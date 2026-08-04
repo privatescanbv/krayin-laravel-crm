@@ -154,6 +154,8 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                         'cstm.betaald_vooruit_c',
                         'cstm.datum_betaling_vr_c',
                         'cstm.betaald_kliniek_c',
+                        'cstm.terugbetaald_klant_c',
+                        'cstm.datum_terugbetaald_c',
                         'cstm.openstaand_c',
                         'cstm.betaal_status_c',
                         'cstm.pin_contant_c',
@@ -1413,37 +1415,75 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             $this->line("  Sugar betaal_status_c={$record->betaal_status_c} (order {$record->id})");
         }
 
+        $advancePaidAt = null;
         $advance = $this->sugarMoneyAmount($record->betaald_vooruit_c ?? null);
         if ($advance !== null && $advance > 0) {
             $enteredDate = $this->parseSugarUtcDate($record->datum_betaling_vr_c ?? null);
+            $advancePaidAt = $enteredDate ? substr($enteredDate, 0, 10) : null;
 
             OrderPayment::create([
                 'order_id' => $order->id,
                 'amount'   => $advance,
                 'type'     => PaymentType::ADVANCE,
                 'method'   => PaymentMethod::BANK,
-                'paid_at'  => $enteredDate ? substr($enteredDate, 0, 10) : null,
+                'paid_at'  => $advancePaidAt,
                 'currency' => 'EUR',
             ]);
         }
 
+        $clinicPaidAt = null;
         $clinic = $this->sugarMoneyAmount($record->betaald_kliniek_c ?? null);
         if ($clinic !== null && $clinic > 0) {
             $examDate = $this->parseSugarUtcDate($record->datum_onderzoek_1 ?? null);
+            $clinicPaidAt = $examDate ? substr($examDate, 0, 10) : null;
 
             OrderPayment::create([
                 'order_id' => $order->id,
                 'amount'   => $clinic,
                 'type'     => PaymentType::PAYED_IN_CLINIC,
                 'method'   => $this->paymentMethodFromSugarPinContant($record->pin_contant_c ?? null),
-                'paid_at'  => $examDate ? substr($examDate, 0, 10) : null,
+                'paid_at'  => $clinicPaidAt,
+                'currency' => 'EUR',
+            ]);
+        }
+
+        // betaald_vooruit_c / betaald_kliniek_c zijn bruto: een terugbetaling aan de klant staat
+        // apart in terugbetaald_klant_c en moet als eigen REFUND-regel mee, anders lijkt de order
+        // overbetaald. Sugar legt geen betaalmethode vast bij terugbetalingen — terugstorten gaat
+        // per bank, gelijk aan de fallback in {@see OrderRefundService::createRefundIfSurplus()}.
+        $refund = $this->sugarMoneyAmount($record->terugbetaald_klant_c ?? null);
+        if ($refund !== null && $refund > 0) {
+            $refundDate = $this->parseSugarUtcDate($record->datum_terugbetaald_c ?? null);
+
+            OrderPayment::create([
+                'order_id' => $order->id,
+                'amount'   => $refund,
+                'type'     => PaymentType::REFUND,
+                'method'   => PaymentMethod::BANK,
+                // Sugar laat datum_terugbetaald_c soms leeg; de terugbetaling is dan op de dag van
+                // betaling afgehandeld, dus val terug op de laatst bekende betaaldatum.
+                'paid_at'  => $refundDate
+                    ? substr($refundDate, 0, 10)
+                    : $this->latestSugarPaymentDate($advancePaidAt, $clinicPaidAt),
                 'currency' => 'EUR',
             ]);
         }
 
         if ($this->output->isVerbose()) {
-            $this->maybeLogOpenstaandVersusOrderTotal($order, $record, ($advance ?? 0.0) + ($clinic ?? 0.0));
+            $netPaid = ($advance ?? 0.0) + ($clinic ?? 0.0) - ($refund ?? 0.0);
+            $this->maybeLogOpenstaandVersusOrderTotal($order, $record, $netPaid);
         }
+    }
+
+    /**
+     * Laatste van de geïmporteerde betaaldata ('Y-m-d' sorteert lexicografisch), of null
+     * wanneer geen van beide betalingen een datum had.
+     */
+    private function latestSugarPaymentDate(?string ...$dates): ?string
+    {
+        $known = array_filter($dates, fn (?string $date) => $date !== null && $date !== '');
+
+        return $known === [] ? null : max($known);
     }
 
     /**
@@ -1472,7 +1512,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
         };
     }
 
-    private function maybeLogOpenstaandVersusOrderTotal(Order $order, object $record, float $importedPaidSum): void
+    private function maybeLogOpenstaandVersusOrderTotal(Order $order, object $record, float $importedNetPaidSum): void
     {
         $openstaand = $this->sugarMoneyAmount($record->openstaand_c ?? null);
         if ($openstaand === null) {
@@ -1484,7 +1524,9 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             return;
         }
 
-        $expectedOutstanding = round(max(0, $total - $importedPaidSum), 2);
+        // Geen max(0, ...): dat maskeerde juist de overbetalingen die deze check moet signaleren
+        // (een order van 509 met 709 geïmporteerd betaald gaf zo geen waarschuwing).
+        $expectedOutstanding = round($total - $importedNetPaidSum, 2);
         if (abs($openstaand - $expectedOutstanding) > 0.02) {
             $this->warn(sprintf(
                 'Order %s: openstaand_c=%s vs (total_price - imported payments)≈%s — check data.',

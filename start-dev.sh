@@ -65,7 +65,7 @@ docker-compose exec crm sh -lc "rm -f storage/framework/vite.hot storage/framewo
     sleep 5
 
     echo "🟢 Admin Hotfile:"
-    docker-compose exec crm cat storage/framework/admin-vite.hot
+    docker-compose exec crm sh -lc "cat storage/framework/admin-vite.hot 2>/dev/null || echo '(nog niet geschreven; Vite start op de achtergrond)'"
 
     echo "🎉 Ready! Visit:"
     echo "   https://crm.local.privatescan.nl"

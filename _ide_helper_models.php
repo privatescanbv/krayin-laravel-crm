@@ -169,6 +169,142 @@ namespace App\Models{
 
 namespace App\Models{
 /**
+ * @property int $id
+ * @property string $subject_type
+ * @property int $subject_id
+ * @property int $user_id
+ * @property string $feedback
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon|null $included_in_generation_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Model|\Eloquent $subject
+ * @property-read \Webkul\User\Models\User $user
+ * @method static \Database\Factories\AiFeedbackFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiFeedback newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiFeedback newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiFeedback onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiFeedback query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiFeedback whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiFeedback whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiFeedback whereFeedback($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiFeedback whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiFeedback whereIncludedInGenerationAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiFeedback whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiFeedback whereSubjectId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiFeedback whereSubjectType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiFeedback whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiFeedback whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiFeedback withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiFeedback withoutTrashed()
+ * @mixin \Eloquent
+ */
+	#[\AllowDynamicProperties]
+	class IdeHelperAiFeedback {}
+}
+
+namespace App\Models{
+/**
+ * @property int $id
+ * @property string $subject_type
+ * @property int $subject_id
+ * @property string|null $summary
+ * @property string|null $next_action_title
+ * @property string|null $next_action_reason
+ * @property string|null $priority
+ * @property array<array-key, mixed>|null $highlights
+ * @property array<array-key, mixed>|null $attention_points
+ * @property \Illuminate\Support\Carbon|null $generated_at
+ * @property string|null $model
+ * @property string|null $prompt_version
+ * @property string $status
+ * @property string|null $last_error
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\AiSummaryGeneration> $generations
+ * @property-read int|null $generations_count
+ * @property-read \Illuminate\Database\Eloquent\Model|\Eloquent $subject
+ * @method static \Database\Factories\AiSummaryFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary whereAttentionPoints($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary whereGeneratedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary whereHighlights($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary whereLastError($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary whereModel($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary whereNextActionReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary whereNextActionTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary wherePriority($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary wherePromptVersion($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary whereSubjectId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary whereSubjectType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary whereSummary($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummary whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
+	#[\AllowDynamicProperties]
+	class IdeHelperAiSummary {}
+}
+
+namespace App\Models{
+/**
+ * @property int $id
+ * @property string $subject_type
+ * @property int $subject_id
+ * @property int|null $ai_summary_id
+ * @property string $status
+ * @property string|null $input_hash
+ * @property array<array-key, mixed>|null $context_snapshot
+ * @property string|null $raw_response
+ * @property array<array-key, mixed>|null $parsed_response
+ * @property string|null $model
+ * @property string $prompt_version
+ * @property int|null $tokens_input
+ * @property int|null $tokens_output
+ * @property int|null $duration_ms
+ * @property string|null $error_message
+ * @property \Illuminate\Support\Carbon $started_at
+ * @property \Illuminate\Support\Carbon|null $completed_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Model|\Eloquent $subject
+ * @property-read \App\Models\AiSummary|null $summary
+ * @method static \Database\Factories\AiSummaryGenerationFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration whereAiSummaryId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration whereCompletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration whereContextSnapshot($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration whereDurationMs($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration whereErrorMessage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration whereInputHash($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration whereModel($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration whereParsedResponse($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration wherePromptVersion($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration whereRawResponse($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration whereStartedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration whereSubjectId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration whereSubjectType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration whereTokensInput($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration whereTokensOutput($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiSummaryGeneration whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
+	#[\AllowDynamicProperties]
+	class IdeHelperAiSummaryGeneration {}
+}
+
+namespace App\Models{
+/**
  * @property string $id
  * @property string|null $name
  * @property string|null $description
@@ -1462,6 +1598,9 @@ namespace App\Models{
  * @property int|null $updated_by
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Webkul\Activity\Models\Activity> $activities
  * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\AiFeedback> $aiFeedback
+ * @property-read int|null $ai_feedback_count
+ * @property-read \App\Models\AiSummary|null $aiSummary
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Anamnesis> $anamnesisRecords
  * @property-read int|null $anamnesis_records_count
  * @property-read \Webkul\Contact\Models\Person|null $contactPerson

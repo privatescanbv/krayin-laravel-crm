@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Webkul\User\Models\User;
 
+/**
+ * @mixin IdeHelperAiFeedback
+ */
 class AiFeedback extends Model
 {
     /** @use HasFactory<AiFeedbackFactory> */

@@ -35,7 +35,6 @@ RUN if [ "$APP_ENV" = "local" ]; then \
 # Kopieer alleen het nodige uit de Node build stage
 COPY --from=vite /build/artisan ./
 COPY --from=vite /build/*.lock ./
-COPY --from=vite /build/*.js ./
 COPY --from=vite /build/*.json ./
 COPY --from=vite /build/*.php ./
 COPY --from=vite /build/.docker/start.sh /start.sh

@@ -19,18 +19,20 @@ This codebase contains PrivateScan-specific customizations.
 ```bash
 docker-compose up -d
 docker-compose exec crm php artisan migrate
-docker-compose exec crm npm run build
-docker-compose exec crm npm run dev    # Watch mode
 
-# Build Admin panel (separate build)
-cd packages/Webkul/Admin && npm run build
+# Frontend build (Admin is de enige frontend build)
+./build.sh              # production build
+./build.sh local        # alleen npm install, geen build
+
+# Of direct:
+cd packages/Webkul/Admin && npm install && npm run build
+cd packages/Webkul/Admin && npm run dev    # Watch mode
 ```
 
 ### Laravel Sail (Alternative)
 ```bash
 vendor/bin/sail up -d
 vendor/bin/sail artisan migrate
-vendor/bin/sail npm run build
 vendor/bin/sail artisan test
 ```
 
@@ -82,9 +84,15 @@ Core functionality is organized as independent packages in `packages/Webkul/`:
 Each package contains Controllers, Models, Routes, Migrations, and Config in its `src/` directory.
 
 ### Frontend Architecture
-Two separate Vite builds:
-- Main app: `vite.config.js` at root (port 5173)
-- Admin panel: `packages/Webkul/Admin/vite.config.js` (port 5174)
+Er is **één** Vite build: `packages/Webkul/Admin/vite.config.js` (port 5174).
+Output gaat naar `public/admin/build/`.
+
+De root heeft geen `package.json` en geen Vite config — die zijn verwijderd omdat
+er niets naar bouwde (`config/krayin-vite.php` heeft alleen de `admin` viter actief,
+en geen enkele blade gebruikt `@vite`). `./build.sh` bouwt alleen de Admin package.
+
+`resources/css/email-templates.css` wordt níét gebouwd; die wordt direct van disk
+gelezen via `resource_path()` in `EmailTemplateRenderingService`.
 
 ### Key Patterns
 - Repository pattern for data access (`app/Repositories/`)

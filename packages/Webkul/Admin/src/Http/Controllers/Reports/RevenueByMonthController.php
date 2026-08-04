@@ -81,9 +81,12 @@ class RevenueByMonthController extends Controller
             ->filter(fn (PipelineStage $s) => in_array($this->departmentForPipeline($s->pipeline())?->key(), $selectedDepartments, true))
             ->filter(fn (PipelineStage $s) => $s->statusCategory() !== null);
 
-        // Map group key -> stage IDs (only for selected groups)
+        // Always load lost for netto; selected groups control chart + column visibility.
+        $fetchGroups = array_values(array_unique(array_merge($selectedGroups, ['lost'])));
+
+        // Map group key -> stage IDs
         $groupStageMap = [];
-        foreach ($selectedGroups as $group) {
+        foreach ($fetchGroups as $group) {
             $groupStageMap[$group] = $allOrderStages
                 ->filter(fn (PipelineStage $s) => $s->statusCategory()?->value === $group)
                 ->map(fn (PipelineStage $s) => $s->id())
@@ -180,11 +183,17 @@ class RevenueByMonthController extends Controller
 
         $monthsData = array_map(function ($m) use ($monthlyRevenue, $inkooByMonth, $selectedGroups, $ordersByMonthGroup) {
             $row = $monthlyRevenue[$m['key']];
-            $groupTotal = array_sum(array_map(fn ($g) => $row[$g] ?? 0, $selectedGroups));
+            $verloren = $row['lost'] ?? 0.0;
+            $selectedNonLost = array_values(array_filter($selectedGroups, fn (string $g) => $g !== 'lost'));
+            $nonLostTotal = array_sum(array_map(fn ($g) => $row[$g] ?? 0, $selectedNonLost));
+            $bruto = $nonLostTotal + $verloren;
             $groupOrders = $ordersByMonthGroup[$m['key']];
 
-            $ordersByGroup = [];
-            foreach ($selectedGroups as $group) {
+            // Always expose lost orders; other groups only when selected.
+            $ordersByGroup = [
+                'lost' => $groupOrders['lost'] ?? [],
+            ];
+            foreach ($selectedNonLost as $group) {
                 $ordersByGroup[$group] = $groupOrders[$group] ?? [];
             }
 
@@ -198,9 +207,10 @@ class RevenueByMonthController extends Controller
                 'option'     => round($row['option'] ?? 0, 2),
                 'nearly_won' => round($row['nearly_won'] ?? 0, 2),
                 'won'        => round($row['won'] ?? 0, 2),
-                'lost'       => round($row['lost'] ?? 0, 2),
+                'verloren'   => round($verloren, 2),
                 'inkoop'     => round($inkooByMonth[$m['key']] ?? 0, 2),
-                'total'      => round($groupTotal, 2),
+                'bruto'      => round($bruto, 2),
+                'netto'      => round($bruto - $verloren, 2),
                 'orders'     => array_merge($ordersByGroup, [
                     'all' => $allOrders->all(),
                 ]),

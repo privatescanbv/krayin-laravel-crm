@@ -11,13 +11,19 @@ use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\User\Models\User;
 
 class RevenueByEmployeeController extends Controller
 {
+    private const GROUPS = [
+        'option'     => ['label' => 'Option',         'color' => '#3CC3DF'],
+        'nearly_won' => ['label' => 'Bijna gewonnen', 'color' => '#FFD166'],
+        'won'        => ['label' => 'Gewonnen',        'color' => '#6BCB77'],
+        'lost'       => ['label' => 'Verloren',        'color' => '#FF928A'],
+    ];
+
     /**
      * Afdelingen in weergavevolgorde. De filterwaarde op de wire is `Departments::key()`.
      *
@@ -52,22 +58,18 @@ class RevenueByEmployeeController extends Controller
             'initialWeek'   => $request->integer('week', now()->isoWeek()),
             'initialYear'   => $request->integer('year', now()->year),
             'initialMonth'  => $request->input('month', now()->format('Y-m')),
+            'departments'   => array_map(
+                fn (Departments $department) => [
+                    'id'    => $department->key(),
+                    'label' => $department->value,
+                ],
+                self::DEPARTMENTS
+            ),
         ]);
     }
 
     public function filterOptions(): JsonResponse
     {
-        $stages = collect(PipelineStage::cases())
-            ->filter(fn (PipelineStage $stage) => $stage->isOrder())
-            ->map(fn (PipelineStage $stage) => [
-                'id'         => $stage->id(),
-                'label'      => $stage->label(),
-                'department' => $this->departmentForPipeline($stage->pipeline())?->key(),
-                'is_lost'    => $stage->isLost(),
-            ])
-            ->filter(fn (array $stage) => $stage['department'] !== null)
-            ->values();
-
         $departments = collect(self::DEPARTMENTS)
             ->map(fn (Departments $department) => [
                 'id'    => $department->key(),
@@ -75,8 +77,16 @@ class RevenueByEmployeeController extends Controller
             ])
             ->values();
 
+        $groups = collect(self::GROUPS)
+            ->map(fn (array $group, string $id) => [
+                'id'    => $id,
+                'label' => $group['label'],
+                'color' => $group['color'],
+            ])
+            ->values();
+
         return response()->json([
-            'stages'      => $stages,
+            'groups'      => $groups,
             'departments' => $departments,
         ]);
     }
@@ -87,48 +97,59 @@ class RevenueByEmployeeController extends Controller
 
         [$periodStart, $periodEnd, $days, $periodMeta] = $this->resolvePeriod($request, $period);
 
+        $selectedGroups = $this->arrayQuery($request, 'groups');
+        $selectedGroups = array_values(array_intersect($selectedGroups, array_keys(self::GROUPS)));
+
+        if (empty($selectedGroups)) {
+            $selectedGroups = ['option', 'nearly_won', 'won'];
+        }
+
         $departmentKeys = array_map(fn (Departments $department) => $department->key(), self::DEPARTMENTS);
 
         $selectedDepartments = $request->has('departments')
             ? array_values(array_intersect($this->arrayQuery($request, 'departments'), $departmentKeys))
             : $departmentKeys;
 
-        $stageIds = collect(PipelineStage::cases())
-            ->filter(fn (PipelineStage $stage) => $stage->isOrder())
-            ->filter(fn (PipelineStage $stage) => in_array($this->departmentForPipeline($stage->pipeline())?->key(), $selectedDepartments, true))
-            ->map(fn (PipelineStage $stage) => $stage->id())
-            ->values()
-            ->all();
+        if (empty($selectedDepartments)) {
+            $selectedDepartments = $departmentKeys;
+        }
 
-        $requestedStageIds = array_values(array_filter(
-            array_map('intval', $this->arrayQuery($request, 'stages')),
-            fn (int $stageId) => $stageId > 0
-        ));
+        $allOrderStages = collect(PipelineStage::cases())
+            ->filter(fn (PipelineStage $s) => $s->isOrder())
+            ->filter(fn (PipelineStage $s) => in_array($this->departmentForPipeline($s->pipeline())?->key(), $selectedDepartments, true))
+            ->filter(fn (PipelineStage $s) => $s->statusCategory() !== null);
 
-        if ($request->has('stages')) {
-            $stageIds = array_values(array_intersect($stageIds, $requestedStageIds));
+        // Always load lost for netto; selected groups control chart visibility.
+        $fetchGroups = array_values(array_unique(array_merge($selectedGroups, ['lost'])));
+
+        $groupStageMap = [];
+        foreach ($fetchGroups as $group) {
+            $groupStageMap[$group] = $allOrderStages
+                ->filter(fn (PipelineStage $s) => $s->statusCategory()?->value === $group)
+                ->map(fn (PipelineStage $s) => $s->id())
+                ->values()
+                ->all();
+        }
+
+        $stageIds = array_values(array_unique(array_merge([], ...array_values($groupStageMap))));
+
+        $stageToGroup = [];
+        foreach ($groupStageMap as $group => $ids) {
+            foreach ($ids as $id) {
+                $stageToGroup[$id] = $group;
+            }
         }
 
         $stageLabelMap = collect(PipelineStage::cases())
             ->filter(fn (PipelineStage $s) => $s->isOrder())
             ->mapWithKeys(fn (PipelineStage $s) => [$s->id() => $s->label()]);
 
-        $wonStageIds = collect(PipelineStage::cases())
-            ->filter(fn (PipelineStage $s) => $s->isOrder() && $s->statusCategory()?->value === 'won')
-            ->map(fn (PipelineStage $s) => $s->id())
+        $lostStageIds = $groupStageMap['lost'] ?? [];
+        $selectedStageIds = collect($selectedGroups)
+            ->flatMap(fn (string $group) => $groupStageMap[$group] ?? [])
+            ->unique()
+            ->values()
             ->all();
-
-        $rows = empty($stageIds)
-            ? collect()
-            : Order::query()
-                ->whereBetween('created_at', [$periodStart, $periodEnd])
-                ->whereIn('pipeline_stage_id', $stageIds)
-                ->whereNotNull('user_id')
-                ->select('user_id')
-                ->selectRaw('DATE(created_at) as day')
-                ->selectRaw('SUM(total_price) as total')
-                ->groupBy('user_id', DB::raw('DATE(created_at)'))
-                ->get();
 
         $ordersByUser = empty($stageIds)
             ? collect()
@@ -145,33 +166,52 @@ class RevenueByEmployeeController extends Controller
                 ->groupBy('user_id');
 
         $users = User::query()
-            ->whereIn('id', $rows->pluck('user_id')->unique()->values())
+            ->whereIn('id', $ordersByUser->keys()->map(fn ($id) => (int) $id)->values())
             ->get(['id', 'first_name', 'last_name'])
             ->keyBy('id');
 
         $dayIndex = $days->pluck('date')->flip();
         $dayCount = $days->count();
 
-        $groupedRows = $rows->groupBy('user_id');
-
         $datasets = [];
         $employees = [];
 
-        foreach ($groupedRows as $userId => $userRows) {
+        foreach ($ordersByUser as $userId => $userOrders) {
             $user = $users->get((int) $userId);
             $color = self::PALETTE[count($datasets) % count(self::PALETTE)];
             $data = array_fill(0, $dayCount, 0.0);
 
-            foreach ($userRows as $row) {
-                $index = $dayIndex->get($row->day);
+            // Chart bars follow selected groups only (lost series/visibility via filter).
+            foreach ($userOrders as $order) {
+                if (! in_array($order->pipeline_stage_id, $selectedStageIds, true)) {
+                    continue;
+                }
+
+                $index = $dayIndex->get($order->created_at->toDateString());
 
                 if ($index !== null) {
-                    $data[$index] = round((float) $row->total, 2);
+                    $data[$index] = round($data[$index] + (float) $order->total_price, 2);
                 }
             }
 
             $name = $user?->name ?: 'Onbekende medewerker';
-            $userOrders = $ordersByUser->get($userId) ?? collect();
+            $verloren = round(
+                $userOrders
+                    ->filter(fn ($o) => in_array($o->pipeline_stage_id, $lostStageIds, true))
+                    ->sum(fn ($o) => (float) $o->total_price),
+                2
+            );
+            $selectedNonLostTotal = round(
+                $userOrders
+                    ->filter(function ($o) use ($stageToGroup, $selectedGroups) {
+                        $group = $stageToGroup[$o->pipeline_stage_id] ?? null;
+
+                        return $group !== null && $group !== 'lost' && in_array($group, $selectedGroups, true);
+                    })
+                    ->sum(fn ($o) => (float) $o->total_price),
+                2
+            );
+            $bruto = round($selectedNonLostTotal + $verloren, 2);
 
             $datasets[] = [
                 'label'           => $name,
@@ -182,28 +222,25 @@ class RevenueByEmployeeController extends Controller
             ];
 
             $employees[] = [
-                'user_id' => (int) $userId,
-                'name'    => $name,
-                'color'   => $color,
-                'bruto'   => round(array_sum($data), 2),
-                'netto'   => round(
-                    $userOrders
-                        ->filter(fn ($o) => in_array($o->pipeline_stage_id, $wonStageIds, true))
-                        ->sum(fn ($o) => (float) $o->total_price),
-                    2
-                ),
-                'inkoop'  => round(
+                'user_id'  => (int) $userId,
+                'name'     => $name,
+                'color'    => $color,
+                'bruto'    => $bruto,
+                'verloren' => $verloren,
+                'inkoop'   => round(
                     $userOrders->sum(fn ($o) => $o->totalPurchasePrice()),
                     2
                 ),
-                'orders'  => $userOrders
+                'netto'    => round($bruto - $verloren, 2),
+                'orders'   => $userOrders
                     ->map(fn ($o) => [
                         'id'           => $o->id,
                         'label'        => $o->order_number ?: $o->title ?: "Order #{$o->id}",
                         'url'          => route('admin.orders.view', $o->id),
                         'created_at'   => $o->created_at->toDateString(),
                         'stage'        => $stageLabelMap->get($o->pipeline_stage_id, '—'),
-                        'is_won'       => in_array($o->pipeline_stage_id, $wonStageIds, true),
+                        'group'        => $stageToGroup[$o->pipeline_stage_id] ?? null,
+                        'is_lost'      => in_array($o->pipeline_stage_id, $lostStageIds, true),
                         'total_price'  => round((float) $o->total_price, 2),
                         'inkoop_price' => $o->totalPurchasePrice(),
                     ])
@@ -215,11 +252,12 @@ class RevenueByEmployeeController extends Controller
         usort($employees, fn (array $a, array $b) => $b['bruto'] <=> $a['bruto']);
 
         return response()->json(array_merge([
-            'period'       => $period,
-            'period_label' => $periodMeta['period_label'],
-            'days'         => $days,
-            'datasets'     => $datasets,
-            'employees'    => $employees,
+            'period'          => $period,
+            'period_label'    => $periodMeta['period_label'],
+            'days'            => $days,
+            'datasets'        => $datasets,
+            'employees'       => $employees,
+            'selected_groups' => $selectedGroups,
         ], $periodMeta['response']));
     }
 

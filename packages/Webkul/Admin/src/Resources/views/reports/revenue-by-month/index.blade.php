@@ -164,7 +164,7 @@
                                 @{{ periodLabel }}
                             </p>
                             <p class="mt-0.5 text-xs text-gray-400">
-                                Klik op een kolom om de onderliggende orders te tonen (behalve omzet netto/bruto).
+                                Klik op maand, statusgroepen of inkoop om orders te tonen (niet op omzet bruto/netto). Verloren telt altijd mee in bruto/netto.
                             </p>
                         </div>
 
@@ -173,28 +173,26 @@
                                 <thead>
                                     <tr class="border-b text-xs font-medium uppercase text-gray-500 dark:border-gray-800 dark:text-gray-400">
                                         <th class="px-4 py-3">Maand</th>
-                                        <th v-if="selectedGroups.includes('option')" class="px-4 py-3 text-right">Option</th>
-                                        <th v-if="selectedGroups.includes('nearly_won')" class="px-4 py-3 text-right">Bijna gewonnen</th>
-                                        <th
-                                            v-if="selectedGroups.includes('won')"
-                                            class="px-4 py-3 text-right"
-                                        >
-                                            <span
-                                                class="inline-flex cursor-help items-center justify-end gap-1"
-                                                v-tooltip="omzetNettoTooltip"
-                                            >
-                                                Omzet netto
-                                                <span class="icon-info text-[10px] opacity-60"></span>
-                                            </span>
-                                        </th>
-                                        <th v-if="selectedGroups.includes('lost')" class="px-4 py-3 text-right">Verloren</th>
-                                        <th class="px-4 py-3 text-right">Inkoop</th>
                                         <th class="px-4 py-3 text-right">
                                             <span
                                                 class="inline-flex cursor-help items-center justify-end gap-1"
                                                 v-tooltip="omzetBrutoTooltip"
                                             >
                                                 Omzet bruto
+                                                <span class="icon-info text-[10px] opacity-60"></span>
+                                            </span>
+                                        </th>
+                                        <th v-if="selectedGroups.includes('option')" class="px-4 py-3 text-right">Option</th>
+                                        <th v-if="selectedGroups.includes('nearly_won')" class="px-4 py-3 text-right">Bijna gewonnen</th>
+                                        <th v-if="selectedGroups.includes('won')" class="px-4 py-3 text-right">Gewonnen</th>
+                                        <th v-if="selectedGroups.includes('lost')" class="px-4 py-3 text-right">Verloren</th>
+                                        <th class="px-4 py-3 text-right">Inkoop</th>
+                                        <th class="px-4 py-3 text-right">
+                                            <span
+                                                class="inline-flex cursor-help items-center justify-end gap-1"
+                                                v-tooltip="omzetNettoTooltip"
+                                            >
+                                                Omzet netto
                                                 <span class="icon-info text-[10px] opacity-60"></span>
                                             </span>
                                         </th>
@@ -222,6 +220,10 @@
                                                 </div>
                                             </td>
 
+                                            <td class="px-4 py-3 text-right text-sm font-medium text-gray-800 dark:text-white">
+                                                @{{ formatCurrency(row.bruto) }}
+                                            </td>
+
                                             <td
                                                 v-if="selectedGroups.includes('option')"
                                                 class="cursor-pointer px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300"
@@ -242,7 +244,9 @@
 
                                             <td
                                                 v-if="selectedGroups.includes('won')"
-                                                class="px-4 py-3 text-right text-sm font-medium text-gray-800 dark:text-white"
+                                                class="cursor-pointer px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300"
+                                                :class="{ 'bg-gray-100 dark:bg-gray-800': isExpanded(row.key, 'won') }"
+                                                @click="toggleExpand(row.key, 'won')"
                                             >
                                                 @{{ formatCurrency(row.won) }}
                                             </td>
@@ -253,7 +257,7 @@
                                                 :class="{ 'bg-gray-100 dark:bg-gray-800': isExpanded(row.key, 'lost') }"
                                                 @click="toggleExpand(row.key, 'lost')"
                                             >
-                                                @{{ formatCurrency(row.lost) }}
+                                                @{{ formatCurrency(row.verloren) }}
                                             </td>
 
                                             <td
@@ -265,7 +269,7 @@
                                             </td>
 
                                             <td class="px-4 py-3 text-right text-sm font-medium text-gray-800 dark:text-white">
-                                                @{{ formatCurrency(row.total) }}
+                                                @{{ formatCurrency(row.netto) }}
                                             </td>
                                         </tr>
 
@@ -300,29 +304,44 @@
                                                     </div>
                                                 </td>
 
+                                                <td class="px-4 py-2 text-right text-sm text-gray-500 dark:text-gray-400">
+                                                    @{{ formatCurrency(order.total_price) }}
+                                                </td>
+
                                                 <td
                                                     v-if="selectedGroups.includes('option')"
-                                                    class="px-4 py-2 text-right text-sm text-gray-400"
-                                                ></td>
+                                                    class="px-4 py-2 text-right text-sm text-gray-700 dark:text-gray-300"
+                                                >
+                                                    @{{ order.group === 'option' ? formatCurrency(order.total_price) : '—' }}
+                                                </td>
+
                                                 <td
                                                     v-if="selectedGroups.includes('nearly_won')"
-                                                    class="px-4 py-2 text-right text-sm text-gray-400"
-                                                ></td>
+                                                    class="px-4 py-2 text-right text-sm text-gray-700 dark:text-gray-300"
+                                                >
+                                                    @{{ order.group === 'nearly_won' ? formatCurrency(order.total_price) : '—' }}
+                                                </td>
+
                                                 <td
                                                     v-if="selectedGroups.includes('won')"
-                                                    class="px-4 py-2 text-right text-sm text-gray-400"
-                                                ></td>
+                                                    class="px-4 py-2 text-right text-sm text-gray-700 dark:text-gray-300"
+                                                >
+                                                    @{{ order.group === 'won' ? formatCurrency(order.total_price) : '—' }}
+                                                </td>
+
                                                 <td
                                                     v-if="selectedGroups.includes('lost')"
-                                                    class="px-4 py-2 text-right text-sm text-gray-400"
-                                                ></td>
+                                                    class="px-4 py-2 text-right text-sm text-gray-700 dark:text-gray-300"
+                                                >
+                                                    @{{ order.group === 'lost' ? formatCurrency(order.total_price) : '—' }}
+                                                </td>
 
                                                 <td class="px-4 py-2 text-right text-sm text-gray-700 dark:text-gray-300">
                                                     @{{ formatCurrency(order.inkoop_price) }}
                                                 </td>
 
                                                 <td class="px-4 py-2 text-right text-sm text-gray-500 dark:text-gray-400">
-                                                    @{{ formatCurrency(order.total_price) }}
+                                                    @{{ order.group === 'lost' ? '—' : formatCurrency(order.total_price) }}
                                                 </td>
                                             </tr>
 
@@ -421,23 +440,24 @@
                     },
 
                     tableColspan() {
-                        return 3 + this.selectedGroups.length;
+                        // Maand + bruto + inkoop + netto + zichtbare statusgroepen
+                        return 4 + this.selectedGroups.length;
                     },
 
                     omzetNettoTooltip() {
-                        return 'Omzet van gewonnen orders (status Gewonnen).';
+                        return 'Omzet bruto minus verloren.';
                     },
 
                     omzetBrutoTooltip() {
-                        const labels = this.groups
-                            .filter(g => this.selectedGroups.includes(g.id))
+                        const nonLost = this.groups
+                            .filter(g => this.selectedGroups.includes(g.id) && g.id !== 'lost')
                             .map(g => g.label);
 
-                        if (! labels.length) {
-                            return 'Som van de geselecteerde statusgroepen.';
+                        if (! nonLost.length) {
+                            return 'Som van verloren (altijd meegenomen voor netto).';
                         }
 
-                        return 'Som van: ' + labels.join(' + ') + '.';
+                        return 'Som van: ' + nonLost.join(' + ') + ' + Verloren.';
                     },
 
                     expandedGroupLabel() {

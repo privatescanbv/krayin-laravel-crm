@@ -25,30 +25,19 @@ beforeEach(function () {
     $this->withoutMiddleware(Authenticate::class);
 });
 
-test('revenue by month data includes orders per status group for drill-down', function () {
+test('revenue by month always loads lost for netto even when lost filter is off', function () {
     $month = now()->startOfMonth();
 
-    $optionOrder = Order::factory()->create([
+    Order::factory()->create([
         'order_number'      => 'OPT-001',
-        'title'             => 'Option order',
         'total_price'       => 100.00,
         'pipeline_stage_id' => PipelineStage::ORDER_CONFIRM->id(),
         'created_at'        => $month->copy()->addDays(2),
         'updated_at'        => $month->copy()->addDays(2),
     ]);
 
-    $nearlyWonOrder = Order::factory()->create([
-        'order_number'      => 'NW-001',
-        'title'             => 'Nearly won order',
-        'total_price'       => 250.00,
-        'pipeline_stage_id' => PipelineStage::ORDER_BEVESTIGD->id(),
-        'created_at'        => $month->copy()->addDays(5),
-        'updated_at'        => $month->copy()->addDays(5),
-    ]);
-
-    $wonOrder = Order::factory()->create([
+    Order::factory()->create([
         'order_number'      => 'WON-001',
-        'title'             => 'Won order',
         'total_price'       => 400.00,
         'pipeline_stage_id' => PipelineStage::ORDER_GEWONNEN->id(),
         'created_at'        => $month->copy()->addDays(8),
@@ -57,7 +46,6 @@ test('revenue by month data includes orders per status group for drill-down', fu
 
     $lostOrder = Order::factory()->create([
         'order_number'      => 'LOST-001',
-        'title'             => 'Lost order',
         'total_price'       => 50.00,
         'pipeline_stage_id' => PipelineStage::ORDER_VERLOREN->id(),
         'created_at'        => $month->copy()->addDays(3),
@@ -65,43 +53,29 @@ test('revenue by month data includes orders per status group for drill-down', fu
     ]);
 
     $response = $this->getJson(route('admin.reports.revenue-by-month.data', [
-        'from'         => $month->format('Y-m'),
-        'to'           => $month->format('Y-m'),
-        'groups'       => ['option', 'nearly_won', 'won', 'lost'],
-        'departments'  => ['privatescan'],
+        'from'        => $month->format('Y-m'),
+        'to'          => $month->format('Y-m'),
+        'groups'      => ['option', 'nearly_won', 'won'],
+        'departments' => ['privatescan'],
     ]));
 
     $response->assertOk();
 
-    $monthKey = $month->format('Y-m');
-    $row = collect($response->json('months_data'))->firstWhere('key', $monthKey);
+    $row = collect($response->json('months_data'))->firstWhere('key', $month->format('Y-m'));
 
     expect($row)->not->toBeNull()
-        ->and($row['option'])->toEqual(100.0)
-        ->and($row['nearly_won'])->toEqual(250.0)
-        ->and($row['won'])->toEqual(400.0)
-        ->and($row['lost'])->toEqual(50.0)
-        ->and($row['total'])->toEqual(800.0)
-        ->and($row['orders'])->toHaveKeys(['option', 'nearly_won', 'won', 'lost', 'all']);
+        ->and($row['verloren'])->toEqual(50.0)
+        ->and($row['bruto'])->toEqual(550.0)
+        ->and($row['netto'])->toEqual(500.0)
+        ->and($row['orders'])->toHaveKey('lost')
+        ->and(collect($row['orders']['lost'])->pluck('id')->all())->toContain($lostOrder->id);
 
-    expect(collect($row['orders']['option'])->pluck('id')->all())->toContain($optionOrder->id);
-    expect(collect($row['orders']['nearly_won'])->pluck('id')->all())->toContain($nearlyWonOrder->id);
-    expect(collect($row['orders']['won'])->pluck('id')->all())->toContain($wonOrder->id);
-    expect(collect($row['orders']['lost'])->pluck('id')->all())->toContain($lostOrder->id);
-    expect(collect($row['orders']['all'])->pluck('id')->all())
-        ->toContain($optionOrder->id, $nearlyWonOrder->id, $wonOrder->id, $lostOrder->id);
-
-    $optionPayload = collect($row['orders']['option'])->firstWhere('id', $optionOrder->id);
-
-    expect($optionPayload)
-        ->toHaveKeys(['id', 'label', 'url', 'created_at', 'stage', 'group', 'total_price', 'inkoop_price'])
-        ->and($optionPayload['label'])->toBe('OPT-001')
-        ->and($optionPayload['group'])->toBe('option')
-        ->and($optionPayload['total_price'])->toEqual(100.0)
-        ->and($optionPayload['url'])->toContain((string) $optionOrder->id);
+    // Chart datasets should not include lost when filter is off.
+    expect(collect($response->json('datasets'))->pluck('group')->all())
+        ->not->toContain('lost');
 });
 
-test('revenue by month total only sums selected groups', function () {
+test('revenue by month keeps bruto and netto stable when toggling lost filter', function () {
     $month = now()->startOfMonth();
 
     Order::factory()->create([
@@ -112,34 +86,31 @@ test('revenue by month total only sums selected groups', function () {
     ]);
 
     Order::factory()->create([
-        'total_price'       => 400.00,
-        'pipeline_stage_id' => PipelineStage::ORDER_GEWONNEN->id(),
+        'total_price'       => 50.00,
+        'pipeline_stage_id' => PipelineStage::ORDER_VERLOREN->id(),
         'created_at'        => $month->copy()->addDays(2),
         'updated_at'        => $month->copy()->addDays(2),
     ]);
 
-    Order::factory()->create([
-        'total_price'       => 50.00,
-        'pipeline_stage_id' => PipelineStage::ORDER_VERLOREN->id(),
-        'created_at'        => $month->copy()->addDays(3),
-        'updated_at'        => $month->copy()->addDays(3),
-    ]);
-
-    $response = $this->getJson(route('admin.reports.revenue-by-month.data', [
+    $withoutLost = $this->getJson(route('admin.reports.revenue-by-month.data', [
         'from'        => $month->format('Y-m'),
         'to'          => $month->format('Y-m'),
         'groups'      => ['option', 'won'],
         'departments' => ['privatescan'],
-    ]));
+    ]))->json('months_data.0');
 
-    $response->assertOk();
+    $withLost = $this->getJson(route('admin.reports.revenue-by-month.data', [
+        'from'        => $month->format('Y-m'),
+        'to'          => $month->format('Y-m'),
+        'groups'      => ['option', 'won', 'lost'],
+        'departments' => ['privatescan'],
+    ]))->json('months_data.0');
 
-    $row = collect($response->json('months_data'))->firstWhere('key', $month->format('Y-m'));
-
-    expect($row['total'])->toEqual(500.0)
-        ->and($row['orders'])->toHaveKeys(['option', 'won', 'all'])
-        ->and($row['orders'])->not->toHaveKey('lost')
-        ->and(collect($row['orders']['all']))->toHaveCount(2);
+    expect($withoutLost['bruto'])->toEqual($withLost['bruto'])
+        ->and($withoutLost['netto'])->toEqual($withLost['netto'])
+        ->and($withoutLost['verloren'])->toEqual($withLost['verloren'])
+        ->and($withoutLost['bruto'])->toEqual(150.0)
+        ->and($withoutLost['netto'])->toEqual(100.0);
 });
 
 test('revenue by month filters on the departments enum key', function () {
@@ -173,25 +144,32 @@ test('revenue by month filters on the departments enum key', function () {
     };
 
     $hernia = $rowFor([Departments::HERNIA->key()]);
-    expect($hernia['won'])->toEqual(400.0)
+    expect($hernia['bruto'])->toEqual(400.0)
         ->and(collect($hernia['orders']['won'])->pluck('id')->all())
         ->toContain($herniaOrder->id)
         ->not->toContain($privatescanOrder->id);
 
     $privatescan = $rowFor([Departments::PRIVATESCAN->key()]);
-    expect($privatescan['won'])->toEqual(100.0)
+    expect($privatescan['bruto'])->toEqual(100.0)
         ->and(collect($privatescan['orders']['won'])->pluck('id')->all())
         ->toContain($privatescanOrder->id)
         ->not->toContain($herniaOrder->id);
-
-    // Onbekende sleutel valt terug op alle afdelingen.
-    expect($rowFor(['hernia'])['won'])->toEqual(500.0);
 });
 
-test('revenue by month index page loads', function () {
+test('revenue by month index page loads with filter-linked status columns', function () {
     $this->get(route('admin.reports.revenue-by-month.index'))
         ->assertOk()
         ->assertSee('Omzet per maand')
+        ->assertSee('Omzet bruto')
+        ->assertSee('>Option</th>', false)
+        ->assertSee('>Bijna gewonnen</th>', false)
+        ->assertSee('>Gewonnen</th>', false)
+        ->assertSee('>Verloren</th>', false)
+        ->assertSee('>Inkoop</th>', false)
         ->assertSee('Omzet netto')
-        ->assertSee('Omzet bruto');
+        ->assertSee("selectedGroups.includes('option')", false)
+        ->assertSee("selectedGroups.includes('nearly_won')", false)
+        ->assertSee("selectedGroups.includes('won')", false)
+        ->assertSee("selectedGroups.includes('lost')", false)
+        ->assertSee('Omzet bruto minus verloren');
 });

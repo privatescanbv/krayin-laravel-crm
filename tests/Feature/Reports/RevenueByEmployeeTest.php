@@ -25,10 +25,10 @@ beforeEach(function () {
     $this->withoutMiddleware(Authenticate::class);
 });
 
-test('revenue by employee separates omzet netto and omzet bruto', function () {
+test('revenue by employee always loads lost for netto even when lost filter is off', function () {
     $weekStart = now()->startOfWeek();
 
-    $optionOrder = Order::factory()->create([
+    Order::factory()->create([
         'user_id'           => $this->admin->id,
         'order_number'      => 'EMP-OPT-001',
         'total_price'       => 100.00,
@@ -37,7 +37,7 @@ test('revenue by employee separates omzet netto and omzet bruto', function () {
         'updated_at'        => $weekStart->copy()->addDay(),
     ]);
 
-    $wonOrder = Order::factory()->create([
+    Order::factory()->create([
         'user_id'           => $this->admin->id,
         'order_number'      => 'EMP-WON-001',
         'total_price'       => 400.00,
@@ -46,14 +46,20 @@ test('revenue by employee separates omzet netto and omzet bruto', function () {
         'updated_at'        => $weekStart->copy()->addDays(2),
     ]);
 
+    Order::factory()->create([
+        'user_id'           => $this->admin->id,
+        'order_number'      => 'EMP-LOST-001',
+        'total_price'       => 50.00,
+        'pipeline_stage_id' => PipelineStage::ORDER_VERLOREN->id(),
+        'created_at'        => $weekStart->copy()->addDays(3),
+        'updated_at'        => $weekStart->copy()->addDays(3),
+    ]);
+
     $response = $this->getJson(route('admin.reports.revenue-by-employee.data', [
         'period'      => 'week',
         'week'        => $weekStart->isoWeek(),
         'year'        => $weekStart->isoWeekYear(),
-        'stages'      => [
-            PipelineStage::ORDER_CONFIRM->id(),
-            PipelineStage::ORDER_GEWONNEN->id(),
-        ],
+        'groups'      => ['option', 'nearly_won', 'won'],
         'departments' => ['privatescan'],
     ]));
 
@@ -62,19 +68,53 @@ test('revenue by employee separates omzet netto and omzet bruto', function () {
     $employee = collect($response->json('employees'))->firstWhere('user_id', $this->admin->id);
 
     expect($employee)->not->toBeNull()
-        ->and($employee['netto'])->toEqual(400.0)
-        ->and($employee['bruto'])->toEqual(500.0)
-        ->and($employee)->not->toHaveKey('week_total')
-        ->and($employee)->not->toHaveKey('week_bruto');
+        ->and($employee['bruto'])->toEqual(550.0)
+        ->and($employee['verloren'])->toEqual(50.0)
+        ->and($employee['netto'])->toEqual(500.0)
+        ->and(collect($employee['orders'])->where('is_lost', true))->toHaveCount(1);
+});
 
-    $orders = collect($employee['orders']);
+test('revenue by employee keeps bruto and netto stable when toggling lost filter', function () {
+    $weekStart = now()->startOfWeek();
 
-    expect($orders->firstWhere('id', $wonOrder->id)['is_won'])->toBeTrue()
-        ->and($orders->firstWhere('id', $optionOrder->id)['is_won'])->toBeFalse()
-        ->and($response->json('period'))->toBe('week')
-        ->and($response->json('days'))->toHaveCount(7)
-        ->and($response->json('period_label'))->not->toBeEmpty();
+    Order::factory()->create([
+        'user_id'           => $this->admin->id,
+        'total_price'       => 100.00,
+        'pipeline_stage_id' => PipelineStage::ORDER_CONFIRM->id(),
+        'created_at'        => $weekStart->copy()->addDay(),
+        'updated_at'        => $weekStart->copy()->addDay(),
+    ]);
 
+    Order::factory()->create([
+        'user_id'           => $this->admin->id,
+        'total_price'       => 50.00,
+        'pipeline_stage_id' => PipelineStage::ORDER_VERLOREN->id(),
+        'created_at'        => $weekStart->copy()->addDays(2),
+        'updated_at'        => $weekStart->copy()->addDays(2),
+    ]);
+
+    $params = [
+        'period'      => 'week',
+        'week'        => $weekStart->isoWeek(),
+        'year'        => $weekStart->isoWeekYear(),
+        'departments' => ['privatescan'],
+    ];
+
+    $withoutLost = collect($this->getJson(route('admin.reports.revenue-by-employee.data', [
+        ...$params,
+        'groups' => ['option', 'won'],
+    ]))->json('employees'))->firstWhere('user_id', $this->admin->id);
+
+    $withLost = collect($this->getJson(route('admin.reports.revenue-by-employee.data', [
+        ...$params,
+        'groups' => ['option', 'won', 'lost'],
+    ]))->json('employees'))->firstWhere('user_id', $this->admin->id);
+
+    expect($withoutLost['bruto'])->toEqual($withLost['bruto'])
+        ->and($withoutLost['netto'])->toEqual($withLost['netto'])
+        ->and($withoutLost['verloren'])->toEqual($withLost['verloren'])
+        ->and($withoutLost['bruto'])->toEqual(150.0)
+        ->and($withoutLost['netto'])->toEqual(100.0);
 });
 
 test('revenue by employee month period aggregates full month days', function () {
@@ -99,7 +139,6 @@ test('revenue by employee month period aggregates full month days', function () 
         'updated_at'        => $monthStart->copy()->addDays(10),
     ]);
 
-    // Outside selected month — must be ignored
     Order::factory()->create([
         'user_id'           => $this->admin->id,
         'total_price'       => 999.00,
@@ -111,29 +150,22 @@ test('revenue by employee month period aggregates full month days', function () 
     $response = $this->getJson(route('admin.reports.revenue-by-employee.data', [
         'period'      => 'month',
         'month'       => $monthKey,
-        'stages'      => [
-            PipelineStage::ORDER_CONFIRM->id(),
-            PipelineStage::ORDER_GEWONNEN->id(),
-        ],
+        'groups'      => ['option', 'won'],
         'departments' => ['privatescan'],
     ]));
 
     $response->assertOk();
 
-    expect($response->json('period'))->toBe('month')
-        ->and($response->json('month'))->toBe($monthKey)
-        ->and($response->json('days'))->toHaveCount($monthStart->daysInMonth)
-        ->and($response->json('period_label'))->not->toBeEmpty();
-
     $employee = collect($response->json('employees'))->firstWhere('user_id', $this->admin->id);
 
-    expect($employee)->not->toBeNull()
-        ->and($employee['netto'])->toEqual(350.0)
+    expect($response->json('period'))->toBe('month')
+        ->and($response->json('days'))->toHaveCount($monthStart->daysInMonth)
         ->and($employee['bruto'])->toEqual(500.0)
-        ->and($employee['orders'])->toHaveCount(2);
+        ->and($employee['verloren'])->toEqual(0.0)
+        ->and($employee['netto'])->toEqual(500.0);
 });
 
-test('revenue by employee filter options expose the departments enum', function () {
+test('revenue by employee filter options expose groups and departments', function () {
     $response = $this->getJson(route('admin.reports.revenue-by-employee.filter-options'));
 
     $response->assertOk();
@@ -143,12 +175,8 @@ test('revenue by employee filter options expose the departments enum', function 
         ['id' => Departments::HERNIA->key(), 'label' => Departments::HERNIA->value],
     ]);
 
-    $stageDepartments = collect($response->json('stages'))->pluck('department')->unique()->sort()->values();
-
-    expect($stageDepartments->all())->toBe([
-        Departments::HERNIA->key(),
-        Departments::PRIVATESCAN->key(),
-    ]);
+    expect(collect($response->json('groups'))->pluck('id')->all())
+        ->toBe(['option', 'nearly_won', 'won', 'lost']);
 });
 
 test('revenue by employee filters on the departments enum key', function () {
@@ -175,6 +203,7 @@ test('revenue by employee filters on the departments enum key', function () {
             'period'      => 'week',
             'week'        => $weekStart->isoWeek(),
             'year'        => $weekStart->isoWeekYear(),
+            'groups'      => ['won'],
             'departments' => $departments,
         ]));
 
@@ -196,12 +225,12 @@ test('revenue by employee filters on the departments enum key', function () {
         ->not->toContain($herniaOrder->id);
 });
 
-test('revenue by employee index page shows period toggle and omzet labels', function () {
+test('revenue by employee index page hides verloren column via filter condition', function () {
     $this->get(route('admin.reports.revenue-by-employee.index'))
         ->assertOk()
-        ->assertSee('Omzet netto')
         ->assertSee('Omzet bruto')
-        ->assertSee('Week')
-        ->assertSee('Maand')
-        ->assertDontSee('Weekomzet');
+        ->assertSee('Verloren')
+        ->assertSee('Omzet netto')
+        ->assertSee("selectedGroups.includes('lost')", false)
+        ->assertSee('Omzet bruto minus verloren');
 });

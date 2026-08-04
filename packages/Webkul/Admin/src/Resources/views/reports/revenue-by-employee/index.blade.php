@@ -87,40 +87,38 @@
                             <div class="flex flex-wrap items-center gap-2">
                                 <div
                                     class="relative"
-                                    v-click-outside="() => stageDropdownOpen = false"
+                                    v-click-outside="() => groupDropdownOpen = false"
                                 >
                                     <button
                                         type="button"
-                                        class="flex min-h-9 min-w-[220px] items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
-                                        @click="stageDropdownOpen = ! stageDropdownOpen"
+                                        class="flex min-h-9 min-w-[200px] items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
+                                        @click="groupDropdownOpen = ! groupDropdownOpen"
                                     >
-                                        <span>@{{ selectedStageText }}</span>
+                                        <span>@{{ selectedGroupText }}</span>
                                         <span class="icon-down-arrow text-xs"></span>
                                     </button>
 
                                     <div
-                                        v-if="stageDropdownOpen"
-                                        class="absolute right-0 z-20 mt-1 max-h-72 w-80 overflow-auto rounded-md border bg-white p-2 shadow dark:border-gray-800 dark:bg-gray-900"
+                                        v-if="groupDropdownOpen"
+                                        class="absolute right-0 z-20 mt-1 w-56 rounded-md border bg-white p-2 shadow dark:border-gray-800 dark:bg-gray-900"
                                     >
                                         <label
-                                            v-for="stage in stages"
-                                            :key="stage.id"
-                                            class="flex cursor-pointer items-start gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+                                            v-for="group in groups"
+                                            :key="group.id"
+                                            class="flex cursor-pointer items-center gap-2 rounded px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
                                         >
                                             <input
                                                 type="checkbox"
-                                                class="mt-0.5 h-4 w-4 shrink-0 accent-[#8979FF]"
-                                                :value="stage.id"
-                                                v-model="selectedStages"
+                                                class="h-4 w-4 shrink-0 accent-[#8979FF]"
+                                                :value="group.id"
+                                                v-model="selectedGroups"
                                                 @change="loadData"
                                             />
-
-                                            <span class="flex flex-1 items-center justify-between gap-2 text-gray-700 dark:text-gray-300">
-                                                <span>@{{ stage.label }}</span>
-                                                <span class="rounded border px-1.5 py-0.5 text-[11px] uppercase text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                                    @{{ departmentLabel(stage.department) }}
-                                                </span>
-                                            </span>
+                                            <span
+                                                class="h-3 w-3 flex-shrink-0 rounded-sm"
+                                                :style="{ backgroundColor: group.color }"
+                                            ></span>
+                                            <span>@{{ group.label }}</span>
                                         </label>
                                     </div>
                                 </div>
@@ -191,22 +189,28 @@
                                 <thead>
                                     <tr class="border-b text-xs font-medium uppercase text-gray-500 dark:border-gray-800 dark:text-gray-400">
                                         <th class="px-4 py-3">Medewerker</th>
+                                        <th class="px-4 py-3 text-right">
+                                            <span
+                                                class="inline-flex cursor-help items-center justify-end gap-1"
+                                                v-tooltip="omzetBrutoTooltip"
+                                            >
+                                                Omzet bruto
+                                                <span class="icon-info text-[10px] opacity-60"></span>
+                                            </span>
+                                        </th>
+                                        <th
+                                            v-if="selectedGroups.includes('lost')"
+                                            class="px-4 py-3 text-right"
+                                        >
+                                            Verloren
+                                        </th>
                                         <th class="px-4 py-3 text-right">Inkoop</th>
                                         <th class="px-4 py-3 text-right">
                                             <span
                                                 class="inline-flex cursor-help items-center justify-end gap-1"
-                                                v-tooltip="'Omzet van gewonnen orders (status Gewonnen).'"
+                                                v-tooltip="'Omzet bruto minus verloren.'"
                                             >
                                                 Omzet netto
-                                                <span class="icon-info text-[10px] opacity-60"></span>
-                                            </span>
-                                        </th>
-                                        <th class="px-4 py-3 text-right">
-                                            <span
-                                                class="inline-flex cursor-help items-center justify-end gap-1"
-                                                v-tooltip="'Som van alle geselecteerde statussen.'"
-                                            >
-                                                Omzet bruto
                                                 <span class="icon-info text-[10px] opacity-60"></span>
                                             </span>
                                         </th>
@@ -237,16 +241,23 @@
                                                 </div>
                                             </td>
 
+                                            <td class="px-4 py-3 text-right text-sm font-medium text-gray-800 dark:text-white">
+                                                @{{ formatCurrency(employee.bruto) }}
+                                            </td>
+
+                                            <td
+                                                v-if="selectedGroups.includes('lost')"
+                                                class="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300"
+                                            >
+                                                @{{ formatCurrency(employee.verloren) }}
+                                            </td>
+
                                             <td class="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300">
                                                 @{{ formatCurrency(employee.inkoop) }}
                                             </td>
 
-                                            <td class="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300">
-                                                @{{ formatCurrency(employee.netto) }}
-                                            </td>
-
                                             <td class="px-4 py-3 text-right text-sm font-medium text-gray-800 dark:text-white">
-                                                @{{ formatCurrency(employee.bruto) }}
+                                                @{{ formatCurrency(employee.netto) }}
                                             </td>
                                         </tr>
 
@@ -272,16 +283,23 @@
                                                     </div>
                                                 </td>
 
+                                                <td class="py-2 pl-4 pr-4 text-right text-sm text-gray-500 dark:text-gray-400">
+                                                    @{{ formatCurrency(order.total_price) }}
+                                                </td>
+
+                                                <td
+                                                    v-if="selectedGroups.includes('lost')"
+                                                    class="py-2 pl-4 pr-4 text-right text-sm text-gray-700 dark:text-gray-300"
+                                                >
+                                                    @{{ order.is_lost ? formatCurrency(order.total_price) : '—' }}
+                                                </td>
+
                                                 <td class="py-2 pl-4 pr-4 text-right text-sm text-gray-700 dark:text-gray-300">
                                                     @{{ formatCurrency(order.inkoop_price) }}
                                                 </td>
 
-                                                <td class="py-2 pl-4 pr-4 text-right text-sm text-gray-700 dark:text-gray-300">
-                                                    @{{ order.is_won ? formatCurrency(order.total_price) : '—' }}
-                                                </td>
-
                                                 <td class="py-2 pl-4 pr-4 text-right text-sm text-gray-500 dark:text-gray-400">
-                                                    @{{ formatCurrency(order.total_price) }}
+                                                    @{{ order.is_lost ? '—' : formatCurrency(order.total_price) }}
                                                 </td>
                                             </tr>
                                         </template>
@@ -289,7 +307,7 @@
 
                                     <tr v-if="! employees.length">
                                         <td
-                                            colspan="4"
+                                            :colspan="tableColspan"
                                             class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
                                         >
                                             Geen medewerkers gevonden.
@@ -303,13 +321,19 @@
                                             Totaal
                                         </td>
                                         <td class="px-4 py-3 text-right text-sm font-semibold text-gray-800 dark:text-white">
+                                            @{{ formatCurrency(employees.reduce((sum, e) => sum + e.bruto, 0)) }}
+                                        </td>
+                                        <td
+                                            v-if="selectedGroups.includes('lost')"
+                                            class="px-4 py-3 text-right text-sm font-semibold text-gray-800 dark:text-white"
+                                        >
+                                            @{{ formatCurrency(employees.reduce((sum, e) => sum + e.verloren, 0)) }}
+                                        </td>
+                                        <td class="px-4 py-3 text-right text-sm font-semibold text-gray-800 dark:text-white">
                                             @{{ formatCurrency(employees.reduce((sum, e) => sum + e.inkoop, 0)) }}
                                         </td>
                                         <td class="px-4 py-3 text-right text-sm font-semibold text-gray-800 dark:text-white">
                                             @{{ formatCurrency(employees.reduce((sum, e) => sum + e.netto, 0)) }}
-                                        </td>
-                                        <td class="px-4 py-3 text-right text-sm font-semibold text-gray-800 dark:text-white">
-                                            @{{ formatCurrency(employees.reduce((sum, e) => sum + e.bruto, 0)) }}
                                         </td>
                                     </tr>
                                 </tfoot>
@@ -349,32 +373,37 @@
                         year: {{ $initialYear }},
                         month: '{{ $initialMonth }}',
                         periodLabel: '',
-                        stages: [],
-                        departments: [],
-                        selectedStages: [],
-                        selectedDepartments: [],
+                        selectedGroups: ['option', 'nearly_won', 'won'],
+                        selectedDepartments: @json(array_column($departments, 'id')),
+                        groups: [
+                            { id: 'option',     label: 'Option',         color: '#3CC3DF' },
+                            { id: 'nearly_won', label: 'Bijna gewonnen', color: '#FFD166' },
+                            { id: 'won',        label: 'Gewonnen',        color: '#6BCB77' },
+                            { id: 'lost',       label: 'Verloren',        color: '#FF928A' },
+                        ],
+                        departments: @json($departments),
                         days: [],
                         datasets: [],
                         employees: [],
                         expandedEmployees: [],
                         isInitialLoad: true,
                         isLoading: true,
-                        stageDropdownOpen: false,
+                        groupDropdownOpen: false,
                         departmentDropdownOpen: false,
                     }
                 },
 
                 computed: {
-                    selectedStageText() {
-                        if (! this.selectedStages.length) {
-                            return 'Geen statussen';
+                    selectedGroupText() {
+                        if (! this.selectedGroups.length) {
+                            return 'Geen groepen';
                         }
 
-                        if (this.selectedStages.length === this.stages.length) {
-                            return 'Alle statussen';
+                        if (this.selectedGroups.length === this.groups.length) {
+                            return 'Alle groepen';
                         }
 
-                        return `${this.selectedStages.length} statussen`;
+                        return `${this.selectedGroups.length} groepen`;
                     },
 
                     selectedDepartmentText() {
@@ -391,11 +420,27 @@
                             .map(department => department.label)
                             .join(', ');
                     },
+
+                    tableColspan() {
+                        return this.selectedGroups.includes('lost') ? 5 : 4;
+                    },
+
+                    omzetBrutoTooltip() {
+                        const nonLost = this.groups
+                            .filter(g => this.selectedGroups.includes(g.id) && g.id !== 'lost')
+                            .map(g => g.label);
+
+                        if (! nonLost.length) {
+                            return 'Som van verloren (altijd meegenomen voor netto).';
+                        }
+
+                        return 'Som van: ' + nonLost.join(' + ') + ' + Verloren.';
+                    },
                 },
 
                 mounted() {
                     this._chart = null; // kept outside data() so Vue never wraps the Chart instance in a Proxy
-                    this.loadFilterOptions();
+                    this.loadData();
                 },
 
                 beforeUnmount() {
@@ -406,20 +451,6 @@
                 },
 
                 methods: {
-                    loadFilterOptions() {
-                        this.$axios.get("{{ route('admin.reports.revenue-by-employee.filter-options') }}")
-                            .then(response => {
-                                this.stages = response.data.stages || [];
-                                this.departments = response.data.departments || [];
-                                this.selectedDepartments = this.departments.map(department => department.id);
-                                this.selectedStages = this.stages
-                                    .filter(stage => ! stage.is_lost)
-                                    .map(stage => stage.id);
-
-                                this.loadData();
-                            });
-                    },
-
                     async loadData() {
                         this.isLoading = true;
                         this.expandedEmployees = [];
@@ -427,7 +458,7 @@
                         try {
                             const params = {
                                 period: this.period,
-                                stages: this.selectedStages,
+                                groups: this.selectedGroups,
                                 departments: this.selectedDepartments,
                             };
 
@@ -657,10 +688,6 @@
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                         });
-                    },
-
-                    departmentLabel(departmentId) {
-                        return this.departments.find(department => department.id === departmentId)?.label || departmentId;
                     },
                 }
             });

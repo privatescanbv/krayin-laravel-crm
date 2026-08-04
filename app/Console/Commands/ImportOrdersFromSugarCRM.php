@@ -797,7 +797,12 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                     $noMatchCount++;
                 }
 
-                $status = $this->mapRowSalesStageToOrderItemStatus($row->sales_stage ?? '', $hasScheduledExamination);
+                $orderStage = $this->mapSalesStageToOrderPipelineStage($record->sales_stage ?? '');
+                $status = $this->mapRowSalesStageToOrderItemStatus(
+                    $row->sales_stage ?? '',
+                    $hasScheduledExamination,
+                    $orderStage,
+                );
                 $mainPayload = $this->orderItemMainPurchasePayloadFromSugarRow($row);
 
                 $tableRows[] = [
@@ -1061,7 +1066,11 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
                             'afb_description' => ! empty(data_get($row, 'afb_description_c')) ? trim((string) data_get($row, 'afb_description_c')) : null,
                             'total_price'     => $row->sales_price ?? 0,
                             'quantity'        => 1,
-                            'status'          => $this->mapRowSalesStageToOrderItemStatus($row->sales_stage ?? '', $hasScheduledExamination),
+                            'status'          => $this->mapRowSalesStageToOrderItemStatus(
+                                $row->sales_stage ?? '',
+                                $hasScheduledExamination,
+                                $orderStage,
+                            ),
                         ]);
 
                         if (! empty($row->pcrm_partnerresources_id_c) && $row->duration !== null) {
@@ -1223,10 +1232,14 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
     /**
      * Map SugarCRM sales_stage on an order row to an OrderItemStatus.
-     * When the order has an imported examination datetime, non-lost rows become {@see OrderItemStatus::PLANNED}.
+     * When the order has an imported examination datetime, open (non-won/non-lost) rows become {@see OrderItemStatus::PLANNED}.
+     * Won/lost terminal statuses are never downgraded to planned — matching OrderObserver behaviour.
      */
-    private function mapRowSalesStageToOrderItemStatus(string $salesStage, bool $hasScheduledExamination = false): OrderItemStatus
-    {
+    private function mapRowSalesStageToOrderItemStatus(
+        string $salesStage,
+        bool $hasScheduledExamination = false,
+        ?PipelineStage $orderStage = null,
+    ): OrderItemStatus {
         $base = match (strtolower(trim($salesStage))) {
             'gewonnen' => OrderItemStatus::WON,
             'verloren' => OrderItemStatus::LOST,
@@ -1235,6 +1248,11 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
         if ($base === OrderItemStatus::LOST) {
             return OrderItemStatus::LOST;
+        }
+
+        // Order-level or row-level won: keep/force won so items do not stay "ingepland".
+        if ($base === OrderItemStatus::WON || ($orderStage !== null && $orderStage->isWon())) {
+            return OrderItemStatus::WON;
         }
 
         if ($hasScheduledExamination) {

@@ -12,6 +12,8 @@ use Webkul\Product\Models\Product;
 
 /**
  * models scanned from invoice as pdf
+ *
+ * @mixin IdeHelperInkoopInvoiceItem
  */
 class InkoopInvoiceItem extends Model
 {

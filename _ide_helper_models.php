@@ -14,15 +14,49 @@
 namespace App\Models{
 /**
  * @property int $id
+ * @property int $activity_id
+ * @property \App\Enums\ActivityActionType $type
+ * @property string|null $body
+ * @property \App\Enums\CallStatus|string|null $call_status
+ * @property int|null $reschedule_days
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property int|null $created_by
+ * @property int|null $updated_by
+ * @property-read \Webkul\Activity\Models\Activity $activity
+ * @property-read \Webkul\User\Models\User|null $creator
+ * @property-read \Webkul\User\Models\User|null $updater
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ActivityAction newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ActivityAction newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ActivityAction query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ActivityAction whereActivityId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ActivityAction whereBody($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ActivityAction whereCallStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ActivityAction whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ActivityAction whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ActivityAction whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ActivityAction whereRescheduleDays($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ActivityAction whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ActivityAction whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ActivityAction whereUpdatedBy($value)
+ * @mixin \Eloquent
+ */
+	#[\AllowDynamicProperties]
+	class IdeHelperActivityAction {}
+}
+
+namespace App\Models{
+/**
+ * @property int $id
  * @property string|null $street
  * @property string $house_number
- * @property string $postal_code
+ * @property string|null $postal_code
  * @property string|null $house_number_suffix
  * @property string|null $state
  * @property string|null $city
  * @property string|null $country
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property-read \Webkul\User\Models\User|null $creator
@@ -137,9 +171,9 @@ namespace App\Models{
 /**
  * @property string $id
  * @property string|null $name
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
  * @property string|null $description
+ * @property \Carbon\CarbonImmutable $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property bool $deleted
  * @property string|null $team_id
  * @property string|null $team_set_id
@@ -154,13 +188,13 @@ namespace App\Models{
  * @property string|null $glaucoma_notes
  * @property bool|null $claustrophobia
  * @property bool|null $dormicum
+ * @property string|null $dormicum_notes
  * @property bool|null $heart_surgery
  * @property string|null $heart_surgery_notes
  * @property bool|null $implant
  * @property string|null $implant_notes
  * @property bool|null $surgeries
  * @property string|null $surgeries_notes
- * @property string|null $remarks
  * @property bool|null $hereditary_heart
  * @property string|null $hereditary_heart_notes
  * @property bool|null $hereditary_vascular
@@ -179,30 +213,39 @@ namespace App\Models{
  * @property bool $spijsverteringsklachten
  * @property string|null $digestive_complaints_notes
  * @property string|null $diabetes_notes
+ * @property bool|null $infectious_disease
+ * @property string|null $infectious_disease_notes
  * @property bool|null $digestive_problems
  * @property string|null $digestive_problems_notes
  * @property string|null $heart_attack_risk
  * @property bool|null $active
- * @property string|null $advice_notes
  * @property int|null $lead_id
  * @property int|null $sales_id
+ * @property int|null $order_id
  * @property int|null $person_id
- * @property string|null $gvl_form_id
- * @property-read string|null $gvl_form_link
  * @property int|null $created_by
  * @property int|null $updated_by
+ * @property string|null $remarks
  * @property-read \Webkul\User\Models\User|null $creator
+ * @property-read string|null $gvl_form_link
+ * @property-read \App\Enums\FormStatus|null $gvl_form_status
+ * @property-read \App\Enums\FormType|null $gvl_form_type
  * @property-read string $label
+ * @property-read \App\Models\AnamnesisGvlForm|null $latest_gvl_form
+ * @property-read string $source_level
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\AnamnesisGvlForm> $gvlForms
+ * @property-read int|null $gvl_forms_count
  * @property-read \Webkul\Lead\Models\Lead|null $lead
+ * @property-read \App\Models\Order|null $order
  * @property-read \Webkul\Contact\Models\Person|null $person
  * @property-read \App\Models\SalesLead|null $sales
  * @property-read \Webkul\User\Models\User|null $updater
  * @method static \Database\Factories\AnamnesisFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis forOrder(\App\Models\Order $order)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereActive($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereAdviceNotes($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereAllergies($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereAllergiesNotes($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereBackProblems($value)
@@ -219,9 +262,9 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereDigestiveProblems($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereDigestiveProblemsNotes($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereDormicum($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereDormicumNotes($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereGlaucoma($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereGlaucomaNotes($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereGvlFormLink($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereHeartAttackRisk($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereHeartProblems($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereHeartProblemsNotes($value)
@@ -237,12 +280,15 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereImplant($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereImplantNotes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereInfectiousDisease($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereInfectiousDiseaseNotes($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereLeadId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereMedications($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereMedicationsNotes($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereMetals($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereMetalsNotes($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereOrderId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis wherePersonId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereRemarks($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anamnesis whereSalesId($value)
@@ -265,10 +311,43 @@ namespace App\Models{
 namespace App\Models{
 /**
  * @property int $id
- * @property \App\Enums\CallStatus $status
+ * @property string $anamnesis_id
+ * @property string|null $gvl_form_id
+ * @property \App\Enums\FormStatus|null $gvl_form_status
+ * @property \App\Enums\FormType|null $gvl_form_type
+ * @property int|null $created_by
+ * @property int|null $updated_by
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \App\Models\Anamnesis $anamnesis
+ * @property-read \Webkul\User\Models\User|null $creator
+ * @property-read string|null $gvl_form_link
+ * @property-read \Webkul\User\Models\User|null $updater
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm whereAnamnesisId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm whereGvlFormId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm whereGvlFormStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm whereGvlFormType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm whereUpdatedBy($value)
+ * @mixin \Eloquent
+ */
+	#[\AllowDynamicProperties]
+	class IdeHelperAnamnesisGvlForm {}
+}
+
+namespace App\Models{
+/**
+ * @property int $id
+ * @property \App\Enums\CallStatus|string $status
  * @property string|null $omschrijving
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property int $activity_id
  * @property int|null $created_by
  * @property int|null $updated_by
@@ -306,12 +385,13 @@ namespace App\Models{
  * @property int|null $visit_address_id
  * @property int|null $postal_address_id
  * @property bool $is_postal_address_same_as_visit_address
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Webkul\Activity\Models\Activity> $activities
  * @property-read int|null $activities_count
+ * @property-read \App\Models\Address|null $address
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\AfbDispatch> $afbDispatches
  * @property-read int|null $afb_dispatches_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\AfbPersonDocument> $afbPersonDocuments
@@ -441,8 +521,8 @@ namespace App\Models{
  * @property int $error_count
  * @property string|null $error_message
  * @property array<array-key, mixed>|null $metadata
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \Webkul\User\Models\User|null $creator
  * @property-read \Webkul\User\Models\User|null $updater
  * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog newModelQuery()
@@ -504,8 +584,8 @@ namespace App\Models{
  * @property int $records_imported
  * @property int $records_skipped
  * @property int $records_errored
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property-read \Webkul\User\Models\User|null $creator
@@ -533,6 +613,182 @@ namespace App\Models{
  */
 	#[\AllowDynamicProperties]
 	class IdeHelperImportRun {}
+}
+
+namespace App\Models\Inkoop{
+/**
+ * @property int $id
+ * @property int $clinic_id
+ * @property string|null $invoice_number
+ * @property \Illuminate\Support\Carbon|null $invoice_date
+ * @property numeric|null $total_amount
+ * @property string $pdf_path
+ * @property string|null $filename
+ * @property string|null $name
+ * @property \Illuminate\Support\Carbon|null $reference_date
+ * @property \App\Enums\Inkoop\InkoopInvoiceParser|null $parser
+ * @property \App\Enums\Inkoop\InkoopInvoiceStatus $status
+ * @property int|null $created_by
+ * @property int|null $updated_by
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\Clinic $clinic
+ * @property-read string|null $supplier_type
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Inkoop\InkoopInvoiceItem> $invoiceItems
+ * @property-read int|null $invoice_items_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Inkoop\InkoopInvoiceItem> $items
+ * @property-read int|null $items_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Inkoop\InkoopPerson> $persons
+ * @property-read int|null $persons_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereClinicId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereFilename($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereInvoiceDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereInvoiceNumber($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereParser($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice wherePdfPath($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereReferenceDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereTotalAmount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereUpdatedBy($value)
+ * @mixin \Eloquent
+ */
+	#[\AllowDynamicProperties]
+	class IdeHelperInkoopInvoice {}
+}
+
+namespace App\Models\Inkoop{
+/**
+ * models scanned from invoice as pdf
+ *
+ * @property int $id
+ * @property int $clinic_id
+ * @property int $inkoop_invoice_id
+ * @property int|null $person_id
+ * @property string $description
+ * @property numeric $quantity
+ * @property numeric|null $unit_price
+ * @property numeric|null $total_price
+ * @property string|null $name
+ * @property \Illuminate\Support\Carbon|null $date
+ * @property float|null $price
+ * @property int|null $created_by
+ * @property int|null $updated_by
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\Clinic $clinic
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Inkoop\InkoopInvoiceItemCrmProduct> $crmProducts
+ * @property-read int|null $crm_products_count
+ * @property-read string $crm_id
+ * @property-read string $crm_status
+ * @property mixed $invoice_id
+ * @property-read \App\Models\Inkoop\InkoopInvoice $invoice
+ * @property-read \App\Models\Inkoop\InkoopPerson|null $person
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Webkul\Product\Models\Product> $products
+ * @property-read int|null $products_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItem newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItem newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItem query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItem whereClinicId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItem whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItem whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItem whereDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItem whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItem whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItem whereInkoopInvoiceId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItem whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItem wherePersonId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItem wherePrice($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItem whereQuantity($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItem whereTotalPrice($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItem whereUnitPrice($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItem whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItem whereUpdatedBy($value)
+ * @mixin \Eloquent
+ */
+	#[\AllowDynamicProperties]
+	class IdeHelperInkoopInvoiceItem {}
+}
+
+namespace App\Models\Inkoop{
+/**
+ * relation between scanned invoice items and CRM products, to link them together
+ *
+ * @property int $id
+ * @property int|null $clinic_id
+ * @property int $inkoop_invoice_item_id
+ * @property int|null $product_id
+ * @property string|null $crm_id
+ * @property string|null $crm_status
+ * @property numeric|null $purchase_price
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\Clinic|null $clinic
+ * @property mixed $invoice_item_id
+ * @property-read \App\Models\Inkoop\InkoopInvoiceItem $invoiceItem
+ * @property-read \App\Models\Inkoop\InkoopInvoiceItem $item
+ * @property-read \Webkul\Product\Models\Product|null $product
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItemCrmProduct newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItemCrmProduct newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItemCrmProduct query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItemCrmProduct whereClinicId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItemCrmProduct whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItemCrmProduct whereCrmId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItemCrmProduct whereCrmStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItemCrmProduct whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItemCrmProduct whereInkoopInvoiceItemId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItemCrmProduct whereProductId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItemCrmProduct wherePurchasePrice($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoiceItemCrmProduct whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
+	#[\AllowDynamicProperties]
+	class IdeHelperInkoopInvoiceItemCrmProduct {}
+}
+
+namespace App\Models\Inkoop{
+/**
+ * @property int $id
+ * @property int $clinic_id
+ * @property int $invoice_id
+ * @property string|null $name
+ * @property string|null $external_id
+ * @property string|null $firstname
+ * @property string|null $lastname
+ * @property \Illuminate\Support\Carbon|null $birthday
+ * @property string|null $crm_id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\Clinic $clinic
+ * @property-read mixed $producten
+ * @property-read \App\Models\Inkoop\InkoopInvoice $invoice
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Inkoop\InkoopInvoiceItem> $invoiceItems
+ * @property-read int|null $invoice_items_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopPerson newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopPerson newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopPerson query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopPerson whereBirthday($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopPerson whereClinicId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopPerson whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopPerson whereCrmId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopPerson whereExternalId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopPerson whereFirstname($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopPerson whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopPerson whereInvoiceId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopPerson whereLastname($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopPerson whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopPerson whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
+	#[\AllowDynamicProperties]
+	class IdeHelperInkoopPerson {}
 }
 
 namespace App\Models{
@@ -596,14 +852,19 @@ namespace App\Models{
  * @property string|null $first_examination_time
  * @property int|null $created_by
  * @property int|null $updated_by
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\OrderItem> $activeOrderItems
+ * @property-read int|null $active_order_items_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Webkul\Activity\Models\Activity> $activities
  * @property-read int|null $activities_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\AfbPersonDocument> $afbPersonDocuments
  * @property-read int|null $afb_person_documents_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Anamnesis> $anamnesisRecords
+ * @property-read int|null $anamnesis_records_count
  * @property-read \App\Models\User|null $clinicCoordinator
  * @property-read \Webkul\User\Models\User|null $creator
+ * @property-read mixed $anamnesis
  * @property-read string|null $lost_reason_label
  * @property-read string $name
  * @property-read int $open_activities_count
@@ -623,6 +884,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Order appointmentEligible()
  * @method static \Database\Factories\OrderFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Order forPerson(\Webkul\Contact\Models\Person $person)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Order inOpenStage()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Order newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Order newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Order query()
@@ -663,8 +925,8 @@ namespace App\Models{
  * @property bool $removable
  * @property int|null $created_by
  * @property int|null $updated_by
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \Webkul\User\Models\User|null $creator
  * @property-read \App\Models\Order $order
  * @property-read \Webkul\User\Models\User|null $updater
@@ -689,8 +951,10 @@ namespace App\Models{
 namespace App\Models{
 /**
  * @property int $id
+ * @property string|null $external_id
  * @property int $order_id
  * @property int $product_id
+ * @property int|null $partner_product_id
  * @property int|null $resource_type_id
  * @property string|null $name
  * @property string|null $description
@@ -702,12 +966,13 @@ namespace App\Models{
  * @property \App\Enums\OrderItemStatus $status
  * @property int|null $created_by
  * @property int|null $updated_by
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \Webkul\User\Models\User|null $creator
  * @property-read string $can_plan
  * @property-read \App\Models\PurchasePrice|null $invoicePurchasePrice
  * @property-read \App\Models\Order $order
+ * @property-read \App\Models\PartnerProduct|null $partnerProduct
  * @property-read \Webkul\Contact\Models\Person|null $person
  * @property-read \Webkul\Product\Models\Product $product
  * @property-read \App\Models\PurchasePrice|null $purchasePrice
@@ -720,15 +985,18 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem forOrderAndNotLost(string $orderId)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem notLost()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereAfbDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereCreatedBy($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereCurrency($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereExternalId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereOrderId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem wherePartnerProductId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem wherePersonId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereProductId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereQuantity($value)
@@ -755,14 +1023,19 @@ namespace App\Models{
  * @property \App\Enums\PaymentMethod $method
  * @property \Illuminate\Support\Carbon|null $paid_at
  * @property string $currency
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property int|null $created_by
+ * @property int|null $updated_by
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \Webkul\User\Models\User|null $creator
  * @property-read \App\Models\Order $order
+ * @property-read \Webkul\User\Models\User|null $updater
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment whereAmount($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment whereCreatedBy($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment whereCurrency($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment whereMethod($value)
@@ -770,6 +1043,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment wherePaidAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment whereType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment whereUpdatedBy($value)
  * @mixin \Eloquent
  */
 	#[\AllowDynamicProperties]
@@ -821,8 +1095,8 @@ namespace App\Models{
  * @property string|null $clinic_description
  * @property int|null $duration
  * @property array<array-key, mixed>|null $reporting
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property \Illuminate\Support\Carbon|null $deleted_at
@@ -838,6 +1112,7 @@ namespace App\Models{
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Resource> $resources
  * @property-read int|null $resources_count
  * @property-read \Webkul\User\Models\User|null $updater
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PartnerProduct bookable()
  * @method static \Database\Factories\PartnerProductFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PartnerProduct forClinicAndProduct(int $clinicId, int $productId)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PartnerProduct newModelQuery()
@@ -918,8 +1193,8 @@ namespace App\Models{
  * @property \Illuminate\Support\Carbon|null $dismissed_at
  * @property \Illuminate\Support\Carbon|null $expires_at
  * @property \Illuminate\Support\Carbon|null $last_notified_by_email_at
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property-read \Webkul\User\Models\User|null $creator
@@ -963,8 +1238,8 @@ namespace App\Models{
  * @property bool $is_system_managed
  * @property int|null $created_by
  * @property int|null $updated_by
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \Webkul\User\Models\User|null $creator
  * @property-read mixed|null $typed_value
  * @property-read \Webkul\Contact\Models\Person|null $person
@@ -994,8 +1269,8 @@ namespace App\Models{
  * @property string $name
  * @property string|null $external_id
  * @property string|null $description
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property-read \Webkul\User\Models\User|null $creator
@@ -1030,6 +1305,7 @@ namespace App\Models{
  * @property numeric|null $purchase_price_clinic
  * @property numeric|null $purchase_price_radiology
  * @property numeric|null $purchase_price
+ * @property bool $force_received
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Model|\Eloquent $priceable
@@ -1037,6 +1313,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PurchasePrice newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PurchasePrice query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PurchasePrice whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PurchasePrice whereForceReceived($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PurchasePrice whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PurchasePrice wherePriceableId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PurchasePrice wherePriceableType($value)
@@ -1060,13 +1337,12 @@ namespace App\Models{
  * @property string $name
  * @property string|null $external_id
  * @property int $resource_type_id
- * @property int|null $clinic_id
  * @property int|null $clinic_department_id
  * @property bool $is_active
  * @property bool $allow_outside_availability
  * @property string|null $notes
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property-read \App\Models\Clinic|null $clinic
@@ -1084,7 +1360,6 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Resource query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Resource whereAllowOutsideAvailability($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Resource whereClinicDepartmentId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Resource whereClinicId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Resource whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Resource whereCreatedBy($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Resource whereExternalId($value)
@@ -1110,8 +1385,8 @@ namespace App\Models{
  * @property \Illuminate\Support\Carbon $to
  * @property int|null $created_by
  * @property int|null $updated_by
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \Webkul\User\Models\User|null $creator
  * @property-read \App\Models\OrderItem $orderItem
  * @property-read \App\Models\Resource $resource
@@ -1144,8 +1419,8 @@ namespace App\Models{
  * @property string $name
  * @property string|null $external_id
  * @property string|null $description
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property-read \Webkul\User\Models\User|null $creator
@@ -1181,8 +1456,8 @@ namespace App\Models{
  * @property int|null $quote_id
  * @property int|null $user_id
  * @property int|null $contact_person_id
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Webkul\Activity\Models\Activity> $activities
@@ -1283,8 +1558,8 @@ namespace App\Models{
  * @property array<array-key, mixed>|null $weekday_time_blocks
  * @property int|null $created_by
  * @property int|null $updated_by
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \Webkul\User\Models\User|null $creator
  * @property-read \App\Models\Resource $resource
  * @property-read \Webkul\User\Models\User|null $updater
@@ -1323,8 +1598,9 @@ namespace App\Models{
  * @property string|null $signature
  * @property int $role_id
  * @property string|null $remember_token
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $last_login_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property string|null $image
  * @property int|null $created_by
  * @property int|null $updated_by
@@ -1346,6 +1622,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereImage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereKeycloakUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLastLoginAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLastName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePassword($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRememberToken($value)
@@ -1360,3 +1637,4 @@ namespace App\Models{
 	#[\AllowDynamicProperties]
 	class IdeHelperUser {}
 }
+

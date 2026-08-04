@@ -22,12 +22,12 @@ use App\Services\Api\DefaultApiHttpTrafficLogger;
 use App\Services\OrderCheckService;
 use App\Services\Storage\DocumentStorage;
 use App\Services\Storage\LaravelDocumentStorage;
-use App\Support\IdeHelper\SocialiteFacadeForIdeHelper;
+use Illuminate\Foundation\AliasLoader;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
-use Laravel\Socialite\Socialite;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -40,21 +40,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Workaround for `ide-helper:generate` crashing on Socialite::fake() signature.
-        // Only active while running the ide-helper generation command.
-        if ($this->app->runningInConsole()) {
-            $argv = $_SERVER['argv'] ?? [];
+        // Concord's `Helper` facade resolves the container binding `concord.helper`, which the
+        // package never registers (it only binds `concord.helpers.{name}`). ide-helper therefore
+        // errors on it every run. Drop the alias while generating so it is skipped silently.
+        if ($this->app->runningInConsole() && in_array('ide-helper:generate', $_SERVER['argv'] ?? [], true)) {
+            $loader = AliasLoader::getInstance();
 
-            if (in_array('ide-helper:generate', $argv, true)) {
-                // Avoid autoloading the real classes before aliasing.
-                if (! class_exists(Socialite::class, false)) {
-                    class_alias(SocialiteFacadeForIdeHelper::class, Socialite::class);
-                }
-
-                if (! class_exists(\Laravel\Socialite\Facades\Socialite::class, false)) {
-                    class_alias(SocialiteFacadeForIdeHelper::class, \Laravel\Socialite\Facades\Socialite::class);
-                }
-            }
+            $loader->setAliases(Arr::except($loader->getAliases(), ['Helper']));
         }
 
         // Compatibility alias: the Webkul Installer package was removed; map the old class

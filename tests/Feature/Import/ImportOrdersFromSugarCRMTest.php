@@ -620,6 +620,48 @@ test('import keeps orderitem LOST when row is verloren even with examination dat
         ->and($order->orderItems->first()->status)->toBe(OrderItemStatus::LOST);
 });
 
+test('import keeps orderitem WON when row is gewonnen even with examination date', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-won-exam']);
+    Person::factory()->create(['external_id' => 'contact-won-exam']);
+
+    insertSugarOrder('order-won-exam', [
+        'sales_stage'       => 'Gewonnen',
+        'datum_onderzoek_1' => '2025-08-20',
+    ]);
+    insertSugarRow('order-won-exam', 'row-won-exam', ['sales_stage' => 'Gewonnen']);
+    linkRowToContact('row-won-exam', 'contact-won-exam');
+    linkOrderToSugarLead('order-won-exam', 'sugar-lead-won-exam');
+
+    expect(runOrderImport())->toBe(0);
+
+    $order = Order::where('external_id', 'order-won-exam')->first();
+    expect($order)->not->toBeNull()
+        ->and($order->pipeline_stage_id)->toBe(PipelineStage::ORDER_GEWONNEN->id())
+        ->and($order->orderItems)->toHaveCount(1)
+        ->and($order->orderItems->first()->status)->toBe(OrderItemStatus::WON);
+});
+
+test('import forces non-lost orderitem to WON when order is gewonnen even if row stage is open', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-won-row-optie']);
+    Person::factory()->create(['external_id' => 'contact-won-row-optie']);
+
+    insertSugarOrder('order-won-row-optie', [
+        'sales_stage'       => 'Gewonnen',
+        'datum_onderzoek_1' => '2025-08-20',
+    ]);
+    // Row still "Optie" in Sugar while order is already Gewonnen — must not stay planned/ingepland.
+    insertSugarRow('order-won-row-optie', 'row-won-row-optie', ['sales_stage' => 'Optie']);
+    linkRowToContact('row-won-row-optie', 'contact-won-row-optie');
+    linkOrderToSugarLead('order-won-row-optie', 'sugar-lead-won-row-optie');
+
+    expect(runOrderImport())->toBe(0);
+
+    $order = Order::where('external_id', 'order-won-row-optie')->first();
+    expect($order)->not->toBeNull()
+        ->and($order->pipeline_stage_id)->toBe(PipelineStage::ORDER_GEWONNEN->id())
+        ->and($order->orderItems->first()->status)->toBe(OrderItemStatus::WON);
+});
+
 test('imports won order and creates saleslead and orderitem linked to person', function () {
     $person = Person::factory()->create(['external_id' => 'contact-001']);
     $lead = Lead::factory()->create(['external_id' => 'sugar-lead-001']);

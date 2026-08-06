@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Resources\LeadResource;
+use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
 use App\Services\DuplicateReasonHelpers;
 
@@ -33,7 +34,7 @@ class DuplicateController extends Controller
         $duplicates = $this->leadRepository->findPotentialDuplicates($lead);
 
         // Use LeadResource for consistent data formatting
-        $leadData = (new LeadResource($lead))->resolve();
+        $leadData = array_merge((new LeadResource($lead))->resolve(), $this->mergeScreenFields($lead));
 
         // Compute per-duplicate match reasons
         $primaryEmails = $this->extractValues($leadData['emails'] ?? []);
@@ -46,7 +47,7 @@ class DuplicateController extends Controller
 
         $duplicatesData = [];
         foreach ($duplicates as $dup) {
-            $dupData = (new LeadResource($dup))->resolve();
+            $dupData = array_merge((new LeadResource($dup))->resolve(), $this->mergeScreenFields($dup));
             $reasons = $this->computeReasons($leadData, $dupData, $primaryEmails, $primaryPhones);
 
             $dupData['matched_emails'] = $reasons['email'];
@@ -62,6 +63,38 @@ class DuplicateController extends Controller
             'leadData' => $leadData,
             'duplicatesData' => $duplicatesData,
         ]);
+    }
+
+    /**
+     * Fields that are selectable on the merge screen but are not part of LeadResource.
+     *
+     * They are added here instead of in the resource on purpose: LeadResource is also used by
+     * EmailResource and the person lookup, and the BSN has no business in those payloads.
+     *
+     * @return array<string, mixed>
+     */
+    private function mergeScreenFields(Lead $lead): array
+    {
+        return [
+            'national_identification_number' => $lead->national_identification_number,
+            'organization_id'                => $lead->organization_id,
+            'organization_name'              => $lead->organization?->name,
+            'contact_person_id'              => $lead->contact_person_id,
+            'contact_person_name'            => $lead->contactPerson?->name,
+            // The portal form id and the website PDF are merged as a single choice, so they are
+            // shown - and compared - as one readable value.
+            'diagnosis_form'                 => $this->describeDiagnosisForm($lead),
+        ];
+    }
+
+    private function describeDiagnosisForm(Lead $lead): string
+    {
+        $parts = array_filter([
+            $lead->diagnosis_form_id ? 'Formulier #'.$lead->diagnosis_form_id : null,
+            $lead->diagnoseform_pdf_url ? 'PDF' : null,
+        ]);
+
+        return $parts ? implode(' + ', $parts) : 'Geen';
     }
 
     /**
@@ -81,7 +114,7 @@ class DuplicateController extends Controller
     /**
      * Merge selected leads.
      */
-    public function merge(): JsonResponse
+    public function merge(int $id): JsonResponse
     {
         $this->validate(request(), [
             'primary_lead_id' => 'required|exists:leads,id',
@@ -89,6 +122,13 @@ class DuplicateController extends Controller
             'duplicate_lead_ids.*' => 'exists:leads,id',
             'field_mappings' => 'nullable|array',
         ]);
+
+        if ($id !== (int) request('primary_lead_id')) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.lead.merge_failed', ['error' => 'Lead in URL komt niet overeen met de primaire lead.']),
+            ], 422);
+        }
 
         $primaryLeadId = request('primary_lead_id');
         $duplicateLeadIds = request('duplicate_lead_ids');

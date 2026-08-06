@@ -3,6 +3,7 @@
 namespace Webkul\Lead\Repositories;
 
 use App\Enums\Departments;
+use App\Enums\DuplicateEntityType;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Models\Department;
@@ -427,6 +428,16 @@ class LeadRepository extends Repository
     public function mergeLeads($primaryLeadId, $duplicateLeadIds, $fieldMappings = [])
     {
         $primaryLead = $this->findOrFail($primaryLeadId);
+
+        // A lead can never be its own duplicate; merging it into itself would soft delete it.
+        $duplicateLeadIds = array_values(array_diff($duplicateLeadIds, [$primaryLeadId]));
+
+        if (empty($duplicateLeadIds)) {
+            return $primaryLead;
+        }
+
+        $this->guardAgainstMergingSalesLeads($duplicateLeadIds);
+
         $duplicateLeads = $this->findWhereIn('id', $duplicateLeadIds);
 
         // Start transaction
@@ -445,8 +456,16 @@ class LeadRepository extends Repository
                         if ($field === 'address') {
                             // Handle address separately - we need to merge the full address data
                             $addressSourceLeadId = $sourceLeadId;
+                        } elseif ($field === 'diagnosis_form') {
+                            // One choice covers both columns, copied verbatim including null: mixing
+                            // the primary's portal form with the duplicate's PDF is never what the
+                            // user picked. The old values stay visible in the activity log.
+                            $updateData['diagnosis_form_id'] = $sourceLead?->diagnosis_form_id;
+                            $updateData['diagnoseform_pdf_url'] = $sourceLead?->diagnoseform_pdf_url;
                         } elseif ($sourceLead && !empty($sourceLead->$field)) {
-                            $updateData[$field] = $sourceLead->$field;
+                            $updateData[$field] = in_array($field, ['emails', 'phones'], true)
+                                ? $this->unionContactValues($updateData[$field] ?? $primaryLead->$field, $sourceLead->$field)
+                                : $sourceLead->$field;
                         }
                     }
                 }
@@ -461,27 +480,15 @@ class LeadRepository extends Repository
                 }
             }
 
-            // Transfer activities from duplicate leads to primary lead
             foreach ($duplicateLeads as $duplicateLead) {
-                try {
-                    // Add system activity for removed duplicate lead
-                    $this->addSystemActivity($primaryLead, $duplicateLead);
-                } catch (Exception $e) {
-                    Log::warning('Error adding system activity for duplicate removal: ' . $e->getMessage());
-                }
-                try {
-                    // Transfer emails (hasMany relationship)
-                    $duplicateLead->emails()->update(['lead_id' => $primaryLeadId]);
-                } catch (Exception $e) {
-                    Log::warning('Error transferring emails during merge: ' . $e->getMessage());
-                }
+                // The audit activities are written first and without a try/catch: they are the only
+                // trail linking a duplicate to the lead it was merged into (see the
+                // leads:repair-merge-orphans command). If they cannot be written the whole merge
+                // must roll back, otherwise we create orphans nobody can trace back.
+                $this->addSystemActivity($primaryLead, $duplicateLead);
+                $this->addMergeNote($primaryLead, $duplicateLead);
 
-                try {
-                    // Add a note about the merge
-                    $this->addMergeNote($primaryLead, $duplicateLead);
-                } catch (Exception $e) {
-                    Log::warning('Error adding merge note: ' . $e->getMessage());
-                }
+                $this->transferLeadRelations((int) $primaryLead->id, (int) $duplicateLead->id);
 
                 // Archive the duplicate lead (soft delete or mark as archived)
                 $duplicateLead->delete();
@@ -502,6 +509,162 @@ class LeadRepository extends Repository
         } catch (Exception $e) {
             DB::rollback();
             throw $e;
+        }
+    }
+
+    /**
+     * Merge two [{label, value, is_default}] lists (emails/phones) instead of letting one replace the
+     * other, so a merge never throws away a phone number or address. Deduplicated on value; only the
+     * primary keeps its default flag.
+     *
+     * @param array<int, array<string, mixed>>|null $primary
+     * @param array<int, array<string, mixed>>|null $source
+     * @return array<int, array<string, mixed>>
+     */
+    private function unionContactValues(?array $primary, ?array $source): array
+    {
+        $merged = $primary ?? [];
+        $existing = array_column($merged, 'value');
+
+        foreach ($source ?? [] as $entry) {
+            if (empty($entry['value']) || in_array($entry['value'], $existing, true)) {
+                continue;
+            }
+
+            $entry['is_default'] = false;
+            $merged[] = $entry;
+            $existing[] = $entry['value'];
+        }
+
+        return $merged;
+    }
+
+    /**
+     * A duplicate that already has a sales lead carries orders and invoicing with it. Won leads are
+     * filtered out of the duplicate list (see applyDuplicateFilters) and sales leads only exist for
+     * won leads, so this should never trigger from the UI - it guards a stale duplicate cache and
+     * direct repository calls.
+     *
+     * @param array<int, int|string> $duplicateLeadIds
+     *
+     * @throws Exception
+     */
+    private function guardAgainstMergingSalesLeads(array $duplicateLeadIds): void
+    {
+        $blocked = DB::table('salesleads')
+            ->whereIn('lead_id', $duplicateLeadIds)
+            ->pluck('lead_id')
+            ->unique();
+
+        if ($blocked->isNotEmpty()) {
+            throw new Exception(
+                'Lead(s) '.$blocked->implode(', ').' hebben een verkooptraject en kunnen niet worden samengevoegd.'
+            );
+        }
+    }
+
+    /**
+     * Re-point everything that hangs off the duplicate lead to the primary lead.
+     *
+     * The duplicate is only soft deleted, so none of the ON DELETE constraints fire and every related
+     * row would silently stay behind on an invisible lead. Uses query builder throughout so soft
+     * deletes are ignored - the repair command calls this for leads that are already deleted.
+     */
+    public function transferLeadRelations(int $primaryLeadId, int $duplicateLeadId): void
+    {
+        foreach (['activities', 'emails', 'lead_marketing_data'] as $table) {
+            DB::table($table)->where('lead_id', $duplicateLeadId)->update(['lead_id' => $primaryLeadId]);
+        }
+
+        $this->resolveAnamnesisConflictsBeforeLeadReassign($primaryLeadId, $duplicateLeadId);
+
+        DB::table('anamnesis')->where('lead_id', $duplicateLeadId)->update(['lead_id' => $primaryLeadId]);
+
+        $this->movePivotRows('lead_persons', 'person_id', $primaryLeadId, $duplicateLeadId);
+        $this->movePivotRows('lead_tags', 'tag_id', $primaryLeadId, $duplicateLeadId);
+
+        // Custom attribute values: unique (entity_type, entity_id, attribute_id), primary wins.
+        $primaryAttributeIds = DB::table('attribute_values')
+            ->where('entity_type', 'leads')
+            ->where('entity_id', $primaryLeadId)
+            ->pluck('attribute_id')
+            ->all();
+
+        DB::table('attribute_values')
+            ->where('entity_type', 'leads')
+            ->where('entity_id', $duplicateLeadId)
+            ->whereIn('attribute_id', $primaryAttributeIds)
+            ->delete();
+
+        DB::table('attribute_values')
+            ->where('entity_type', 'leads')
+            ->where('entity_id', $duplicateLeadId)
+            ->update(['entity_id' => $primaryLeadId]);
+
+        // "Not a duplicate" pairs are meaningless once one side is gone; re-pointing them would
+        // create a self-pair or collide with an existing pair on the primary.
+        DB::table('duplicates_false_positives')
+            ->where('entity_type', DuplicateEntityType::LEAD->value)
+            ->where(function ($query) use ($duplicateLeadId) {
+                $query->where('entity_id_1', $duplicateLeadId)
+                    ->orWhere('entity_id_2', $duplicateLeadId);
+            })
+            ->delete();
+
+        // Adopt the address when the primary has none and no explicit field mapping was made.
+        $primaryAddressId = DB::table('leads')->where('id', $primaryLeadId)->value('address_id');
+        $duplicateAddressId = DB::table('leads')->where('id', $duplicateLeadId)->value('address_id');
+
+        if (empty($primaryAddressId) && ! empty($duplicateAddressId)) {
+            DB::table('leads')->where('id', $primaryLeadId)->update(['address_id' => $duplicateAddressId]);
+        }
+    }
+
+    /**
+     * Move pivot rows to the primary lead, dropping the ones it already has so unique indexes
+     * (lead_persons) and unindexed tables alike (lead_tags) never end up with duplicates.
+     */
+    private function movePivotRows(string $table, string $otherKey, int $primaryLeadId, int $duplicateLeadId): void
+    {
+        $existing = DB::table($table)->where('lead_id', $primaryLeadId)->pluck($otherKey)->all();
+
+        DB::table($table)
+            ->where('lead_id', $duplicateLeadId)
+            ->whereNotIn($otherKey, $existing)
+            ->update(['lead_id' => $primaryLeadId]);
+
+        DB::table($table)->where('lead_id', $duplicateLeadId)->delete();
+    }
+
+    /**
+     * Before re-pointing anamnesis rows, drop the ones that would violate unique(lead_id, person_id).
+     * Newest row wins, mirroring PersonRepository::resolveAnamnesisConflictsBeforePersonReassign().
+     */
+    private function resolveAnamnesisConflictsBeforeLeadReassign(int $primaryLeadId, int $duplicateLeadId): void
+    {
+        $conflictPersonIds = DB::table('anamnesis as d')
+            ->where('d.lead_id', $duplicateLeadId)
+            ->whereNotNull('d.person_id')
+            ->whereExists(function ($query) use ($primaryLeadId) {
+                $query->selectRaw('1')
+                    ->from('anamnesis as p')
+                    ->whereColumn('p.person_id', 'd.person_id')
+                    ->where('p.lead_id', $primaryLeadId);
+            })
+            ->pluck('d.person_id');
+
+        foreach ($conflictPersonIds->unique()->all() as $personId) {
+            $rows = DB::table('anamnesis')
+                ->where('person_id', $personId)
+                ->whereIn('lead_id', [$primaryLeadId, $duplicateLeadId])
+                ->orderByDesc('updated_at')
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->get();
+
+            foreach ($rows->skip(1) as $row) {
+                DB::table('anamnesis')->where('id', $row->id)->delete();
+            }
         }
     }
 

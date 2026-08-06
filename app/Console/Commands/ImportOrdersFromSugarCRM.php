@@ -37,6 +37,9 @@ use Webkul\User\Models\User;
 
 class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 {
+    /** Aantal orders per batch bij het importeren van e-mails/notities/calls. */
+    private const ACTIVITY_CHUNK_SIZE = 500;
+
     /**
      * The name and signature of the console command.
      *
@@ -1788,6 +1791,9 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
         $this->info("Tasks: imported={$totalImported}, skipped={$totalSkipped}");
 
+        // Taakbuffers vrijgeven: die blijven anders in scope tijdens de (zwaardere) e-mailimport.
+        unset($taskActivities, $ordersByExternalId, $existingActivities, $allTaskIds);
+
         $this->importOrderActivities($activityImporter, $sugarOrderIds, $parentType);
     }
 
@@ -1842,6 +1848,9 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
 
         $this->info("Tasks: imported={$totalImported}, skipped={$totalSkipped}");
 
+        // Taakbuffers vrijgeven: die blijven anders in scope tijdens de (zwaardere) e-mailimport.
+        unset($taskActivities, $ordersByExternalId, $existingActivities, $allTaskIds);
+
         $this->importOrderActivities($activityImporter, $sugarOrderIds, $parentType);
     }
 
@@ -1860,6 +1869,16 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
     ): void {
         $sugarOrderIds = array_values(array_filter($sugarOrderIds));
         if (empty($sugarOrderIds)) {
+            return;
+        }
+
+        // Email bodies zijn groot: alles in één keer ophalen blaast het memory_limit op.
+        // Per batch verwerken houdt het geheugen begrensd (locals vallen vrij na elke return).
+        if (count($sugarOrderIds) > self::ACTIVITY_CHUNK_SIZE) {
+            foreach (array_chunk($sugarOrderIds, self::ACTIVITY_CHUNK_SIZE) as $chunk) {
+                $this->importOrderActivities($activityImporter, $chunk, $parentType);
+            }
+
             return;
         }
 

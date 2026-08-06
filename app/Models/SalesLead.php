@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\LostReason;
+use App\Models\Concerns\HasAiSummary;
 use App\Traits\HasAuditTrail;
 use App\Traits\SelectsBestContactPerson;
 use BackedEnum;
@@ -30,7 +31,7 @@ use Webkul\Lead\Models\StageProxy;
  */
 class SalesLead extends Model
 {
-    use HasAuditTrail, HasFactory, SelectsBestContactPerson;
+    use HasAiSummary, HasAuditTrail, HasFactory, SelectsBestContactPerson;
 
     /**
      * The table associated with the model.

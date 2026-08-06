@@ -26659,7 +26659,7 @@ namespace Illuminate\Database\Query {
      */
     class Builder {
         /**
-         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:73$a0::creator()
+         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:73$a1::creator()
          * @static
          */
         public static function creator()
@@ -26668,7 +26668,7 @@ namespace Illuminate\Database\Query {
         }
 
         /**
-         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:73$a0::updater()
+         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:73$a1::updater()
          * @static
          */
         public static function updater()
@@ -26677,7 +26677,7 @@ namespace Illuminate\Database\Query {
         }
 
         /**
-         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:145$a2::getFillable()
+         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:145$a3::getFillable()
          * @static
          */
         public static function getFillable()
@@ -31854,7 +31854,7 @@ namespace  {
         }
 
         /**
-         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:73$a0::creator()
+         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:73$a1::creator()
          * @static
          */
         public static function creator()
@@ -31863,7 +31863,7 @@ namespace  {
         }
 
         /**
-         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:73$a0::updater()
+         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:73$a1::updater()
          * @static
          */
         public static function updater()

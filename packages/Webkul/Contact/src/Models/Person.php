@@ -7,6 +7,7 @@ use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
 use App\Enums\PreferredLanguage;
 use App\Models\Address;
+use App\Models\Concerns\HasAiSummary;
 use App\Models\Anamnesis;
 use App\Models\PatientMessage;
 use App\Models\SalesLead;
@@ -33,7 +34,7 @@ use Webkul\User\Models\UserProxy;
 
 class Person extends Model implements PersonContract
 {
-    use CustomAttribute, HasDefaultContactInfo, HasFactory, HasPersonName, LogsActivity, SoftDeletes;
+    use CustomAttribute, HasAiSummary, HasDefaultContactInfo, HasFactory, HasPersonName, LogsActivity, SoftDeletes;
 
     /**
      * Database columns required to compute the name accessor (getNameAttribute).

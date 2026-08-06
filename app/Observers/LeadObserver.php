@@ -5,7 +5,10 @@ namespace App\Observers;
 use App\Actions\Leads\LeadToLostAction;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\WebhookType;
+use App\Jobs\GenerateAiSummaryJob;
 use App\Repositories\SalesLeadRepository;
+use App\Services\Ai\AiSubjectRegistry;
+use App\Services\Ai\AiSummaryService;
 use App\Services\LeadDuplicateCacheService;
 use App\Services\WebhookService;
 use Exception;
@@ -89,6 +92,8 @@ class LeadObserver
 
         // Invalidate duplicate cache for new lead
         $this->invalidateDuplicateCache($lead);
+
+        $this->queueAiSummary($lead);
     }
 
     /**
@@ -228,6 +233,24 @@ class LeadObserver
                 ]);
             }
         }
+    }
+
+    /**
+     * Queue the first AI summary for a fresh lead so the right-hand panel is filled
+     * by the time somebody opens it.
+     */
+    private function queueAiSummary(Lead $lead): void
+    {
+        $registry = app(AiSubjectRegistry::class);
+        $definition = $registry->findForModel($lead);
+
+        if (! $definition || ! $registry->isEnabled($definition)) {
+            return;
+        }
+
+        app(AiSummaryService::class)->summaryFor($lead, $definition);
+
+        GenerateAiSummaryJob::dispatch($definition->key, $lead->id, 'lead_created')->afterCommit();
     }
 
     /**

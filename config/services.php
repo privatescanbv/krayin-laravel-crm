@@ -109,6 +109,7 @@ return [
                 explode(',', (string) env('LLM_EMAIL_TECHNICAL_OUTPUT_USERS', 'mark.bulthuis@privatescan.nl,mark.klaucke@privatescan.nl'))
             ))),
         ],
+        // AI summary settings live in config/ai_summaries.php (per subject).
         'response_format_json' => filter_var(env('LLM_RESPONSE_FORMAT_JSON', true), FILTER_VALIDATE_BOOLEAN),
     ],
 

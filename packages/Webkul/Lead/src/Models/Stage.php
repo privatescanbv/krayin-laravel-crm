@@ -12,6 +12,10 @@ class Stage extends Model implements StageContract
 {
     use HasFactory;
 
+    public const IS_WON = 'is_won';
+
+    public const IS_LOST = 'is_lost';
+
     public $timestamps = false;
 
     protected $table = 'lead_pipeline_stages';

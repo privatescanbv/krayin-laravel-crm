@@ -10,6 +10,7 @@ use App\Enums\PersonSalutation;
 use App\Models\Address;
 use App\Models\Anamnesis;
 use App\Models\Department;
+use App\Models\Concerns\HasAiSummary;
 use App\Models\LeadMarketingData;
 use App\Models\LeadPerson;
 use App\Services\LeadStatusTransitionValidator;
@@ -19,6 +20,7 @@ use BackedEnum;
 use Carbon\Carbon;
 use Database\Factories\LeadFactory;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -45,7 +47,7 @@ use Webkul\User\Models\UserProxy;
 
 class Lead extends Model implements LeadContract
 {
-    use HasDefaultContactInfo, HasFactory, HasPersonName, LogsActivity, SelectsBestContactPerson, SoftDeletes;
+    use HasAiSummary, HasDefaultContactInfo, HasFactory, HasPersonName, LogsActivity, SelectsBestContactPerson, SoftDeletes;
 
     protected $casts = [
         'closed_at'                      => 'datetime',
@@ -388,6 +390,19 @@ class Lead extends Model implements LeadContract
     public function stage(): BelongsTo
     {
         return $this->belongsTo(StageProxy::modelClass(), 'lead_pipeline_stage_id');
+    }
+
+    /**
+     * Leads without a pipeline stage, or in a stage that is neither won nor lost.
+     */
+    public function scopeInOpenStage(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q) {
+            $q->whereNull('lead_pipeline_stage_id')
+                ->orWhereHas('stage', fn (Builder $s) => $s
+                    ->where(Stage::IS_WON, false)
+                    ->where(Stage::IS_LOST, false));
+        });
     }
 
     /**

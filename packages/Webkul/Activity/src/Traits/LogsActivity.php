@@ -61,7 +61,19 @@ trait LogsActivity
         });
 
         static::deleting(function ($model) {
-            if (! method_exists($model->entity ?? $model, 'activities')) {
+            $entity = $model->entity ?? $model;
+
+            // Persons link activities via person_id FK (not a pivot). Soft delete must keep them
+            // (merge transfers them; restore should still see the trail). Only hard delete wipes them.
+            if (method_exists($entity, 'getTable') && $entity->getTable() === 'persons') {
+                if (method_exists($model, 'isForceDeleting') && $model->isForceDeleting()) {
+                    $model->activities()->delete();
+                }
+
+                return;
+            }
+
+            if (! method_exists($entity, 'activities')) {
                 return;
             }
 

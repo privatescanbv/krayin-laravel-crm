@@ -3,9 +3,6 @@
 namespace Webkul\Contact\Repositories;
 
 use App\Enums\DuplicateEntityType;
-use App\Models\Anamnesis;
-use App\Models\PatientMessage;
-use App\Models\SalesLead;
 use App\Repositories\AddressRepository;
 use App\Services\Concerns\JsonDuplicateMatcher;
 use App\Services\DuplicateFalsePositiveService;
@@ -15,14 +12,11 @@ use Illuminate\Container\Container;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Contracts\Person;
 use Webkul\Core\Eloquent\Repository;
-use Webkul\Email\Models\Email;
-use Webkul\Lead\Models\Lead;
 
 class PersonRepository extends Repository
 {
@@ -304,107 +298,67 @@ class PersonRepository extends Repository
     public function mergePersons($primaryPersonId, $duplicatePersonIds, $fieldMappings = [])
     {
         $primaryPerson = $this->findOrFail($primaryPersonId);
+
+        // A person can never be its own duplicate; merging it into itself would soft delete it.
+        $duplicatePersonIds = array_values(array_diff($duplicatePersonIds, [$primaryPersonId]));
+
+        if (empty($duplicatePersonIds)) {
+            return $primaryPerson;
+        }
+
         $duplicatePersons = $this->findWhereIn('id', $duplicatePersonIds);
 
         try {
             DB::beginTransaction();
 
-            // Apply field mappings to primary person
-            foreach ($fieldMappings as $field => $sourcePersonId) {
-                if ($sourcePersonId != $primaryPersonId) {
+            if (! empty($fieldMappings)) {
+                $updateData = [];
+                $addressSourcePersonId = null;
+
+                foreach ($fieldMappings as $field => $sourcePersonId) {
+                    if ($sourcePersonId == $primaryPersonId) {
+                        continue;
+                    }
+
                     $sourcePerson = $duplicatePersons->firstWhere('id', $sourcePersonId);
-                    if ($sourcePerson && ! empty($sourcePerson->$field)) {
-                        $primaryPerson->$field = $sourcePerson->$field;
+
+                    if ($field === 'address') {
+                        // Address is a relation, not a column — never assign it onto the model.
+                        $addressSourcePersonId = $sourcePersonId;
+                    } elseif ($field === 'is_active' && $sourcePerson) {
+                        // Boolean: !empty() would skip a deliberate "inactive" choice.
+                        $updateData['is_active'] = (bool) $sourcePerson->is_active;
+                    } elseif ($sourcePerson && ! empty($sourcePerson->$field)) {
+                        $updateData[$field] = in_array($field, ['emails', 'phones'], true)
+                            ? $this->unionContactValues($updateData[$field] ?? $primaryPerson->$field, $sourcePerson->$field)
+                            : $sourcePerson->$field;
                     }
                 }
-            }
 
-            // Handle address merging
-            if (isset($fieldMappings['address'])) {
-                $addressSourcePersonId = $fieldMappings['address'];
-                if ($addressSourcePersonId != $primaryPersonId) {
+                if (! empty($updateData)) {
+                    $primaryPerson->update($updateData);
+                }
+
+                if ($addressSourcePersonId) {
                     $this->mergeAddress($primaryPerson, $duplicatePersons->firstWhere('id', $addressSourcePersonId));
                 }
             }
 
-            // Save the updated primary person
-            $primaryPerson->save();
-
-            // Transfer activities and emails from duplicate persons to primary person
             foreach ($duplicatePersons as $duplicatePerson) {
-                try {
-                    $this->addSystemActivity($primaryPerson, $duplicatePerson);
-                } catch (Exception $e) {
-                    Log::warning('Error adding system activity for duplicate removal: '.$e->getMessage());
-                }
+                // Audit first and without try/catch: these notes are the only trail linking a
+                // duplicate to the person it was merged into (see persons:report-merge-orphans).
+                $this->addSystemActivity($primaryPerson, $duplicatePerson);
+                $this->addMergeNote($primaryPerson, $duplicatePerson);
 
-                Email::where('person_id', $duplicatePerson->id)
-                    ->update(['person_id' => $primaryPersonId]);
+                $this->transferPersonRelations((int) $primaryPerson->id, (int) $duplicatePerson->id);
+                $this->adoptKeycloakAccount($primaryPerson, $duplicatePerson);
 
-                // Transfer activities: re-point person_id FK activities to primary person
-                Activity::where('person_id', $duplicatePerson->id)
-                    ->update(['person_id' => $primaryPersonId]);
-
-                // Transfer lead_persons pivot: attach duplicate's leads to primary, avoid duplicates
-                $existingLeadIds = DB::table('lead_persons')
-                    ->where('person_id', $primaryPersonId)
-                    ->pluck('lead_id')
-                    ->all();
-
-                DB::table('lead_persons')
-                    ->where('person_id', $duplicatePerson->id)
-                    ->whereNotIn('lead_id', $existingLeadIds)
-                    ->update(['person_id' => $primaryPersonId]);
-
-                DB::table('lead_persons')
-                    ->where('person_id', $duplicatePerson->id)
-                    ->delete();
-
-                // Transfer saleslead_persons pivot
-                $existingSalesLeadIds = DB::table('saleslead_persons')
-                    ->where('person_id', $primaryPersonId)
-                    ->pluck('saleslead_id')
-                    ->all();
-
-                DB::table('saleslead_persons')
-                    ->where('person_id', $duplicatePerson->id)
-                    ->whereNotIn('saleslead_id', $existingSalesLeadIds)
-                    ->update(['person_id' => $primaryPersonId]);
-
-                DB::table('saleslead_persons')
-                    ->where('person_id', $duplicatePerson->id)
-                    ->delete();
-
-                // Transfer contact_person_id on leads
-                Lead::where('contact_person_id', $duplicatePerson->id)
-                    ->update(['contact_person_id' => $primaryPersonId]);
-
-                // Transfer contact_person_id on salesleads
-                SalesLead::where('contact_person_id', $duplicatePerson->id)
-                    ->update(['contact_person_id' => $primaryPersonId]);
-
-                $this->resolveAnamnesisConflictsBeforePersonReassign($primaryPersonId, (int) $duplicatePerson->id);
-
-                Anamnesis::where('person_id', $duplicatePerson->id)
-                    ->update(['person_id' => $primaryPersonId]);
-
-                PatientMessage::where('person_id', $duplicatePerson->id)
-                    ->update(['person_id' => $primaryPersonId]);
-
-                $this->reassignPersonScopedPivotAndFks($primaryPersonId, (int) $duplicatePerson->id);
-
-                try {
-                    $this->addMergeNote($primaryPerson, $duplicatePerson);
-                } catch (Exception $e) {
-                    Log::warning('Error adding merge note after person merge: '.$e->getMessage());
-                }
-
+                // Soft-delete; keycloak_user_id was cleared so PersonObserver will not HTTP-delete.
                 $duplicatePerson->delete();
             }
 
             DB::commit();
 
-            // Clear cache for merged persons
             try {
                 $cacheService = app(PersonDuplicateCacheService::class);
                 $cacheService->handlePersonMerge($primaryPersonId, $duplicatePersonIds);
@@ -412,7 +366,7 @@ class PersonRepository extends Repository
                 Log::warning('Error clearing person duplicate cache: '.$e->getMessage());
             }
 
-            return $primaryPerson;
+            return $primaryPerson->fresh();
         } catch (Exception $e) {
             DB::rollback();
             Log::error('Error merging persons: '.$e->getMessage());
@@ -421,91 +375,74 @@ class PersonRepository extends Repository
     }
 
     /**
-     * Before reassigning anamnesis rows to the primary person, drop duplicates that would violate
-     * unique(lead_id, person_id) or unique(sales_id, person_id), keeping the newest row.
+     * Merge two [{label, value, is_default}] lists (emails/phones) instead of letting one replace the
+     * other. Deduplicated on value; only the primary keeps its default flag.
+     *
+     * @param  array<int, array<string, mixed>>|null  $primary
+     * @param  array<int, array<string, mixed>>|null  $source
+     * @return array<int, array<string, mixed>>
      */
-    private function resolveAnamnesisConflictsBeforePersonReassign(int $primaryPersonId, int $duplicatePersonId): void
+    private function unionContactValues(?array $primary, ?array $source): array
     {
-        $leadConflictIds = DB::table('anamnesis as d')
-            ->where('d.person_id', $duplicatePersonId)
-            ->whereNotNull('d.lead_id')
-            ->whereExists(function ($query) use ($primaryPersonId) {
-                $query->selectRaw('1')
-                    ->from('anamnesis as p')
-                    ->whereColumn('p.lead_id', 'd.lead_id')
-                    ->where('p.person_id', $primaryPersonId);
-            })
-            ->pluck('d.lead_id');
+        $merged = $primary ?? [];
+        $existing = array_column($merged, 'value');
 
-        foreach ($leadConflictIds->unique()->all() as $leadId) {
-            $this->deleteOlderAnamnesisRowsForLead((int) $leadId, $primaryPersonId, $duplicatePersonId);
+        foreach ($source ?? [] as $entry) {
+            if (empty($entry['value']) || in_array($entry['value'], $existing, true)) {
+                continue;
+            }
+
+            $entry['is_default'] = false;
+            $merged[] = $entry;
+            $existing[] = $entry['value'];
         }
 
-        $salesConflictIds = DB::table('anamnesis as d')
-            ->where('d.person_id', $duplicatePersonId)
-            ->whereNotNull('d.sales_id')
-            ->whereExists(function ($query) use ($primaryPersonId) {
-                $query->selectRaw('1')
-                    ->from('anamnesis as p')
-                    ->whereColumn('p.sales_id', 'd.sales_id')
-                    ->where('p.person_id', $primaryPersonId);
-            })
-            ->pluck('d.sales_id');
-
-        foreach ($salesConflictIds->unique()->all() as $salesId) {
-            $this->deleteOlderAnamnesisRowsForSales((int) $salesId, $primaryPersonId, $duplicatePersonId);
-        }
-    }
-
-    private function deleteOlderAnamnesisRowsForLead(int $leadId, int $primaryPersonId, int $duplicatePersonId): void
-    {
-        $rows = DB::table('anamnesis')
-            ->where('lead_id', $leadId)
-            ->whereIn('person_id', [$primaryPersonId, $duplicatePersonId])
-            ->orderByDesc('updated_at')
-            ->orderByDesc('created_at')
-            ->orderByDesc('id')
-            ->get();
-
-        foreach ($rows->skip(1) as $row) {
-            DB::table('anamnesis')->where('id', $row->id)->delete();
-        }
-    }
-
-    private function deleteOlderAnamnesisRowsForSales(int $salesId, int $primaryPersonId, int $duplicatePersonId): void
-    {
-        $rows = DB::table('anamnesis')
-            ->where('sales_id', $salesId)
-            ->whereIn('person_id', [$primaryPersonId, $duplicatePersonId])
-            ->orderByDesc('updated_at')
-            ->orderByDesc('created_at')
-            ->orderByDesc('id')
-            ->get();
-
-        foreach ($rows->skip(1) as $row) {
-            DB::table('anamnesis')->where('id', $row->id)->delete();
-        }
+        return $merged;
     }
 
     /**
-     * Reassign remaining person_id foreign keys so soft-deleted duplicates do not orphan related rows.
+     * Re-point everything that hangs off the duplicate person to the primary person.
+     *
+     * The duplicate is only soft deleted, so none of the ON DELETE constraints fire and every related
+     * row would silently stay behind on an invisible person. Uses query builder throughout so soft
+     * deletes are ignored.
      */
-    private function reassignPersonScopedPivotAndFks(int $primaryPersonId, int $duplicatePersonId): void
+    public function transferPersonRelations(int $primaryPersonId, int $duplicatePersonId): void
     {
-        $existingTagIds = DB::table('person_tags')
-            ->where('person_id', $primaryPersonId)
-            ->pluck('tag_id')
-            ->all();
+        foreach (['emails', 'activities', 'anamnesis', 'patient_messages', 'order_items', 'afb_person_documents'] as $table) {
+            // Anamnesis needs conflict resolution first — handled below.
+            if ($table === 'anamnesis') {
+                continue;
+            }
 
-        DB::table('person_tags')
+            DB::table($table)->where('person_id', $duplicatePersonId)->update(['person_id' => $primaryPersonId]);
+        }
+
+        DB::table('patient_notifications')
+            ->where('patient_id', $duplicatePersonId)
+            ->update(['patient_id' => $primaryPersonId]);
+
+        DB::table('leads')
+            ->where('contact_person_id', $duplicatePersonId)
+            ->update(['contact_person_id' => $primaryPersonId]);
+
+        DB::table('salesleads')
+            ->where('contact_person_id', $duplicatePersonId)
+            ->update(['contact_person_id' => $primaryPersonId]);
+
+        $this->resolveAnamnesisConflictsBeforePersonReassign($primaryPersonId, $duplicatePersonId);
+
+        DB::table('anamnesis')
             ->where('person_id', $duplicatePersonId)
-            ->whereNotIn('tag_id', $existingTagIds)
             ->update(['person_id' => $primaryPersonId]);
 
-        DB::table('person_tags')
-            ->where('person_id', $duplicatePersonId)
-            ->delete();
+        $this->movePersonPivotRows('lead_persons', 'lead_id', $primaryPersonId, $duplicatePersonId);
+        $this->movePersonPivotRows('saleslead_persons', 'saleslead_id', $primaryPersonId, $duplicatePersonId);
+        $this->movePersonPivotRows('person_tags', 'tag_id', $primaryPersonId, $duplicatePersonId);
+        $this->movePersonPivotRows('activity_portal_persons', 'activity_id', $primaryPersonId, $duplicatePersonId);
+        $this->movePersonPivotRows('order_person_confirmations', 'order_id', $primaryPersonId, $duplicatePersonId);
 
+        // person_preferences: unique-ish on (person_id, key); primary wins on colliding keys.
         $preferenceKeysOnPrimary = DB::table('person_preferences')
             ->where('person_id', $primaryPersonId)
             ->pluck('key')
@@ -520,47 +457,124 @@ class PersonRepository extends Repository
             ->where('person_id', $duplicatePersonId)
             ->update(['person_id' => $primaryPersonId]);
 
-        $existingPortalActivityIds = DB::table('activity_portal_persons')
-            ->where('person_id', $primaryPersonId)
-            ->pluck('activity_id')
+        // Custom attribute values: unique (entity_type, entity_id, attribute_id), primary wins.
+        $primaryAttributeIds = DB::table('attribute_values')
+            ->where('entity_type', 'persons')
+            ->where('entity_id', $primaryPersonId)
+            ->pluck('attribute_id')
             ->all();
 
-        DB::table('activity_portal_persons')
-            ->where('person_id', $duplicatePersonId)
-            ->whereNotIn('activity_id', $existingPortalActivityIds)
-            ->update(['person_id' => $primaryPersonId]);
-
-        DB::table('activity_portal_persons')
-            ->where('person_id', $duplicatePersonId)
+        DB::table('attribute_values')
+            ->where('entity_type', 'persons')
+            ->where('entity_id', $duplicatePersonId)
+            ->whereIn('attribute_id', $primaryAttributeIds)
             ->delete();
 
+        DB::table('attribute_values')
+            ->where('entity_type', 'persons')
+            ->where('entity_id', $duplicatePersonId)
+            ->update(['entity_id' => $primaryPersonId]);
+
+        // "Not a duplicate" pairs are meaningless once one side is gone.
+        DB::table('duplicates_false_positives')
+            ->where('entity_type', DuplicateEntityType::PERSON->value)
+            ->where(function ($query) use ($duplicatePersonId) {
+                $query->where('entity_id_1', $duplicatePersonId)
+                    ->orWhere('entity_id_2', $duplicatePersonId);
+            })
+            ->delete();
+
+        // Adopt the address when the primary has none and no explicit field mapping was made.
         $primaryAddressId = DB::table('persons')->where('id', $primaryPersonId)->value('address_id');
         $duplicateAddressId = DB::table('persons')->where('id', $duplicatePersonId)->value('address_id');
+
         if (empty($primaryAddressId) && ! empty($duplicateAddressId)) {
             DB::table('persons')->where('id', $primaryPersonId)->update(['address_id' => $duplicateAddressId]);
         }
+    }
 
-        $existingConfirmationOrderIds = DB::table('order_person_confirmations')
-            ->where('person_id', $primaryPersonId)
-            ->pluck('order_id')
-            ->all();
+    /**
+     * Move pivot rows to the primary person, dropping ones it already has so unique indexes never collide.
+     */
+    private function movePersonPivotRows(string $table, string $otherKey, int $primaryPersonId, int $duplicatePersonId): void
+    {
+        $existing = DB::table($table)->where('person_id', $primaryPersonId)->pluck($otherKey)->all();
 
-        DB::table('order_person_confirmations')
+        DB::table($table)
             ->where('person_id', $duplicatePersonId)
-            ->whereNotIn('order_id', $existingConfirmationOrderIds)
+            ->whereNotIn($otherKey, $existing)
             ->update(['person_id' => $primaryPersonId]);
 
-        DB::table('order_person_confirmations')
-            ->where('person_id', $duplicatePersonId)
-            ->delete();
+        DB::table($table)->where('person_id', $duplicatePersonId)->delete();
+    }
 
-        DB::table('order_items')
-            ->where('person_id', $duplicatePersonId)
-            ->update(['person_id' => $primaryPersonId]);
+    /**
+     * If the primary has no portal account and the duplicate does, adopt it. Always clear the
+     * duplicate's keycloak_user_id before soft-delete so PersonObserver::deleted does not fire a
+     * real HTTP delete against Keycloak (that cannot be rolled back with the DB transaction).
+     *
+     * The in-memory model must be cleared too: the observer reads $person->keycloak_user_id, not the DB.
+     */
+    private function adoptKeycloakAccount(Person $primaryPerson, Person $duplicatePerson): void
+    {
+        $primaryKeycloakId = $primaryPerson->keycloak_user_id
+            ?: DB::table('persons')->where('id', $primaryPerson->id)->value('keycloak_user_id');
+        $duplicateKeycloakId = $duplicatePerson->keycloak_user_id
+            ?: DB::table('persons')->where('id', $duplicatePerson->id)->value('keycloak_user_id');
 
-        DB::table('afb_person_documents')
-            ->where('person_id', $duplicatePersonId)
-            ->update(['person_id' => $primaryPersonId]);
+        if (empty($primaryKeycloakId) && ! empty($duplicateKeycloakId)) {
+            DB::table('persons')->where('id', $primaryPerson->id)->update([
+                'keycloak_user_id' => $duplicateKeycloakId,
+            ]);
+            $primaryPerson->keycloak_user_id = $duplicateKeycloakId;
+        }
+
+        if (! empty($duplicateKeycloakId)) {
+            DB::table('persons')->where('id', $duplicatePerson->id)->update([
+                'keycloak_user_id' => null,
+            ]);
+            $duplicatePerson->keycloak_user_id = null;
+        }
+    }
+
+    /**
+     * Before reassigning anamnesis rows to the primary person, drop duplicates that would violate
+     * unique(lead_id, person_id), unique(sales_id, person_id) or unique(order_id, person_id),
+     * keeping the newest row.
+     */
+    private function resolveAnamnesisConflictsBeforePersonReassign(int $primaryPersonId, int $duplicatePersonId): void
+    {
+        $this->resolveAnamnesisConflictsForScope('lead_id', $primaryPersonId, $duplicatePersonId);
+        $this->resolveAnamnesisConflictsForScope('sales_id', $primaryPersonId, $duplicatePersonId);
+        $this->resolveAnamnesisConflictsForScope('order_id', $primaryPersonId, $duplicatePersonId);
+    }
+
+    private function resolveAnamnesisConflictsForScope(string $scopeColumn, int $primaryPersonId, int $duplicatePersonId): void
+    {
+        $conflictIds = DB::table('anamnesis as d')
+            ->where('d.person_id', $duplicatePersonId)
+            ->whereNotNull("d.{$scopeColumn}")
+            ->whereExists(function ($query) use ($primaryPersonId, $scopeColumn) {
+                $query->selectRaw('1')
+                    ->from('anamnesis as p')
+                    ->whereColumn("p.{$scopeColumn}", "d.{$scopeColumn}")
+                    ->where('p.person_id', $primaryPersonId);
+            })
+            ->pluck("d.{$scopeColumn}");
+
+        foreach ($conflictIds->unique()->all() as $scopeId) {
+            $rows = DB::table('anamnesis')
+                ->where($scopeColumn, $scopeId)
+                ->whereIn('person_id', [$primaryPersonId, $duplicatePersonId])
+                ->orderByDesc('updated_at')
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->get();
+
+            foreach ($rows->skip(1) as $row) {
+                DB::table('anamnesis')->where('id', $row->id)->delete();
+            }
+        }
     }
 
     /**
@@ -591,30 +605,29 @@ class PersonRepository extends Repository
 
     /**
      * Add system activity for person merge.
+     *
+     * Titles/comments are the trail used by persons:report-merge-orphans. Keep the parseable
+     * "(ID: n)" / "Person #n " markers stable. Also matches the legacy "Person Merge" title so
+     * historical merges remain reportable.
      */
     private function addSystemActivity($primaryPerson, $duplicatePerson): void
     {
-        try {
-            $activity = app(ActivityRepository::class)->create([
-                'type'      => 'note',
-                'title'     => 'Person Merge',
-                'comment'   => "Removed duplicate person \"{$duplicatePerson->name}\" (ID: {$duplicatePerson->id}) during merge operation.",
-                'is_done'   => true,
-                'person_id' => $primaryPerson->id,
-                'user_id'   => auth()->id() ?: 1,
-            ]);
+        $activity = app(ActivityRepository::class)->create([
+            'type'      => 'system',
+            'title'     => 'System: Duplicate Person Removed',
+            'comment'   => "Removed duplicate person \"{$duplicatePerson->name}\" (ID: {$duplicatePerson->id}) during merge operation.",
+            'is_done'   => true,
+            'person_id' => $primaryPerson->id,
+            'user_id'   => auth()->id() ?: 1,
+        ]);
 
-            Log::info('System activity created for person duplicate removal', [
-                'primary_person_id'      => $primaryPerson->id,
-                'primary_person_name'    => $primaryPerson->name,
-                'removed_duplicate_id'   => $duplicatePerson->id,
-                'removed_duplicate_name' => $duplicatePerson->name,
-                'activity_id'            => $activity->id,
-            ]);
-        } catch (Exception $e) {
-            Log::error('Error creating system activity for person merge: '.$e->getMessage());
-            throw $e;
-        }
+        Log::info('System activity created for person duplicate removal', [
+            'primary_person_id'      => $primaryPerson->id,
+            'primary_person_name'    => $primaryPerson->name,
+            'removed_duplicate_id'   => $duplicatePerson->id,
+            'removed_duplicate_name' => $duplicatePerson->name,
+            'activity_id'            => $activity->id,
+        ]);
     }
 
     /**
@@ -625,17 +638,13 @@ class PersonRepository extends Repository
      */
     private function addMergeNote($primaryPerson, $duplicatePerson): void
     {
-        try {
-            app(ActivityRepository::class)->create([
-                'type'      => 'note',
-                'title'     => 'Person Merged',
-                'comment'   => "Person #{$duplicatePerson->id} ({$duplicatePerson->name}) was merged into this person.",
-                'is_done'   => true,
-                'person_id' => $primaryPerson->id,
-                'user_id'   => auth()->id() ?: 1,
-            ]);
-        } catch (Exception $e) {
-            Log::error('Error adding merge note: '.$e->getMessage());
-        }
+        app(ActivityRepository::class)->create([
+            'type'      => 'note',
+            'title'     => 'Person Merged',
+            'comment'   => "Person #{$duplicatePerson->id} ({$duplicatePerson->name}) was merged into this person.",
+            'is_done'   => true,
+            'person_id' => $primaryPerson->id,
+            'user_id'   => auth()->id() ?: 1,
+        ]);
     }
 }

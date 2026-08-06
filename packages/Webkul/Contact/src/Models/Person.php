@@ -377,6 +377,14 @@ class Person extends Model implements PersonContract
     }
 
     /**
+     * Activities linked directly via person_id (notes, system audit trail, etc.).
+     */
+    public function activities()
+    {
+        return $this->hasMany(ActivityProxy::modelClass(), 'person_id');
+    }
+
+    /**
      * Get the address that belongs to the person.
      */
     public function address()

@@ -2,12 +2,18 @@
 
 namespace Tests\Feature\Persons;
 
+use App\Models\Address;
 use App\Models\Anamnesis;
+use App\Models\Order;
 use App\Models\PatientMessage;
+use App\Models\PatientNotification;
 use App\Models\SalesLead;
+use App\Services\PersonKeycloakService;
 use Database\Seeders\TestSeeder;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Mockery;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
@@ -266,4 +272,206 @@ test('merging persons transfers activity_portal_persons without duplicate activi
 
     $count = DB::table('activity_portal_persons')->where('activity_id', $activity->id)->where('person_id', $primary->id)->count();
     expect($count)->toBe(1);
+});
+
+test('merging persons transfers attribute_values with primary winning on conflicts', function () {
+    $primary = Person::factory()->create();
+    $duplicate = Person::factory()->create();
+
+    $sharedAttributeId = DB::table('attributes')->insertGetId([
+        'code'        => 'merge_shared_'.uniqid(),
+        'name'        => 'Shared',
+        'type'        => 'text',
+        'entity_type' => 'persons',
+        'is_required' => 0,
+        'created_at'  => now(),
+        'updated_at'  => now(),
+    ]);
+
+    $onlyDuplicateAttributeId = DB::table('attributes')->insertGetId([
+        'code'        => 'merge_dup_'.uniqid(),
+        'name'        => 'Only Dup',
+        'type'        => 'text',
+        'entity_type' => 'persons',
+        'is_required' => 0,
+        'created_at'  => now(),
+        'updated_at'  => now(),
+    ]);
+
+    DB::table('attribute_values')->insert([
+        ['entity_type' => 'persons', 'entity_id' => $primary->id, 'attribute_id' => $sharedAttributeId, 'text_value' => 'primary-wins'],
+        ['entity_type' => 'persons', 'entity_id' => $duplicate->id, 'attribute_id' => $sharedAttributeId, 'text_value' => 'duplicate-loses'],
+        ['entity_type' => 'persons', 'entity_id' => $duplicate->id, 'attribute_id' => $onlyDuplicateAttributeId, 'text_value' => 'moved'],
+    ]);
+
+    $this->personRepository->mergePersons($primary->id, [$duplicate->id]);
+
+    expect(DB::table('attribute_values')->where('entity_type', 'persons')->where('entity_id', $primary->id)->where('attribute_id', $sharedAttributeId)->value('text_value'))
+        ->toBe('primary-wins')
+        ->and(DB::table('attribute_values')->where('entity_type', 'persons')->where('entity_id', $primary->id)->where('attribute_id', $onlyDuplicateAttributeId)->value('text_value'))
+        ->toBe('moved')
+        ->and(DB::table('attribute_values')->where('entity_type', 'persons')->where('entity_id', $duplicate->id)->count())
+        ->toBe(0);
+});
+
+test('merging persons transfers patient notifications to primary person', function () {
+    $primary = Person::factory()->create();
+    $duplicate = Person::factory()->create();
+
+    $notification = PatientNotification::factory()->create(['patient_id' => $duplicate->id]);
+
+    $this->personRepository->mergePersons($primary->id, [$duplicate->id]);
+
+    expect($notification->fresh()->patient_id)->toBe($primary->id);
+});
+
+test('merging persons drops false positive pairs that reference the duplicate', function () {
+    $primary = Person::factory()->create();
+    $duplicate = Person::factory()->create();
+    $other = Person::factory()->create();
+
+    DB::table('duplicates_false_positives')->insert([
+        'entity_type' => 'person',
+        'entity_id_1' => $duplicate->id,
+        'entity_id_2' => $other->id,
+    ]);
+
+    $this->personRepository->mergePersons($primary->id, [$duplicate->id]);
+
+    expect(DB::table('duplicates_false_positives')->count())->toBe(0);
+});
+
+test('merging persons keeps newest anamnesis when primary and duplicate share the same order', function () {
+    $primary = Person::factory()->create();
+    $duplicate = Person::factory()->create();
+    $order = Order::factory()->create(['order_number' => 'MRG-'.substr(uniqid(), -5)]);
+
+    $olderOnPrimary = Anamnesis::factory()->create([
+        'lead_id'    => null,
+        'sales_id'   => null,
+        'order_id'   => $order->id,
+        'person_id'  => $primary->id,
+        'updated_at' => now()->subDay(),
+    ]);
+
+    $newerOnDuplicate = Anamnesis::factory()->create([
+        'lead_id'    => null,
+        'sales_id'   => null,
+        'order_id'   => $order->id,
+        'person_id'  => $duplicate->id,
+        'updated_at' => now(),
+    ]);
+
+    $this->personRepository->mergePersons($primary->id, [$duplicate->id]);
+
+    expect(Anamnesis::query()->where('order_id', $order->id)->where('person_id', $primary->id)->count())->toBe(1);
+    expect(Anamnesis::query()->find($olderOnPrimary->id))->toBeNull();
+    expect($newerOnDuplicate->fresh()->person_id)->toBe($primary->id);
+});
+
+test('merging persons unions emails and phones instead of replacing them', function () {
+    $primary = Person::factory()->create([
+        'emails' => [['label' => 'eigen', 'value' => 'primary@example.com', 'is_default' => true]],
+        'phones' => [['label' => 'eigen', 'value' => '+31600000001', 'is_default' => true]],
+    ]);
+
+    $duplicate = Person::factory()->create([
+        'emails' => [
+            ['label' => 'eigen', 'value' => 'primary@example.com', 'is_default' => true],
+            ['label' => 'werk', 'value' => 'duplicate@example.com', 'is_default' => false],
+        ],
+        'phones' => [['label' => 'werk', 'value' => '+31600000002', 'is_default' => true]],
+    ]);
+
+    $merged = $this->personRepository->mergePersons($primary->id, [$duplicate->id], [
+        'emails' => $duplicate->id,
+        'phones' => $duplicate->id,
+    ]);
+
+    expect(array_column($merged->emails, 'value'))
+        ->toBe(['primary@example.com', 'duplicate@example.com'])
+        ->and(array_column($merged->phones, 'value'))
+        ->toBe(['+31600000001', '+31600000002'])
+        ->and(array_column($merged->phones, 'is_default'))->toBe([true, false]);
+});
+
+test('merging persons ignores the primary when it is listed as its own duplicate', function () {
+    $primary = Person::factory()->create();
+
+    $this->personRepository->mergePersons($primary->id, [$primary->id]);
+
+    expect(Person::find($primary->id))->not->toBeNull();
+});
+
+test('merging persons records an audit activity the report command can parse', function () {
+    $primary = Person::factory()->create();
+    $duplicate = Person::factory()->create();
+
+    $this->personRepository->mergePersons($primary->id, [$duplicate->id]);
+
+    $system = Activity::where('person_id', $primary->id)
+        ->where('type', 'system')
+        ->where('title', 'System: Duplicate Person Removed')
+        ->firstOrFail();
+
+    $note = Activity::where('person_id', $primary->id)
+        ->where('type', 'note')
+        ->where('title', 'Person Merged')
+        ->firstOrFail();
+
+    expect($system->comment)->toContain("(ID: {$duplicate->id})")
+        ->and($note->comment)->toStartWith("Person #{$duplicate->id} ");
+});
+
+test('merging persons adopts address from mapping without treating address as a column', function () {
+    $primary = Person::factory()->create(['address_id' => null]);
+    $duplicateAddress = Address::factory()->create([
+        'street'       => 'Duplicaatstraat',
+        'house_number' => '1',
+        'postal_code'  => '1234AB',
+        'city'         => 'Amsterdam',
+    ]);
+    $duplicate = Person::factory()->create(['address_id' => $duplicateAddress->id]);
+
+    $merged = $this->personRepository->mergePersons($primary->id, [$duplicate->id], [
+        'address' => $duplicate->id,
+    ]);
+
+    expect($merged->fresh()->address)->not->toBeNull()
+        ->and($merged->fresh()->address->street)->toBe('Duplicaatstraat');
+});
+
+test('merging persons adopts keycloak account from duplicate and does not call Keycloak delete', function () {
+    Person::setEventDispatcher(app('events'));
+    Config::set('services.keycloak.client_id', 'test-client');
+
+    $keycloakService = Mockery::mock(PersonKeycloakService::class);
+    $keycloakService->shouldNotReceive('delete');
+    $this->app->instance(PersonKeycloakService::class, $keycloakService);
+
+    $primary = Person::factory()->create(['keycloak_user_id' => null]);
+    $duplicate = Person::factory()->create(['keycloak_user_id' => 'kc-from-duplicate']);
+
+    $merged = $this->personRepository->mergePersons($primary->id, [$duplicate->id]);
+
+    expect($merged->fresh()->keycloak_user_id)->toBe('kc-from-duplicate')
+        ->and(Person::withTrashed()->find($duplicate->id)->keycloak_user_id)->toBeNull()
+        ->and(Person::withTrashed()->find($duplicate->id)->trashed())->toBeTrue();
+});
+
+test('merging persons keeps primary keycloak when both have an account and still skips Keycloak delete', function () {
+    Person::setEventDispatcher(app('events'));
+    Config::set('services.keycloak.client_id', 'test-client');
+
+    $keycloakService = Mockery::mock(PersonKeycloakService::class);
+    $keycloakService->shouldNotReceive('delete');
+    $this->app->instance(PersonKeycloakService::class, $keycloakService);
+
+    $primary = Person::factory()->create(['keycloak_user_id' => 'kc-primary']);
+    $duplicate = Person::factory()->create(['keycloak_user_id' => 'kc-duplicate']);
+
+    $merged = $this->personRepository->mergePersons($primary->id, [$duplicate->id]);
+
+    expect($merged->fresh()->keycloak_user_id)->toBe('kc-primary')
+        ->and(Person::withTrashed()->find($duplicate->id)->keycloak_user_id)->toBeNull();
 });

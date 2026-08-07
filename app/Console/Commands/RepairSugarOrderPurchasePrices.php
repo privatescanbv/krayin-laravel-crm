@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Commands\Concerns\SugarCRMOrderRowsTrait;
 use App\Enums\PurchasePriceType;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -11,8 +12,9 @@ use Illuminate\Support\Facades\Log;
 use Webkul\Contact\Models\Person;
 use Webkul\Product\Models\Product;
 
-class RepairSugarOrderPurchasePrices extends ImportOrdersFromSugarCRM
+class RepairSugarOrderPurchasePrices extends AbstractSugarCRMImport
 {
+    use SugarCRMOrderRowsTrait;
     protected $signature = 'orders:repair-sugar-purchase-prices
                             {--connection=sugarcrm : Database connection name}
                             {--order-nums=* : Specifieke ordernummers (bijv. 202502011)}

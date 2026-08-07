@@ -3,8 +3,14 @@ set -e
 
 echo "🚀 Starting local development (Docker + Vite)…"
 # Alle key=value regels uit .env exporteren (comments negeren)
+# Let op: gebruik sourcing i.p.v. `export $(... | xargs)`. Bij die laatste doet bash
+# nog pathname expansion over het resultaat, waardoor waardes met een kale * (zoals
+# cron-expressies) expanderen naar bestandsnamen uit de repo-root.
 if [ -f .env ]; then
-  export $(grep -v '^#' .env | grep '=' | xargs)
+  set -a
+  # shellcheck disable=SC1091
+  . ./.env
+  set +a
 fi
 
 export WWWUSER=${WWWUSER:-1000}
@@ -58,19 +64,12 @@ docker-compose exec crm sh -lc "rm -f storage/framework/vite.hot storage/framewo
     echo "⏳ Checking Vite URLs…"
     sleep 5
 
-    echo "🟢 CRM Hotfile:"
-    docker-compose exec crm cat storage/framework/vite.hot
-
     echo "🟢 Admin Hotfile:"
     docker-compose exec crm cat storage/framework/admin-vite.hot
 
     echo "🎉 Ready! Visit:"
     echo "   https://crm.local.privatescan.nl"
-    echo "   https://$VITE_HMR_HOST:$VITE_PORT  (CRM)"
     echo "   https://$VITE_HMR_HOST:$VITE_ADMIN_PORT (Admin)"
-else
-    echo "🎉 Containers opnieuw gestart (geen lokale Vite-devservers gestart)."
-fi
 
 # Not exactly the right place, but we don't have ci for this. So generate it here, to minimize human error of forgetting it.
 ./vendor/bin/sail artisan scribe:generate

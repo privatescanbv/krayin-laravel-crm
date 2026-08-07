@@ -37,65 +37,88 @@
                 >
                     <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <div class="flex flex-wrap items-center justify-between gap-3">
-                            <div class="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    class="flex h-9 w-9 items-center justify-center rounded-md border text-xl text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-400"
-                                    @click="prevWeek"
-                                >
-                                    <span class="icon-left-arrow"></span>
-                                </button>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <div class="flex overflow-hidden rounded-md border dark:border-gray-800">
+                                    <button
+                                        type="button"
+                                        class="px-3 py-2 text-sm transition-all"
+                                        :class="period === 'week'
+                                            ? 'bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900'
+                                            : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800'"
+                                        @click="setPeriod('week')"
+                                    >
+                                        Week
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="border-l px-3 py-2 text-sm transition-all dark:border-gray-800"
+                                        :class="period === 'month'
+                                            ? 'bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900'
+                                            : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800'"
+                                        @click="setPeriod('month')"
+                                    >
+                                        Maand
+                                    </button>
+                                </div>
 
-                                <p class="min-w-[260px] text-center text-base font-semibold text-gray-800 dark:text-white max-sm:min-w-0">
-                                    @{{ weekLabel }}
-                                </p>
+                                <div class="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        class="flex h-9 w-9 items-center justify-center rounded-md border text-xl text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-400"
+                                        @click="prevPeriod"
+                                    >
+                                        <span class="icon-left-arrow"></span>
+                                    </button>
 
-                                <button
-                                    type="button"
-                                    class="flex h-9 w-9 items-center justify-center rounded-md border text-xl text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-400"
-                                    @click="nextWeek"
-                                >
-                                    <span class="icon-right-arrow"></span>
-                                </button>
+                                    <p class="min-w-[260px] text-center text-base font-semibold text-gray-800 dark:text-white max-sm:min-w-0">
+                                        @{{ periodLabel }}
+                                    </p>
+
+                                    <button
+                                        type="button"
+                                        class="flex h-9 w-9 items-center justify-center rounded-md border text-xl text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-400"
+                                        @click="nextPeriod"
+                                    >
+                                        <span class="icon-right-arrow"></span>
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="flex flex-wrap items-center gap-2">
                                 <div
                                     class="relative"
-                                    v-click-outside="() => stageDropdownOpen = false"
+                                    v-click-outside="() => groupDropdownOpen = false"
                                 >
                                     <button
                                         type="button"
-                                        class="flex min-h-9 min-w-[220px] items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
-                                        @click="stageDropdownOpen = ! stageDropdownOpen"
+                                        class="flex min-h-9 min-w-[200px] items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
+                                        @click="groupDropdownOpen = ! groupDropdownOpen"
                                     >
-                                        <span>@{{ selectedStageText }}</span>
+                                        <span>@{{ selectedGroupText }}</span>
                                         <span class="icon-down-arrow text-xs"></span>
                                     </button>
 
                                     <div
-                                        v-if="stageDropdownOpen"
-                                        class="absolute right-0 z-20 mt-1 max-h-72 w-80 overflow-auto rounded-md border bg-white p-2 shadow dark:border-gray-800 dark:bg-gray-900"
+                                        v-if="groupDropdownOpen"
+                                        class="absolute right-0 z-20 mt-1 w-56 rounded-md border bg-white p-2 shadow dark:border-gray-800 dark:bg-gray-900"
                                     >
                                         <label
-                                            v-for="stage in stages"
-                                            :key="stage.id"
-                                            class="flex cursor-pointer items-start gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+                                            v-for="group in groups"
+                                            :key="group.id"
+                                            class="flex cursor-pointer items-center gap-2 rounded px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
                                         >
                                             <input
                                                 type="checkbox"
-                                                class="mt-0.5 h-4 w-4 shrink-0 accent-[#8979FF]"
-                                                :value="stage.id"
-                                                v-model="selectedStages"
+                                                class="h-4 w-4 shrink-0 accent-[#8979FF]"
+                                                :value="group.id"
+                                                v-model="selectedGroups"
                                                 @change="loadData"
                                             />
-
-                                            <span class="flex flex-1 items-center justify-between gap-2 text-gray-700 dark:text-gray-300">
-                                                <span>@{{ stage.label }}</span>
-                                                <span class="rounded border px-1.5 py-0.5 text-[11px] uppercase text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                                    @{{ departmentLabel(stage.department) }}
-                                                </span>
-                                            </span>
+                                            <span
+                                                class="h-3 w-3 flex-shrink-0 rounded-sm"
+                                                :style="{ backgroundColor: group.color }"
+                                            ></span>
+                                            <span>@{{ group.label }}</span>
                                         </label>
                                     </div>
                                 </div>
@@ -166,8 +189,31 @@
                                 <thead>
                                     <tr class="border-b text-xs font-medium uppercase text-gray-500 dark:border-gray-800 dark:text-gray-400">
                                         <th class="px-4 py-3">Medewerker</th>
+                                        <th class="px-4 py-3 text-right">
+                                            <span
+                                                class="inline-flex cursor-help items-center justify-end gap-1"
+                                                v-tooltip="omzetBrutoTooltip"
+                                            >
+                                                Omzet bruto
+                                                <span class="icon-info text-[10px] opacity-60"></span>
+                                            </span>
+                                        </th>
+                                        <th
+                                            v-if="selectedGroups.includes('lost')"
+                                            class="px-4 py-3 text-right"
+                                        >
+                                            Verloren
+                                        </th>
                                         <th class="px-4 py-3 text-right">Inkoop</th>
-                                        <th class="px-4 py-3 text-right">Weekomzet</th>
+                                        <th class="px-4 py-3 text-right">
+                                            <span
+                                                class="inline-flex cursor-help items-center justify-end gap-1"
+                                                v-tooltip="'Omzet bruto minus verloren.'"
+                                            >
+                                                Omzet netto
+                                                <span class="icon-info text-[10px] opacity-60"></span>
+                                            </span>
+                                        </th>
                                     </tr>
                                 </thead>
 
@@ -195,12 +241,23 @@
                                                 </div>
                                             </td>
 
+                                            <td class="px-4 py-3 text-right text-sm font-medium text-gray-800 dark:text-white">
+                                                @{{ formatCurrency(employee.bruto) }}
+                                            </td>
+
+                                            <td
+                                                v-if="selectedGroups.includes('lost')"
+                                                class="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300"
+                                            >
+                                                @{{ formatCurrency(employee.verloren) }}
+                                            </td>
+
                                             <td class="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300">
-                                                @{{ formatCurrency(employee.week_inkoop) }}
+                                                @{{ formatCurrency(employee.inkoop) }}
                                             </td>
 
                                             <td class="px-4 py-3 text-right text-sm font-medium text-gray-800 dark:text-white">
-                                                @{{ formatCurrency(employee.week_total) }}
+                                                @{{ formatCurrency(employee.netto) }}
                                             </td>
                                         </tr>
 
@@ -226,12 +283,23 @@
                                                     </div>
                                                 </td>
 
+                                                <td class="py-2 pl-4 pr-4 text-right text-sm text-gray-500 dark:text-gray-400">
+                                                    @{{ formatCurrency(order.total_price) }}
+                                                </td>
+
+                                                <td
+                                                    v-if="selectedGroups.includes('lost')"
+                                                    class="py-2 pl-4 pr-4 text-right text-sm text-gray-700 dark:text-gray-300"
+                                                >
+                                                    @{{ order.is_lost ? formatCurrency(order.total_price) : '—' }}
+                                                </td>
+
                                                 <td class="py-2 pl-4 pr-4 text-right text-sm text-gray-700 dark:text-gray-300">
                                                     @{{ formatCurrency(order.inkoop_price) }}
                                                 </td>
 
                                                 <td class="py-2 pl-4 pr-4 text-right text-sm text-gray-500 dark:text-gray-400">
-                                                    @{{ formatCurrency(order.total_price) }}
+                                                    @{{ order.is_lost ? '—' : formatCurrency(order.total_price) }}
                                                 </td>
                                             </tr>
                                         </template>
@@ -239,7 +307,7 @@
 
                                     <tr v-if="! employees.length">
                                         <td
-                                            colspan="3"
+                                            :colspan="tableColspan"
                                             class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
                                         >
                                             Geen medewerkers gevonden.
@@ -253,10 +321,19 @@
                                             Totaal
                                         </td>
                                         <td class="px-4 py-3 text-right text-sm font-semibold text-gray-800 dark:text-white">
-                                            @{{ formatCurrency(employees.reduce((sum, e) => sum + e.week_inkoop, 0)) }}
+                                            @{{ formatCurrency(employees.reduce((sum, e) => sum + e.bruto, 0)) }}
+                                        </td>
+                                        <td
+                                            v-if="selectedGroups.includes('lost')"
+                                            class="px-4 py-3 text-right text-sm font-semibold text-gray-800 dark:text-white"
+                                        >
+                                            @{{ formatCurrency(employees.reduce((sum, e) => sum + e.verloren, 0)) }}
                                         </td>
                                         <td class="px-4 py-3 text-right text-sm font-semibold text-gray-800 dark:text-white">
-                                            @{{ formatCurrency(employees.reduce((sum, e) => sum + e.week_total, 0)) }}
+                                            @{{ formatCurrency(employees.reduce((sum, e) => sum + e.inkoop, 0)) }}
+                                        </td>
+                                        <td class="px-4 py-3 text-right text-sm font-semibold text-gray-800 dark:text-white">
+                                            @{{ formatCurrency(employees.reduce((sum, e) => sum + e.netto, 0)) }}
                                         </td>
                                     </tr>
                                 </tfoot>
@@ -291,35 +368,42 @@
 
                 data() {
                     return {
+                        period: '{{ $initialPeriod }}',
                         week: {{ $initialWeek }},
                         year: {{ $initialYear }},
-                        weekLabel: '',
-                        stages: [],
-                        departments: [],
-                        selectedStages: [],
-                        selectedDepartments: ['privatescan', 'hernia'],
+                        month: '{{ $initialMonth }}',
+                        periodLabel: '',
+                        selectedGroups: ['option', 'nearly_won', 'won'],
+                        selectedDepartments: @json(array_column($departments, 'id')),
+                        groups: [
+                            { id: 'option',     label: 'Option',         color: '#3CC3DF' },
+                            { id: 'nearly_won', label: 'Bijna gewonnen', color: '#FFD166' },
+                            { id: 'won',        label: 'Gewonnen',        color: '#6BCB77' },
+                            { id: 'lost',       label: 'Verloren',        color: '#FF928A' },
+                        ],
+                        departments: @json($departments),
                         days: [],
                         datasets: [],
                         employees: [],
                         expandedEmployees: [],
                         isInitialLoad: true,
                         isLoading: true,
-                        stageDropdownOpen: false,
+                        groupDropdownOpen: false,
                         departmentDropdownOpen: false,
                     }
                 },
 
                 computed: {
-                    selectedStageText() {
-                        if (! this.selectedStages.length) {
-                            return 'Geen statussen';
+                    selectedGroupText() {
+                        if (! this.selectedGroups.length) {
+                            return 'Geen groepen';
                         }
 
-                        if (this.selectedStages.length === this.stages.length) {
-                            return 'Alle statussen';
+                        if (this.selectedGroups.length === this.groups.length) {
+                            return 'Alle groepen';
                         }
 
-                        return `${this.selectedStages.length} statussen`;
+                        return `${this.selectedGroups.length} groepen`;
                     },
 
                     selectedDepartmentText() {
@@ -336,11 +420,27 @@
                             .map(department => department.label)
                             .join(', ');
                     },
+
+                    tableColspan() {
+                        return this.selectedGroups.includes('lost') ? 5 : 4;
+                    },
+
+                    omzetBrutoTooltip() {
+                        const nonLost = this.groups
+                            .filter(g => this.selectedGroups.includes(g.id) && g.id !== 'lost')
+                            .map(g => g.label);
+
+                        if (! nonLost.length) {
+                            return 'Som van verloren (altijd meegenomen voor netto).';
+                        }
+
+                        return 'Som van: ' + nonLost.join(' + ') + ' + Verloren.';
+                    },
                 },
 
                 mounted() {
                     this._chart = null; // kept outside data() so Vue never wraps the Chart instance in a Proxy
-                    this.loadFilterOptions();
+                    this.loadData();
                 },
 
                 beforeUnmount() {
@@ -351,35 +451,42 @@
                 },
 
                 methods: {
-                    loadFilterOptions() {
-                        this.$axios.get("{{ route('admin.reports.revenue-by-employee.filter-options') }}")
-                            .then(response => {
-                                this.stages = response.data.stages || [];
-                                this.departments = response.data.departments || [];
-                                this.selectedStages = this.stages
-                                    .filter(stage => ! stage.is_lost)
-                                    .map(stage => stage.id);
-
-                                this.loadData();
-                            });
-                    },
-
                     async loadData() {
                         this.isLoading = true;
+                        this.expandedEmployees = [];
+
                         try {
+                            const params = {
+                                period: this.period,
+                                groups: this.selectedGroups,
+                                departments: this.selectedDepartments,
+                            };
+
+                            if (this.period === 'month') {
+                                params.month = this.month;
+                            } else {
+                                params.week = this.week;
+                                params.year = this.year;
+                            }
+
                             const response = await this.$axios.get("{{ route('admin.reports.revenue-by-employee.data') }}", {
-                                params: {
-                                    week: this.week,
-                                    year: this.year,
-                                    stages: this.selectedStages,
-                                    departments: this.selectedDepartments,
-                                }
+                                params,
                             });
                             const data = response.data;
-                            this.weekLabel = data.week_label;
+                            this.periodLabel = data.period_label;
                             this.days = data.days;
                             this.datasets = data.datasets;
                             this.employees = data.employees;
+
+                            if (data.period === 'month' && data.month) {
+                                this.month = data.month;
+                            }
+
+                            if (data.week && data.year) {
+                                this.week = data.week;
+                                this.year = data.year;
+                            }
+
                             this.$nextTick(() => this.renderChart());
                         } finally {
                             this.isLoading = false;
@@ -396,11 +503,12 @@
                             // JSON round-trip strips Vue reactivity before handing data to Chart.js.
                             this._chart.data.labels = this.days.map(d => d.label);
                             this._chart.data.datasets = JSON.parse(JSON.stringify(this.datasets));
+                            this._chart.options.scales.x.ticks.color = (ctx) => this.tickColor(ctx.index);
+                            this._chart.options.scales.x.ticks.font = (ctx) => ({ size: this.tickFontSize(ctx.index) });
                             this._chart.update('none');
                             return;
                         }
 
-                        const weekendIndices = [5, 6]; // Mon-anchored week: Sat=5, Sun=6
                         const self = this;
 
                         this._chart = new Chart(canvas, {
@@ -434,8 +542,8 @@
                                         beginAtZero: true,
                                         border: { dash: [8, 4] },
                                         ticks: {
-                                            color: (ctx) => weekendIndices.includes(ctx.index) ? '#9CA3AF' : '#374151',
-                                            font: (ctx) => ({ size: weekendIndices.includes(ctx.index) ? 10 : 12 }),
+                                            color: (ctx) => self.tickColor(ctx.index),
+                                            font: (ctx) => ({ size: self.tickFontSize(ctx.index) }),
                                         },
                                     },
                                     y: {
@@ -451,29 +559,65 @@
                         });
                     },
 
-                    prevWeek() {
-                        const date = this.isoWeekDate(this.year, this.week);
+                    tickColor(index) {
+                        return this.days[index]?.is_weekend ? '#9CA3AF' : '#374151';
+                    },
 
-                        date.setDate(date.getDate() - 7);
+                    tickFontSize(index) {
+                        return this.days[index]?.is_weekend ? 10 : 12;
+                    },
 
-                        const isoWeek = this.getISOWeek(date);
+                    setPeriod(period) {
+                        if (this.period === period) {
+                            return;
+                        }
 
-                        this.week = isoWeek.week;
-                        this.year = isoWeek.year;
+                        if (period === 'month') {
+                            const weekDate = this.isoWeekDate(this.year, this.week);
+                            const month = String(weekDate.getMonth() + 1).padStart(2, '0');
+                            this.month = `${weekDate.getFullYear()}-${month}`;
+                        } else {
+                            const [year, month] = this.month.split('-').map(Number);
+                            const firstOfMonth = new Date(year, month - 1, 1);
+                            const isoWeek = this.getISOWeek(firstOfMonth);
+                            this.week = isoWeek.week;
+                            this.year = isoWeek.year;
+                        }
+
+                        this.period = period;
+                        this.updateUrl();
+                        this.loadData();
+                    },
+
+                    prevPeriod() {
+                        if (this.period === 'month') {
+                            const [year, month] = this.month.split('-').map(Number);
+                            const date = new Date(year, month - 2, 1);
+                            this.month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                        } else {
+                            const date = this.isoWeekDate(this.year, this.week);
+                            date.setDate(date.getDate() - 7);
+                            const isoWeek = this.getISOWeek(date);
+                            this.week = isoWeek.week;
+                            this.year = isoWeek.year;
+                        }
 
                         this.updateUrl();
                         this.loadData();
                     },
 
-                    nextWeek() {
-                        const date = this.isoWeekDate(this.year, this.week);
-
-                        date.setDate(date.getDate() + 7);
-
-                        const isoWeek = this.getISOWeek(date);
-
-                        this.week = isoWeek.week;
-                        this.year = isoWeek.year;
+                    nextPeriod() {
+                        if (this.period === 'month') {
+                            const [year, month] = this.month.split('-').map(Number);
+                            const date = new Date(year, month, 1);
+                            this.month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                        } else {
+                            const date = this.isoWeekDate(this.year, this.week);
+                            date.setDate(date.getDate() + 7);
+                            const isoWeek = this.getISOWeek(date);
+                            this.week = isoWeek.week;
+                            this.year = isoWeek.year;
+                        }
 
                         this.updateUrl();
                         this.loadData();
@@ -481,8 +625,18 @@
 
                     updateUrl() {
                         const url = new URL(window.location.href);
-                        url.searchParams.set('week', this.week);
-                        url.searchParams.set('year', this.year);
+                        url.searchParams.set('period', this.period);
+
+                        if (this.period === 'month') {
+                            url.searchParams.set('month', this.month);
+                            url.searchParams.delete('week');
+                            url.searchParams.delete('year');
+                        } else {
+                            url.searchParams.set('week', this.week);
+                            url.searchParams.set('year', this.year);
+                            url.searchParams.delete('month');
+                        }
+
                         history.pushState({}, '', url.toString());
                     },
 
@@ -534,10 +688,6 @@
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                         });
-                    },
-
-                    departmentLabel(departmentId) {
-                        return this.departments.find(department => department.id === departmentId)?.label || departmentId;
                     },
                 }
             });

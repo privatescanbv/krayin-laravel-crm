@@ -12,22 +12,10 @@ composer dump-autoload -o
 echo "Composer dependencies updated."
 
 
-echo "Updating and install npm dependencies root..."
-
-npm upgrade
-npm install
-
 echo "Building Admin package..."
 
+# De Admin package is de enige met een package.json / vite.config.js.
 cd packages/Webkul/Admin
-echo "Updating dependencies..."
-npm update
-echo "Installing dependencies..."
-npm install
-cd ../../..
-
-echo "Building WebForm package..."
-cd packages/Webkul/WebForm
 echo "Updating dependencies..."
 npm update
 echo "Installing dependencies..."

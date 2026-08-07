@@ -13,12 +13,18 @@
                 Edit sales
             </div>
         </div>
+
+        <div class="flex items-center gap-x-2.5">
+            <button type="submit" form="sales-edit-form" class="primary-button">
+                Opslaan
+            </button>
+        </div>
     </div>
 
     <!-- Content -->
     <div class="mt-3.5">
         <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <form action="{{ route('admin.sales-leads.update', $salesLead->id) }}" method="POST">
+            <form id="sales-edit-form" action="{{ route('admin.sales-leads.update', $salesLead->id) }}" method="POST">
                 @csrf
                 @method('PUT')
 
@@ -144,15 +150,6 @@
                     </x-adminc::components.field>
                 </div>
 
-                <!-- Submit Button -->
-                <div class="mt-6 flex justify-end">
-                    <button
-                        type="submit"
-                        class="primary-button"
-                    >
-                        Update Sales
-                    </button>
-                </div>
             </form>
         </div>
     </div>

@@ -75,13 +75,17 @@ class SyncGraphEmails extends Command
             $this->info("Syncing mailbox [{$key}] {$address} ...");
 
             try {
-                $tokenService->clearToken($key);
                 $graphService->configureMailbox($address, $key, $folderName);
                 $graphService->processMessagesFromAllFolders();
 
                 $this->info('  -> Done.');
             } catch (Exception $e) {
                 $this->error("  -> Failed: {$e->getMessage()}");
+
+                // GraphMailService has no 401 recovery of its own, so drop the cached token: if the
+                // failure was a rejected token, the next run starts with a fresh one instead of
+                // replaying the bad one until it expires.
+                $tokenService->clearToken($key);
 
                 Log::error('Graph mailbox sync failed', [
                     'mailbox'   => $key,

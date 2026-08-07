@@ -142,7 +142,6 @@ class ActivityImporter
                     'e.parent_id',
                     'et.description',
                     'et.description_html',
-                    'et.raw_source',
                     'eb.bean_id',
                     'eb.bean_module',
                 ])
@@ -595,7 +594,6 @@ class ActivityImporter
                     'e.parent_id',
                     'et.description',
                     'et.description_html',
-                    'et.raw_source',
                 ])
                 ->whereIn('e.parent_id', $sugarOrderIds)
                 ->where('e.parent_type', '=', $parentType)

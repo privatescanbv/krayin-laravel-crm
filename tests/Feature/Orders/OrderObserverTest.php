@@ -41,6 +41,48 @@ test('updating to a won stage marks all non-lost order items as won', function (
         ->and($lostItem->fresh()->status)->toBe(OrderItemStatus::LOST);
 });
 
+test('updating to gewonnen stage marks planned order items as won so they do not stay ingepland', function () {
+    $order = Order::factory()->create([
+        'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id(),
+    ]);
+
+    $plannedItem = OrderItem::factory()->create([
+        'order_id' => $order->id,
+        'status'   => OrderItemStatus::PLANNED->value,
+    ]);
+    $newItem = OrderItem::factory()->create([
+        'order_id' => $order->id,
+        'status'   => OrderItemStatus::NEW->value,
+    ]);
+    $lostItem = OrderItem::factory()->create([
+        'order_id' => $order->id,
+        'status'   => OrderItemStatus::LOST->value,
+    ]);
+
+    $order->pipeline_stage_id = PipelineStage::ORDER_GEWONNEN->id();
+    $order->save();
+
+    expect($plannedItem->fresh()->status)->toBe(OrderItemStatus::WON)
+        ->and($newItem->fresh()->status)->toBe(OrderItemStatus::WON)
+        ->and($lostItem->fresh()->status)->toBe(OrderItemStatus::LOST);
+});
+
+test('updating to hernia gewonnen stage marks planned order items as won', function () {
+    $order = Order::factory()->create([
+        'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND_HERNIA->id(),
+    ]);
+
+    $plannedItem = OrderItem::factory()->create([
+        'order_id' => $order->id,
+        'status'   => OrderItemStatus::PLANNED->value,
+    ]);
+
+    $order->pipeline_stage_id = PipelineStage::ORDER_GEWONNEN_HERNIA->id();
+    $order->save();
+
+    expect($plannedItem->fresh()->status)->toBe(OrderItemStatus::WON);
+});
+
 test('updating to a hernia won stage marks order items as won', function () {
     $order = Order::factory()->create([
         'pipeline_stage_id' => PipelineStage::ORDER_VOORBEREIDEN_HERNIA->id(),

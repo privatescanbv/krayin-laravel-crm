@@ -347,7 +347,6 @@
                         fieldConfigurations: [
                             // Personal Information
                             { field: 'salutation', label: 'Aanhef', type: 'simple' },
-                            { field: 'title', label: 'Titel', type: 'simple' },
                             { field: 'first_name', label: 'Voornaam', type: 'simple' },
                             { field: 'last_name', label: 'Achternaam', type: 'simple' },
                             { field: 'lastname_prefix', label: 'Voorvoegsel achternaam', type: 'simple' },
@@ -367,10 +366,21 @@
                             { field: 'address', label: 'Adres', type: 'address' },
 
                             // Lead Information
-                            { field: 'status', label: 'Status', type: 'stage' }, // Special handling for status as stage name
+                            // 'status' is deliberately not selectable: it showed the pipeline stage name
+                            // while the merge copied the unrelated leads.status column. The stage is
+                            // already listed above as a readonly row.
                             { field: 'description', label: 'Beschrijving', type: 'simple', cssClass: 'text-sm text-center break-words max-w-xs' },
                             { field: 'lost_reason', label: 'Reden verlies', type: 'simple' },
 
+                            // Fields whose stored value is an id or enum: `displayField` only changes what
+                            // is shown, the radio keeps submitting the real column name.
+                            { field: 'mri_status', label: 'MRI-status', type: 'simple', displayField: 'mri_status_label' },
+                            // 'diagnosis_form' is not a column: choosing it copies diagnosis_form_id and
+                            // diagnoseform_pdf_url together (see LeadRepository::mergeLeads).
+                            { field: 'diagnosis_form', label: 'Diagnoseformulier', type: 'simple' },
+                            { field: 'national_identification_number', label: 'BSN', type: 'simple' },
+                            { field: 'organization_id', label: 'Organisatie', type: 'simple', displayField: 'organization_name' },
+                            { field: 'contact_person_id', label: 'Contactpersoon', type: 'simple', displayField: 'contact_person_name' },
                         ]
                     };
                 },
@@ -493,42 +503,53 @@
                         return lead[fieldConfig.field] || 'N/A';
                     },
 
+                    // These values end up in v-html, and lead data is free text (BSN, description,
+                    // organisation name, PDF url), so escape before interpolating.
+                    esc(value) {
+                        const div = document.createElement('div');
+                        div.textContent = value ?? '';
+                        return div.innerHTML;
+                    },
+
                     renderFieldValue(lead, fieldConfig) {
                         const cssClass = fieldConfig.cssClass || 'text-sm text-center break-words';
 
                         switch (fieldConfig.type) {
                             case 'simple':
-                                let value = lead[fieldConfig.field] || 'N/A';
+                                let value = lead[fieldConfig.displayField ?? fieldConfig.field] || 'N/A';
                                 if (fieldConfig.field === 'description' && typeof value === 'string' && value.length > 100) {
                                     value = value.substring(0, 100) + '…';
                                 }
-                                return `<span class="${cssClass}">${value}</span>`;
+                                return `<span class="${cssClass}">${this.esc(value)}</span>`;
 
                             case 'stage':
                                 const stageName = lead.stage?.name || 'N/A';
-                                return `<span class="${cssClass}">${stageName}</span>`;
+                                return `<span class="${cssClass}">${this.esc(stageName)}</span>`;
+
+                            case 'readonly':
+                                return `<span class="${cssClass}">${this.esc(lead[fieldConfig.field]?.name || 'N/A')}</span>`;
 
                             case 'array':
                                 if (!lead[fieldConfig.field] || lead[fieldConfig.field].length === 0) {
                                     const emptyText = fieldConfig.field === 'emails' ? 'Geen e-mails' : 'Geen telefoonnummers';
                                     return `<div class="text-xs text-center"><span class="text-gray-400">${emptyText}</span></div>`;
                                 }
-                                const items = lead[fieldConfig.field].map(item => `<div class="mb-1">${item.value}</div>`).join('');
+                                const items = lead[fieldConfig.field].map(item => `<div class="mb-1">${this.esc(item.value)}</div>`).join('');
                                 return `<div class="text-xs text-center">${items}</div>`;
 
                             case 'address':
                                 if (!lead.address) {
                                     return '<div class="text-xs text-center"><span class="text-gray-400">Geen adres</span></div>';
                                 }
-                                let addressHtml = `<div class="text-xs text-center"><div class="mb-1"><div>${lead.address.full_address || 'N/A'}</div>`;
+                                let addressHtml = `<div class="text-xs text-center"><div class="mb-1"><div>${this.esc(lead.address.full_address || 'N/A')}</div>`;
                                 if (lead.address.street && lead.address.house_number) {
-                                    addressHtml += `<div>${lead.address.street} ${lead.address.house_number}${lead.address.house_number_suffix || ''}</div>`;
+                                    addressHtml += `<div>${this.esc(lead.address.street)} ${this.esc(lead.address.house_number)}${this.esc(lead.address.house_number_suffix || '')}</div>`;
                                 }
                                 if (lead.address.postal_code || lead.address.city) {
-                                    addressHtml += `<div>${lead.address.postal_code || ''} ${lead.address.city || ''}</div>`;
+                                    addressHtml += `<div>${this.esc(lead.address.postal_code || '')} ${this.esc(lead.address.city || '')}</div>`;
                                 }
                                 if (lead.address.state || lead.address.country) {
-                                    addressHtml += `<div>${lead.address.state || ''} ${lead.address.country || ''}</div>`;
+                                    addressHtml += `<div>${this.esc(lead.address.state || '')} ${this.esc(lead.address.country || '')}</div>`;
                                 }
                                 addressHtml += '</div></div>';
                                 return addressHtml;

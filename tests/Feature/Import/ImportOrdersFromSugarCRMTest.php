@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\LostReason;
 use App\Enums\OrderItemStatus;
+use App\Enums\OrderPaymentStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentType;
 use App\Enums\PipelineStage;
@@ -82,6 +83,8 @@ beforeEach(function () {
         $table->string('aankomsttijd_c', 5)->nullable();
         $table->decimal('betaald_vooruit_c', 14, 6)->nullable();
         $table->decimal('betaald_kliniek_c', 14, 6)->nullable();
+        $table->decimal('terugbetaald_klant_c', 14, 6)->nullable();
+        $table->date('datum_terugbetaald_c')->nullable();
         $table->dateTime('datum_betaling_vr_c')->nullable();
         $table->decimal('openstaand_c', 14, 6)->nullable();
         $table->string('betaal_status_c')->nullable();
@@ -194,6 +197,8 @@ function insertSugarOrder(string $id, array $overrides = []): void
         'aankomsttijd_c',
         'betaald_vooruit_c',
         'betaald_kliniek_c',
+        'terugbetaald_klant_c',
+        'datum_terugbetaald_c',
         'datum_betaling_vr_c',
         'openstaand_c',
         'betaal_status_c',
@@ -218,17 +223,19 @@ function insertSugarOrder(string $id, array $overrides = []): void
     ], $soOverrides));
 
     DB::connection('sugarcrm')->table('pcrm_salesorder_cstm')->insert(array_merge([
-        'id_c'                => $id,
-        'reden_afvoeren_c'    => null,
-        'op_een_factuur_c'    => 0,
-        'd_wfl_status_c'      => 'eindeproces',
-        'betaald_vooruit_c'   => null,
-        'betaald_kliniek_c'   => null,
-        'datum_betaling_vr_c' => '2025-03-10 09:00:00',
-        'openstaand_c'        => null,
-        'betaal_status_c'     => null,
-        'pin_contant_c'       => null,
-        'user_id_c'           => null,
+        'id_c'                 => $id,
+        'reden_afvoeren_c'     => null,
+        'op_een_factuur_c'     => 0,
+        'd_wfl_status_c'       => 'eindeproces',
+        'betaald_vooruit_c'    => null,
+        'betaald_kliniek_c'    => null,
+        'terugbetaald_klant_c' => null,
+        'datum_terugbetaald_c' => null,
+        'datum_betaling_vr_c'  => '2025-03-10 09:00:00',
+        'openstaand_c'         => null,
+        'betaal_status_c'      => null,
+        'pin_contant_c'        => null,
+        'user_id_c'            => null,
     ], $cstmOverrides));
 }
 
@@ -611,6 +618,48 @@ test('import keeps orderitem LOST when row is verloren even with examination dat
     $order = Order::where('external_id', 'order-lost-exam')->first();
     expect($order->orderItems)->toHaveCount(1)
         ->and($order->orderItems->first()->status)->toBe(OrderItemStatus::LOST);
+});
+
+test('import keeps orderitem WON when row is gewonnen even with examination date', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-won-exam']);
+    Person::factory()->create(['external_id' => 'contact-won-exam']);
+
+    insertSugarOrder('order-won-exam', [
+        'sales_stage'       => 'Gewonnen',
+        'datum_onderzoek_1' => '2025-08-20',
+    ]);
+    insertSugarRow('order-won-exam', 'row-won-exam', ['sales_stage' => 'Gewonnen']);
+    linkRowToContact('row-won-exam', 'contact-won-exam');
+    linkOrderToSugarLead('order-won-exam', 'sugar-lead-won-exam');
+
+    expect(runOrderImport())->toBe(0);
+
+    $order = Order::where('external_id', 'order-won-exam')->first();
+    expect($order)->not->toBeNull()
+        ->and($order->pipeline_stage_id)->toBe(PipelineStage::ORDER_GEWONNEN->id())
+        ->and($order->orderItems)->toHaveCount(1)
+        ->and($order->orderItems->first()->status)->toBe(OrderItemStatus::WON);
+});
+
+test('import forces non-lost orderitem to WON when order is gewonnen even if row stage is open', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-won-row-optie']);
+    Person::factory()->create(['external_id' => 'contact-won-row-optie']);
+
+    insertSugarOrder('order-won-row-optie', [
+        'sales_stage'       => 'Gewonnen',
+        'datum_onderzoek_1' => '2025-08-20',
+    ]);
+    // Row still "Optie" in Sugar while order is already Gewonnen — must not stay planned/ingepland.
+    insertSugarRow('order-won-row-optie', 'row-won-row-optie', ['sales_stage' => 'Optie']);
+    linkRowToContact('row-won-row-optie', 'contact-won-row-optie');
+    linkOrderToSugarLead('order-won-row-optie', 'sugar-lead-won-row-optie');
+
+    expect(runOrderImport())->toBe(0);
+
+    $order = Order::where('external_id', 'order-won-row-optie')->first();
+    expect($order)->not->toBeNull()
+        ->and($order->pipeline_stage_id)->toBe(PipelineStage::ORDER_GEWONNEN->id())
+        ->and($order->orderItems->first()->status)->toBe(OrderItemStatus::WON);
 });
 
 test('imports won order and creates saleslead and orderitem linked to person', function () {
@@ -1366,6 +1415,110 @@ test('does not create OrderPayments when Sugar payment amounts are empty', funct
 
     $order = Order::where('external_id', 'order-pay-none-001')->first();
     expect(OrderPayment::where('order_id', $order->id)->count())->toBe(0);
+});
+
+test('imports Sugar terugbetaald_klant_c as REFUND payment', function () {
+    // Regressie voor Sugar-order 202500176: klant betaalde 709 vooruit op een order van 509 en
+    // kreeg 200 teruggestort. Zonder de REFUND-regel telde de CRM 709 betaald → status Credit.
+    Lead::factory()->create(['external_id' => 'sugar-lead-refund']);
+
+    insertSugarOrder('order-refund-001', [
+        'amount'               => 509.0,
+        'betaald_vooruit_c'    => 709.0,
+        'datum_betaling_vr_c'  => '2025-01-27 00:00:00',
+        'terugbetaald_klant_c' => 200.0,
+        'datum_terugbetaald_c' => '2025-01-29',
+        'openstaand_c'         => 0.0,
+        'betaal_status_c'      => 'volledig',
+    ]);
+    linkOrderToSugarLead('order-refund-001', 'sugar-lead-refund');
+
+    runOrderImport();
+
+    $order = Order::where('external_id', 'order-refund-001')->first();
+    expect($order)->not->toBeNull();
+
+    $payments = OrderPayment::where('order_id', $order->id)->get();
+    expect($payments)->toHaveCount(2);
+
+    $refund = $payments->firstWhere('type', PaymentType::REFUND);
+    expect($refund)->not->toBeNull()
+        ->and((float) $refund->amount)->toBe(200.0)
+        ->and($refund->method)->toBe(PaymentMethod::BANK)
+        ->and($refund->currency)->toBe('EUR')
+        ->and($refund->paid_at?->format('Y-m-d'))->toBe('2025-01-29');
+
+    $order->load('payments');
+    expect($order->netReceivedAmount())->toBe(509.0)
+        ->and($order->paymentStatus())->toBe(OrderPaymentStatus::FULLY_PAID);
+});
+
+test('refund without datum_terugbetaald_c falls back to the customer payment date', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-refund-nodate']);
+
+    insertSugarOrder('order-refund-nodate-001', [
+        'amount'               => 200.0,
+        'betaald_vooruit_c'    => 300.0,
+        'datum_betaling_vr_c'  => '2025-02-01 00:00:00',
+        'terugbetaald_klant_c' => 100.0,
+        'datum_terugbetaald_c' => null,
+    ]);
+    linkOrderToSugarLead('order-refund-nodate-001', 'sugar-lead-refund-nodate');
+
+    runOrderImport();
+
+    $order = Order::where('external_id', 'order-refund-nodate-001')->first();
+    $refund = OrderPayment::where('order_id', $order->id)
+        ->where('type', PaymentType::REFUND)
+        ->sole();
+
+    expect((float) $refund->amount)->toBe(100.0)
+        ->and($refund->paid_at?->format('Y-m-d'))->toBe('2025-02-01');
+});
+
+test('refund falls back to the clinic payment date when there is no advance payment', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-refund-clinic']);
+
+    insertSugarOrder('order-refund-clinic-001', [
+        'amount'               => 100.0,
+        'betaald_vooruit_c'    => null,
+        'betaald_kliniek_c'    => 150.0,
+        'pin_contant_c'        => 'pin',
+        'datum_onderzoek_1'    => '2025-07-15',
+        'terugbetaald_klant_c' => 50.0,
+        'datum_terugbetaald_c' => null,
+    ]);
+    linkOrderToSugarLead('order-refund-clinic-001', 'sugar-lead-refund-clinic');
+
+    runOrderImport();
+
+    $order = Order::where('external_id', 'order-refund-clinic-001')->first();
+    $refund = OrderPayment::where('order_id', $order->id)
+        ->where('type', PaymentType::REFUND)
+        ->sole();
+
+    // Terugbetaling volgt de kliniekbetaling; methode blijft BANK ondanks pin_contant_c=pin.
+    expect((float) $refund->amount)->toBe(50.0)
+        ->and($refund->method)->toBe(PaymentMethod::BANK)
+        ->and($refund->paid_at?->format('Y-m-d'))->toBe('2025-07-15');
+});
+
+test('does not create a REFUND payment when terugbetaald_klant_c is empty or zero', function () {
+    Lead::factory()->create(['external_id' => 'sugar-lead-refund-zero']);
+
+    insertSugarOrder('order-refund-zero-001', [
+        'betaald_vooruit_c'    => 250.0,
+        'terugbetaald_klant_c' => 0.0,
+    ]);
+    linkOrderToSugarLead('order-refund-zero-001', 'sugar-lead-refund-zero');
+
+    runOrderImport();
+
+    $order = Order::where('external_id', 'order-refund-zero-001')->first();
+    $payments = OrderPayment::where('order_id', $order->id)->get();
+
+    expect($payments)->toHaveCount(1)
+        ->and($payments->first()->type)->toBe(PaymentType::ADVANCE);
 });
 
 test('creates ResourceOrderItem with correct times when duration and resource are present', function () {

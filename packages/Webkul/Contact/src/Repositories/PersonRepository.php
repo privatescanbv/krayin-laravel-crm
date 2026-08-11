@@ -409,7 +409,7 @@ class PersonRepository extends Repository
      */
     public function transferPersonRelations(int $primaryPersonId, int $duplicatePersonId): void
     {
-        foreach (['emails', 'activities', 'anamnesis', 'patient_messages', 'order_items', 'afb_person_documents'] as $table) {
+        foreach (['emails', 'anamnesis', 'patient_messages', 'order_items', 'afb_person_documents'] as $table) {
             // Anamnesis needs conflict resolution first — handled below.
             if ($table === 'anamnesis') {
                 continue;
@@ -417,6 +417,8 @@ class PersonRepository extends Repository
 
             DB::table($table)->where('person_id', $duplicatePersonId)->update(['person_id' => $primaryPersonId]);
         }
+
+        $this->transferActivitiesSkippingDuplicates('person_id', $primaryPersonId, $duplicatePersonId);
 
         DB::table('patient_notifications')
             ->where('patient_id', $duplicatePersonId)
@@ -490,6 +492,30 @@ class PersonRepository extends Repository
 
         if (empty($primaryAddressId) && ! empty($duplicateAddressId)) {
             DB::table('persons')->where('id', $primaryPersonId)->update(['address_id' => $duplicateAddressId]);
+        }
+    }
+
+    /**
+     * Move activities to the primary person, skipping any duplicate activity that already matches
+     * one the primary has (same title + status) so a merge never doubles up an activity. Skipped
+     * rows stay on the (soft-deleted) duplicate - no data lost, just not surfaced twice.
+     */
+    private function transferActivitiesSkippingDuplicates(string $foreignKey, int $primaryId, int $duplicateId): void
+    {
+        $existing = DB::table('activities')
+            ->where($foreignKey, $primaryId)
+            ->get(['title', 'status'])
+            ->map(fn ($row) => $row->title.'|'.$row->status)
+            ->all();
+
+        $idsToTransfer = DB::table('activities')
+            ->where($foreignKey, $duplicateId)
+            ->get(['id', 'title', 'status'])
+            ->reject(fn ($row) => in_array($row->title.'|'.$row->status, $existing, true))
+            ->pluck('id');
+
+        if ($idsToTransfer->isNotEmpty()) {
+            DB::table('activities')->whereIn('id', $idsToTransfer)->update([$foreignKey => $primaryId]);
         }
     }
 

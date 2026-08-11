@@ -33,6 +33,25 @@ test('it transfers activities from the duplicate to the primary lead', function 
         ->and(Activity::where('lead_id', $duplicateLead->id)->count())->toBe(0);
 });
 
+test('it skips transferring an activity that duplicates one the primary already has', function () {
+    $primaryLead = Lead::factory()->create();
+    $duplicateLead = Lead::factory()->create();
+
+    $primaryMatch = Activity::create(['title' => 'Gebeld met patiënt', 'type' => 'note', 'status' => 'active', 'lead_id' => $primaryLead->id]);
+    $duplicateMatch = Activity::create(['title' => 'Gebeld met patiënt', 'type' => 'note', 'status' => 'active', 'lead_id' => $duplicateLead->id]);
+    $unique = Activity::create(['title' => 'Terugbellen', 'type' => 'task', 'lead_id' => $duplicateLead->id]);
+
+    $this->leadRepository->mergeLeads($primaryLead->id, [$duplicateLead->id]);
+
+    // The skipped activity was never re-pointed to the primary, so it goes away with the
+    // archived duplicate lead (Lead's LogsActivity trait deletes a lead's own activities on
+    // delete) instead of surfacing twice on the primary.
+    expect($unique->fresh()->lead_id)->toBe($primaryLead->id)
+        ->and(Activity::find($duplicateMatch->id))->toBeNull()
+        ->and($primaryMatch->fresh()->lead_id)->toBe($primaryLead->id)
+        ->and(Activity::where('lead_id', $primaryLead->id)->where('title', 'Gebeld met patiënt')->count())->toBe(1);
+});
+
 test('it merges linked persons without violating the unique index', function () {
     $primaryLead = Lead::factory()->create();
     $duplicateLead = Lead::factory()->create();

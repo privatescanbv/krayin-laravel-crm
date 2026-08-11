@@ -572,9 +572,11 @@ class LeadRepository extends Repository
      */
     public function transferLeadRelations(int $primaryLeadId, int $duplicateLeadId): void
     {
-        foreach (['activities', 'emails', 'lead_marketing_data'] as $table) {
+        foreach (['emails', 'lead_marketing_data'] as $table) {
             DB::table($table)->where('lead_id', $duplicateLeadId)->update(['lead_id' => $primaryLeadId]);
         }
+
+        $this->transferActivitiesSkippingDuplicates('lead_id', $primaryLeadId, $duplicateLeadId);
 
         $this->resolveAnamnesisConflictsBeforeLeadReassign($primaryLeadId, $duplicateLeadId);
 
@@ -617,6 +619,30 @@ class LeadRepository extends Repository
 
         if (empty($primaryAddressId) && ! empty($duplicateAddressId)) {
             DB::table('leads')->where('id', $primaryLeadId)->update(['address_id' => $duplicateAddressId]);
+        }
+    }
+
+    /**
+     * Move activities to the primary lead, skipping any duplicate activity that already matches
+     * one the primary has (same title + status) so a merge never doubles up an activity. Skipped
+     * rows stay on the (soft-deleted) duplicate - no data lost, just not surfaced twice.
+     */
+    private function transferActivitiesSkippingDuplicates(string $foreignKey, int $primaryId, int $duplicateId): void
+    {
+        $existing = DB::table('activities')
+            ->where($foreignKey, $primaryId)
+            ->get(['title', 'status'])
+            ->map(fn ($row) => $row->title.'|'.$row->status)
+            ->all();
+
+        $idsToTransfer = DB::table('activities')
+            ->where($foreignKey, $duplicateId)
+            ->get(['id', 'title', 'status'])
+            ->reject(fn ($row) => in_array($row->title.'|'.$row->status, $existing, true))
+            ->pluck('id');
+
+        if ($idsToTransfer->isNotEmpty()) {
+            DB::table('activities')->whereIn('id', $idsToTransfer)->update([$foreignKey => $primaryId]);
         }
     }
 

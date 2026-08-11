@@ -199,6 +199,29 @@ test('merging persons transfers activities with person_id to primary person', fu
     expect($activity->fresh()->person_id)->toBe($primary->id);
 });
 
+test('merging persons skips transferring an activity that duplicates one the primary already has', function () {
+    $primary = Person::factory()->create();
+    $duplicate = Person::factory()->create();
+    $group = Group::firstOrFail();
+
+    $activityData = fn (int $personId) => [
+        'type'      => 'note',
+        'title'     => 'Gebeld met patiënt',
+        'status'    => 'active',
+        'group_id'  => $group->id,
+        'person_id' => $personId,
+    ];
+
+    $primaryMatch = Activity::query()->create($activityData($primary->id));
+    $duplicateMatch = Activity::query()->create($activityData($duplicate->id));
+
+    $this->personRepository->mergePersons($primary->id, [$duplicate->id]);
+
+    expect($duplicateMatch->fresh()->person_id)->toBe($duplicate->id)
+        ->and($primaryMatch->fresh()->person_id)->toBe($primary->id)
+        ->and(Activity::where('person_id', $primary->id)->where('title', 'Gebeld met patiënt')->count())->toBe(1);
+});
+
 test('merging persons transfers email rows to primary person', function () {
     $primary = Person::factory()->create();
     $duplicate = Person::factory()->create();

@@ -45,7 +45,7 @@
         $status = OrderPurchaseStatus::forItem($purchaseTotal, $invoiceTotal, $forced);
 
         if ($status === OrderPurchaseStatus::HIDDEN) {
-            continue;
+            $status = OrderPurchaseStatus::NO_PURCHASE_PRICE;
         }
 
         $diff = $invoiceTotal - $purchaseTotal;
@@ -130,7 +130,7 @@
 
     @if (count($rows) === 0)
         <div class="rounded-lg border bg-white p-6 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-            Geen items met inkoop- of factuurbedrag (beide 0 wordt niet getoond).
+            Geen order items gevonden.
         </div>
     @else
         <div class="grid grid-cols-1 gap-4 md:grid-cols-5">

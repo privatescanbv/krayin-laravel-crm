@@ -15,6 +15,7 @@ use Webkul\Product\Models\Product;
 class RepairSugarOrderPurchasePrices extends AbstractSugarCRMImport
 {
     use SugarCRMOrderRowsTrait;
+
     protected $signature = 'orders:repair-sugar-purchase-prices
                             {--connection=sugarcrm : Database connection name}
                             {--order-nums=* : Specifieke ordernummers (bijv. 202502011)}

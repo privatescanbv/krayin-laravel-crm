@@ -26,14 +26,15 @@ We hebben vandaag een nieuwe versie van Privatescan klaargezet. In deze release 
 
 ### Portaal / Forms
 
-- **Geen aparte nieuwe productiefunctionaliteit in deze release.** De huidige productieversie van Forms was al leidend; we hebben de branchstand gecontroleerd en weer gelijkgetrokken met productie.
+- **Kleine robuustheidsverbetering in het portaal.** Een recente aanpassing maakt de omgang netter met gebruikers zonder voornaam in bepaalde portaal- en adminweergaven.
+- **Technisch onderhoud aan dependencies.** In Forms zijn dependency-updates en kwetsbaarheidsfixes meegenomen om de basis actueel en veiliger te houden.
 
 ---
 
 ## Aandachtspunten
 
 - In deze omgeving konden geen volledige lokale geautomatiseerde tests of builds worden uitgevoerd, omdat in de tijdelijke clones geen `vendor/`- en `node_modules/`-dependencies aanwezig zijn.
-- Advies na uitrol: controleer in het CRM kort een dubbelen-merge, een order-/inkoopflow, een e-mailactie vanuit het mailoverzicht en een rapportageweergave. Voor Forms volstaat een korte controle van een standaardformulier of portaalroute.
+- Advies na uitrol: controleer in het CRM kort een dubbelen-merge, een order-/inkoopflow, een e-mailactie vanuit het mailoverzicht en een rapportageweergave. Voor Forms volstaat een korte controle van een standaardformulier, portaalroute en een gebruiker waarbij naamvelden niet volledig gevuld zijn.
 
 ---
 
@@ -45,4 +46,4 @@ Het Privatescan development-team
 ---
 
 _Releasebasis CRM: `origin/main` `6eb46338f` -> `origin/development` `bbbc90e0b`._
-_Releasebasis Forms: `origin/main` `e6d85e4` -> `origin/development` `460a715` (development liep achter op production; geen nieuwe Forms-productiecode in deze release)._
+_Releasebasis Forms: `origin/main` `befbafb` -> `origin/development` `095a9ef`._

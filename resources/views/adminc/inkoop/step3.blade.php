@@ -155,7 +155,7 @@
                                             </a>
                                             <span class="text-gray-300 dark:text-gray-600">—</span>
                                         @endif
-                                        <span class="text-gray-700 dark:text-gray-300">{{ $orderItem->product->name ?? $orderItem->name ?? 'Onbekend product' }}</span>
+                                        <span class="text-gray-700 dark:text-gray-300">{{ $orderItem->getProductName() ?: 'Onbekend product' }}</span>
                                         @if ($crmPurchasePrice !== null)
                                             <span class="text-xs text-gray-500 dark:text-gray-400">€&nbsp;{{ number_format((float) $crmPurchasePrice, 2, ',', '.') }}</span>
                                         @endif

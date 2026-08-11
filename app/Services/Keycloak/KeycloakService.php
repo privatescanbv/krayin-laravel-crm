@@ -10,12 +10,18 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Laravel\Socialite\Contracts\User;
 use Laravel\Socialite\Facades\Socialite;
-use Laravel\Socialite\Two\User;
 use Webkul\Contact\Models\Person;
 
 class KeycloakService
 {
+    /**
+     * Placeholder used for firstName/lastName when the CRM value is blank.
+     * Keycloak does not handle an empty firstName/lastName well.
+     */
+    public const EMPTY_NAME_PLACEHOLDER = 'empty';
+
     /**
      * Get the base URL for browser redirects (external).
      */
@@ -333,6 +339,8 @@ class KeycloakService
      */
     public function createUser(array $userData, ?string $accessToken = null): ?string
     {
+        $userData = $this->normalizeNameFields($userData);
+
         $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/users');
 
         // Log user data being sent to Keycloak for debugging
@@ -464,6 +472,8 @@ class KeycloakService
      */
     public function updateUser(string $userId, array $userData, ?string $accessToken = null): bool
     {
+        $userData = $this->normalizeNameFields($userData);
+
         $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/users/'.$userId);
         $response = $this->makeRequest('PUT', $url, $accessToken, $userData);
 
@@ -682,6 +692,21 @@ class KeycloakService
         }
 
         return [$person, $user];
+    }
+
+    /**
+     * Replace blank firstName/lastName with a placeholder, only for fields present in the payload.
+     * Keycloak rejects/mishandles users with an empty firstName or lastName.
+     */
+    private function normalizeNameFields(array $userData): array
+    {
+        foreach (['firstName', 'lastName'] as $field) {
+            if (array_key_exists($field, $userData) && trim((string) $userData[$field]) === '') {
+                $userData[$field] = self::EMPTY_NAME_PLACEHOLDER;
+            }
+        }
+
+        return $userData;
     }
 
     /**

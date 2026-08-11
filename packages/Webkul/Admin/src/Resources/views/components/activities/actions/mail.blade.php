@@ -676,7 +676,7 @@
                             }
 
                             // Combine template content with signature; add blank line before signature so user can type above it
-                            const fullContent = templateContent + (signature ? '<p><br></p><p><br></p>' + signature : '');
+                            const fullContent = templateContent + (signature ? '<p><br></p>' + signature : '');
 
                             // Set content in TinyMCE or textarea
                             this.setContentWithRetry(fullContent);
@@ -784,7 +784,7 @@
                             } else {
                                 // Fallback to signature only
                                 @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
-                                    this.setContentWithRetry('<p><br></p><p><br></p>' + @json(auth()->guard('user')->user()->signature));
+                                    this.setContentWithRetry('<p><br></p>' + @json(auth()->guard('user')->user()->signature));
                                 @endif
                             }
                         }

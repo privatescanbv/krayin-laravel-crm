@@ -19,7 +19,11 @@ FROM ghcr.io/privatescanbv/dockerbase/php:8.5-fpm-bookworm
 ARG APP_ENV=production
 ARG WWWGROUP=1000
 ARG WWWUSER=1000
+# Baked in at build time so every error report carries the commit it came from.
+# Bugsink infers releases from the events themselves; nothing to create server-side.
+ARG SENTRY_RELEASE=""
 ENV APP_ENV=${APP_ENV}
+ENV SENTRY_RELEASE=${SENTRY_RELEASE}
 
 # --- Add Yarn + NodeJS (for frontend builds or tooling) - for Vite server
 RUN if [ "$APP_ENV" = "local" ]; then \
@@ -35,7 +39,6 @@ RUN if [ "$APP_ENV" = "local" ]; then \
 # Kopieer alleen het nodige uit de Node build stage
 COPY --from=vite /build/artisan ./
 COPY --from=vite /build/*.lock ./
-COPY --from=vite /build/*.js ./
 COPY --from=vite /build/*.json ./
 COPY --from=vite /build/*.php ./
 COPY --from=vite /build/.docker/start.sh /start.sh

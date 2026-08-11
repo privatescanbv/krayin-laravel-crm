@@ -22,7 +22,7 @@ Route::prefix('inkoop')->group(function () {
         ->name('admin.inkoop.step1');
     Route::put('{invoice}/save-crm-ids', [InkoopStep1Controller::class, 'saveAllCrmIds'])
         ->name('admin.inkoop.save-crm-ids');
-    Route::put('{invoice}/persons/{person}/reset-crm-id', [InkoopStep1Controller::class, 'resetCrmId'])
+    Route::put('{invoice}/persons/{inkoopPerson}/reset-crm-id', [InkoopStep1Controller::class, 'resetCrmId'])
         ->name('admin.inkoop.reset-person-crm-id');
 
     Route::get('{invoice}/step2', [InkoopStep2Controller::class, 'handleStep'])

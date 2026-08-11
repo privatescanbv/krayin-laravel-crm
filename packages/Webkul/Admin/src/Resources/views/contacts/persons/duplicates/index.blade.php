@@ -368,9 +368,12 @@
                             { field: 'date_of_birth', label: 'Geboortedatum', type: 'simple' },
                             { field: 'gender', label: 'Geslacht', type: 'simple' },
                             { field: 'job_title', label: 'Functie', type: 'simple' },
+                            { field: 'national_identification_number', label: 'BSN', type: 'simple' },
+                            { field: 'preferred_language', label: 'Taalvoorkeur', type: 'simple', displayField: 'preferred_language_label' },
+                            { field: 'is_active', label: 'Actief/inactief', type: 'simple', displayField: 'is_active_label' },
 
-                            // Organization Information (readonly)
-                            { field: 'organization', label: 'Organisatie', type: 'readonly' },
+                            // Organization (stored as id; displayField only changes what is shown)
+                            { field: 'organization_id', label: 'Organisatie', type: 'simple', displayField: 'organization_name' },
 
                             // Contact Information
                             { field: 'emails', label: 'E-mailadressen', type: 'array' },
@@ -431,6 +434,10 @@
 
                         switch (fieldConfig.type) {
                             case 'simple':
+                                // Booleans (is_active): keep false distinct from empty.
+                                if (typeof fieldValue === 'boolean') {
+                                    return fieldValue;
+                                }
                                 return fieldValue || '';
 
                             case 'array':
@@ -443,7 +450,6 @@
                                 if (!person.address) {
                                     return '';
                                 }
-                                // Create a normalized address string for comparison
                                 return [
                                     person.address.full_address || '',
                                     person.address.street || '',
@@ -462,20 +468,17 @@
 
                     areValuesEqual(value1, value2, fieldType) {
                         if (fieldType === 'array') {
-                            // Compare arrays
                             if (value1.length !== value2.length) {
                                 return false;
                             }
                             return value1.every((item, index) => item === value2[index]);
                         }
 
-                        // Compare strings/primitives
                         return value1 === value2;
                     },
 
                     togglePersonSelection(personId) {
                         if (personId === this.primaryPerson.id) {
-                            // Primary person must always be selected
                             return;
                         }
 
@@ -491,7 +494,14 @@
                         if (fieldConfig.type === 'readonly') {
                             return person[fieldConfig.field]?.name || 'N/A';
                         }
-                        return person[fieldConfig.field] || 'N/A';
+                        return person[fieldConfig.displayField ?? fieldConfig.field] || 'N/A';
+                    },
+
+                    // Values end up in v-html; escape free text (BSN, names, addresses).
+                    esc(value) {
+                        const div = document.createElement('div');
+                        div.textContent = value ?? '';
+                        return div.innerHTML;
                     },
 
                     renderFieldValue(person, fieldConfig) {
@@ -499,30 +509,33 @@
 
                         switch (fieldConfig.type) {
                             case 'simple':
-                                let value = person[fieldConfig.field] || 'N/A';
-                                return `<span class="${cssClass}">${value}</span>`;
+                                let value = person[fieldConfig.displayField ?? fieldConfig.field];
+                                if (value === null || value === undefined || value === '') {
+                                    value = 'N/A';
+                                }
+                                return `<span class="${cssClass}">${this.esc(String(value))}</span>`;
 
                             case 'array':
                                 if (!person[fieldConfig.field] || person[fieldConfig.field].length === 0) {
                                     const emptyText = fieldConfig.field === 'emails' ? 'Geen e-mails' : 'Geen telefoonnummers';
                                     return `<div class="text-xs text-center"><span class="text-gray-400">${emptyText}</span></div>`;
                                 }
-                                const items = person[fieldConfig.field].map(item => `<div class="mb-1">${item.value}</div>`).join('');
+                                const items = person[fieldConfig.field].map(item => `<div class="mb-1">${this.esc(item.value)}</div>`).join('');
                                 return `<div class="text-xs text-center">${items}</div>`;
 
                             case 'address':
                                 if (!person.address) {
                                     return '<div class="text-xs text-center"><span class="text-gray-400">Geen adres</span></div>';
                                 }
-                                let addressHtml = `<div class="text-xs text-center"><div class="mb-1"><div>${person.address.full_address || 'N/A'}</div>`;
+                                let addressHtml = `<div class="text-xs text-center"><div class="mb-1"><div>${this.esc(person.address.full_address || 'N/A')}</div>`;
                                 if (person.address.street && person.address.house_number) {
-                                    addressHtml += `<div>${person.address.street} ${person.address.house_number}${person.address.house_number_suffix || ''}</div>`;
+                                    addressHtml += `<div>${this.esc(person.address.street)} ${this.esc(person.address.house_number)}${this.esc(person.address.house_number_suffix || '')}</div>`;
                                 }
                                 if (person.address.postal_code || person.address.city) {
-                                    addressHtml += `<div>${person.address.postal_code || ''} ${person.address.city || ''}</div>`;
+                                    addressHtml += `<div>${this.esc(person.address.postal_code || '')} ${this.esc(person.address.city || '')}</div>`;
                                 }
                                 if (person.address.state || person.address.country) {
-                                    addressHtml += `<div>${person.address.state || ''} ${person.address.country || ''}</div>`;
+                                    addressHtml += `<div>${this.esc(person.address.state || '')} ${this.esc(person.address.country || '')}</div>`;
                                 }
                                 addressHtml += '</div></div>';
                                 return addressHtml;

@@ -1,5 +1,6 @@
 #!/bin/bash
-# builds the frontend assets for the project (root Vite config covers Admin package)
+# builds the frontend assets for the project
+# Er is geen root Vite build: de Admin package heeft de enige vite.config.js.
 # Run this script inside the docker container! otherwise incorrect rollover dependencies may be installed
 # Usage: ./build.sh [local|production]
 #   local: skip npm run build commands (for development)

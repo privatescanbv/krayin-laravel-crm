@@ -3,11 +3,11 @@
 namespace App\Observers;
 
 use App\Enums\OrderItemStatus;
-use App\Enums\PurchasePriceType;
 use App\Models\OrderItem;
 use App\Models\PartnerProduct;
 use App\Models\ResourceOrderItem;
 use App\Services\Afb\AfbDispatchService;
+use App\Services\OrderItemPurchasePriceService;
 use App\Services\OrderStatusService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +20,7 @@ class ResourceOrderItemObserver
         private readonly OrderStatusService $orderStatusService,
         private readonly AfbDispatchService $afbDispatchService,
         private readonly ActivityRepository $activityRepository,
+        private readonly OrderItemPurchasePriceService $orderItemPurchasePriceService,
     ) {}
 
     /**
@@ -49,6 +50,11 @@ class ResourceOrderItemObserver
     public function deleted(ResourceOrderItem $resourceOrderItem): void
     {
         $this->updateOrderItemStatus($resourceOrderItem);
+
+        $orderItem = $resourceOrderItem->orderItem ?? OrderItem::find($resourceOrderItem->orderitem_id);
+        if ($orderItem) {
+            $this->orderItemPurchasePriceService->clearPartnerProductLink($orderItem);
+        }
 
         $this->logActivity($resourceOrderItem, 'deleted');
     }
@@ -109,24 +115,16 @@ class ResourceOrderItemObserver
         if (! $clinicId) {
             return;
         }
-        $partnerPrice = PartnerProduct::forClinicAndProduct($clinicId, $orderItem->product_id)
-            ->with('purchasePrice')
-            ->first()
-            ?->purchasePrice;
 
-        if (! $partnerPrice) {
+        $partnerProduct = PartnerProduct::forClinicAndProduct($clinicId, $orderItem->product_id)
+            ->with('purchasePrice')
+            ->first();
+
+        if (! $partnerProduct) {
             return;
         }
 
-        $orderItem->purchasePrice()->updateOrCreate([], [
-            'type'                      => PurchasePriceType::MAIN,
-            'purchase_price_misc'       => $partnerPrice->purchase_price_misc,
-            'purchase_price_doctor'     => $partnerPrice->purchase_price_doctor,
-            'purchase_price_cardiology' => $partnerPrice->purchase_price_cardiology,
-            'purchase_price_clinic'     => $partnerPrice->purchase_price_clinic,
-            'purchase_price_radiology'  => $partnerPrice->purchase_price_radiology,
-            'purchase_price'            => $partnerPrice->purchase_price,
-        ]);
+        $this->orderItemPurchasePriceService->linkPartnerProduct($orderItem, $partnerProduct);
     }
 
     /**

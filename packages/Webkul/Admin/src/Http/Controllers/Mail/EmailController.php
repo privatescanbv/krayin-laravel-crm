@@ -153,7 +153,11 @@ class EmailController extends Controller
 
             $hierarchicalFolders = $this->folderRepository->getHierarchicalFolders();
 
-            return view('admin::mail.view', compact('email', 'selectedEmail', 'hierarchicalFolders'));
+            return view('admin::mail.view', [
+                'email' => $email,
+                'selectedEmail' => $selectedEmail,
+                'hierarchicalFolders' => $hierarchicalFolders
+            ]);
         } catch (Exception $e) {
             Log::error('EmailController@view: Error', [
                 'error' => $e->getMessage(),
@@ -507,6 +511,41 @@ class EmailController extends Controller
         $this->emailRepository->moveThreadToProcessedIfInbox($email->id);
 
         return response()->json(['message' => 'E-mail gemarkeerd als verwerkt.']);
+    }
+
+    /**
+     * Detach an email from its conversation thread (clears parent_id).
+     */
+    public function detachFromThread(int $id): JsonResponse
+    {
+        $email = $this->emailRepository->findOrFail($id);
+
+        if (! $email->parent_id) {
+            return response()->json([
+                'message' => trans('admin::app.mail.view.thread.detach-not-linked'),
+            ], 422);
+        }
+
+        Event::dispatch('email.update.before', $email->id);
+
+        $this->emailRepository->update(['parent_id' => null], $email->id);
+
+        $email = $email->fresh();
+
+        Event::dispatch('email.update.after', $email);
+
+        return response()->json([
+            'message'      => trans('admin::app.mail.view.thread.detach-success'),
+            'redirect_url' => $this->mailViewUrlFor($email),
+        ]);
+    }
+
+    private function mailViewUrlFor(Email $email): string
+    {
+        $folder = $email->folder_id ? Folder::find($email->folder_id) : null;
+        $route = $folder?->name ?? EmailFolderEnum::INBOX->value;
+
+        return route('admin.mail.view', ['route' => $route, 'id' => $email->id]);
     }
 
     /**

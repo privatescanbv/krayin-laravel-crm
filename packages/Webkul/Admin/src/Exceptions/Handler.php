@@ -51,6 +51,18 @@ class Handler extends AppExceptionHandler
             return $this->renderCustomResponse($exception);
         }
 
+        // A missing/deleted record (stale link, direct URL guess) is a routine 404, not an application error
+        if ($exception instanceof ModelNotFoundException) {
+            Log::warning('Admin: model not found', [
+                'model'   => $exception->getModel(),
+                'ids'     => $exception->getIds(),
+                'url'     => $request->fullUrl(),
+                'user_id' => auth()->guard('user')->id(),
+            ]);
+
+            return $this->renderCustomResponse($exception);
+        }
+
         // Log all exceptions in admin context with additional details
         Log::error('Admin exception occurred', [
             'exception' => get_class($exception),
@@ -106,15 +118,10 @@ class Handler extends AppExceptionHandler
         }
 
         if ($exception instanceof ModelNotFoundException) {
-            \Log::error('Model not found in admin', [
-                'model' => $exception->getModel(),
-                'ids' => $exception->getIds(),
-                'url' => request()->fullUrl(),
-                'user_id' => auth()->guard('user')->id(),
-            ]);
+            // Already logged as a warning in render() above.
             return $this->response(404);
         } elseif ($exception instanceof PDOException || $exception instanceof \ParseError) {
-            \Log::error('Database error in admin', [
+            Log::error('Database error in admin', [
                 'error' => $exception->getMessage(),
                 'code' => $exception->getCode(),
                 'url' => request()->fullUrl(),
@@ -123,7 +130,7 @@ class Handler extends AppExceptionHandler
             ]);
             return $this->response(500);
         } else {
-            \Log::error('General error in admin', [
+            Log::error('General error in admin', [
                 'error' => $exception->getMessage(),
                 'class' => get_class($exception),
                 'url' => request()->fullUrl(),
@@ -151,6 +158,6 @@ class Handler extends AppExceptionHandler
             ], $errorCode);
         }
 
-        return response()->view('admin::errors.index', compact('errorCode'));
+        return response()->view('admin::errors.index', compact('errorCode'), $errorCode);
     }
 }

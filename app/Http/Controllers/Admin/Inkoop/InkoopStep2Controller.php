@@ -41,7 +41,7 @@ class InkoopStep2Controller extends Controller
                     'product_id'     => $orderItem->product_id,
                     'crm_id'         => $orderItem->id,
                     'crm_status'     => $this->orderItemStatusValue($orderItem),
-                    'purchase_price' => $invoiceItem->price,
+                    'purchase_price' => (float) $orderItem->resolvedPurchasePrice()->purchase_price,
                 ]));
                 $linkedCount++;
             }
@@ -102,7 +102,7 @@ class InkoopStep2Controller extends Controller
                 }
 
                 foreach ($items as $itemId => $selectedCrmIds) {
-                    $selectedCrmIds = array_filter((array) $selectedCrmIds);
+                    $selectedCrmIds = array_values(array_filter((array) $selectedCrmIds));
                     $item = InkoopInvoiceItem::where('inkoop_invoice_id', $invoice->id)
                         ->where('person_id', $person->id)
                         ->find($itemId);
@@ -111,7 +111,12 @@ class InkoopStep2Controller extends Controller
                         continue;
                     }
 
+                    $previousCrmIds = $item->crmProducts()->pluck('crm_id')->map(fn ($id) => (string) $id);
                     $item->crmProducts()->delete();
+
+                    foreach ($previousCrmIds->diff($selectedCrmIds) as $removedCrmId) {
+                        OrderItem::find($removedCrmId)?->invoicePurchasePrice()?->delete();
+                    }
 
                     foreach ($selectedCrmIds as $crmId) {
                         $orderItem = OrderItem::where('person_id', $person->crm_id)->find($crmId);
@@ -125,7 +130,7 @@ class InkoopStep2Controller extends Controller
                             'product_id'     => $orderItem->product_id,
                             'crm_id'         => $orderItem->id,
                             'crm_status'     => $this->orderItemStatusValue($orderItem),
-                            'purchase_price' => $item->price,
+                            'purchase_price' => (float) $orderItem->resolvedPurchasePrice()->purchase_price,
                         ]);
 
                         $this->updateInvoicePurchasePrice($invoice, $crmProduct);
@@ -169,7 +174,14 @@ class InkoopStep2Controller extends Controller
     public function resetCrmId(Request $request, InkoopInvoice $invoice, $item)
     {
         $invoiceItem = InkoopInvoiceItem::where('inkoop_invoice_id', $invoice->id)->findOrFail($item);
+        $linkedOrderItemIds = $invoiceItem->crmProducts()->pluck('crm_id');
+
         $invoiceItem->crmProducts()->delete();
+
+        foreach ($linkedOrderItemIds as $orderItemId) {
+            $orderItem = OrderItem::find($orderItemId);
+            $orderItem?->invoicePurchasePrice()?->delete();
+        }
 
         return redirect()->back()->with('success', 'CRM koppelingen zijn gereset.');
     }
@@ -204,6 +216,7 @@ class InkoopStep2Controller extends Controller
                 'purchasePrice',
                 'order.orderItems.invoicePurchasePrice',
                 'order.orderItems.purchasePrice',
+                'order.orderItems.resourceOrderItems',
                 'invoicePurchasePrice',
             ])
             ->whereIn('person_id', $persons->pluck('crm_id'))
@@ -213,7 +226,19 @@ class InkoopStep2Controller extends Controller
             })
             ->orderByDesc('id')
             ->get()
-            ->filter(function (OrderItem $item) {
+            ->filter(function (OrderItem $item) use ($invoice) {
+                if ($invoice->reference_date) {
+                    $examAt = $item->order?->firstExaminationCarbon();
+
+                    if (
+                        $examAt === null
+                        || $examAt->year !== (int) $invoice->reference_date->year
+                        || $examAt->month !== (int) $invoice->reference_date->month
+                    ) {
+                        return false;
+                    }
+                }
+
                 $purchaseTotal = (float) $item->resolvedPurchasePrice()->purchase_price;
                 $invoiceTotal = (float) ($item->invoicePurchasePrice?->purchase_price ?? 0);
                 $forced = (bool) ($item->invoicePurchasePrice?->force_received ?? false);

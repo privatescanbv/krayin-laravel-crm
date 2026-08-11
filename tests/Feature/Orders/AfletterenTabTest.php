@@ -3,6 +3,7 @@
 namespace Tests\Feature\Orders;
 
 use App\Enums\OrderItemStatus;
+use App\Enums\PurchasePriceType;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PartnerProduct;
@@ -43,14 +44,15 @@ test('afletteren tab shows order items that are not LOST when they have purchase
     $order = Order::factory()->create();
     $product = Product::factory()->create(['name' => 'TestProductWon_'.uniqid()]);
 
-    PartnerProduct::factory()
-        ->withMainPurchasePrice(['clinic' => 99, 'total' => 99])
-        ->create(['product_id' => $product->id]);
-
-    OrderItem::factory()->create([
+    $item = OrderItem::factory()->create([
         'order_id'   => $order->id,
         'product_id' => $product->id,
         'status'     => OrderItemStatus::WON,
+    ]);
+    $item->purchasePrice()->create([
+        'type'                  => PurchasePriceType::MAIN,
+        'purchase_price_clinic' => 99,
+        'purchase_price'        => 99,
     ]);
 
     $response = $this->get(route('admin.orders.view', $order->id));

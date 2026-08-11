@@ -195,10 +195,6 @@ class ResourceController extends SimpleEntityController
             }
         }
 
-        if (empty($events)) {
-            return [];
-        }
-
         usort($events, function ($a, $b) {
             if ($a['date']->eq($b['date'])) {
                 return $a['type'] === 'end' ? -1 : 1; // end before start on same day

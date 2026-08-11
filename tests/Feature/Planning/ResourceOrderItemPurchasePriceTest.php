@@ -44,8 +44,11 @@ test('planning een order item kopieert de inkoopprijs van het clinic-specifieke 
         'to'           => Carbon::tomorrow()->setTime(11, 0),
     ]);
 
-    $price = $orderItem->purchasePrice()->first();
-    expect($price)->not->toBeNull()
+    $orderItem->refresh();
+    $price = $orderItem->purchasePrice;
+
+    expect($orderItem->partner_product_id)->toBe($partnerProduct->id)
+        ->and($price)->not->toBeNull()
         ->and((float) $price->purchase_price_misc)->toBe(10.00)
         ->and((float) $price->purchase_price_doctor)->toBe(20.00)
         ->and((float) $price->purchase_price_cardiology)->toBe(30.00)
@@ -80,10 +83,11 @@ test('planning zonder matching partner product maakt geen purchase price aan en 
         'to'           => Carbon::tomorrow()->setTime(11, 0),
     ]);
 
-    expect($orderItem->purchasePrice()->exists())->toBeFalse();
+    expect($orderItem->fresh()->purchasePrice()->exists())->toBeFalse()
+        ->and($orderItem->fresh()->partner_product_id)->toBeNull();
 });
 
-test('planning overschrijft een bestaande purchase price op het order item met de kliniek-specifieke prijs', function () {
+test('planning overschrijft geen handmatige purchase price op het order item', function () {
     $clinic = Clinic::factory()->create();
     $dept = ClinicDepartment::factory()->create(['clinic_id' => $clinic->id]);
     $resourceType = ResourceType::firstOrCreate(['name' => 'MRI scanner'], ['description' => null]);
@@ -107,7 +111,7 @@ test('planning overschrijft een bestaande purchase price op het order item met d
 
     $orderItem = OrderItem::factory()->create(['product_id' => $product->id]);
 
-    // Bestaande (handmatige) inkoopprijs — wordt overschreven
+    // Bestaande (handmatige) inkoopprijs — wordt niet overschreven
     $orderItem->purchasePrice()->create([
         'type'                      => PurchasePriceType::MAIN,
         'purchase_price_misc'       => 42.00,
@@ -125,8 +129,11 @@ test('planning overschrijft een bestaande purchase price op het order item met d
         'to'           => Carbon::tomorrow()->setTime(11, 0),
     ]);
 
-    expect((float) $orderItem->purchasePrice()->value('purchase_price'))->toBe(999.00);
-    expect($orderItem->purchasePrice()->count())->toBe(1);
+    $orderItem->refresh();
+
+    expect($orderItem->partner_product_id)->toBe($partnerProduct->id)
+        ->and((float) $orderItem->purchasePrice()->value('purchase_price'))->toBe(42.00)
+        ->and($orderItem->purchasePrice()->count())->toBe(1);
 });
 
 test('planning zonder clinicDepartment op resource maakt geen purchase price aan en geeft geen error', function () {
@@ -148,5 +155,5 @@ test('planning zonder clinicDepartment op resource maakt geen purchase price aan
         'to'           => Carbon::tomorrow()->setTime(11, 0),
     ]);
 
-    expect($orderItem->purchasePrice()->exists())->toBeFalse();
+    expect($orderItem->fresh()->purchasePrice()->exists())->toBeFalse();
 });

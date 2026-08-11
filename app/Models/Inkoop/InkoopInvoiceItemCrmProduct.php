@@ -9,6 +9,8 @@ use Webkul\Product\Models\Product;
 
 /**
  * relation between scanned invoice items and CRM products, to link them together
+ *
+ * @mixin IdeHelperInkoopInvoiceItemCrmProduct
  */
 class InkoopInvoiceItemCrmProduct extends Model
 {

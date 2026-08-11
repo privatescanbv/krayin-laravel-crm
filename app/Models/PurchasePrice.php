@@ -46,7 +46,7 @@ class PurchasePrice extends Model
     {
         $prefix = 'purchase_price_';
 
-        return collect((new static)->getFillable())
+        return collect((new self)->getFillable())
             ->filter(fn (string $field) => str_starts_with($field, $prefix))
             ->map(fn (string $field) => substr($field, strlen($prefix)))
             ->values()

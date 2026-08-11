@@ -58,25 +58,15 @@ test('returns cached token without re-fetching when still valid', function () {
 test('re-fetches token when it has expired', function () {
     Http::fake([
         'login.microsoftonline.com/*' => Http::sequence()
-            ->push(['access_token' => 'old-token', 'expires_in' => 3600])
-            ->push(['access_token' => 'new-token', 'expires_in' => 3600]),
+            ->push(['access_token' => 'old-token', 'expires_in' => 600])
+            ->push(['access_token' => 'new-token', 'expires_in' => 600]),
     ]);
 
     $service = new MicrosoftGraphTokenService;
-    $service->getAccessToken('privatescan');
+    expect($service->getAccessToken('privatescan'))->toBe('old-token');
 
-    $ref = new ReflectionClass($service);
-    $prop = $ref->getProperty('expiresAt');
-    $prop->setAccessible(true);
-    $expiresAt = $prop->getValue($service);
-
-    foreach (array_keys($expiresAt) as $cacheKey) {
-        if (str_starts_with($cacheKey, 'privatescan:')) {
-            $expiresAt[$cacheKey] = time() - 1;
-        }
-    }
-
-    $prop->setValue($service, $expiresAt);
+    // 600s lifetime minus the 60s renewal margin.
+    test()->travel(541)->seconds();
 
     expect($service->getAccessToken('privatescan'))->toBe('new-token');
     Http::assertSentCount(2);
@@ -97,24 +87,18 @@ test('clearToken forces a fresh fetch on next call', function () {
     Http::assertSentCount(2);
 });
 
-test('stores expires_in from token response with a 60 second buffer', function () {
+test('keeps the token until the renewal margin is reached', function () {
     Http::fake([
         'login.microsoftonline.com/*' => Http::response(['access_token' => 'tok', 'expires_in' => 3600]),
     ]);
 
     $service = new MicrosoftGraphTokenService;
-    $before = time();
     $service->getAccessToken('privatescan');
-    $after = time();
 
-    $ref = new ReflectionClass($service);
-    $expiresAt = $ref->getProperty('expiresAt');
-    $expiresAt->setAccessible(true);
-    $values = $expiresAt->getValue($service);
-    $value = collect($values)->first(fn ($_, $key) => str_starts_with($key, 'privatescan:'));
+    test()->travel(3539)->seconds();
 
-    expect($value)->toBeGreaterThanOrEqual($before + 3540)
-        ->and($value)->toBeLessThanOrEqual($after + 3540);
+    expect($service->getAccessToken('privatescan'))->toBe('tok');
+    Http::assertSentCount(1);
 });
 
 test('fetches separate tokens per mailbox credentials', function () {
@@ -204,4 +188,52 @@ test('each mailbox uses only its own configured client secret', function () {
 
     Http::assertSent(fn ($request) => ($request->data()['client_secret'] ?? null) === 'ps-secret');
     Http::assertSent(fn ($request) => ($request->data()['client_secret'] ?? null) === 'hp-secret');
+});
+
+test('a second process reuses the cached token instead of asking Microsoft again', function () {
+    Http::fake([
+        'login.microsoftonline.com/*' => Http::response(['access_token' => 'my-token', 'expires_in' => 3600]),
+    ]);
+
+    (new MicrosoftGraphTokenService)->getAccessToken('privatescan');
+
+    // A fresh instance stands in for the next scheduled artisan run: without the shared cache that
+    // run would open another TLS connection to login.microsoftonline.com, every single minute.
+    expect((new MicrosoftGraphTokenService)->getAccessToken('privatescan'))->toBe('my-token');
+
+    Http::assertSentCount(1);
+});
+
+test('clearToken invalidates the token for a process that never fetched it', function () {
+    Http::fake([
+        'login.microsoftonline.com/*' => Http::sequence()
+            ->push(['access_token' => 'first-token', 'expires_in' => 3600])
+            ->push(['access_token' => 'second-token', 'expires_in' => 3600]),
+    ]);
+
+    (new MicrosoftGraphTokenService)->getAccessToken('privatescan');
+
+    (new MicrosoftGraphTokenService)->clearToken('privatescan');
+
+    expect((new MicrosoftGraphTokenService)->getAccessToken('privatescan'))->toBe('second-token');
+});
+
+test('a failed TLS connection is retried instead of surfacing', function () {
+    Http::fakeSequence()
+        ->pushResponse(Http::failedConnection('cURL error 28: SSL connection timeout'))
+        ->push(['access_token' => 'token-after-retry', 'expires_in' => 3600]);
+
+    expect((new MicrosoftGraphTokenService)->getAccessToken('privatescan'))
+        ->toBe('token-after-retry');
+});
+
+test('rejected credentials throw with mailbox context and are not retried', function () {
+    Http::fake([
+        'login.microsoftonline.com/*' => Http::response(['error' => 'invalid_client'], 401),
+    ]);
+
+    expect(fn () => (new MicrosoftGraphTokenService)->getAccessToken('privatescan'))
+        ->toThrow(Exception::class, 'Failed to get access token for mailbox [privatescan]');
+
+    Http::assertSentCount(1);
 });

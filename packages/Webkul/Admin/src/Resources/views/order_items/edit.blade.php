@@ -151,7 +151,7 @@
 
 
                 <x-adminc::components.purchase-price-fields
-                    :purchase-price="$resolvedPurchasePrice ?? $order_items->purchasePrice"
+                    :purchase-price="$order_items->purchasePrice"
                 />
 
                 <x-adminc::components.purchase-price-fields
@@ -170,39 +170,5 @@
             </div>
         </div>
     </x-admin::form>
-
-    @push('scripts')
-    <script type="module">
-        document.addEventListener('adminc:product-selected', async function(e) {
-            if (e.detail.fieldName !== 'product_id' || !e.detail.id) return;
-
-            try {
-                const response = await axios.get(`/admin/order-items/partner-purchase-prices/${e.detail.id}`);
-                const prices = response.data;
-
-                const resourceTypeSelect = document.querySelector(`select[name="resource_type_id"]`);
-                if (resourceTypeSelect) {
-                    resourceTypeSelect.value = prices.resource_type_id ?? '';
-                    resourceTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                }
-
-                const suffixes = Object.keys(prices).filter(k => k !== 'resource_type_id');
-                suffixes.forEach(suffix => {
-                    const input = document.querySelector(`input[name="purchase_price_${suffix}"]`);
-                    if (input) {
-                        const value = new Intl.NumberFormat('nl-NL', {
-                            minimumFractionDigits: 2, maximumFractionDigits: 2
-                        }).format(prices[suffix] ?? 0);
-                        input.value = value;
-                        input.dispatchEvent(new Event('input', { bubbles: true }));
-                        input.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                });
-            } catch (err) {
-                console.warn('Failed to fetch partner purchase prices', err);
-            }
-        });
-    </script>
-    @endpush
 </x-admin::layouts>
 

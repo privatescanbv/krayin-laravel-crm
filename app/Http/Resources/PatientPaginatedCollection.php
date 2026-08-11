@@ -38,6 +38,7 @@ abstract class PatientPaginatedCollection extends ResourceCollection
      */
     public static function fromPaginator(LengthAwarePaginator $paginator, $resource): static
     {
+        // @phpstan-ignore-next-line new.static
         return new static($resource, [
             'current_page' => $paginator->currentPage(),
             'per_page'     => $paginator->perPage(),
@@ -47,6 +48,7 @@ abstract class PatientPaginatedCollection extends ResourceCollection
 
     public static function empty(int $perPage = 15): static
     {
+        // @phpstan-ignore-next-line new.static
         return new static(collect(), [
             'current_page' => 1,
             'per_page'     => $perPage,

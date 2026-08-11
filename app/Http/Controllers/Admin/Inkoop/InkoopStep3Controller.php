@@ -40,16 +40,36 @@ class InkoopStep3Controller extends Controller
         $crmOrderItemsByPerson = $persons
             ->filter(fn (InkoopPerson $person) => ! empty($person->crm_id))
             ->mapWithKeys(function (InkoopPerson $person) use ($invoice) {
-                return [
-                    $person->id => OrderItem::query()
-                        ->with(['product', 'product.partnerProducts.purchasePrice', 'person', 'order', 'order.stage', 'purchasePrice', 'invoicePurchasePrice'])
-                        ->where('person_id', $person->crm_id)
-                        ->where('status', '!=', OrderItemStatus::LOST->value)
-                        ->whereHas('resourceOrderItem.resource.clinicDepartment', function ($q) use ($invoice) {
-                            $q->where('clinic_id', $invoice->clinic_id);
-                        })
-                        ->get(),
-                ];
+                $orderItems = OrderItem::query()
+                    ->with([
+                        'product',
+                        'product.partnerProducts.purchasePrice',
+                        'person',
+                        'order.orderItems.resourceOrderItems',
+                        'order.stage',
+                        'purchasePrice',
+                        'invoicePurchasePrice',
+                    ])
+                    ->where('person_id', $person->crm_id)
+                    ->where('status', '!=', OrderItemStatus::LOST->value)
+                    ->whereHas('resourceOrderItem.resource.clinicDepartment', function ($q) use ($invoice) {
+                        $q->where('clinic_id', $invoice->clinic_id);
+                    })
+                    ->get()
+                    ->filter(function (OrderItem $item) use ($invoice) {
+                        if (! $invoice->reference_date) {
+                            return true;
+                        }
+
+                        $examAt = $item->order?->firstExaminationCarbon();
+
+                        return $examAt !== null
+                            && $examAt->year === (int) $invoice->reference_date->year
+                            && $examAt->month === (int) $invoice->reference_date->month;
+                    })
+                    ->values();
+
+                return [$person->id => $orderItems];
             });
 
         $invoiceDataByOrderItemId = $persons->flatMap(fn ($person) => $person->invoiceItems)

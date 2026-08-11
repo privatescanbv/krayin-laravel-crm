@@ -196,23 +196,6 @@ HTML,
 HTML,
             ],
 
-            // ── Patiëntportaal: nieuwe content (digest-mail) ───────────────────────
-            // Variables: person.first_name, portal_url, portal_link, lastname
-            [
-                'name'        => 'Patiëntportaal nieuwe content',
-                'code'        => EmailTemplateCode::PATIENT_PORTAL_NOTIFICATION_NEW_CONTENT->value,
-                'type'        => $patient,
-                'language'    => $nl,
-                'departments' => $allDepartments,
-                'subject'     => 'Nieuwe inhoud in uw patiëntportaal',
-                'content'     => <<<'HTML'
-<p>Beste {{ person.first_name }},</p>
-<p>Er staan nieuwe documenten, formulieren of verzoeken voor je klaar in jouw patiëntportaal.</p>
-<p>Klik hier om deze te bekijken:<br><a href="{{ portal_link }}">{{ portal_link }}</a></p>
-<p>Met vriendelijke groet,<br>Privatescan</p>
-HTML,
-            ],
-
             // ── Patiënt: wachtwoord vergeten ───────────────────────────────────────
             // Variables: person.first_name, reset_url
             [

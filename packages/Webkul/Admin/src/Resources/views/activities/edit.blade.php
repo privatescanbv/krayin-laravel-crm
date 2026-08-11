@@ -116,16 +116,32 @@
                             :placeholder="trans('admin::app.activities.edit.title')"
                         />
 
-                        <!-- Type (read-only) -->
+                        <!-- Type -->
                         <x-admin::form.control-group>
                             @php
                                 $currentTypeValue = old('type') ?? ($activity->type?->value ?? $activity->type);
                                 $currentTypeLabel = $activity->type->label();
+                                $typeIsEditable = ! $isReadOnly && $activity->type->isUserSelectable();
                             @endphp
-                            <div class="flex items-center justify-between rounded-md border px-3 py-2 text-sm text-gray-700 dark:border-gray-800 dark:text-gray-200">
-                                <span>{{ $currentTypeLabel }}</span>
-                            </div>
-                            <input type="hidden" name="type" value="{{ $currentTypeValue }}"/>
+                            @if($typeIsEditable)
+                                <x-admin::form.control-group.control
+                                    type="select"
+                                    name="type"
+                                    id="type"
+                                    :value="$currentTypeValue"
+                                >
+                                    @foreach(array_filter(\App\Enums\ActivityType::cases(), fn($t) => $t->isUserSelectable()) as $activityType)
+                                        <option value="{{ $activityType->value }}" {{ $currentTypeValue === $activityType->value ? 'selected' : '' }}>
+                                            {{ $activityType->label() }}
+                                        </option>
+                                    @endforeach
+                                </x-admin::form.control-group.control>
+                            @else
+                                <div class="flex items-center justify-between rounded-md border px-3 py-2 text-sm text-gray-700 dark:border-gray-800 dark:text-gray-200">
+                                    <span>{{ $currentTypeLabel }}</span>
+                                </div>
+                                <input type="hidden" name="type" value="{{ $currentTypeValue }}"/>
+                            @endif
                             <x-admin::form.control-group.label class="required">
                                 @lang('admin::app.activities.edit.type')
                             </x-admin::form.control-group.label>

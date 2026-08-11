@@ -38,9 +38,6 @@ class InkoopPdfParser
 
             $parser = new Parser;
             $pdf = $parser->parseFile($pdfPath);
-            if (empty($pdf)) {
-                throw new Exception('Empty pdf file, nothing to handle');
-            }
 
             // Extract text - try coordinate-based first, fallback to simple extraction
             $extractedText = $this->extractTextByCoordinates($pdf);

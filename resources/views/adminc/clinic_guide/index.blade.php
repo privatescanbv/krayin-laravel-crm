@@ -18,7 +18,7 @@
     <div class="hidden">
         <x-admin::activities.actions.activity
             :entity="(object)['id' => null]"
-            entityControlName="person_id"
+            entityControlName="order_id"
         />
     </div>
 
@@ -133,7 +133,7 @@
 
                             <span
                                 v-if="item.patient"
-                                @click="openActivityModal(item.patient)"
+                                @click="openActivityModal(item.order)"
                                 class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] text-activity-task-text bg-activity-task-bg font-semibold border cursor-pointer"
                             >
                                 <span class="icon-activity text-sm text-activity-task-text mr-1 cursor-pointer"></span>
@@ -243,8 +243,8 @@
                 <!-- Activiteit modal (gedeeld, één instantie) -->
                 <v-activity
                     ref="activityModal"
-                    :entity="activeActivityPerson"
-                    entity-control-name="person_id"
+                    :entity="activeActivityOrder"
+                    entity-control-name="order_id"
                 ></v-activity>
             </div>
         </script>
@@ -259,7 +259,7 @@
                         selectedDepartment: localStorage.getItem('dagplanning_department') ?? 'all',
                         orders: [],
                         loading: false,
-                        activeActivityPerson: { id: null },
+                        activeActivityOrder: { id: null },
                     };
                 },
 
@@ -329,8 +329,8 @@
                         this.fetchData();
                     },
 
-                    openActivityModal(person) {
-                        this.activeActivityPerson = person;
+                    openActivityModal(order) {
+                        this.activeActivityOrder = order;
                         this.$nextTick(() => {
                             this.$refs.activityModal.openModal();
                         });

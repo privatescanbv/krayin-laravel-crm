@@ -62,7 +62,7 @@ return [
     ], [
         'key'   => 'mail.edit',
         'name'  => 'admin::app.acl.edit',
-        'route' => 'admin.mail.update',
+        'route' => ['admin.mail.update', 'admin.mail.detach_thread'],
         'sort'  => 3,
     ], [
         'key'   => 'mail.delete',

@@ -13,4 +13,7 @@ enum EmailTemplateCode: string
     case CREATE_USER = 'create-user';
     case PATIENT_FORGOT_PASSWORD = 'patient-forgot-password';
     case CRM_FORGOT_PASSWORD = 'crm-forgot-password';
+
+    /** Preselected in the GVL mail dialog by resources/assets/js/app.js. */
+    case INFORMATIEF_MET_GVL = 'informatief-met-gvl';
 }

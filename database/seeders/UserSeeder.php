@@ -112,13 +112,13 @@ class UserSeeder extends Seeder
             [
                 'first_name'      => 'Mark',
                 'last_name'       => 'Klaucke',
-                'email'           => 'mark.klaucke@privatescan.nl',
-                'password'        => $passwords['mark.klaucke@privatescan.nl'],
+                'email'           => 'mark@privatescan.nl',
+                'password'        => $passwords['mark@privatescan.nl'],
                 'status'          => 1,
                 'role_id'         => 1,
                 'view_permission' => 'global',
                 'group_id'        => null, // Admin has no specific group
-                'signature'       => $this->signatureTemplate('Mark', 'Klaucke', 'mark.klaucke@privatescan.nl'),
+                'signature'       => $this->signatureTemplate('Mark', 'Klaucke', 'mark@privatescan.nl'),
             ],
             [
                 'first_name'      => 'Linda',

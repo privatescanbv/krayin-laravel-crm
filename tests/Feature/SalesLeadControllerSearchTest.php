@@ -40,6 +40,28 @@ test('sales lead search by name works', function () {
     expect($ids)->toContain($salesLead->id);
 });
 
+test('sales lead search returns stage and created_at so the entity-link picker can distinguish results', function () {
+    $salesLead = SalesLead::factory()->create([
+        'name'              => 'Test Sales Lead',
+        'pipeline_stage_id' => $this->stage->id,
+        'user_id'           => $this->user->id,
+    ]);
+
+    $response = $this->getJson(route('admin.sales-leads.search', [
+        'search'       => 'name:Test;',
+        'searchFields' => 'name:like;',
+    ]));
+
+    $response->assertOk();
+
+    $result = collect($response->json('data'))->firstWhere('id', $salesLead->id);
+
+    expect($result)->not->toBeNull();
+    expect($result['created_at'])->not->toBeNull();
+    expect($result['stage']['name'])->toBe($this->stage->name);
+    expect($result['stage'])->toHaveKeys(['is_won', 'is_lost']);
+});
+
 test('sales lead search ignores email field (does not exist)', function () {
     $salesLead = SalesLead::factory()->create([
         'name'              => 'Test Sales Lead',

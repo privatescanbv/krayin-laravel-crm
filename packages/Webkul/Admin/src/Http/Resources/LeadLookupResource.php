@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Resources;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class LeadLookupResource extends JsonResource
@@ -10,7 +11,7 @@ class LeadLookupResource extends JsonResource
      * Transform the resource into an array.
      * Minimal resource for lookup/search operations to avoid N+1 queries.
      *
-     * @param  \Illuminate\Http\Request
+     * @param  Request
      * @return array
      */
     public function toArray($request)
@@ -25,25 +26,28 @@ class LeadLookupResource extends JsonResource
             'married_name_prefix'  => $this->married_name_prefix,
             'emails'               => is_array($this->emails) ? $this->emails : [],
             'phones'               => is_array($this->phones) ? $this->phones : [],
-            
+            'created_at'           => $this->created_at,
+
             // Minimal relationship data - only IDs and names, no nested relationships
             'lead_pipeline_stage_id' => $this->lead_pipeline_stage_id,
-            'stage'                => $this->when(
+            'stage'                  => $this->when(
                 $this->relationLoaded('stage'),
-                fn() => $this->stage ? [
-                    'id' => $this->stage->id,
-                    'name' => $this->stage->name,
+                fn () => $this->stage ? [
+                    'id'      => $this->stage->id,
+                    'name'    => $this->stage->name,
+                    'is_won'  => (bool) $this->stage->is_won,
+                    'is_lost' => (bool) $this->stage->is_lost,
                 ] : null
             ),
             'user_id'              => $this->user_id,
             'user'                 => $this->when(
                 $this->relationLoaded('user'),
-                fn() => $this->user ? [
-                    'id' => $this->user->id,
+                fn () => $this->user ? [
+                    'id'   => $this->user->id,
                     'name' => $this->user->name,
                 ] : null
             ),
-            
+
             // IDs only for other relationships
             'lead_source_id'       => $this->lead_source_id,
             'lead_type_id'         => $this->lead_type_id,
@@ -54,4 +58,3 @@ class LeadLookupResource extends JsonResource
         ];
     }
 }
-

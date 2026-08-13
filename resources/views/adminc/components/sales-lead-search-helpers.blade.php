@@ -26,7 +26,20 @@
                 }
 
                 const response = await axios.get('/admin/sales-leads/search', { params });
-                return (response && response.data && (response.data.data || response.data)) || [];
+                const results = (response && response.data && (response.data.data || response.data)) || [];
+
+                // Active/ongoing sales leads first, most recently created first — helps
+                // distinguish between multiple similarly named sales leads.
+                return [...results].sort((a, b) => {
+                    const aClosed = a.stage?.is_won || a.stage?.is_lost ? 1 : 0;
+                    const bClosed = b.stage?.is_won || b.stage?.is_lost ? 1 : 0;
+
+                    if (aClosed !== bClosed) {
+                        return aClosed - bClosed;
+                    }
+
+                    return new Date(b.created_at) - new Date(a.created_at);
+                });
             };
         }
     </script>

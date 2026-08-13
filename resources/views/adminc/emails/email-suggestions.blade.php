@@ -4,6 +4,7 @@
             lead: '{{ route('admin.leads.search') }}',
             person: '{{ route('admin.contacts.persons.search') }}',
             salesLead: '{{ route('admin.sales-leads.search') }}',
+            order: '{{ route('admin.orders.search') }}',
         };
     </script>
 @verbatim
@@ -24,7 +25,8 @@
                          :class="{
                              'bg-blue-100 text-activity-note-text dark:bg-blue-900 dark:text-blue-300': suggestion.type === 'lead',
                              'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300': suggestion.type === 'sales_lead',
-                             'bg-green-100 text-status-active-text dark:bg-green-900 dark:text-green-300': suggestion.type === 'person'
+                             'bg-green-100 text-status-active-text dark:bg-green-900 dark:text-green-300': suggestion.type === 'person',
+                             'bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-300': suggestion.type === 'order'
                          }"
                     >
                         <span class="text-xs font-semibold">
@@ -36,7 +38,7 @@
                             {{ suggestion.name }}
                         </div>
                         <div class="text-xs text-gray-500 dark:text-gray-400">
-                            {{ suggestion.type === 'lead' ? 'Lead' : suggestion.type === 'sales_lead' ? 'Sales' : 'Contact' }}
+                            {{ suggestion.type === 'lead' ? 'Lead' : suggestion.type === 'sales_lead' ? 'Sales' : suggestion.type === 'order' ? 'Order' : 'Contact' }}
                             <span v-if="suggestion.stage"> - {{ suggestion.stage.name }}</span>
                         </div>
                     </div>
@@ -54,6 +56,7 @@
                 leadSearchRoute: String,
                 personSearchRoute: String,
                 salesLeadSearchRoute: String,
+                orderSearchRoute: String,
             },
             emits: ['link-entity', 'loaded'],
             data() {
@@ -64,6 +67,7 @@
                         lead: this.leadSearchRoute || '',
                         person: this.personSearchRoute || '',
                         salesLead: this.salesLeadSearchRoute || '',
+                        order: this.orderSearchRoute || '',
                     },
                 };
             },
@@ -105,7 +109,8 @@
                             id: item.id,
                             name: item.name || [item.first_name, item.last_name].filter(Boolean).join(' '),
                             type: 'lead',
-                            stage: item.stage ? { id: item.stage.id, name: item.stage.name } : null,
+                            stage: item.stage ? { id: item.stage.id, name: item.stage.name, is_won: item.stage.is_won, is_lost: item.stage.is_lost } : null,
+                            created_at: item.created_at,
                         }));
 
                         const persons = (personsResp.data?.data || []).map(item => ({
@@ -113,19 +118,54 @@
                             name: item.name || [item.first_name, item.last_name].filter(Boolean).join(' '),
                             type: 'person',
                             stage: null,
+                            created_at: item.created_at,
                         }));
 
                         const salesLeads = (salesResp.data?.data || []).map(item => ({
                             id: item.id,
                             name: item.name,
                             type: 'sales_lead',
-                            stage: item.pipeline_stage ? { id: item.pipeline_stage.id, name: item.pipeline_stage.name } : null,
+                            stage: item.stage ? { id: item.stage.id, name: item.stage.name, is_won: item.stage.is_won, is_lost: item.stage.is_lost } : null,
+                            created_at: item.created_at,
                         }));
 
-                        const merged = [...leads, ...salesLeads, ...persons];
+                        // Open orders for the leads found above (e.g. via a linked sales lead) —
+                        // so an existing order isn't missed just because the mail isn't linked yet.
+                        const leadIds = leads.map(lead => lead.id);
+                        let orders = [];
+                        if (leadIds.length && this.routes.order) {
+                            try {
+                                const ordersResp = await this.$axios.get(this.routes.order, {
+                                    params: { lead_id: leadIds, limit: 10 },
+                                });
+                                orders = (ordersResp.data?.data || []).map(item => ({
+                                    id: item.id,
+                                    name: item.name,
+                                    type: 'order',
+                                    stage: item.stage ? { id: item.stage.id, name: item.stage.name } : null,
+                                    created_at: item.created_at,
+                                }));
+                            } catch (error) {
+                                console.error('Error fetching order suggestions:', error);
+                            }
+                        }
+
+                        const merged = [...leads, ...salesLeads, ...orders, ...persons];
                         const uniq = {};
                         merged.forEach(s => { uniq[`${s.type}-${s.id}`] = s; });
-                        this.suggestions = Object.values(uniq);
+
+                        // Active/ongoing suggestions first, most recently created first —
+                        // same ordering as the manual lead/sales lead linking dropdowns.
+                        this.suggestions = Object.values(uniq).sort((a, b) => {
+                            const aClosed = a.stage?.is_won || a.stage?.is_lost ? 1 : 0;
+                            const bClosed = b.stage?.is_won || b.stage?.is_lost ? 1 : 0;
+
+                            if (aClosed !== bClosed) {
+                                return aClosed - bClosed;
+                            }
+
+                            return new Date(b.created_at) - new Date(a.created_at);
+                        });
                     } catch (error) {
                         console.error('Error fetching suggestions:', error);
                         this.suggestions = [];

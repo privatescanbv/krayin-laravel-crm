@@ -36,6 +36,30 @@ test('lead search returns 400 for invalid search field', function () {
         ->assertJsonStructure(['message', 'field']);
 });
 
+test('lead search returns stage and created_at so the entity-link picker can distinguish results', function () {
+    $lead = Lead::factory()->create([
+        'first_name'             => 'Stage',
+        'last_name'              => 'Info',
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
+        'user_id'                => $this->user->id,
+    ]);
+
+    $response = $this->getJson(route('admin.leads.search', [
+        'search'       => 'first_name:Stage;',
+        'searchFields' => 'first_name:like;',
+    ]));
+
+    $response->assertOk();
+
+    $result = collect($response->json('data'))->firstWhere('id', $lead->id);
+
+    expect($result)->not->toBeNull();
+    expect($result['created_at'])->not->toBeNull();
+    expect($result['stage']['name'])->toBe($this->stage->name);
+    expect($result['stage'])->toHaveKeys(['is_won', 'is_lost']);
+});
+
 test('lead search can find by email and phone', function () {
     // Create a lead with emails/phones arrays
     $lead = Lead::factory()->create([

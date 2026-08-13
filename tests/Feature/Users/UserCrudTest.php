@@ -62,6 +62,30 @@ it('rejects update when department default is invalid', function () {
         ->assertSessionHasErrors(['user_default_values.lead.department_id']);
 });
 
+it('keeps the existing password when the edit form submits an empty password field', function () {
+    $user = $this->user;
+    $role = $this->role;
+    $originalHash = $user->password;
+
+    $payload = [
+        'email'            => $user->email,
+        'first_name'       => 'Admin',
+        'last_name'        => 'Tester',
+        'role_id'          => $role->id,
+        'view_permission'  => 'global',
+        'groups'           => [],
+        // Simulates the edit form, which always submits these fields, blank when untouched.
+        'password'         => '',
+        'confirm_password' => '',
+    ];
+
+    actingAs($user, 'user');
+    $resp = put(route('admin.settings.users.update', ['id' => $user->id]), $payload);
+    $resp->assertRedirect(route('admin.settings.users.index'));
+
+    expect($user->fresh()->password)->toBe($originalHash);
+});
+
 test('can add user', function () {
     $role = Role::query()->first() ?? Role::factory()->create();
 

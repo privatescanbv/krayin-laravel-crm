@@ -80,6 +80,8 @@ Route::controller(LeadController::class)->prefix('leads')->group(function () {
     Route::controller(DuplicateController::class)->prefix('{id}/duplicates')->group(function () {
         Route::get('', 'index')->name('admin.leads.duplicates.index');
 
+        Route::get('select', 'select')->name('admin.leads.duplicates.select');
+
         Route::get('check', 'checkDuplicates')->name('admin.leads.duplicates.check');
 
         Route::get('get', 'getDuplicates')->name('admin.leads.duplicates.get');

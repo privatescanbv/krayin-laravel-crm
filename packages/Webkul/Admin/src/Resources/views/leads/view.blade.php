@@ -100,6 +100,14 @@
 
                         {!! view_render_event('admin.leads.view.actions.after', ['lead' => $lead]) !!}
                     </div>
+
+                    <div class="mt-2">
+                        <a href="{{ route('admin.leads.duplicates.select', $lead->id) }}"
+                           class="secondary-button inline-flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text">
+                            <span class="icon-setting text-base"></span>
+                            <span>Lead samenvoegen</span>
+                        </a>
+                    </div>
                 </div>
             </div>
             @if($lead->diagnoseform_pdf_url || $lead->mri_status)

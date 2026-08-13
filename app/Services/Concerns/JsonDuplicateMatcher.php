@@ -2,6 +2,7 @@
 
 namespace App\Services\Concerns;
 
+use Closure;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -33,8 +34,13 @@ trait JsonDuplicateMatcher
 
     /**
      * Generic helper to find duplicates based on JSON field values.
+     *
+     * @param  Closure(Builder): void|null  $scopeQuery  Optional extra constraint (e.g. a recency
+     *                                                   window) applied to every candidate query,
+     *                                                   so it's pushed down to SQL instead of
+     *                                                   filtering the fetched result in PHP.
      */
-    protected function findDuplicatesByJsonField(Lead|Person $entity, string $fieldName): Collection
+    protected function findDuplicatesByJsonField(Lead|Person $entity, string $fieldName, ?Closure $scopeQuery = null): Collection
     {
         $duplicates = collect();
 
@@ -60,6 +66,9 @@ trait JsonDuplicateMatcher
                     $query = $this->model->newQuery()->where('id', '!=', $entity->id);
                     // Use shared trait for robust matching
                     $query = $this->applyJsonValueMatch($query, $fieldName, (string) $value);
+                    if ($scopeQuery) {
+                        $scopeQuery($query);
+                    }
                     $results = $query->get();
 
                     $duplicates = $duplicates->merge($results);
@@ -74,7 +83,10 @@ trait JsonDuplicateMatcher
         return $duplicates;
     }
 
-    protected function findDuplicatesByName(Person|Lead $entity): Collection
+    /**
+     * @param  Closure(Builder): void|null  $scopeQuery  See findDuplicatesByJsonField().
+     */
+    protected function findDuplicatesByName(Person|Lead $entity, ?Closure $scopeQuery = null): Collection
     {
         if (empty($entity->first_name) && empty($entity->last_name)) {
             return collect();
@@ -84,6 +96,9 @@ trait JsonDuplicateMatcher
         try {
             $query = $this->model->newQuery()
                 ->where('id', '!=', $entity->id);
+            if ($scopeQuery) {
+                $scopeQuery($query);
+            }
 
             // Exact first + last name match (case-insensitive, MySQL compatible)
             if (! empty($entity->first_name) && ! empty($entity->last_name)) {

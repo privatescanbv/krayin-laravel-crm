@@ -7,6 +7,7 @@ use App\Enums\DuplicateEntityType;
 use App\Models\Address;
 use App\Services\DuplicateFalsePositiveService;
 use Database\Seeders\TestSeeder;
+use Illuminate\Support\Facades\DB;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Repositories\LeadRepository;
@@ -218,7 +219,7 @@ test('it ignores leads in won status as duplicates', function () {
             ['value' => 'marcus.won@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'lead_pipeline_stage_id' => $wonStage->id,
-        'created_at'             => now()->subDays(5), // Within 2 weeks but won status
+        'created_at'             => now()->subDays(5), // Within 4 weeks but won status
     ]);
 
     // Test duplicate detection - should NOT find the won lead as duplicate
@@ -228,7 +229,7 @@ test('it ignores leads in won status as duplicates', function () {
     $this->assertFalse($this->leadRepository->hasPotentialDuplicates($lead1));
 });
 
-test('it ignores leads created more than 2 weeks apart as duplicates', function () {
+test('it ignores leads created more than 4 weeks apart as duplicates', function () {
     // Create the first lead (current lead)
     $lead1 = Lead::factory()->create([
         'first_name' => 'John',
@@ -239,24 +240,24 @@ test('it ignores leads created more than 2 weeks apart as duplicates', function 
         'created_at' => now(),
     ]);
 
-    // Create a second lead with the same email but created 3 weeks ago (too old)
+    // Create a second lead with the same email but created 5 weeks ago (too old)
     $lead2 = Lead::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Timetest',
         'emails'     => [
             ['value' => 'john.time@example.com', 'label' => 'work'],
         ],
-        'created_at' => now()->subWeeks(3),
+        'created_at' => now()->subWeeks(5),
     ]);
 
-    // Create a third lead created 16 days ago (just over 2 weeks, should be ignored)
+    // Create a third lead created 29 days ago (just over 4 weeks, should be ignored)
     $lead3 = Lead::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Timetest',
         'phones'     => [
             ['value' => '+1234567890', 'label' => ContactLabel::Relatie->value],
         ],
-        'created_at' => now()->subDays(16),
+        'created_at' => now()->subDays(29),
     ]);
 
     // Test duplicate detection - should NOT find old leads as duplicates
@@ -266,7 +267,7 @@ test('it ignores leads created more than 2 weeks apart as duplicates', function 
     $this->assertFalse($this->leadRepository->hasPotentialDuplicates($lead1));
 });
 
-test('it finds leads created within 2 weeks as duplicates', function () {
+test('it finds leads created within 4 weeks as duplicates', function () {
     // Create the first lead
     $lead1 = Lead::factory()->create([
         'first_name' => 'Sarah',
@@ -277,17 +278,17 @@ test('it finds leads created within 2 weeks as duplicates', function () {
         'created_at' => now(),
     ]);
 
-    // Create a second lead with the same email created 1 week ago (within 2 weeks)
+    // Create a second lead with the same email created 3 weeks ago (within 4 weeks)
     $lead2 = Lead::factory()->create([
         'first_name' => 'Sarah',
         'last_name'  => 'Recenttest',
         'emails'     => [
             ['value' => 'sarah.recent@example.com', 'label' => ContactLabel::Eigen->value],
         ],
-        'created_at' => now()->subWeek(1),
+        'created_at' => now()->subWeeks(3),
     ]);
 
-    // Create a third lead with same phone created 10 days ago (within 2 weeks)
+    // Create a third lead with same phone created 10 days ago (within 4 weeks)
     $lead3 = Lead::factory()->create([
         'first_name' => 'Sarah',
         'last_name'  => 'Recenttest',
@@ -343,7 +344,7 @@ test('it combines time and status filters correctly', function () {
         'emails'     => [
             ['value' => 'alice.combined@example.com', 'label' => ContactLabel::Eigen->value],
         ],
-        'created_at' => now()->subWeeks(3),
+        'created_at' => now()->subWeeks(5),
     ]);
 
     // Create a fourth lead - recent and not won (should be found as duplicate)
@@ -364,7 +365,7 @@ test('it combines time and status filters correctly', function () {
     $this->assertTrue($this->leadRepository->hasPotentialDuplicates($lead1));
 });
 
-test('it handles edge case of exactly 2 weeks difference', function () {
+test('it handles edge case of exactly 4 weeks difference', function () {
     // Create the first lead
     $lead1 = Lead::factory()->create([
         'first_name' => 'Edge',
@@ -375,24 +376,26 @@ test('it handles edge case of exactly 2 weeks difference', function () {
         'created_at' => now(),
     ]);
 
-    // Create a second lead exactly 2 weeks ago (should be included)
+    // Create a second lead just under 4 weeks ago (should be included). Not placed at the exact
+    // 4-week boundary: the filter's "now" is evaluated at query time, a moment after this fixture
+    // is created, so an exact boundary would flake by a few milliseconds.
     $lead2 = Lead::factory()->create([
         'first_name' => 'Edge',
         'last_name'  => 'Case',
         'emails'     => [
             ['value' => 'edge.case@example.com', 'label' => ContactLabel::Eigen->value],
         ],
-        'created_at' => now()->subWeeks(2),
+        'created_at' => now()->subWeeks(4)->addMinutes(5),
     ]);
 
-    // Create a third lead exactly 2 weeks and 1 day ago (should be excluded)
+    // Create a third lead exactly 4 weeks and 1 day ago (should be excluded)
     $lead3 = Lead::factory()->create([
         'first_name' => 'Edge',
         'last_name'  => 'Case',
         'emails'     => [
             ['value' => 'edge.case@example.com', 'label' => ContactLabel::Eigen->value],
         ],
-        'created_at' => now()->subWeeks(2)->subDay(1),
+        'created_at' => now()->subWeeks(4)->subDay(1),
     ]);
 
     // Test duplicate detection - should find lead2 but not lead3
@@ -445,14 +448,14 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
         'lead_pipeline_stage_id' => $wonStage->id,
     ]);
 
-    // Scenario 3: Old lead (3 weeks ago) that is still active (should be ignored - time filter)
+    // Scenario 3: Old lead (5 weeks ago) that is still active (should be ignored - time filter)
     $oldActiveLead = Lead::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Comprehensive',
         'emails'     => [
             ['value' => 'john.comprehensive@example.com', 'label' => ContactLabel::Eigen->value],
         ],
-        'created_at' => now()->subWeeks(3),
+        'created_at' => now()->subWeeks(5),
         // Default stage (not won)
     ]);
 
@@ -481,6 +484,31 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
     $this->assertNotContains($oldActiveLead->id, $duplicateIds, 'Should not find old active lead');
 
     $this->assertTrue($this->leadRepository->hasPotentialDuplicates($mainLead));
+});
+
+test('it pushes the recency window into the candidate queries instead of filtering in PHP after fetch', function () {
+    $lead1 = Lead::factory()->create([
+        'first_name' => 'Query',
+        'last_name'  => 'Pushdown',
+        'emails'     => [
+            ['value' => 'pushdown@example.com', 'label' => ContactLabel::Eigen->value],
+        ],
+        'created_at' => now(),
+    ]);
+
+    DB::enableQueryLog();
+    $this->leadRepository->findPotentialDuplicatesDirectly($lead1);
+    $queries = DB::getQueryLog();
+    DB::disableQueryLog();
+
+    $leadsTableQueries = collect($queries)->filter(
+        fn ($q) => str_contains($q['query'], 'from `leads`') || str_contains($q['query'], 'from "leads"')
+    );
+
+    expect($leadsTableQueries)->not->toBeEmpty();
+    $leadsTableQueries->each(
+        fn ($q) => expect($q['query'])->toContain('created_at')
+    );
 });
 
 test('it hides lead duplicates when marked as false positive (even with cache)', function () {

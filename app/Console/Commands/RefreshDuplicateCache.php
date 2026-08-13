@@ -7,6 +7,7 @@ use App\Services\PersonDuplicateCacheService;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Webkul\Lead\Repositories\LeadRepository;
 
 /**
  * Used in cronjob to refresh duplicate detection caches every hour
@@ -114,8 +115,12 @@ class RefreshDuplicateCache extends Command
                 $personCache->refreshPersonCache((int) $pid);
             }
 
-            $this->info('Incremental refresh (last 24h) for leads...');
-            $recentLeads = DB::table('leads')->where('updated_at', '>=', now()->subDay())->pluck('id');
+            // Leads older than the duplicate search window (see LeadRepository::applyDuplicateFilters)
+            // can never be flagged as a duplicate again, on the assumption they've already been
+            // handled - so only leads created within that same window need their cache kept warm.
+            $duplicateWindowWeeks = LeadRepository::DUPLICATE_SEARCH_PERIOD_WEEKS;
+            $this->info("Incremental refresh (last $duplicateWindowWeeks weeks) for leads...");
+            $recentLeads = DB::table('leads')->where('created_at', '>=', now()->subWeeks($duplicateWindowWeeks))->pluck('id');
             foreach ($recentLeads as $lid) {
                 $leadCache->refreshLeadCache((int) $lid);
             }

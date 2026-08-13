@@ -25,6 +25,14 @@ use Webkul\Lead\Contracts\Lead;
 class LeadRepository extends Repository
 {
     use JsonDuplicateMatcher;
+
+    /**
+     * How far back duplicate leads are searched for, counted from now. Public so callers that need
+     * to keep the duplicate cache warm for this same window (see RefreshDuplicateCache) can reuse it
+     * instead of hardcoding the number again.
+     */
+    public const int DUPLICATE_SEARCH_PERIOD_WEEKS = 4;
+
     /**
      * Searchable fields.
      */
@@ -305,7 +313,7 @@ class LeadRepository extends Repository
      * Find potential duplicate leads based on email, phone, and name similarity.
      * Uses caching for improved performance.
      * Filters out leads that are:
-     * - Created more than 2 weeks apart
+     * - Created outside the last DUPLICATE_SEARCH_PERIOD_WEEKS weeks
      * - In 'Won' status
      */
     public function findPotentialDuplicates($lead): Collection
@@ -337,17 +345,24 @@ class LeadRepository extends Repository
     {
         $duplicates = collect();
 
+        // Push the recency window down into the candidate queries themselves (leads.created_at is
+        // indexed - see leads_created_at_idx) instead of fetching every historical match and
+        // discarding old rows in PHP afterwards. applyDuplicateFilters() below still re-checks this
+        // window, so behavior is unchanged - this only cuts down what gets scanned/fetched.
+        $periodStart = Carbon::now()->subWeeks(self::DUPLICATE_SEARCH_PERIOD_WEEKS);
+        $withinSearchWindow = fn ($query) => $query->where('created_at', '>=', $periodStart);
+
         try {
             // Check for email duplicates
-            $emailDuplicates = $this->findDuplicatesByJsonField($lead, 'emails');
+            $emailDuplicates = $this->findDuplicatesByJsonField($lead, 'emails', $withinSearchWindow);
             $duplicates = $duplicates->merge($emailDuplicates);
 
             // Check for phone duplicates
-            $phoneDuplicates = $this->findDuplicatesByJsonField($lead, 'phones');
+            $phoneDuplicates = $this->findDuplicatesByJsonField($lead, 'phones', $withinSearchWindow);
             $duplicates = $duplicates->merge($phoneDuplicates);
 
             // Check for name similarity
-            $nameDuplicates = $this->findDuplicatesByName($lead);
+            $nameDuplicates = $this->findDuplicatesByName($lead, $withinSearchWindow);
             $duplicates = $duplicates->merge($nameDuplicates);
 
         } catch (Exception $e) {
@@ -368,20 +383,19 @@ class LeadRepository extends Repository
      */
     private function applyDuplicateFilters($lead, Collection $duplicates): Collection
     {
-        $leadCreatedAt = Carbon::parse($lead->created_at);
-        $twoWeeksAgo = $leadCreatedAt->copy()->subWeeks(2);
-        $twoWeeksLater = $leadCreatedAt->copy()->addWeeks(2);
+        $now = Carbon::now();
+        $periodStart = $now->copy()->subWeeks(self::DUPLICATE_SEARCH_PERIOD_WEEKS);
 
-        return $duplicates->filter(function ($duplicate) use ($twoWeeksAgo, $twoWeeksLater) {
+        return $duplicates->filter(function ($duplicate) use ($periodStart, $now) {
             // Filter out leads in 'Won' status
             if ($duplicate->stage && $duplicate->stage->is_won) {
                 return false;
             }
 
-            // Filter out leads created more than 2 weeks apart
+            // Only consider leads created within the search period (now vs. X weeks ago)
             $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
 
-            return $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater);
+            return $duplicateCreatedAt->between($periodStart, $now);
         });
     }
 

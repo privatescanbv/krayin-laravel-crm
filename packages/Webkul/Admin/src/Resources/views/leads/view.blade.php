@@ -98,15 +98,13 @@
                             <x-admin::activities.actions.activity :entity="$lead" entity-control-name="lead_id"/>
                         @endif
 
-                        {!! view_render_event('admin.leads.view.actions.after', ['lead' => $lead]) !!}
-                    </div>
-
-                    <div class="mt-2">
                         <a href="{{ route('admin.leads.duplicates.select', $lead->id) }}"
-                           class="secondary-button inline-flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text">
-                            <span class="icon-setting text-base"></span>
-                            <span>Lead samenvoegen</span>
+                           class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-orange-50 font-medium text-orange-700 transition-all hover:border-orange-300 dark:bg-orange-900/20 dark:text-orange-300 dark:hover:border-orange-700">
+                            <span class="icon-setting text-2xl dark:!text-orange-300"></span>
+                            <span class="px-1 text-center text-xs leading-tight">Lead samenvoegen</span>
                         </a>
+
+                        {!! view_render_event('admin.leads.view.actions.after', ['lead' => $lead]) !!}
                     </div>
                 </div>
             </div>

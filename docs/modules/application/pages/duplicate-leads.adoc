@@ -50,7 +50,17 @@ Lead Detail Weergave
 
 * Oranje waarschuwingsbanner verschijnt bovenaan wanneer duplicaten worden gedetecteerd
 * Toont aantal mogelijke duplicaten
-* "Merge Duplicates" knop biedt directe toegang tot samenvoeg interface
+* "Duplicaten samenvoegen" knop biedt directe toegang tot samenvoeg interface
+* Actie "Lead samenvoegen" is altijd beschikbaar om handmatig een andere lead te zoeken en samen te voegen (ook buiten de detectieperiode)
+
+====== 2.1. Handmatig samenvoegen
+
+Wanneer een duplicaat niet automatisch is herkend:
+
+. Open de lead en kies *Lead samenvoegen*
+. Zoek en selecteer één andere lead
+. Via *Verder* opent het bestaande Merge leads-scherm met de huidige lead als primaire lead en de gekozen lead als duplicaat
+. Vanaf daar geldt de bestaande samenvoegfunctionaliteit
 
 ====== 3. Samenvoeg Interface
 

@@ -27,11 +27,31 @@ class DuplicateController extends Controller
 
     /**
      * Show potential duplicates for a lead.
+     *
+     * Optional query param `with` injects a manually chosen lead into the merge screen
+     * (used by the manual "Lead samenvoegen" flow) without changing automatic detection.
      */
     public function index(int $leadId): View
     {
-        $lead = $this->leadRepository->with(['stage', 'pipeline', 'user'])->findOrFail($leadId);
+        $lead = $this->leadRepository->with(['stage', 'pipeline', 'user', 'organization', 'contactPerson'])->findOrFail($leadId);
         $duplicates = $this->leadRepository->findPotentialDuplicates($lead);
+
+        $preselectedLeadIds = [];
+        $manualLeadId = (int) request()->query('with', 0);
+
+        if ($manualLeadId > 0 && $manualLeadId !== $leadId) {
+            $manualLead = $this->leadRepository
+                ->with(['stage', 'pipeline', 'user', 'organization', 'contactPerson'])
+                ->find($manualLeadId);
+
+            if ($manualLead && ! $duplicates->contains('id', $manualLeadId)) {
+                $duplicates = $duplicates->prepend($manualLead)->values();
+            }
+
+            if ($manualLead) {
+                $preselectedLeadIds[] = $manualLeadId;
+            }
+        }
 
         // Use LeadResource for consistent data formatting
         $leadData = array_merge((new LeadResource($lead))->resolve(), $this->mergeScreenFields($lead));
@@ -62,6 +82,19 @@ class DuplicateController extends Controller
             'duplicates' => $duplicates,
             'leadData' => $leadData,
             'duplicatesData' => $duplicatesData,
+            'preselectedLeadIds' => $preselectedLeadIds,
+        ]);
+    }
+
+    /**
+     * Manual merge entry: search and select another lead to merge with the current one.
+     */
+    public function select(int $leadId): View
+    {
+        $lead = $this->leadRepository->with(['stage', 'user'])->findOrFail($leadId);
+
+        return view('admin::leads.duplicates.select', [
+            'lead' => $lead,
         ]);
     }
 

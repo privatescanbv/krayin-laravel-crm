@@ -24,6 +24,7 @@
             <v-duplicates-manager
                 :primary-lead="{{ json_encode($leadData) }}"
                 :duplicates="{{ json_encode($duplicatesData) }}"
+                :preselected-lead-ids="{{ json_encode($preselectedLeadIds ?? []) }}"
                 merge-url="{{ route('admin.leads.duplicates.merge', $lead->id) }}"
                 false-positive-url="{{ route('admin.leads.duplicates.false_positive', $lead->id) }}"
                 redirect-url="{{ route('admin.leads.view', $lead->id) }}"
@@ -337,10 +338,27 @@
         <script type="module">
             app.component('v-duplicates-manager', {
                 template: '#v-duplicates-manager-template',
-                props: ['primaryLead', 'duplicates', 'mergeUrl', 'falsePositiveUrl', 'redirectUrl'],
+                props: {
+                    primaryLead: { type: Object, required: true },
+                    duplicates: { type: Array, required: true },
+                    mergeUrl: { type: String, required: true },
+                    falsePositiveUrl: { type: String, required: true },
+                    redirectUrl: { type: String, required: true },
+                    preselectedLeadIds: { type: Array, default: () => [] },
+                },
                 data() {
+                    const initialSelected = [this.primaryLead.id];
+
+                    (this.preselectedLeadIds || []).forEach((id) => {
+                        const leadId = Number(id);
+
+                        if (leadId && ! initialSelected.includes(leadId)) {
+                            initialSelected.push(leadId);
+                        }
+                    });
+
                     return {
-                        selectedLeads: [this.primaryLead.id], // Primary lead is always selected
+                        selectedLeads: initialSelected, // Primary lead is always selected
                         fieldMappings: {},
                         isLoading: false,
                         showIdenticalFields: false, // Control visibility of identical fields

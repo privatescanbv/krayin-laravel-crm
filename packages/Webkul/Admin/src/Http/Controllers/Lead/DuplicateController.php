@@ -6,6 +6,7 @@ use App\Enums\DuplicateEntityType;
 use App\Services\DuplicateFalsePositiveService;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Resources\LeadResource;
@@ -30,8 +31,11 @@ class DuplicateController extends Controller
      *
      * Optional query param `with` injects a manually chosen lead into the merge screen
      * (used by the manual "Lead samenvoegen" flow) without changing automatic detection.
+     *
+     * Redirects instead of rendering when the manually picked lead needs to become primary
+     * (see the sales-lead swap below).
      */
-    public function index(int $leadId): View
+    public function index(int $leadId): View|RedirectResponse
     {
         $lead = $this->leadRepository->with(['stage', 'pipeline', 'user', 'organization', 'contactPerson'])->findOrFail($leadId);
         $duplicates = $this->leadRepository->findPotentialDuplicates($lead);
@@ -44,14 +48,38 @@ class DuplicateController extends Controller
                 ->with(['stage', 'pipeline', 'user', 'organization', 'contactPerson'])
                 ->find($manualLeadId);
 
-            if ($manualLead && ! $duplicates->contains('id', $manualLeadId)) {
-                $duplicates = $duplicates->prepend($manualLead)->values();
-            }
-
             if ($manualLead) {
-                $preselectedLeadIds[] = $manualLeadId;
+                // The manually picked lead already carries a sales lead (order/invoicing) and the
+                // current lead does not - merging would fail (guardAgainstMergingSalesLeads) because
+                // this lead would be the one archived. Swap roles instead of letting the user hit
+                // that error: reload with the sales-lead lead as primary and this page's lead as the
+                // one to merge in. If both sides have a sales lead, no swap can save it - that's
+                // caught below where the row gets disabled with an explanation.
+                $salesLeadIds = $this->leadRepository->leadIdsWithSalesLead([$leadId, $manualLeadId]);
+
+                if ($salesLeadIds->contains($manualLeadId) && ! $salesLeadIds->contains($leadId)) {
+                    return redirect()->route('admin.leads.duplicates.index', [
+                        'id'   => $manualLeadId,
+                        'with' => $leadId,
+                    ]);
+                }
+
+                if (! $duplicates->contains('id', $manualLeadId)) {
+                    $duplicates = $duplicates->prepend($manualLead)->values();
+                }
+
+                // Both sides have a sales lead: no swap fixes that, leave it unchecked. The row
+                // below still gets has_sales_lead so its checkbox is disabled with an explanation
+                // instead of preselecting a choice the user can no longer untick.
+                if (! $salesLeadIds->contains($manualLeadId)) {
+                    $preselectedLeadIds[] = $manualLeadId;
+                }
             }
         }
+
+        // Leads that already have a sales lead can never be the side a merge archives - flagged per
+        // row so the Vue table disables selecting them as a duplicate (see leadIdsWithSalesLead).
+        $salesLeadDuplicateIds = $this->leadRepository->leadIdsWithSalesLead($duplicates->pluck('id')->all());
 
         // Use LeadResource for consistent data formatting
         $leadData = array_merge((new LeadResource($lead))->resolve(), $this->mergeScreenFields($lead));
@@ -73,6 +101,7 @@ class DuplicateController extends Controller
             $dupData['matched_emails'] = $reasons['email'];
             $dupData['matched_phones'] = $reasons['phone'];
             $dupData['name_reason']    = $reasons['name_reason'];
+            $dupData['has_sales_lead'] = $salesLeadDuplicateIds->contains($dup->id);
 
             $duplicatesData[] = $dupData;
         }

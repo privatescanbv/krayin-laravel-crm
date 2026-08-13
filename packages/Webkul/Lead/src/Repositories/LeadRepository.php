@@ -554,10 +554,27 @@ class LeadRepository extends Repository
     }
 
     /**
-     * A duplicate that already has a sales lead carries orders and invoicing with it. Won leads are
-     * filtered out of the duplicate list (see applyDuplicateFilters) and sales leads only exist for
-     * won leads, so this should never trigger from the UI - it guards a stale duplicate cache and
-     * direct repository calls.
+     * Which of the given leads already have a sales lead (salesleads.lead_id). A duplicate with a
+     * sales lead carries orders and invoicing with it, so it can never be the side that gets
+     * archived by a merge. Used both by the merge guard below and by the duplicates screen to keep
+     * such leads from being picked as a duplicate in the first place.
+     *
+     * @param array<int, int|string> $leadIds
+     * @return Collection<int, int>
+     */
+    public function leadIdsWithSalesLead(array $leadIds): Collection
+    {
+        return DB::table('salesleads')
+            ->whereIn('lead_id', $leadIds)
+            ->pluck('lead_id')
+            ->unique();
+    }
+
+    /**
+     * Won leads are filtered out of the automatic duplicate list (see applyDuplicateFilters) and
+     * sales leads only exist for won leads, so this should never trigger from there - it guards the
+     * manual "search and merge" flow (which can inject any lead, see DuplicateController::index),
+     * a stale duplicate cache, and direct repository calls.
      *
      * @param array<int, int|string> $duplicateLeadIds
      *
@@ -565,14 +582,11 @@ class LeadRepository extends Repository
      */
     private function guardAgainstMergingSalesLeads(array $duplicateLeadIds): void
     {
-        $blocked = DB::table('salesleads')
-            ->whereIn('lead_id', $duplicateLeadIds)
-            ->pluck('lead_id')
-            ->unique();
+        $blocked = $this->leadIdsWithSalesLead($duplicateLeadIds);
 
         if ($blocked->isNotEmpty()) {
             throw new Exception(
-                'Lead(s) '.$blocked->implode(', ').' hebben een verkooptraject en kunnen niet worden samengevoegd.'
+                'Lead(s) '.$blocked->implode(', ').' hebben een sales (verkooptraject) en kunnen niet worden samengevoegd.'
             );
         }
     }

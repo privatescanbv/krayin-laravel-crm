@@ -114,14 +114,27 @@
                                     </tr>
                                     <tr v-for="duplicate in duplicates" :key="'dup-row-' + duplicate.id" class="border-b border-gray-100 dark:border-gray-800">
                                         <td class="p-3"><a :href="'{{ route('admin.leads.view', 'place_holder') }}'.replace('place_holder', duplicate.id)">@{{ duplicate.id }}</a></td>
-                                        <td class="p-3 text-sm">@{{ duplicate.first_name }} @{{ duplicate.last_name }}</td>
+                                        <td class="p-3 text-sm">
+                                            @{{ duplicate.first_name }} @{{ duplicate.last_name }}
+                                            <span
+                                                v-if="duplicate.has_sales_lead"
+                                                class="ml-1 inline-flex items-center rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                                title="Deze lead heeft al een sales (verkooptraject) en kan daarom niet als duplicaat worden samengevoegd. Start het samenvoegen vanaf deze lead om hem te behouden."
+                                            >sales</span>
+                                        </td>
                                         <td class="p-3 text-sm">@{{ duplicate.stage?.name || '-' }}</td>
                                         <td class="p-3 text-sm">@{{ duplicate.created_at || '-' }}</td>
                                         <td class="p-3 text-xs">@{{ (duplicate.matched_emails || []).join(', ') || '-' }}</td>
                                         <td class="p-3 text-xs">@{{ (duplicate.matched_phones || []).join(', ') || '-' }}</td>
                                         <td class="p-3 text-xs">@{{ duplicate.name_reason || '-' }}</td>
                                         <td class="p-3 text-center">
-                                            <input type="checkbox" :checked="selectedLeads.includes(duplicate.id)" @change="toggleLeadSelection(duplicate.id)" />
+                                            <input
+                                                type="checkbox"
+                                                :checked="selectedLeads.includes(duplicate.id)"
+                                                :disabled="duplicate.has_sales_lead"
+                                                :title="duplicate.has_sales_lead ? 'Heeft al een sales (verkooptraject) - kan niet als duplicaat worden samengevoegd.' : ''"
+                                                @change="toggleLeadSelection(duplicate.id)"
+                                            />
                                         </td>
                                     </tr>
                                 </tbody>
@@ -166,11 +179,17 @@
                                                 <input
                                                     type="checkbox"
                                                     :checked="selectedLeads.includes(duplicate.id)"
+                                                    :disabled="duplicate.has_sales_lead"
+                                                    :title="duplicate.has_sales_lead ? 'Heeft al een sales (verkooptraject) - kan niet als duplicaat worden samengevoegd.' : ''"
                                                     @change="toggleLeadSelection(duplicate.id)"
                                                     class="mb-2"
                                                 />
                                                 <span class="text-sm font-medium">Duplicaat</span>
                                                 <span class="text-xs text-gray-500">ID: @{{ duplicate.id }}</span>
+                                                <span
+                                                    v-if="duplicate.has_sales_lead"
+                                                    class="mt-1 inline-flex items-center rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                                >sales</span>
                                             </div>
                                         </th>
                                     </tr>

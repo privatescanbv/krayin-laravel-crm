@@ -10,21 +10,21 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-core</artifactId>
-            <version>24.0.5</version>
+            <version>26.6.3</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-server-spi</artifactId>
-            <version>24.0.5</version>
+            <version>26.6.3</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-server-spi-private</artifactId>
-            <version>24.0.5</version>
+            <version>26.6.3</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

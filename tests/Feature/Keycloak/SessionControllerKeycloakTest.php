@@ -73,6 +73,44 @@ it('redirects SSO user to Keycloak logout on logout within ', function () {
         ->and(auth()->guard('user')->user())->toBeNull();
 });
 
+it('includes id_token_hint in Keycloak logout URL when available', function () {
+    $user = createUser([
+        'email'            => 'sso-logout-idtoken@example.com',
+        'keycloak_user_id' => 'keycloak-user-123',
+        'role_id'          => $this->role->id,
+        'status'           => 1,
+    ]);
+    $response = $this->actingAs($user, 'user')
+        ->withSession([
+            'auth_source'       => 'keycloak',
+            'keycloak_id_token' => 'test-id-token',
+        ])
+        ->delete(route('admin.session.destroy'));
+
+    $response->assertStatus(302);
+    $location = $response->headers->get('Location');
+    expect($location)->toContain('id_token_hint=test-id-token')
+        ->and($location)->toContain('post_logout_redirect_uri=');
+});
+
+it('omits id_token_hint from Keycloak logout URL when not available', function () {
+    $user = createUser([
+        'email'            => 'sso-logout-no-idtoken@example.com',
+        'keycloak_user_id' => 'keycloak-user-123',
+        'role_id'          => $this->role->id,
+        'status'           => 1,
+    ]);
+    $response = $this->actingAs($user, 'user')
+        ->withSession([
+            'auth_source' => 'keycloak',
+        ])
+        ->delete(route('admin.session.destroy'));
+
+    $response->assertStatus(302);
+    $location = $response->headers->get('Location');
+    expect($location)->not->toContain('id_token_hint');
+});
+
 it('redirects non-SSO user to login on logout', function () {
     $user = createUser([
         'email'            => 'regular@example.com',

@@ -405,10 +405,18 @@ class KeycloakService
 
     /**
      * Get Keycloak user via Socialite.
+     * Also stashes the id_token in the session for use as id_token_hint on logout.
      */
     public function getUserViaSocialite(): User
     {
-        return $this->getSocialiteDriver()->user();
+        $driver = $this->getSocialiteDriver();
+        $user = $driver->user();
+
+        if (method_exists($driver, 'getIdToken')) {
+            session(['keycloak_id_token' => $driver->getIdToken()]);
+        }
+
+        return $user;
     }
 
     /**

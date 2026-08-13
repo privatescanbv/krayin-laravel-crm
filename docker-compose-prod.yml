@@ -317,12 +317,15 @@ services:
       KC_DB: postgres
       KC_DB_URL_HOST: keycloak-db
       KC_DB_URL_DATABASE: keycloak
-      KC_HOSTNAME: sso.${PRIVATESCAN_BASE_DOMAIN}
+      # KC 26 hostname-v2: schema komt uit KC_HOSTNAME zelf (vandaar https://),
+      # forwarded headers van Traefik worden vertrouwd via KC_PROXY_HEADERS.
+      # De oude v1-opties (KC_PROXY=edge, KC_HOSTNAME_STRICT_HTTPS) worden
+      # door v2 genegeerd en gaven daardoor http:// in gegenereerde URLs.
+      KC_HOSTNAME: https://sso.${PRIVATESCAN_BASE_DOMAIN}
       KC_HOSTNAME_STRICT: "false"
-      KC_HOSTNAME_STRICT_HTTPS: "false"
       KC_HTTP_ENABLED: "true"
       KC_HEALTH_ENABLED: "true"
-      KC_PROXY: edge
+      KC_PROXY_HEADERS: xforwarded
       FORMS_FRONTEND_URL: "https://patient.privatescan.nl"
     networks:
       - backend

@@ -161,14 +161,25 @@ class SessionController extends Controller
         if ($isSSOUser) {
             $logoutUrl = $this->keycloakService->getLogoutUrl();
             $clientId = $this->keycloakService->getClientId();
+            $idToken = session()->pull('keycloak_id_token');
 
-            // Try logout with only client_id first (simpler, redirects to client base URL)
-            $fullLogoutUrl = $logoutUrl . '?client_id=' . urlencode($clientId);
+            // Keycloak's OIDC end-session endpoint only redirects back automatically
+            // when a post_logout_redirect_uri is given that matches a URI registered
+            // on the client (see KeycloakRealmClientSeeder). Without id_token_hint,
+            // Keycloak shows its own logout confirmation page requiring a click instead
+            // of redirecting straight back, which read as a blank/hanging page.
+            $fullLogoutUrl = $logoutUrl
+                . '?client_id=' . urlencode($clientId)
+                . '&post_logout_redirect_uri=' . urlencode(route('admin.keycloak.logout-callback'));
+
+            if ($idToken) {
+                $fullLogoutUrl .= '&id_token_hint=' . urlencode($idToken);
+            }
 
             Log::debug('Redirecting to Keycloak logout', [
                 'logout_url' => $fullLogoutUrl,
                 'client_id' => $clientId,
-                'note' => 'Using logout with client_id only - Keycloak will redirect to client base URL',
+                'has_id_token_hint' => (bool) $idToken,
             ]);
 
             return redirect($fullLogoutUrl);

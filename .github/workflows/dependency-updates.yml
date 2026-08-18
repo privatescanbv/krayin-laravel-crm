@@ -1,0 +1,42 @@
+name: Weekly dependency updates
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * 6'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    if: github.ref == 'refs/heads/development'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: development
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Update Composer dependencies
+        run: composer update --no-interaction
+
+      - name: Update npm dependencies
+        run: npm update
+
+      - name: Commit updated lockfiles
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: weekly npm and composer update"
+          file_pattern: "composer.lock package-lock.json"

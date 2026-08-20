@@ -86,6 +86,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $schedule->command('activities:release-overdue')->hourly();
         $schedule->command('activities:sync-statuses')->hourly();
         $schedule->command('duplicates:refresh-cache --clear')->hourly();
+        $schedule->command('duplicates:refresh-cache --index')->dailyAt('07:00');
         $schedule->command('emails:cleanup-logs')->daily();
         $schedule->command('emails:cleanup-graph-inbox')->daily();
         $schedule->command('patient:send-notification-email')->everyFiveMinutes()->withoutOverlapping();

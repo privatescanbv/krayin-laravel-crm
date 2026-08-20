@@ -19,6 +19,7 @@ class RefreshDuplicateCache extends Command
      */
     protected $signature = 'duplicates:refresh-cache
                           {--full : Rebuild cache for all entities}
+                          {--index : Rebuild persons.has_duplicates flags from detection}
                           {--stats : Show cache statistics}
                           {--clear : Clear all duplicate caches}';
 
@@ -31,6 +32,7 @@ class RefreshDuplicateCache extends Command
     {
         try {
             $doFull = (bool) $this->option('full');
+            $doIndex = (bool) $this->option('index');
             $doStats = (bool) $this->option('stats');
             $doClear = (bool) $this->option('clear');
 
@@ -105,6 +107,14 @@ class RefreshDuplicateCache extends Command
 
                 $this->info('✅ Full rebuild completed');
 
+                $this->rebuildPersonDuplicateIndex($personCache);
+
+                return Command::SUCCESS;
+            }
+
+            if ($doIndex) {
+                $this->rebuildPersonDuplicateIndex($personCache);
+
                 return Command::SUCCESS;
             }
 
@@ -133,5 +143,12 @@ class RefreshDuplicateCache extends Command
 
             return Command::FAILURE;
         }
+    }
+
+    private function rebuildPersonDuplicateIndex(PersonDuplicateCacheService $personCache): void
+    {
+        $this->info('Rebuilding persons.has_duplicates index...');
+        $processed = $personCache->rebuildHasDuplicatesIndex();
+        $this->info("✅ Indexed {$processed} persons ({$personCache->countPersonsWithDuplicates()} with duplicates)");
     }
 }

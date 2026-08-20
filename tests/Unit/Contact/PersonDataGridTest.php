@@ -82,6 +82,22 @@ test('date_of_birth filter leaves range unchanged when both from and to are set'
         ->and($filters['date_of_birth'][0][1])->toBe('2008-05-31');
 });
 
+test('duplicates column is a filterable dropdown', function () {
+    $dataGrid = app(PersonDataGrid::class);
+    $dataGrid->prepareColumns();
+
+    $column = collect($dataGrid->getColumns())
+        ->first(fn ($column) => $column->getIndex() === 'has_duplicates');
+
+    expect($column->getFilterable())->toBeTrue()
+        ->and($column->getSortable())->toBeTrue()
+        ->and($column->getFilterableType())->toBe('dropdown')
+        ->and($column->getFilterableOptions())->toBe([
+            ['label' => 'Heeft duplicaten', 'value' => '1'],
+            ['label' => 'Geen duplicaten', 'value' => '0'],
+        ]);
+});
+
 test('Date column processFilter uses midnight (00:00:00) as start of day', function () {
     $col = new Date([
         'index'      => 'date_of_birth',

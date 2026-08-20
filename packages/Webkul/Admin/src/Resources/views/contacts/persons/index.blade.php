@@ -37,6 +37,11 @@
 
         {!! view_render_event('admin.persons.index.datagrid.before') !!}
 
+        <x-admin::person-duplicates-alert
+            :count="$personDuplicateCount"
+            :url="$personDuplicatesUrl"
+        />
+
         <v-persons>
             <!-- Datagrid shimmer -->
             <x-admin::shimmer.datagrid :is-multi-row="true"/>

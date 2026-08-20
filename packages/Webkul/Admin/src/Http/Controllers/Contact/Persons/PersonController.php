@@ -13,6 +13,7 @@ use App\Helpers\Comparable;
 use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Repositories\AddressRepository;
+use App\Services\PersonDuplicateCacheService;
 use App\Services\PersonValidationService;
 use BackedEnum;
 use Carbon\Carbon;
@@ -57,6 +58,7 @@ class PersonController extends Controller
         private readonly CreatePortalAccountAction $createPortalAccountAction,
         private readonly DeletePortalAccountAction $deletePortalAccountAction,
         private readonly ActivityRepository $activityRepository,
+        private readonly PersonDuplicateCacheService $personDuplicateCacheService,
     )
     {
         request()->request->add(['entity_type' => 'persons']);
@@ -174,7 +176,12 @@ class PersonController extends Controller
             return datagrid(PersonDataGrid::class)->process();
         }
 
-        return view('admin::contacts.persons.index');
+        return view('admin::contacts.persons.index', [
+            'personDuplicateCount' => $this->personDuplicateCacheService->countPersonsWithDuplicates(
+                bouncer()->getAuthorizedUserIds()
+            ),
+            'personDuplicatesUrl'  => $this->personDuplicateCacheService->personsIndexUrlWithDuplicateFilter(),
+        ]);
     }
 
     /**

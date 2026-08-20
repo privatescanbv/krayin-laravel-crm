@@ -41,6 +41,7 @@ class PersonDataGrid extends DataGrid
                 'persons.phones',
                 'persons.date_of_birth',
                 'persons.is_active',
+                'persons.has_duplicates',
                 'organizations.name as organization',
                 'organizations.id as organization_id'
             )
@@ -109,6 +110,7 @@ class PersonDataGrid extends DataGrid
         )"));
         $this->addFilter('organization', 'organizations.name');
         $this->addFilter('is_active', 'persons.is_active');
+        $this->addFilter('has_duplicates', 'persons.has_duplicates');
         $this->addFilter('date_of_birth', 'persons.date_of_birth');
 
         return $queryBuilder;
@@ -229,13 +231,18 @@ class PersonDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'has_duplicates',
-            'label'      => 'Duplicaten',
-            'type'       => 'string',
-            'sortable'   => false,
-            'filterable' => false,
-            'searchable' => false,
-            'closure'    => function ($row) {
+            'index'              => 'has_duplicates',
+            'label'              => 'Duplicaten',
+            'type'               => 'string',
+            'sortable'           => true,
+            'filterable'         => true,
+            'searchable'         => false,
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => [
+                ['label' => 'Heeft duplicaten', 'value' => '1'],
+                ['label' => 'Geen duplicaten', 'value' => '0'],
+            ],
+            'closure'            => function ($row) {
                 $duplicateIds = $this->duplicateCacheService->getCachedDuplicates($row->id);
                 $duplicateCount = $duplicateIds->count();
                 if ($duplicateCount > 0) {

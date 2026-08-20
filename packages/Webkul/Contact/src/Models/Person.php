@@ -85,6 +85,7 @@ class Person extends Model implements PersonContract
         'gender'                              => PersonGender::class,
         'salutation'                          => PersonSalutation::class,
         'is_active'                           => 'boolean',
+        'has_duplicates'                      => 'boolean',
         'preferred_language'                  => PreferredLanguage::class,
         'national_identification_number'      => EncryptedString::class,
         'onboarding_completed_at'             => 'datetime',

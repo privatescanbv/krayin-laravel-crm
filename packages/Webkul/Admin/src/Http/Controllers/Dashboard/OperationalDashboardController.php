@@ -6,6 +6,7 @@ use App\Enums\Departments;
 use App\Services\ActivityQueueRegistry;
 use App\Services\ActivityQueueRepository;
 use App\Services\EmailInboxService;
+use App\Services\PersonDuplicateCacheService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -18,8 +19,8 @@ class OperationalDashboardController extends Controller
         protected ActivityQueueRegistry $queueRegistry,
         protected ActivityQueueRepository $queueRepository,
         protected EmailInboxService $emailInboxService,
-    ) {
-    }
+        protected PersonDuplicateCacheService $personDuplicateCacheService,
+    ) {}
 
     /**
      * Show the operational dashboard with all queues.
@@ -59,13 +60,14 @@ class OperationalDashboardController extends Controller
 
         $defaultQueueKey = $queues[0]['key'] ?? 'frontoffice';
 
-
         $defaultDepartment = $this->getInitialDepartmentForCurrentUser();
 
         return view('admin::dashboard.operational.index', [
-            'queues'            => $queues,
-            'defaultQueueKey'   => $defaultQueueKey,
-            'defaultDepartment' => $defaultDepartment,
+            'queues'               => $queues,
+            'defaultQueueKey'      => $defaultQueueKey,
+            'defaultDepartment'    => $defaultDepartment,
+            'personDuplicateCount' => $this->personDuplicateCountForCurrentUser(),
+            'personDuplicatesUrl'  => $this->personDuplicateCacheService->personsIndexUrlWithDuplicateFilter(),
         ]);
     }
 
@@ -144,5 +146,15 @@ class OperationalDashboardController extends Controller
 
         return $deptCase ? $deptCase->key() : Departments::PRIVATESCAN->key();
     }
-}
 
+    private function personDuplicateCountForCurrentUser(): int
+    {
+        if (! bouncer()->hasPermission('contacts.persons')) {
+            return 0;
+        }
+
+        return $this->personDuplicateCacheService->countPersonsWithDuplicates(
+            bouncer()->getAuthorizedUserIds()
+        );
+    }
+}

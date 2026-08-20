@@ -18,6 +18,11 @@
         initial-department="{{ $defaultDepartment }}"
     >
         <div class="flex flex-col gap-4">
+            <x-admin::person-duplicates-alert
+                :count="$personDuplicateCount"
+                :url="$personDuplicatesUrl"
+            />
+
             <div
                 class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
             >
@@ -73,6 +78,11 @@
                         </template>
                     </div>
                 </div>
+
+                <x-admin::person-duplicates-alert
+                    :count="$personDuplicateCount"
+                    :url="$personDuplicatesUrl"
+                />
 
                 <!-- Queue tabs -->
                 <div class="rounded-lg border bg-white px-2 pt-2 dark:border-gray-800 dark:bg-gray-900">

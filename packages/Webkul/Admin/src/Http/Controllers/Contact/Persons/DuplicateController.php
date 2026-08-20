@@ -5,6 +5,7 @@ namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 use App\Enums\DuplicateEntityType;
 use App\Services\DuplicateFalsePositiveService;
 use App\Services\DuplicateReasonHelpers;
+use App\Services\PersonDuplicateCacheService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
@@ -22,7 +23,8 @@ class DuplicateController extends Controller
      */
     public function __construct(
         protected PersonRepository $personRepository,
-        protected DuplicateFalsePositiveService $falsePositiveService
+        protected DuplicateFalsePositiveService $falsePositiveService,
+        protected PersonDuplicateCacheService $personDuplicateCacheService,
     ) {}
 
     /**
@@ -189,6 +191,10 @@ class DuplicateController extends Controller
                 $entityIds,
                 null
             );
+
+            foreach ($entityIds as $id) {
+                $this->personDuplicateCacheService->getCachedDuplicates($id);
+            }
 
             return response()->json([
                 'success' => true,

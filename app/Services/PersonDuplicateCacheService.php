@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 
 class PersonDuplicateCacheService extends AbstractDuplicateCacheService
@@ -36,11 +37,15 @@ class PersonDuplicateCacheService extends AbstractDuplicateCacheService
         });
 
         // Always apply false-positive filtering at read-time (so new markings take effect immediately).
-        return $this->falsePositiveService->filterCandidateIdsForPrimary(
+        $filteredIds = $this->falsePositiveService->filterCandidateIdsForPrimary(
             DuplicateEntityType::PERSON,
             $personId,
             $duplicateIds
         );
+
+        $this->persistHasDuplicatesFlag($personId, $filteredIds);
+
+        return $filteredIds;
     }
 
     /**
@@ -88,6 +93,12 @@ class PersonDuplicateCacheService extends AbstractDuplicateCacheService
     public function handlePersonMerge(int $primaryPersonId, array $mergedPersonIds): void
     {
         $this->handleMerge($primaryPersonId, $mergedPersonIds);
+
+        foreach ($mergedPersonIds as $id) {
+            $this->persistHasDuplicatesFlag((int) $id, collect());
+        }
+
+        $this->getCachedDuplicates($primaryPersonId);
     }
 
     /**
@@ -103,6 +114,81 @@ class PersonDuplicateCacheService extends AbstractDuplicateCacheService
 
             return $this->personRepository->findPotentialDuplicatesDirectly($person)->pluck('id');
         });
+
+        $this->getCachedDuplicates($personId);
+    }
+
+    /**
+     * Count non-deleted persons currently flagged as having duplicates.
+     *
+     * @param  array<int>|null  $authorizedUserIds  null = no user restriction
+     */
+    public function countPersonsWithDuplicates(?array $authorizedUserIds = null): int
+    {
+        $query = Person::query()
+            ->where('has_duplicates', true);
+
+        if ($authorizedUserIds !== null) {
+            $query->whereIn('user_id', $authorizedUserIds);
+        }
+
+        return $query->count();
+    }
+
+    /**
+     * URL for the persons list pre-filtered to duplicates.
+     */
+    public function personsIndexUrlWithDuplicateFilter(): string
+    {
+        return route('admin.contacts.persons.index', [
+            'filters' => [
+                'has_duplicates' => ['1'],
+            ],
+        ]);
+    }
+
+    /**
+     * Recompute has_duplicates for every non-deleted person from cached/live detection.
+     */
+    public function rebuildHasDuplicatesIndex(): int
+    {
+        $processed = 0;
+
+        Person::query()
+            ->select('id')
+            ->orderBy('id')
+            ->chunkById(500, function ($persons) use (&$processed) {
+                foreach ($persons as $person) {
+                    $this->getCachedDuplicates((int) $person->id);
+                    $processed++;
+                }
+            });
+
+        Person::withoutTimestamps(function (): void {
+            Person::onlyTrashed()
+                ->where('has_duplicates', true)
+                ->update(['has_duplicates' => false]);
+        });
+
+        return $processed;
+    }
+
+    /**
+     * Persist the denormalized has_duplicates flag without touching updated_at.
+     *
+     * @param  Collection<int, int>  $duplicateIds
+     */
+    public function persistHasDuplicatesFlag(int $personId, Collection $duplicateIds): void
+    {
+        $hasDuplicates = $duplicateIds->isNotEmpty();
+
+        $this->writeHasDuplicatesFlag($personId, $hasDuplicates);
+
+        if ($hasDuplicates) {
+            foreach ($duplicateIds as $duplicateId) {
+                $this->writeHasDuplicatesFlag((int) $duplicateId, true);
+            }
+        }
     }
 
     /**
@@ -143,6 +229,16 @@ class PersonDuplicateCacheService extends AbstractDuplicateCacheService
     {
         Cache::flush();
         Log::info('Cleared all person duplicate caches');
+    }
+
+    private function writeHasDuplicatesFlag(int $personId, bool $hasDuplicates): void
+    {
+        Person::withoutTimestamps(function () use ($personId, $hasDuplicates): void {
+            Person::withTrashed()
+                ->whereKey($personId)
+                ->where('has_duplicates', '!=', $hasDuplicates)
+                ->update(['has_duplicates' => $hasDuplicates]);
+        });
     }
 
     /**

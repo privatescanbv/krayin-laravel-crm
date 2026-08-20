@@ -54,6 +54,10 @@ class PersonResource extends JsonResource
             $data['match_score_percentage'] = $this->match_score_percentage;
         }
 
+        if (isset($this->match_reasons) && is_array($this->match_reasons)) {
+            $data['match_reasons'] = $this->match_reasons;
+        }
+
         return $data;
     }
 }

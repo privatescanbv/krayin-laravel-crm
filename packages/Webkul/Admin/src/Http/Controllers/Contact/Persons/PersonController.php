@@ -14,6 +14,7 @@ use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Repositories\AddressRepository;
 use App\Services\PersonDuplicateCacheService;
+use App\Services\PersonSuggestionService;
 use App\Services\PersonValidationService;
 use BackedEnum;
 use Carbon\Carbon;
@@ -59,6 +60,7 @@ class PersonController extends Controller
         private readonly DeletePortalAccountAction $deletePortalAccountAction,
         private readonly ActivityRepository $activityRepository,
         private readonly PersonDuplicateCacheService $personDuplicateCacheService,
+        private readonly PersonSuggestionService $personSuggestionService,
     )
     {
         request()->request->add(['entity_type' => 'persons']);
@@ -112,45 +114,21 @@ class PersonController extends Controller
     }
 
     /**
-     * Searches on first name and last name
-     * Created for suggestions in edit lead.
-     * @param mixed $lead
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     * Auto-suggest persons for a lead (edit lead, no search query).
+     *
+     * Candidates are a union of email, phone, and last-name matches; last-name
+     * hits without a similar first name need an extra signal (DOB or postcode).
      */
     public function findPersonsBasedOnLead(mixed $lead): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
-        $leadFirstName = trim($lead->first_name ?? '');
-        $leadLastName = trim($lead->last_name ?? '');
+        $authorizedUserIds = bouncer()->getAuthorizedUserIds();
 
-        // Search persons with the same first + last name as this lead.
-        // Keep permission filtering consistent with the regular search() endpoint.
-        if ($leadLastName === '') {
-            $result = PersonResource::collection(collect());
-        } else {
-            $repository = $this->personRepository->with(['address']);
+        $persons = $this->personSuggestionService->findCandidates(
+            $lead,
+            is_array($authorizedUserIds) ? $authorizedUserIds : null
+        );
 
-            $repository->scopeQuery(function ($query) use ($leadFirstName, $leadLastName) {
-                if ($leadFirstName !== '') {
-                    $query->whereRaw('LOWER(first_name) = ?', [mb_strtolower($leadFirstName)]);
-                }
-
-                if ($leadLastName !== '') {
-                    $lowerLast = mb_strtolower($leadLastName);
-
-                    $query->where(function ($q) use ($lowerLast) {
-                        $q->whereRaw('LOWER(last_name) = ?', [$lowerLast])
-                            ->orWhereRaw('LOWER(married_name) = ?', [$lowerLast]);
-                    });
-                }
-
-                return $query->limit(30);
-            });
-
-            $this->applyPermissionFilter($repository);
-
-            $result = PersonResource::collection($repository->all());
-        }
-        return $result;
+        return PersonResource::collection($persons);
     }
 
     /**

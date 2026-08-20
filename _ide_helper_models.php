@@ -860,9 +860,6 @@ namespace App\Models{
  * @property-read int|null $activities_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\AfbPersonDocument> $afbPersonDocuments
  * @property-read int|null $afb_person_documents_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\AiFeedback> $aiFeedback
- * @property-read int|null $ai_feedback_count
- * @property-read \App\Models\AiSummary|null $aiSummary
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Anamnesis> $anamnesisRecords
  * @property-read int|null $anamnesis_records_count
  * @property-read \App\Models\User|null $clinicCoordinator

@@ -229,7 +229,7 @@ test('it ignores leads in won status as duplicates', function () {
     $this->assertFalse($this->leadRepository->hasPotentialDuplicates($lead1));
 });
 
-test('it ignores leads created more than 4 weeks apart as duplicates', function () {
+test('it still finds older matches for a recent lead (window applies to the pair)', function () {
     // Create the first lead (current lead)
     $lead1 = Lead::factory()->create([
         'first_name' => 'John',
@@ -260,11 +260,39 @@ test('it ignores leads created more than 4 weeks apart as duplicates', function 
         'created_at' => now()->subDays(29),
     ]);
 
-    // Test duplicate detection - should NOT find old leads as duplicates
+    // The lead itself is recent, so its older matches stay visible - otherwise the old lead would
+    // list this one while this one lists nothing.
     $duplicates = $this->leadRepository->findPotentialDuplicates($lead1);
 
-    $this->assertCount(0, $duplicates);
-    $this->assertFalse($this->leadRepository->hasPotentialDuplicates($lead1));
+    $this->assertCount(2, $duplicates);
+    $this->assertTrue($this->leadRepository->hasPotentialDuplicates($lead1));
+    $this->assertEqualsCanonicalizing(
+        [$lead2->id, $lead3->id],
+        $duplicates->pluck('id')->toArray()
+    );
+});
+
+test('it ignores matches when both leads are older than 4 weeks', function () {
+    $lead1 = Lead::factory()->create([
+        'first_name' => 'Both',
+        'last_name'  => 'Stale',
+        'emails'     => [
+            ['value' => 'both.stale@example.com', 'label' => ContactLabel::Eigen->value],
+        ],
+        'created_at' => now()->subWeeks(6),
+    ]);
+
+    $lead2 = Lead::factory()->create([
+        'first_name' => 'Both',
+        'last_name'  => 'Stale',
+        'emails'     => [
+            ['value' => 'both.stale@example.com', 'label' => ContactLabel::Eigen->value],
+        ],
+        'created_at' => now()->subWeeks(5),
+    ]);
+
+    $this->assertCount(0, $this->leadRepository->findPotentialDuplicates($lead1));
+    $this->assertCount(0, $this->leadRepository->findPotentialDuplicates($lead2));
 });
 
 test('it finds leads created within 4 weeks as duplicates', function () {
@@ -337,7 +365,7 @@ test('it combines time and status filters correctly', function () {
         'lead_pipeline_stage_id' => $wonStage->id,
     ]);
 
-    // Create a third lead - not won status but too old (should be ignored)
+    // Create a third lead - not won and older than the window, but lead1 is recent so the pair counts
     $lead3 = Lead::factory()->create([
         'first_name' => 'Alice',
         'last_name'  => 'Combinedtest',
@@ -357,23 +385,26 @@ test('it combines time and status filters correctly', function () {
         'created_at' => now()->subDays(7),
     ]);
 
-    // Test duplicate detection - should only find lead4 as duplicate
+    // Test duplicate detection - won lead is out, the older active one is in
     $duplicates = $this->leadRepository->findPotentialDuplicates($lead1);
 
-    $this->assertCount(1, $duplicates);
-    $this->assertEquals($lead4->id, $duplicates->first()->id);
+    $this->assertCount(2, $duplicates);
+    $this->assertEqualsCanonicalizing(
+        [$lead3->id, $lead4->id],
+        $duplicates->pluck('id')->toArray()
+    );
     $this->assertTrue($this->leadRepository->hasPotentialDuplicates($lead1));
 });
 
 test('it handles edge case of exactly 4 weeks difference', function () {
-    // Create the first lead
+    // The lead itself is outside the window, so the window is what decides per candidate.
     $lead1 = Lead::factory()->create([
         'first_name' => 'Edge',
         'last_name'  => 'Case',
         'emails'     => [
             ['value' => 'edge.case@example.com', 'label' => ContactLabel::Eigen->value],
         ],
-        'created_at' => now(),
+        'created_at' => now()->subWeeks(6),
     ]);
 
     // Create a second lead just under 4 weeks ago (should be included). Not placed at the exact
@@ -448,7 +479,7 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
         'lead_pipeline_stage_id' => $wonStage->id,
     ]);
 
-    // Scenario 3: Old lead (5 weeks ago) that is still active (should be ignored - time filter)
+    // Scenario 3: Old lead (5 weeks ago) that is still active (found: the main lead is recent)
     $oldActiveLead = Lead::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Comprehensive',
@@ -473,15 +504,13 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
     // Test the new filtering logic
     $duplicates = $this->leadRepository->findPotentialDuplicates($mainLead);
 
-    // Should only find the recent active lead
-    $this->assertCount(1, $duplicates, 'Should only find 1 duplicate after applying time and status filters');
-    $this->assertEquals($recentActiveLead->id, $duplicates->first()->id, 'Should find the recent active lead');
+    // Should find both active leads; closed (won) leads stay out
+    $this->assertCount(2, $duplicates, 'Should find the active duplicates after applying the status filter');
 
-    // Verify the filtered out leads are not in results
     $duplicateIds = $duplicates->pluck('id')->toArray();
+    $this->assertEqualsCanonicalizing([$recentActiveLead->id, $oldActiveLead->id], $duplicateIds);
     $this->assertNotContains($oldWonLead->id, $duplicateIds, 'Should not find old won lead');
     $this->assertNotContains($recentWonLead->id, $duplicateIds, 'Should not find recent won lead');
-    $this->assertNotContains($oldActiveLead->id, $duplicateIds, 'Should not find old active lead');
 
     $this->assertTrue($this->leadRepository->hasPotentialDuplicates($mainLead));
 });
@@ -493,7 +522,8 @@ test('it pushes the recency window into the candidate queries instead of filteri
         'emails'     => [
             ['value' => 'pushdown@example.com', 'label' => ContactLabel::Eigen->value],
         ],
-        'created_at' => now(),
+        // Outside the window itself, so candidates are restricted by created_at in SQL.
+        'created_at' => now()->subWeeks(6),
     ]);
 
     DB::enableQueryLog();

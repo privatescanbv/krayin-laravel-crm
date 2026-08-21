@@ -100,35 +100,24 @@ trait JsonDuplicateMatcher
                 $scopeQuery($query);
             }
 
-            // Exact first + last name match (case-insensitive, MySQL compatible)
-            if (! empty($entity->first_name) && ! empty($entity->last_name)) {
+            // Compare every name the entity carries (last_name and married_name) against both
+            // name columns of the candidate, so a match is found from either side of the pair.
+            if (! empty($entity->first_name)) {
                 $first = mb_strtolower($entity->first_name);
-                $last = mb_strtolower($entity->last_name);
 
-                $exactMatches = (clone $query)
-                    ->whereRaw('LOWER(first_name) = ?', [$first])
-                    ->whereRaw('LOWER(last_name) = ?', [$last])
-                    ->get();
-                $duplicates = $duplicates->merge($exactMatches);
-            }
+                foreach (array_filter([$entity->last_name, $entity->married_name]) as $name) {
+                    $nameLower = mb_strtolower($name);
 
-            // Married name variations
-            if (! empty($entity->married_name) && ! empty($entity->first_name)) {
-                $firstLower = mb_strtolower($entity->first_name);
-                $marriedLower = mb_strtolower($entity->married_name);
-                $lastLower = ! empty($entity->last_name) ? mb_strtolower($entity->last_name) : null;
+                    $matches = (clone $query)
+                        ->whereRaw('LOWER(first_name) = ?', [$first])
+                        ->where(function ($q) use ($nameLower) {
+                            $q->whereRaw('LOWER(last_name) = ?', [$nameLower])
+                                ->orWhereRaw('LOWER(married_name) = ?', [$nameLower]);
+                        })
+                        ->get();
 
-                $marriedQuery = (clone $query)
-                    ->whereRaw('LOWER(first_name) = ?', [$firstLower])
-                    ->where(function ($q) use ($marriedLower, $lastLower) {
-                        $q->whereRaw('LOWER(last_name) = ?', [$marriedLower]);
-                        if ($lastLower !== null) {
-                            $q->orWhereRaw('LOWER(married_name) = ?', [$lastLower]);
-                        }
-                    });
-
-                $marriedMatches = $marriedQuery->get();
-                $duplicates = $duplicates->merge($marriedMatches);
+                    $duplicates = $duplicates->merge($matches);
+                }
             }
         } catch (Exception $e) {
             Log::error('Error searching for person name duplicates: '.$e->getMessage());

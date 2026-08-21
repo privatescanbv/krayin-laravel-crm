@@ -25,6 +25,11 @@ use Webkul\Lead\Repositories\LeadRepository;
 class LeadObserver
 {
     /**
+     * Fields that decide which other leads this lead matches (see JsonDuplicateMatcher).
+     */
+    private const DUPLICATE_MATCH_FIELDS = ['first_name', 'last_name', 'married_name', 'emails', 'phones'];
+
+    /**
      * Create a new observer instance.
      */
     public function __construct(
@@ -244,6 +249,18 @@ class LeadObserver
         try {
             $cacheService = app(LeadDuplicateCacheService::class);
             $cacheService->invalidateLeadCache($lead->id);
+
+            // Also drop the counterparts' caches: their (possibly empty) result was computed before
+            // this lead existed/changed, which is what made the duplicate show up on one side only.
+            // Only worth the extra detection queries when the lead is new or its matching fields
+            // changed - a stage move or webhook flag cannot change who this lead matches.
+            if (! $lead->wasRecentlyCreated && ! $lead->wasChanged(self::DUPLICATE_MATCH_FIELDS)) {
+                return;
+            }
+
+            foreach ($this->leadRepository->findPotentialDuplicatesDirectly($lead) as $related) {
+                $cacheService->invalidateLeadCache((int) $related->id);
+            }
         } catch (Exception $e) {
             Log::warning('Failed to invalidate duplicate cache for lead '.$lead->id.': '.$e->getMessage());
         }

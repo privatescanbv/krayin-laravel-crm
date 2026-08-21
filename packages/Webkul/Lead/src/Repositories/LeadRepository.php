@@ -347,10 +347,18 @@ class LeadRepository extends Repository
 
         // Push the recency window down into the candidate queries themselves (leads.created_at is
         // indexed - see leads_created_at_idx) instead of fetching every historical match and
-        // discarding old rows in PHP afterwards. applyDuplicateFilters() below still re-checks this
-        // window, so behavior is unchanged - this only cuts down what gets scanned/fetched.
+        // discarding old rows in PHP afterwards. applyDuplicateFilters() below re-checks the same
+        // window - this only cuts down what gets scanned/fetched.
         $periodStart = Carbon::now()->subWeeks(self::DUPLICATE_SEARCH_PERIOD_WEEKS);
-        $withinSearchWindow = fn ($query) => $query->where('created_at', '>=', $periodStart);
+
+        // The window is pair-based: a pair is relevant when at least one of the two leads is recent.
+        // So only restrict candidates by age when the lead itself already falls outside the window -
+        // otherwise a fresh lead would not see the older lead it duplicates, while that older lead
+        // does see the fresh one.
+        $leadIsRecent = Carbon::parse($lead->created_at)->gte($periodStart);
+        $withinSearchWindow = $leadIsRecent
+            ? null
+            : fn ($query) => $query->where('created_at', '>=', $periodStart);
 
         try {
             // Check for email duplicates
@@ -386,17 +394,39 @@ class LeadRepository extends Repository
         $now = Carbon::now();
         $periodStart = $now->copy()->subWeeks(self::DUPLICATE_SEARCH_PERIOD_WEEKS);
 
-        return $duplicates->filter(function ($duplicate) use ($periodStart, $now) {
-            // Filter out leads in 'Won' status
-            if ($duplicate->stage && $duplicate->stage->is_won) {
+        // Closed leads hide the pair from both sides: without this the closed lead would still list
+        // its counterpart while the counterpart no longer lists the closed one.
+        $lead->loadMissing('stage');
+        if ($this->isClosedStage($lead)) {
+            return collect();
+        }
+
+        $leadIsRecent = Carbon::parse($lead->created_at)->gte($periodStart);
+
+        return $duplicates->filter(function ($duplicate) use ($periodStart, $now, $leadIsRecent) {
+            // Filter out leads in a 'Won' or 'Lost' status
+            if ($this->isClosedStage($duplicate)) {
                 return false;
             }
 
-            // Only consider leads created within the search period (now vs. X weeks ago)
+            // Recency is only required from the candidate when the lead itself is no longer recent
+            // (see findPotentialDuplicatesDirectly - the window applies to the pair, not one side).
+            if ($leadIsRecent) {
+                return true;
+            }
+
             $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
 
             return $duplicateCreatedAt->between($periodStart, $now);
         });
+    }
+
+    /**
+     * A lead in a won or lost stage is done - duplicates are no longer worth reporting.
+     */
+    private function isClosedStage($lead): bool
+    {
+        return (bool) ($lead->stage?->is_won || $lead->stage?->is_lost);
     }
 
     /**

@@ -9,6 +9,7 @@ use App\Services\DuplicateReasonHelpers;
 use App\Services\PersonDuplicateCacheService;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Resources\PersonResource;
@@ -214,6 +215,28 @@ class DuplicateController extends Controller
                 'message' => 'Opslaan false positive mislukt: '.$e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Undo a wrong "not a duplicate" marking so the pair is detected again.
+     */
+    public function unmarkFalsePositive(int $personId): RedirectResponse
+    {
+        $this->validate(request(), [
+            'entity_id' => 'required|integer|not_in:'.$personId.'|exists:persons,id',
+        ]);
+
+        $otherId = (int) request('entity_id');
+
+        $this->falsePositiveService->removePair(DuplicateEntityType::PERSON, $personId, $otherId);
+
+        foreach ([$personId, $otherId] as $id) {
+            $this->personDuplicateCacheService->refreshPersonCache($id);
+        }
+
+        session()->flash('success', 'Markering "geen duplicaat" is ongedaan gemaakt.');
+
+        return back();
     }
 
     /**

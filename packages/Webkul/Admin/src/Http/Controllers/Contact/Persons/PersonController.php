@@ -8,11 +8,13 @@ use App\Support\PhoneNormalizer;
 use App\Actions\Persons\DeletePortalAccountAction;
 use App\Enums\ActivityType;
 use App\Enums\ContactLabel;
+use App\Enums\DuplicateEntityType;
 use App\Enums\PortalRevocationReason;
 use App\Helpers\Comparable;
 use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Repositories\AddressRepository;
+use App\Services\DuplicateFalsePositiveService;
 use App\Services\PersonDuplicateCacheService;
 use App\Services\PersonKeycloakService;
 use App\Services\PersonSuggestionService;
@@ -63,6 +65,7 @@ class PersonController extends Controller
         private readonly PersonDuplicateCacheService $personDuplicateCacheService,
         private readonly PersonSuggestionService $personSuggestionService,
         private readonly PersonKeycloakService $personKeycloakService,
+        private readonly DuplicateFalsePositiveService $falsePositiveService,
     )
     {
         request()->request->add(['entity_type' => 'persons']);
@@ -283,9 +286,16 @@ class PersonController extends Controller
             ->orderByDesc('updated_at')
             ->first();
 
+        // Persons this one was marked "not a duplicate" with, so a wrong marking can be undone from the UI.
+        $falsePositivePersons = Person::whereIn(
+            'id',
+            $this->falsePositiveService->partnerIdsFor(DuplicateEntityType::PERSON, $person->id)
+        )->get();
+
         return view('admin::contacts.persons.view', [
-            'person'          => $person,
-            'duplicateCount'  => $duplicateCount,
+            'person'               => $person,
+            'duplicateCount'       => $duplicateCount,
+            'falsePositivePersons' => $falsePositivePersons,
             'sortedLeads'     => $sortedLeads,
             'activitiesCount' => $activitiesCount,
             'patientMessageActivity' => $patientMessageActivity,

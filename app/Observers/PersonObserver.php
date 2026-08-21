@@ -31,7 +31,9 @@ class PersonObserver
             DB::table('persons')->where('id', $person->id)->update(['created_by' => auth()->id()]);
         }
 
-        // Invalidate duplicate cache for this person (skipped during bulk imports)
+        // Only invalidate (not eager-refresh) on create: a duplicate partner created in the
+        // same request/import batch may not exist in the DB yet, and eagerly computing here
+        // would cache a false "no duplicates" result for up to an hour.
         if (! config('import.skip_duplicate_cache', false)) {
             $this->duplicateCacheService->invalidatePersonCache($person->id);
         }
@@ -66,10 +68,14 @@ class PersonObserver
             DB::table('persons')->where('id', $person->id)->update(['updated_by' => auth()->id()]);
         }
 
-        // Invalidate duplicate cache for this person if relevant fields changed (skipped during bulk imports)
+        // Refresh duplicate cache + has_duplicates flag if relevant fields changed, right away
+        // rather than just invalidating (skipped during bulk imports). Without this, a person
+        // that stops matching (e.g. its email is corrected) keeps a stale has_duplicates=true
+        // forever unless someone happens to view that exact record again - see
+        // PersonDuplicateFlagRatchetTest.
         $duplicateRelevantFields = ['first_name', 'last_name', 'married_name', 'emails', 'phones'];
         if (! config('import.skip_duplicate_cache', false) && $person->wasChanged($duplicateRelevantFields)) {
-            $this->duplicateCacheService->invalidatePersonCache($person->id);
+            $this->duplicateCacheService->refreshPersonCache($person->id);
         }
 
         // Log activities for fixed fields

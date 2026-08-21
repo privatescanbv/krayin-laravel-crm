@@ -93,6 +93,8 @@ Route::prefix('contacts')->group(function () {
             Route::post('merge', 'merge')->name('admin.contacts.persons.duplicates.merge');
 
             Route::post('false-positive', 'markFalsePositive')->name('admin.contacts.persons.duplicates.false_positive');
+
+            Route::delete('false-positive', 'unmarkFalsePositive')->name('admin.contacts.persons.duplicates.false_positive.destroy');
         });
     });
 

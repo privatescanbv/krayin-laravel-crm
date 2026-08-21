@@ -86,6 +86,45 @@
             <!-- Footer with creation and modification dates -->
             <div
                 class="flex w-full flex-col gap-2 border-t border-gray-200 p-4 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
+                <!-- Wrongly marked as "not a duplicate": collapsed by default, undo it here instead of in the database -->
+                @if (($falsePositivePersons ?? collect())->isNotEmpty())
+                    <details class="group -mx-1 rounded px-1 open:bg-gray-50 dark:open:bg-gray-800/50">
+                        <summary class="flex cursor-pointer list-none items-center justify-between text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
+                            <span class="flex items-center gap-1">
+                                <span class="icon-info text-sm"></span>
+
+                                Gemarkeerd als "geen duplicaat" ({{ $falsePositivePersons->count() }})
+                            </span>
+
+                            <span class="icon-down-arrow text-[10px] transition-transform group-open:rotate-180"></span>
+                        </summary>
+
+                        <div class="mb-2 mt-1 flex flex-col gap-1">
+                            @foreach ($falsePositivePersons as $falsePositivePerson)
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <a href="{{ route('admin.contacts.persons.view', $falsePositivePerson->id) }}"
+                                       class="truncate hover:underline">
+                                        {{ $falsePositivePerson->name }} (#{{ $falsePositivePerson->id }})
+                                    </a>
+
+                                    <form method="POST"
+                                          action="{{ route('admin.contacts.persons.duplicates.false_positive.destroy', $person->id) }}">
+                                        @csrf
+                                        @method('DELETE')
+
+                                        <input type="hidden" name="entity_id" value="{{ $falsePositivePerson->id }}">
+
+                                        <button type="submit"
+                                                class="shrink-0 underline hover:text-gray-700 dark:hover:text-gray-200">
+                                            Toch een duplicaat
+                                        </button>
+                                    </form>
+                                </div>
+                            @endforeach
+                        </div>
+                    </details>
+                @endif
+
                 <div class="flex justify-between">
                     <span>Aangemaakt:</span>
                     <span>{{ $person->created_at->format('d-m-Y') }}</span>

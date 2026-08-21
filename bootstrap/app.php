@@ -85,8 +85,9 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $schedule->command('emails:sync-graph')->everyMinute()->withoutOverlapping();
         $schedule->command('activities:release-overdue')->hourly();
         $schedule->command('activities:sync-statuses')->hourly();
-        $schedule->command('duplicates:refresh-cache --clear')->hourly();
-        $schedule->command('duplicates:refresh-cache --index')->dailyAt('07:00');
+        // The index is what the duplicate counters and the persons list read, so it is rebuilt
+        // hourly now that a rebuild is one pass instead of a detection per person.
+        $schedule->command('duplicates:refresh-cache --index')->hourly()->withoutOverlapping();
         $schedule->command('emails:cleanup-logs')->daily();
         $schedule->command('emails:cleanup-graph-inbox')->daily();
         $schedule->command('patient:send-notification-email')->everyFiveMinutes()->withoutOverlapping();

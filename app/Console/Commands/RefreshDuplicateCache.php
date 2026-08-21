@@ -148,7 +148,8 @@ class RefreshDuplicateCache extends Command
     private function rebuildPersonDuplicateIndex(PersonDuplicateCacheService $personCache): void
     {
         $this->info('Rebuilding persons.has_duplicates index...');
-        $processed = $personCache->rebuildHasDuplicatesIndex();
-        $this->info("✅ Indexed {$processed} persons ({$personCache->countPersonsWithDuplicates()} with duplicates)");
+        $result = $personCache->rebuildHasDuplicatesIndex();
+        $this->info("✅ Indexed {$result['processed']} persons: {$result['flagged']} with duplicates ".
+            "(+{$result['turned_on']} / -{$result['turned_off']} changed)");
     }
 }

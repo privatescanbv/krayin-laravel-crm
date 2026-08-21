@@ -7,7 +7,6 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\Contact\Repositories\OrganizationRepository;
 use Webkul\DataGrid\DataGrid;
-use App\Services\PersonDuplicateCacheService;
 
 class PersonDataGrid extends DataGrid
 {
@@ -17,8 +16,7 @@ class PersonDataGrid extends DataGrid
      * @return void
      */
     public function __construct(
-        protected OrganizationRepository $organizationRepository,
-        protected PersonDuplicateCacheService $duplicateCacheService
+        protected OrganizationRepository $organizationRepository
     ) {}
 
     /**
@@ -243,15 +241,17 @@ class PersonDataGrid extends DataGrid
                 ['label' => 'Heeft duplicaten', 'value' => '1'],
                 ['label' => 'Geen duplicaten', 'value' => '0'],
             ],
+            // Reads the indexed flag instead of detecting per row: detection here cost a query per
+            // row and wrote the flag as a side effect, so browsing the list changed the counts.
+            // duplicates:refresh-cache --index is what maintains the column.
             'closure'            => function ($row) {
-                $duplicateIds = $this->duplicateCacheService->getCachedDuplicates($row->id);
-                $duplicateCount = $duplicateIds->count();
-                if ($duplicateCount > 0) {
-                    return '<a href="' . route('admin.contacts.persons.duplicates.index', $row->id) . '" class="text-orange-600 hover:text-activity-note-text" title="' . $duplicateCount . ' duplicaten gevonden">'
-                         . '<span class="icon-warning text-lg"></span>'
-                         . '</a>';
+                if (! $row->has_duplicates) {
+                    return '';
                 }
-                return '';
+
+                return '<a href="' . route('admin.contacts.persons.duplicates.index', $row->id) . '" class="text-orange-600 hover:text-activity-note-text" title="Mogelijk duplicaat">'
+                     . '<span class="icon-warning text-lg"></span>'
+                     . '</a>';
             },
         ]);
     }

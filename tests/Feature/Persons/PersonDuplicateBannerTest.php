@@ -99,3 +99,26 @@ test('persons datagrid can filter to duplicate persons', function () {
     expect($ids)->toContain($duplicate->id)
         ->and($ids)->not->toContain($other->id);
 });
+
+test('opening the persons list does not change the duplicate flags', function () {
+    if (DB::connection()->getDriverName() === 'sqlite') {
+        $this->markTestSkipped('Requires MySQL: PersonDataGrid uses CONCAT_WS');
+    }
+
+    $a = Person::factory()->create([
+        'emails' => [['value' => 'list.readonly@example.com', 'label' => ContactLabel::Eigen->value]],
+    ]);
+    $b = Person::factory()->create([
+        'emails' => [['value' => 'list.readonly@example.com', 'label' => ContactLabel::Eigen->value]],
+    ]);
+
+    // Flags deliberately left off: the list must render from the column, not detect (and write).
+    Person::withoutTimestamps(fn () => Person::whereIn('id', [$a->id, $b->id])->update(['has_duplicates' => false]));
+
+    test()->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])
+        ->getJson(route('admin.contacts.persons.index', ['filters' => ['has_duplicates' => ['0']]]))
+        ->assertOk();
+
+    expect((bool) $a->fresh()->has_duplicates)->toBeFalse()
+        ->and((bool) $b->fresh()->has_duplicates)->toBeFalse();
+});

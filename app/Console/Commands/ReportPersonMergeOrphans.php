@@ -46,6 +46,7 @@ class ReportPersonMergeOrphans extends Command
         'order_person_confirmations' => 'person_id',
         'order_items'                => 'person_id',
         'afb_person_documents'       => 'person_id',
+        'inkoop_persons'             => 'crm_id',
     ];
 
     protected $signature = 'persons:report-merge-orphans
@@ -76,7 +77,7 @@ class ReportPersonMergeOrphans extends Command
                 continue;
             }
 
-            $counts = $this->countOrphans($duplicateId);
+            $counts = $this->countOrphans($duplicateId, $primaryId);
             $total = array_sum($counts);
 
             $keycloakLeft = DB::table('persons')->where('id', $duplicateId)->value('keycloak_user_id');
@@ -152,12 +153,20 @@ class ReportPersonMergeOrphans extends Command
     /**
      * @return array<string, int>
      */
-    private function countOrphans(int $duplicateId): array
+    private function countOrphans(int $duplicateId, int $primaryId): array
     {
         $counts = [];
 
         foreach (self::ORPHAN_TABLES as $table => $column) {
-            $counts[$table] = DB::table($table)->where($column, $duplicateId)->count();
+            if ($table === 'activities') {
+                $counts[$table] = $this->countActivityOrphans($duplicateId, $primaryId);
+
+                continue;
+            }
+
+            $value = $column === 'crm_id' ? (string) $duplicateId : $duplicateId;
+
+            $counts[$table] = DB::table($table)->where($column, $value)->count();
         }
 
         $counts['attribute_values'] = DB::table('attribute_values')
@@ -174,5 +183,24 @@ class ReportPersonMergeOrphans extends Command
             ->count();
 
         return $counts;
+    }
+
+    /**
+     * Activities left on the duplicate that match title+status of one on the primary were skipped
+     * on purpose during merge. Those are not orphans.
+     */
+    private function countActivityOrphans(int $duplicateId, int $primaryId): int
+    {
+        $existing = DB::table('activities')
+            ->where('person_id', $primaryId)
+            ->get(['title', 'status'])
+            ->map(fn ($row) => $row->title.'|'.$row->status)
+            ->all();
+
+        return DB::table('activities')
+            ->where('person_id', $duplicateId)
+            ->get(['title', 'status'])
+            ->reject(fn ($row) => in_array($row->title.'|'.$row->status, $existing, true))
+            ->count();
     }
 }

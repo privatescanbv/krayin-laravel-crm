@@ -62,10 +62,13 @@ docker-compose exec crm sh -lc "rm -f storage/framework/vite.hot storage/framewo
     "
 #cd /usr/share/nginx/html/packages/Webkul/Admin && npm install --silent && npm run dev -- --host=0.0.0.0 --port=5174
     echo "⏳ Checking Vite URLs…"
-    sleep 5
+    for i in $(seq 1 30); do
+      docker-compose exec crm test -f storage/framework/admin-vite.hot && break
+      sleep 1
+    done
 
     echo "🟢 Admin Hotfile:"
-    docker-compose exec crm cat storage/framework/admin-vite.hot
+    docker-compose exec crm cat storage/framework/admin-vite.hot || echo "⚠️  Hotfile nog niet geschreven (Vite nog aan het opstarten?)"
 
     echo "🎉 Ready! Visit:"
     echo "   https://crm.local.privatescan.nl"

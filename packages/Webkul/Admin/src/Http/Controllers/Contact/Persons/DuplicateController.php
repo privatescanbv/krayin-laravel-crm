@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 
 use App\Enums\DuplicateEntityType;
+use App\Exceptions\CannotMergePersonWithPortalException;
 use App\Services\DuplicateFalsePositiveService;
 use App\Services\DuplicateReasonHelpers;
 use App\Services\PersonDuplicateCacheService;
@@ -106,6 +107,7 @@ class DuplicateController extends Controller
             'address'                        => $person->relationLoaded('address') ? $person->address : null,
             'created_at'                     => $person->created_at,
             'updated_at'                     => $person->updated_at,
+            'has_portal_account'             => $person->hasPortalAccount(),
         ];
     }
 
@@ -157,6 +159,11 @@ class DuplicateController extends Controller
                     'name' => $mergedPerson->name,
                 ],
             ]);
+        } catch (CannotMergePersonWithPortalException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,

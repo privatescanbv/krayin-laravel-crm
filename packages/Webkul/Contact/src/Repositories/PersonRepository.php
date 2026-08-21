@@ -3,6 +3,7 @@
 namespace Webkul\Contact\Repositories;
 
 use App\Enums\DuplicateEntityType;
+use App\Exceptions\CannotMergePersonWithPortalException;
 use App\Repositories\AddressRepository;
 use App\Services\Concerns\JsonDuplicateMatcher;
 use App\Services\DuplicateFalsePositiveService;
@@ -308,6 +309,8 @@ class PersonRepository extends Repository
 
         $duplicatePersons = $this->findWhereIn('id', $duplicatePersonIds);
 
+        $this->guardAgainstMergingPortalDuplicates($duplicatePersons);
+
         try {
             DB::beginTransaction();
 
@@ -444,6 +447,8 @@ class PersonRepository extends Repository
         $this->movePersonPivotRows('activity_portal_persons', 'activity_id', $primaryPersonId, $duplicatePersonId);
         $this->movePersonPivotRows('order_person_confirmations', 'order_id', $primaryPersonId, $duplicatePersonId);
 
+        $this->transferInkoopPersonLinks($primaryPersonId, $duplicatePersonId);
+
         // person_preferences: unique-ish on (person_id, key); primary wins on colliding keys.
         $preferenceKeysOnPrimary = DB::table('person_preferences')
             ->where('person_id', $primaryPersonId)
@@ -520,6 +525,30 @@ class PersonRepository extends Repository
     }
 
     /**
+     * Re-point inkoop invoice patients that were matched to the duplicate. crm_id is a string
+     * copy of persons.id. Skip invoices the primary is already linked on so two inkoop rows on
+     * the same invoice never both claim the same CRM person.
+     */
+    private function transferInkoopPersonLinks(int $primaryPersonId, int $duplicatePersonId): void
+    {
+        $primaryCrmId = (string) $primaryPersonId;
+        $duplicateCrmId = (string) $duplicatePersonId;
+
+        $invoiceIdsOnPrimary = DB::table('inkoop_persons')
+            ->where('crm_id', $primaryCrmId)
+            ->pluck('invoice_id')
+            ->all();
+
+        $query = DB::table('inkoop_persons')->where('crm_id', $duplicateCrmId);
+
+        if ($invoiceIdsOnPrimary !== []) {
+            $query->whereNotIn('invoice_id', $invoiceIdsOnPrimary);
+        }
+
+        $query->update(['crm_id' => $primaryCrmId]);
+    }
+
+    /**
      * Move pivot rows to the primary person, dropping ones it already has so unique indexes never collide.
      */
     private function movePersonPivotRows(string $table, string $otherKey, int $primaryPersonId, int $duplicatePersonId): void
@@ -535,11 +564,33 @@ class PersonRepository extends Repository
     }
 
     /**
+     * A person with a patient portal account must never be the archived side of a merge.
+     * Staff must first make that person primary, or revoke the portal account by hand.
+     *
+     * @param  Collection<int, mixed>  $duplicatePersons
+     *
+     * @throws CannotMergePersonWithPortalException
+     */
+    private function guardAgainstMergingPortalDuplicates(Collection $duplicatePersons): void
+    {
+        $blockedIds = $duplicatePersons
+            ->filter(fn ($person): bool => ! empty($person->keycloak_user_id))
+            ->pluck('id')
+            ->all();
+
+        if ($blockedIds !== []) {
+            throw CannotMergePersonWithPortalException::forPersonIds($blockedIds);
+        }
+    }
+
+    /**
      * If the primary has no portal account and the duplicate does, adopt it. Always clear the
      * duplicate's keycloak_user_id before soft-delete so PersonObserver::deleted does not fire a
      * real HTTP delete against Keycloak (that cannot be rolled back with the DB transaction).
      *
      * The in-memory model must be cleared too: the observer reads $person->keycloak_user_id, not the DB.
+     *
+     * Portal duplicates are rejected before this runs; the adopt branch is a last-resort safety net.
      */
     private function adoptKeycloakAccount(Person $primaryPerson, Person $duplicatePerson): void
     {

@@ -72,7 +72,21 @@
                         @lang('admin::app.leads.common.emails.title')
                     </h3>
                 </div>
-                <x-adminc::components.emails name="emails" :value="old('emails', $person->emails ?? [])"/>
+                <x-adminc::components.emails
+                    name="emails"
+                    :value="old('emails', $person->emails ?? [])"
+                    :locked-email="$portalEmail ?? null"
+                    :lock-existing="$portalEmailUnverified ?? false"
+                />
+                @if(!empty($portalEmail))
+                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        {{ $portalEmail }} hoort bij het patiëntportaal en kan niet worden gewijzigd of verwijderd.
+                    </p>
+                @elseif(!empty($portalEmailUnverified))
+                    <p class="mt-2 text-sm text-orange-700 dark:text-orange-400">
+                        Het patiëntportaal-e-mailadres kon niet worden gecontroleerd. Bestaande e-mailadressen mogen daarom niet worden gewijzigd of verwijderd.
+                    </p>
+                @endif
             </div>
 
             <!-- Phones Section -->

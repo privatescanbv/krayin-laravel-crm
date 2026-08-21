@@ -42,6 +42,7 @@ class PersonDataGrid extends DataGrid
                 'persons.date_of_birth',
                 'persons.is_active',
                 'persons.has_duplicates',
+                'persons.keycloak_user_id',
                 'organizations.name as organization',
                 'organizations.id as organization_id'
             )
@@ -284,6 +285,7 @@ class PersonDataGrid extends DataGrid
 
         if (bouncer()->hasPermission('contacts.persons.delete')) {
             $this->addAction([
+                'index'  => 'delete',
                 'icon'   => 'icon-delete',
                 'title'  => trans('admin::app.contacts.persons.index.datagrid.delete'),
                 'method' => 'DELETE',
@@ -292,6 +294,27 @@ class PersonDataGrid extends DataGrid
                 },
             ]);
         }
+    }
+
+    /**
+     * Hide delete for persons that still have a patient portal account.
+     */
+    protected function formatRecords($records): mixed
+    {
+        $records = parent::formatRecords($records);
+
+        foreach ($records as $record) {
+            if (empty($record->keycloak_user_id)) {
+                continue;
+            }
+
+            $record->actions = array_values(array_filter(
+                $record->actions,
+                fn (array $action): bool => ($action['index'] ?? '') !== 'delete'
+            ));
+        }
+
+        return $records;
     }
 
     /**

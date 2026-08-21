@@ -2,8 +2,12 @@
 
 namespace Tests\Feature\Persons;
 
+use App\Exceptions\CannotMergePersonWithPortalException;
 use App\Models\Address;
 use App\Models\Anamnesis;
+use App\Models\Clinic;
+use App\Models\Inkoop\InkoopInvoice;
+use App\Models\Inkoop\InkoopPerson;
 use App\Models\Order;
 use App\Models\PatientMessage;
 use App\Models\PatientNotification;
@@ -464,7 +468,7 @@ test('merging persons adopts address from mapping without treating address as a 
         ->and($merged->fresh()->address->street)->toBe('Duplicaatstraat');
 });
 
-test('merging persons adopts keycloak account from duplicate and does not call Keycloak delete', function () {
+test('merging persons refuses to archive a duplicate with a portal account', function () {
     Person::setEventDispatcher(app('events'));
     Config::set('services.keycloak.client_id', 'test-client');
 
@@ -475,14 +479,10 @@ test('merging persons adopts keycloak account from duplicate and does not call K
     $primary = Person::factory()->create(['keycloak_user_id' => null]);
     $duplicate = Person::factory()->create(['keycloak_user_id' => 'kc-from-duplicate']);
 
-    $merged = $this->personRepository->mergePersons($primary->id, [$duplicate->id]);
+    $this->personRepository->mergePersons($primary->id, [$duplicate->id]);
+})->throws(CannotMergePersonWithPortalException::class);
 
-    expect($merged->fresh()->keycloak_user_id)->toBe('kc-from-duplicate')
-        ->and(Person::withTrashed()->find($duplicate->id)->keycloak_user_id)->toBeNull()
-        ->and(Person::withTrashed()->find($duplicate->id)->trashed())->toBeTrue();
-});
-
-test('merging persons keeps primary keycloak when both have an account and still skips Keycloak delete', function () {
+test('merging persons refuses when both primary and duplicate have a portal account', function () {
     Person::setEventDispatcher(app('events'));
     Config::set('services.keycloak.client_id', 'test-client');
 
@@ -493,8 +493,89 @@ test('merging persons keeps primary keycloak when both have an account and still
     $primary = Person::factory()->create(['keycloak_user_id' => 'kc-primary']);
     $duplicate = Person::factory()->create(['keycloak_user_id' => 'kc-duplicate']);
 
+    $this->personRepository->mergePersons($primary->id, [$duplicate->id]);
+})->throws(CannotMergePersonWithPortalException::class);
+
+test('merging persons keeps the primary portal account when the duplicate has none', function () {
+    Person::setEventDispatcher(app('events'));
+    Config::set('services.keycloak.client_id', 'test-client');
+
+    $keycloakService = Mockery::mock(PersonKeycloakService::class);
+    $keycloakService->shouldNotReceive('delete');
+    $this->app->instance(PersonKeycloakService::class, $keycloakService);
+
+    $primary = Person::factory()->create(['keycloak_user_id' => 'kc-primary']);
+    $duplicate = Person::factory()->create(['keycloak_user_id' => null]);
+
     $merged = $this->personRepository->mergePersons($primary->id, [$duplicate->id]);
 
     expect($merged->fresh()->keycloak_user_id)->toBe('kc-primary')
-        ->and(Person::withTrashed()->find($duplicate->id)->keycloak_user_id)->toBeNull();
+        ->and(Person::withTrashed()->find($duplicate->id)->trashed())->toBeTrue();
+});
+
+test('merging persons re-points inkoop_persons crm_id to the primary person', function () {
+    $primary = Person::factory()->create();
+    $duplicate = Person::factory()->create();
+
+    $clinic = Clinic::factory()->create();
+    $invoice = InkoopInvoice::create([
+        'clinic_id' => $clinic->id,
+        'pdf_path'  => 'test/merge.pdf',
+    ]);
+
+    $inkoopPerson = InkoopPerson::create([
+        'clinic_id'  => $clinic->id,
+        'invoice_id' => $invoice->id,
+        'firstname'  => 'Ritske',
+        'lastname'   => 'Clewits',
+        'crm_id'     => (string) $duplicate->id,
+    ]);
+
+    $this->personRepository->mergePersons($primary->id, [$duplicate->id]);
+
+    expect($inkoopPerson->fresh()->crm_id)->toBe((string) $primary->id);
+});
+
+test('merging persons skips inkoop_persons crm_id when the primary is already linked on that invoice', function () {
+    $primary = Person::factory()->create();
+    $duplicate = Person::factory()->create();
+
+    $clinic = Clinic::factory()->create();
+    $sharedInvoice = InkoopInvoice::create([
+        'clinic_id' => $clinic->id,
+        'pdf_path'  => 'test/shared.pdf',
+    ]);
+    $otherInvoice = InkoopInvoice::create([
+        'clinic_id' => $clinic->id,
+        'pdf_path'  => 'test/other.pdf',
+    ]);
+
+    InkoopPerson::create([
+        'clinic_id'  => $clinic->id,
+        'invoice_id' => $sharedInvoice->id,
+        'firstname'  => 'Primary',
+        'lastname'   => 'Link',
+        'crm_id'     => (string) $primary->id,
+    ]);
+
+    $colliding = InkoopPerson::create([
+        'clinic_id'  => $clinic->id,
+        'invoice_id' => $sharedInvoice->id,
+        'firstname'  => 'Duplicate',
+        'lastname'   => 'Link',
+        'crm_id'     => (string) $duplicate->id,
+    ]);
+
+    $transferable = InkoopPerson::create([
+        'clinic_id'  => $clinic->id,
+        'invoice_id' => $otherInvoice->id,
+        'firstname'  => 'Other',
+        'lastname'   => 'Invoice',
+        'crm_id'     => (string) $duplicate->id,
+    ]);
+
+    $this->personRepository->mergePersons($primary->id, [$duplicate->id]);
+
+    expect($colliding->fresh()->crm_id)->toBe((string) $duplicate->id)
+        ->and($transferable->fresh()->crm_id)->toBe((string) $primary->id);
 });

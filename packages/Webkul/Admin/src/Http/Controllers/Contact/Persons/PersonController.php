@@ -14,6 +14,7 @@ use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Repositories\AddressRepository;
 use App\Services\PersonDuplicateCacheService;
+use App\Services\PersonKeycloakService;
 use App\Services\PersonSuggestionService;
 use App\Services\PersonValidationService;
 use BackedEnum;
@@ -61,6 +62,7 @@ class PersonController extends Controller
         private readonly ActivityRepository $activityRepository,
         private readonly PersonDuplicateCacheService $personDuplicateCacheService,
         private readonly PersonSuggestionService $personSuggestionService,
+        private readonly PersonKeycloakService $personKeycloakService,
     )
     {
         request()->request->add(['entity_type' => 'persons']);
@@ -298,7 +300,17 @@ class PersonController extends Controller
         $person = $this->personRepository->with('address')->findOrFail($id);
         $returnUrl = $this->resolveReturnUrl();
 
-        return view('admin::contacts.persons.edit', compact('person', 'returnUrl'));
+        $portalEmail = $person->hasPortalAccount()
+            ? $this->personKeycloakService->getAccountEmail($person)
+            : null;
+        $portalEmailUnverified = $person->hasPortalAccount() && $portalEmail === null;
+
+        return view('admin::contacts.persons.edit', compact(
+            'person',
+            'returnUrl',
+            'portalEmail',
+            'portalEmailUnverified',
+        ));
     }
 
     /**
@@ -325,6 +337,12 @@ class PersonController extends Controller
 
         $data = $request->all();
         $data['entity_type'] = 'persons';
+
+        $person = $this->personRepository->findOrFail($id);
+
+        if ($person->hasPortalAccount() && $this->personKeycloakService->emailsChanged($person->emails, $data['emails'] ?? null)) {
+            $this->personKeycloakService->assertPortalEmailPreserved($person, $data['emails'] ?? null);
+        }
 
         // Normalize enum-like fields to strings for persistence
         if (isset($data['salutation']) && $data['salutation'] instanceof BackedEnum) {
@@ -1040,6 +1058,12 @@ class PersonController extends Controller
     {
         $person = $this->personRepository->findOrFail($id);
 
+        if ($person->hasPortalAccount()) {
+            return response()->json([
+                'message' => __('messages.person.delete_blocked_portal'),
+            ], 422);
+        }
+
         try {
             Event::dispatch('contacts.person.delete.before', $id);
 
@@ -1064,6 +1088,19 @@ class PersonController extends Controller
     public function massDestroy(MassDestroyRequest $massDestroyRequest): JsonResponse
     {
         $persons = $this->personRepository->findWhereIn('id', $massDestroyRequest->get('indices'));
+
+        $portalIds = $persons
+            ->filter(fn ($person): bool => $person->hasPortalAccount())
+            ->pluck('id')
+            ->all();
+
+        if ($portalIds !== []) {
+            return response()->json([
+                'message' => __('messages.person.mass_delete_blocked_portal', [
+                    'ids' => implode(', ', $portalIds),
+                ]),
+            ], 422);
+        }
 
         foreach ($persons as $person) {
             Event::dispatch('contact.person.delete.before', $person);

@@ -65,5 +65,31 @@ test('the merge view exposes address and the extra selectable fields', function 
         ->and($personData['is_active'])->toBeFalse()
         ->and($personData['is_active_label'])->toBe('Inactief')
         ->and($personData['job_title'])->toBe('Chirurg')
-        ->and($personData['address'])->not->toBeNull();
+        ->and($personData['address'])->not->toBeNull()
+        ->and($personData['has_portal_account'])->toBeFalse();
+});
+
+test('the merge view exposes portal flag, view links and make-primary action', function () {
+    $person = Person::factory()->create([
+        'keycloak_user_id' => 'kc-primary',
+    ]);
+
+    Person::factory()->create([
+        'first_name'       => $person->first_name,
+        'last_name'        => $person->last_name,
+        'keycloak_user_id' => 'kc-duplicate',
+    ]);
+
+    $response = $this->get(route('admin.contacts.persons.duplicates.index', $person->id))
+        ->assertOk()
+        ->assertSee('Maak primair', false)
+        ->assertSee('icon-eye', false)
+        ->assertSee('target="_blank"', false)
+        ->assertSee('portaal', false);
+
+    $personData = $response->viewData('personData');
+    $duplicatesData = $response->viewData('duplicatesData');
+
+    expect($personData['has_portal_account'])->toBeTrue()
+        ->and(collect($duplicatesData)->pluck('has_portal_account')->contains(true))->toBeTrue();
 });

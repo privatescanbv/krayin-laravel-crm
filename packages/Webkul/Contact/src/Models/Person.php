@@ -296,6 +296,11 @@ class Person extends Model implements PersonContract
         $this->attributes['salutation'] = $value;
     }
 
+    public function hasPortalAccount(): bool
+    {
+        return ! empty($this->keycloak_user_id);
+    }
+
     /**
      * Get the user that owns the lead.
      */

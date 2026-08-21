@@ -21,6 +21,7 @@ test('deactivating person with keycloak account does not cause SQL error from di
 
     // Mock the Keycloak service to avoid real API calls
     $keycloakService = Mockery::mock(PersonKeycloakService::class);
+    $keycloakService->shouldReceive('emailsChanged')->andReturn(false);
     $keycloakService->shouldReceive('delete')
         ->once()
         ->andReturn(['success' => true]);
@@ -64,6 +65,7 @@ test('deactivating person without keycloak still works', function () {
     Config::set('services.keycloak.client_id', 'test-client');
 
     $keycloakService = Mockery::mock(PersonKeycloakService::class);
+    $keycloakService->shouldReceive('emailsChanged')->andReturn(false);
     $keycloakService->shouldReceive('delete')
         ->once()
         ->andReturn(['success' => true]);

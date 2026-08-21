@@ -6,8 +6,11 @@ use App\Actions\Keycloak\AddKeycloakUserAction;
 use App\Actions\Keycloak\DeleteKeycloakUserAction;
 use App\Actions\Keycloak\UpdateKeycloakUserAction;
 use App\Enums\KeycloakRoles;
+use App\Services\Keycloak\KeycloakService;
+use App\Support\EmailNormalizer;
 use App\Support\PasswordGenerator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Webkul\Contact\Models\Person;
 
 class PersonKeycloakService
@@ -16,6 +19,7 @@ class PersonKeycloakService
         protected AddKeycloakUserAction $addKeycloakUserAction,
         protected UpdateKeycloakUserAction $updateKeycloakUserAction,
         protected DeleteKeycloakUserAction $deleteKeycloakUserAction,
+        protected KeycloakService $keycloakService,
     ) {}
 
     /**
@@ -58,6 +62,67 @@ class PersonKeycloakService
         }
 
         return $result;
+    }
+
+    /**
+     * Email address Keycloak currently uses for this person's portal account.
+     */
+    public function getAccountEmail(Person $person): ?string
+    {
+        if (empty($person->keycloak_user_id)) {
+            return null;
+        }
+
+        $user = $this->keycloakService->getUserById($person->keycloak_user_id);
+        $email = $user['email'] ?? $user['username'] ?? null;
+
+        if (! is_string($email) || $email === '') {
+            return null;
+        }
+
+        return EmailNormalizer::normalize($email);
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>|null  $original
+     * @param  array<int, array<string, mixed>>|null  $incoming
+     */
+    public function emailsChanged(?array $original, ?array $incoming): bool
+    {
+        return $this->normalizedEmailValues($original) !== $this->normalizedEmailValues($incoming);
+    }
+
+    /**
+     * Keep the Keycloak login email on the person. Do not invent or restore it when it is missing.
+     *
+     * @param  array<int, array<string, mixed>>|null  $incomingEmails
+     */
+    public function assertPortalEmailPreserved(Person $person, ?array $incomingEmails): void
+    {
+        $portalEmail = $this->getAccountEmail($person);
+
+        if ($portalEmail === null) {
+            $missing = array_diff(
+                $this->normalizedEmailValues($person->emails),
+                $this->normalizedEmailValues($incomingEmails)
+            );
+
+            if ($missing !== []) {
+                throw ValidationException::withMessages([
+                    'emails' => __('messages.person.portal_email_locked_unverified'),
+                ]);
+            }
+
+            return;
+        }
+
+        $originalHasPortalEmail = $this->listContainsEmail($person->emails, $portalEmail);
+
+        if ($originalHasPortalEmail && ! $this->listContainsEmail($incomingEmails, $portalEmail)) {
+            throw ValidationException::withMessages([
+                'emails' => __('messages.person.portal_email_locked'),
+            ]);
+        }
     }
 
     /**
@@ -205,5 +270,34 @@ class PersonKeycloakService
         }
 
         return null;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>|null  $emails
+     * @return array<int, string>
+     */
+    private function normalizedEmailValues(?array $emails): array
+    {
+        $values = [];
+
+        foreach ($emails ?? [] as $entry) {
+            $normalized = EmailNormalizer::normalize((string) ($entry['value'] ?? ''));
+
+            if ($normalized !== null) {
+                $values[] = $normalized;
+            }
+        }
+
+        sort($values);
+
+        return array_values($values);
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>|null  $emails
+     */
+    private function listContainsEmail(?array $emails, string $email): bool
+    {
+        return in_array($email, $this->normalizedEmailValues($emails), true);
     }
 }

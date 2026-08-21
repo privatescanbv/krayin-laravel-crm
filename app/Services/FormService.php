@@ -381,7 +381,7 @@ class FormService
             Log::warning('FormService: Could not remove session for person', ['status' => $result['status'], 'response' => $result['json']]);
         } else {
 
-            Log::info('FormService: Eemoving session for person success', [
+            Log::info('FormService: Removing session for person success', [
                 'status'         => $result['status'],
             ]);
         }

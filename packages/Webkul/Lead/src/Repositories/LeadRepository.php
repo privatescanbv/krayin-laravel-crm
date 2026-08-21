@@ -343,11 +343,22 @@ class LeadRepository extends Repository
      */
     public function findPotentialDuplicatesDirectly($lead): Collection
     {
+        return $this->applyDuplicateFilters($lead, $this->findRawDuplicateCandidates($lead));
+    }
+
+    /**
+     * Match candidates by email/phone/name, unfiltered by either lead's stage or the recency
+     * window's status check. Used directly (not via findPotentialDuplicatesDirectly) when the
+     * subject lead's own closed state must not hide its counterparts - e.g. invalidating a
+     * counterpart's cache after this lead just moved to won/lost.
+     */
+    public function findRawDuplicateCandidates($lead): Collection
+    {
         $duplicates = collect();
 
         // Push the recency window down into the candidate queries themselves (leads.created_at is
         // indexed - see leads_created_at_idx) instead of fetching every historical match and
-        // discarding old rows in PHP afterwards. applyDuplicateFilters() below re-checks the same
+        // discarding old rows in PHP afterwards. applyDuplicateFilters() re-checks the same
         // window - this only cuts down what gets scanned/fetched.
         $periodStart = Carbon::now()->subWeeks(self::DUPLICATE_SEARCH_PERIOD_WEEKS);
 
@@ -377,9 +388,7 @@ class LeadRepository extends Repository
             Log::error('Error in duplicate detection: ' . $e->getMessage());
         }
 
-        // Remove duplicates from the collection and apply time/status filters
-        $uniqueDuplicates = $duplicates->unique('id');
-        return $this->applyDuplicateFilters($lead, $uniqueDuplicates);
+        return $duplicates->unique('id');
     }
 
     /**

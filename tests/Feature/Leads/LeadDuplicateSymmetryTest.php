@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\ContactLabel;
+use App\Enums\LostReason;
 use Database\Seeders\TestSeeder;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
@@ -81,6 +82,34 @@ test('a closed lead reports no duplicates itself either', function (string $stag
     expect(duplicateIdsFor($closed))->toBe([])
         ->and(duplicateIdsFor($open))->toBe([]);
 })->with(['won', 'lost']);
+
+test('closing a lead invalidates the cached duplicate result of its still-open counterpart', function () {
+    // "lost" only - "won" additionally requires a 100%-match person via LeadStatusTransitionValidator,
+    // which is orthogonal to what's under test here. Both stages hit the same isStageClosed() check.
+    $stage = Stage::where('code', 'lost')->where('lead_pipeline_id', 1)->firstOrFail();
+
+    $a = Lead::factory()->create([
+        'first_name' => 'Closing',
+        'last_name'  => 'Counterpart',
+        'emails'     => [['value' => 'closing.counterpart@example.com', 'label' => ContactLabel::Eigen->value]],
+    ]);
+
+    $b = Lead::factory()->create([
+        'first_name' => 'Closing',
+        'last_name'  => 'Counterpart',
+        'emails'     => [['value' => 'closing.counterpart@example.com', 'label' => ContactLabel::Relatie->value]],
+    ]);
+
+    // Warm b's cache while a is still open - this is what used to stick after a closed.
+    expect(duplicateIdsFor($b))->toBe([$a->id]);
+
+    $a->update([
+        'lead_pipeline_stage_id' => $stage->id,
+        'lost_reason'            => LostReason::Price->value,
+    ]);
+
+    expect(duplicateIdsFor($b))->toBe([]);
+});
 
 test('a married name matches from both sides', function () {
     $birthName = Lead::factory()->create([

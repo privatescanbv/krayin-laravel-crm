@@ -9,6 +9,7 @@ use App\Enums\KeycloakRoles;
 use App\Services\Keycloak\KeycloakService;
 use App\Support\EmailNormalizer;
 use App\Support\PasswordGenerator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Webkul\Contact\Models\Person;
@@ -66,6 +67,9 @@ class PersonKeycloakService
 
     /**
      * Email address Keycloak currently uses for this person's portal account.
+     *
+     * Cached briefly so an edit-page render and the save that follows a few seconds later
+     * (separate HTTP requests) don't each pay for a synchronous Keycloak admin API round-trip.
      */
     public function getAccountEmail(Person $person): ?string
     {
@@ -73,14 +77,22 @@ class PersonKeycloakService
             return null;
         }
 
-        $user = $this->keycloakService->getUserById($person->keycloak_user_id);
-        $email = $user['email'] ?? $user['username'] ?? null;
+        // ponytail: 30s cache, no invalidation hook - out-of-band Keycloak email edits surface
+        // within 30s, which is fine since the read already happens once per request anyway.
+        return Cache::remember(
+            "person_keycloak_email:{$person->keycloak_user_id}",
+            30,
+            function () use ($person) {
+                $user = $this->keycloakService->getUserById($person->keycloak_user_id);
+                $email = $user['email'] ?? $user['username'] ?? null;
 
-        if (! is_string($email) || $email === '') {
-            return null;
-        }
+                if (! is_string($email) || $email === '') {
+                    return null;
+                }
 
-        return EmailNormalizer::normalize($email);
+                return EmailNormalizer::normalize($email);
+            }
+        );
     }
 
     /**

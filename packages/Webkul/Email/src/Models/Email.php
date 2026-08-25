@@ -661,10 +661,32 @@ class Email extends Model implements EmailContract
     {
         if ($this->quoteSplitCache === null) {
             $this->quoteSplitCache = app(EmailQuoteSplitter::class)
-                ->split((string) $this->reply);
+                ->split($this->resolveInlineAttachments((string) $this->reply));
         }
 
         return $this->quoteSplitCache;
+    }
+
+    /**
+     * Replace `cid:` references in the HTML body with the matching attachment's storage
+     * URL, so inline images (e.g. pasted screenshots, Outlook-embedded pictures) render
+     * instead of showing as broken images.
+     */
+    private function resolveInlineAttachments(string $html): string
+    {
+        if (stripos($html, 'cid:') === false) {
+            return $html;
+        }
+
+        foreach ($this->attachments as $attachment) {
+            if (empty($attachment->content_id)) {
+                continue;
+            }
+
+            $html = str_ireplace('cid:'.$attachment->content_id, $attachment->url, $html);
+        }
+
+        return $html;
     }
 
     /**

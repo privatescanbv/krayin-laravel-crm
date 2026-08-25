@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Webkul\Email\Models\Attachment;
 use Webkul\Email\Models\Email;
 use Webkul\Email\Models\Folder;
 
@@ -99,4 +100,54 @@ test('email model handles edge cases for time_ago', function () {
     $email->created_at = now();
     expect($email->time_ago)->not->toBe('Unknown')
         ->and($email->time_ago)->toBeString();
+});
+
+test('quote_split resolves cid references to the matching attachment url', function () {
+    $folder = Folder::create(['name' => 'inbox']);
+
+    $email = Email::create([
+        'subject'   => 'Photo attached',
+        'from'      => ['sender@example.com'],
+        'reply'     => '<p>See attached</p><img src="cid:image001@01D12345">',
+        'folder_id' => $folder->id,
+    ]);
+
+    $attachment = Attachment::create([
+        'email_id'     => $email->id,
+        'name'         => 'photo.jpg',
+        'path'         => 'emails/'.$email->id.'/photo.jpg',
+        'content_type' => 'image/jpeg',
+        'size'         => 1234,
+        'content_id'   => 'image001@01D12345',
+    ]);
+
+    expect($email->quote_split['main'])
+        ->not->toContain('cid:image001@01D12345')
+        ->toContain($attachment->url);
+});
+
+test('quote_split leaves body untouched when it has no cid references', function () {
+    $folder = Folder::create(['name' => 'inbox']);
+
+    $email = Email::create([
+        'subject'   => 'No attachments',
+        'from'      => ['sender@example.com'],
+        'reply'     => '<p>Just text</p>',
+        'folder_id' => $folder->id,
+    ]);
+
+    expect($email->quote_split['main'])->toBe('<p>Just text</p>');
+});
+
+test('quote_split leaves unmatched cid references untouched', function () {
+    $folder = Folder::create(['name' => 'inbox']);
+
+    $email = Email::create([
+        'subject'   => 'Dangling cid',
+        'from'      => ['sender@example.com'],
+        'reply'     => '<img src="cid:unknown@01D12345">',
+        'folder_id' => $folder->id,
+    ]);
+
+    expect($email->quote_split['main'])->toContain('cid:unknown@01D12345');
 });

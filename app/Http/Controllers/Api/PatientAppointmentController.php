@@ -6,7 +6,6 @@ use App\Enums\AppointmentTimeFilter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\PatientAppointmentsIndexRequest;
 use App\Http\Resources\PatientPortalAppointmentResource;
-use App\Repositories\ActivityRepository;
 use App\Repositories\OrderRepository;
 use App\Services\Keycloak\KeycloakService;
 use App\Services\OrderCheckService;
@@ -18,18 +17,9 @@ use Webkul\Contact\Models\Person;
 
 class PatientAppointmentController extends Controller
 {
-    /**
-     * Activity types that are exposed as appointments in the patient portal.
-     * Extend this list to include additional activity types when needed.
-     *
-     * @var ActivityType[]
-     */
-    public const PORTAL_ACTIVITY_TYPES = [];
-
     public function __construct(
         private readonly KeycloakService $keycloakService,
         private readonly OrderRepository $orderRepository,
-        private readonly ActivityRepository $activityRepository,
     ) {}
 
     /**
@@ -66,7 +56,6 @@ class PatientAppointmentController extends Controller
         $now = now();
 
         $items = $this->collectOrderItems($person, $filter, $now)
-            ->concat($this->collectActivityItems($person, $filter, $now))
             ->sortBy('sort_at')
             ->values();
 
@@ -97,33 +86,5 @@ class PatientAppointmentController extends Controller
                     'person' => $person,
                 ],
             ]);
-    }
-
-    /**
-     * Collect activity-based appointment items for a person.
-     * Fetches each configured portal activity type.
-     */
-    private function collectActivityItems(Person $person, ?AppointmentTimeFilter $filter, Carbon $now): Collection
-    {
-        $items = collect();
-
-        foreach (self::PORTAL_ACTIVITY_TYPES as $type) {
-            $activities = $this->activityRepository
-                ->queryPatientActivitiesForPerson($person, $type, $filter, $now)
-                ->get()
-                ->map(fn ($activity) => [
-                    'source'  => 'activity',
-                    'sort_at' => $activity->schedule_from,
-                    'payload' => [
-                        'activity' => $activity,
-                        'clinic'   => $activity->clinic_id,
-                        'person'   => $person,
-                    ],
-                ]);
-
-            $items = $items->concat($activities);
-        }
-
-        return $items;
     }
 }

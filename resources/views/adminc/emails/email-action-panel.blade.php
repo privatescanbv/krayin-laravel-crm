@@ -1,4 +1,5 @@
 @php
+    use App\Services\Mail\EmailLinkAuditLog;
     use App\Services\Mail\EmailLlmLinkingService;
     use Webkul\Email\Enums\EmailFolderEnum;
     use Webkul\Email\Models\Folder;
@@ -26,6 +27,8 @@
     $showLlmTechnicalOutput = config('services.llm.email_linking.technical_output_enabled')
         || ($adminEmail !== '' && in_array($adminEmail, $technicalOutputUsers, true));
     $initialLlmMetadata = is_array($email->llm_metadata) ? $email->llm_metadata : null;
+
+    $linkHistory = app(EmailLinkAuditLog::class)->forEmail($email);
 @endphp
 
 @pushOnce('scripts')
@@ -168,6 +171,40 @@
             @{{ markingProcessed ? 'Bezig...' : 'Markeer als verwerkt' }}
         </button>
     </div>
+
+    <!-- Audit: creation/last-modified metadata (à la leads/view.blade.php's footer) plus
+         the mail's system-activity logboek — only manual link/unlink actions are logged
+         (EmailObserver), so an empty logboek means every link here was auto-linked.
+         Collapsed by default and deliberately tiny — diagnostic detail, not everyday UI. -->
+    <details class="border-t pt-3 text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">
+        <summary class="cursor-pointer select-none hover:text-gray-600 dark:hover:text-gray-300">
+            Logboek
+        </summary>
+        <div class="mt-2 flex flex-col gap-1">
+            <div class="flex justify-between">
+                <span>Aangemaakt:</span>
+                <span>{{ $email->created_at?->format('d-m-Y H:i') }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span>Laatst gewijzigd:</span>
+                <span>{{ $email->updated_at?->format('d-m-Y H:i') }}</span>
+            </div>
+        </div>
+
+        <div class="mt-2 border-t pt-2 dark:border-gray-700">
+            <div class="mb-1">Systeemactiviteiten ({{ $linkHistory->count() }})</div>
+            <ul class="flex flex-col gap-1">
+                @forelse ($linkHistory as $entry)
+                    <li class="flex justify-between gap-2 text-xs text-gray-400 dark:text-gray-500">
+                        <span>{{ $entry->created_at?->format('d-m-Y H:i') }} {{ $entry->user?->name ?? 'Onbekend' }}</span>
+                        <span class="truncate text-right">{{ $entry->title }}</span>
+                    </li>
+                @empty
+                    <li class="text-xs text-gray-400 dark:text-gray-500">Geen handmatige koppelacties — automatisch gekoppeld.</li>
+                @endforelse
+            </ul>
+        </div>
+    </details>
 
     {!! view_render_event('admin.mail.view.action_mail.after', ['email' => $email]) !!}
 </script>

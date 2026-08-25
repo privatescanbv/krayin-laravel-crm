@@ -3,8 +3,6 @@
 namespace App\Repositories;
 
 use App\Enums\ActivityType;
-use App\Enums\AppointmentTimeFilter;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Webkul\Activity\Models\Activity;
@@ -17,23 +15,6 @@ class ActivityRepository extends Repository
     public function model(): string
     {
         return Activity::class;
-    }
-
-    /**
-     * Get a query builder for patient portal activities of a given type for a person.
-     */
-    public function queryPatientActivitiesForPerson(
-        Person $person,
-        ActivityType $type,
-        ?AppointmentTimeFilter $filter = null,
-        ?Carbon $now = null,
-    ): Builder {
-        $now = $now ?: now();
-
-        return Activity::query()
-            ->publishedToPortalForPerson($person)
-            ->ofType($type)
-            ->scheduleTimeFilter($filter, $now);
     }
 
     /**

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Anamnesis;
+use App\Models\LeadMarketingData;
 use Database\Seeders\CampaignSeeder;
 use Database\Seeders\LeadChannelSeeder;
 use Database\Seeders\TestSeeder;
@@ -92,6 +93,31 @@ test('POST api/leads/hernia creates anamnesis when person is attached', function
     $lead->attachPersons([$person->id]);
 
     expect(Anamnesis::where('lead_id', $lead->id)->where('person_id', $person->id)->count())->toBe(1);
+});
+
+test('POST api/leads/hernia returns a structured 500 (not a bare 200/201) when marketing data fails to persist, but the lead still exists', function () {
+    LeadMarketingData::saving(function () {
+        throw new RuntimeException('simulated marketing data failure');
+    });
+
+    $payload = [
+        'lead_source'      => 'Herniapoli.nl',
+        'kanaal_c'         => 'website',
+        'soort_aanvraag_c' => 'operatie',
+        'first_name'       => 'Jan',
+        'last_name'        => 'Jansen',
+        'email1'           => 'jan.jansen@example.com',
+        'gad_campaignid'   => 'test-gad-campaign-123',
+    ];
+
+    $res = $this->postJson('/api/leads/hernia', $payload);
+
+    $res->assertStatus(500)
+        ->assertJsonStructure(['message', 'lead_id']);
+
+    $leadId = $res->json('lead_id');
+    expect($leadId)->not->toBeNull()
+        ->and(Lead::find($leadId))->not->toBeNull(); // the lead is genuinely created despite the 500
 });
 
 test('POST api/leads/hernia rejects unknown properties (additionalProperties=false)', function () {

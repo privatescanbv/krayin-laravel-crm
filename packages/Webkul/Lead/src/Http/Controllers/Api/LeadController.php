@@ -208,21 +208,38 @@ class LeadController extends Controller
             return $response;
         }
 
-        $leadId = $this->leadIdFromCreateResponse($response);
+        // The lead itself is already committed at this point. A failure below (missing lead_id in
+        // the just-built response, or the marketing-data insert itself) must not surface as a plain
+        // 201/200 nor as an uncontrolled, unstructured 500 — always return a structured error that
+        // still names the lead_id so it can be found and its marketing data retried/backfilled.
+        try {
+            $leadId = $this->leadIdFromCreateResponse($response);
 
-        if (! empty($marketingData)) {
-            $this->persistMarketingData($leadId, $marketingData);
+            if (! empty($marketingData)) {
+                $this->persistMarketingData($leadId, $marketingData);
 
-            if (
-                array_key_exists('campaign_id', $marketingData)
-                && Campaign::query()->where('external_id', $marketingData['campaign_id'])->first() === null
-            ) {
-                Log::error('Campaign not found by campaign_id', [
-                    'campaign_id' => $marketingData['campaign_id'],
-                    'lead_id'     => $leadId,
-                    'endpoint'    => $endpoint,
-                ]);
+                if (
+                    array_key_exists('campaign_id', $marketingData)
+                    && Campaign::query()->where('external_id', $marketingData['campaign_id'])->first() === null
+                ) {
+                    Log::error('Campaign not found by campaign_id', [
+                        'campaign_id' => $marketingData['campaign_id'],
+                        'lead_id'     => $leadId,
+                        'endpoint'    => $endpoint,
+                    ]);
+                }
             }
+        } catch (Exception $e) {
+            Log::error('Lead created but marketing data could not be persisted', [
+                'error'    => $e->getMessage(),
+                'lead_id'  => $leadId ?? null,
+                'endpoint' => $endpoint,
+            ]);
+
+            return response()->json([
+                'message' => 'Lead created, but marketing data could not be stored.',
+                'lead_id' => $leadId ?? null,
+            ], 500);
         }
 
         return $response;

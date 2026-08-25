@@ -197,7 +197,7 @@
                 @forelse ($linkHistory as $entry)
                     <li class="flex justify-between gap-2 text-xs text-gray-400 dark:text-gray-500">
                         <span>{{ $entry->created_at?->format('d-m-Y H:i') }} {{ $entry->user?->name ?? 'Onbekend' }}</span>
-                        <span class="truncate text-right">{{ $entry->title }}</span>
+                        <span class="truncate text-right" title="{{ $entry->title }}">{{ $entry->title }}</span>
                     </li>
                 @empty
                     <li class="text-xs text-gray-400 dark:text-gray-500">Geen handmatige koppelacties — automatisch gekoppeld.</li>

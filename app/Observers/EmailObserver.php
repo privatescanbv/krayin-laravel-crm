@@ -69,10 +69,11 @@ class EmailObserver
 
             $this->activityRepository->createSystem([
                 'title'      => sprintf(
-                    'E-mail #%d %s aan %s',
+                    'E-mail #%d %s aan %s #%d',
                     $email->id,
                     $new ? 'gekoppeld' : 'ontkoppeld',
-                    $label
+                    $label,
+                    $new ?? $old
                 ),
                 'additional' => [
                     'field'         => $field,

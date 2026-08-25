@@ -46,6 +46,7 @@ test('manually (re)linking an email to an order while authenticated logs it with
         ->and($activity->user_id)->toBe($admin->id)
         ->and($activity->order_id)->toBeNull() // not attached to the order's own timeline — email-scoped only
         ->and($activity->title)->toContain('gekoppeld')
+        ->and($activity->title)->toContain((string) $order->id) // entity id must be visible in the title, not just buried in additional
         ->and($activity->additional['field'])->toBe('order_id')
         ->and($activity->additional['old_value'])->toBeNull()
         ->and($activity->additional['new_value'])->toBe($order->id);
@@ -70,6 +71,7 @@ test('unlinking an entity while authenticated logs an ontkoppeld activity carryi
         ->first();
 
     expect($activity)->not->toBeNull()
+        ->and($activity->title)->toContain((string) $order->id) // unlink title must still name the order that was removed
         ->and($activity->additional['old_value'])->toBe($order->id)
         ->and($activity->additional['new_value'])->toBeNull();
 });

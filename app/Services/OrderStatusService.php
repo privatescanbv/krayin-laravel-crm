@@ -66,7 +66,7 @@ class OrderStatusService
         // Check if any plannable item still needs a booking (only NEW counts as unplanned)
         foreach ($plannableItems as $orderItem) {
             if ($orderItem->status === OrderItemStatus::NEW) {
-                Log::info("Order {$order->id} has plannable items still NEW, setting stage to {$firstStageId}");
+                Log::info("Order $order->id has plannable items still NEW, setting stage to $firstStageId");
 
                 return $firstStageId;
             }

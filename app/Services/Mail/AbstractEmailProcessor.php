@@ -304,13 +304,11 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
      */
     protected function logSyncComplete(int $processedCount, int $errorCount): void
     {
-        if ($this->currentLog) {
-            $this->currentLog->update([
-                'completed_at'    => now(),
-                'processed_count' => $processedCount,
-                'error_count'     => $errorCount,
-            ]);
-        }
+        $this->currentLog?->update([
+            'completed_at'    => now(),
+            'processed_count' => $processedCount,
+            'error_count'     => $errorCount,
+        ]);
 
         if ($processedCount > 1) {
             Log::info('Email sync completed', [
@@ -328,12 +326,10 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
      */
     protected function logSyncError(string $error): void
     {
-        if ($this->currentLog) {
-            $this->currentLog->update([
-                'completed_at'  => now(),
-                'error_message' => $error,
-            ]);
-        }
+        $this->currentLog?->update([
+            'completed_at'  => now(),
+            'error_message' => $error,
+        ]);
 
         Log::error('Email sync failed', [
             'processor' => static::class,
@@ -411,25 +407,17 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
     abstract protected function getSyncType(): string;
 
     /**
-     * Get processor name for activity creation
-     */
-    abstract protected function getProcessorName(): string;
-
-    /**
      * Get sync metadata for logging
      */
     abstract protected function getSyncMetadata(): array;
 
     /**
      * Get folder ID by name
-     *
-     * @param  string  $folderName
-     * @return int|null
      */
-    protected function getFolderId($folderName)
+    protected function getFolderId(string $folderName): ?int
     {
         $folder = Folder::where('name', strtolower($folderName))->first();
 
-        return $folder ? $folder->id : null;
+        return $folder?->id;
     }
 }

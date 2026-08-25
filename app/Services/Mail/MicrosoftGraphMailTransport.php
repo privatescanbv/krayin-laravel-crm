@@ -49,13 +49,8 @@ class MicrosoftGraphMailTransport implements TransportInterface
      */
     public static function matchesAnyPattern(string $emailAddress, array $patterns): bool
     {
-        foreach ($patterns as $pattern) {
-            if (self::matchesPattern($emailAddress, $pattern)) {
-                return true;
-            }
-        }
+        return array_any($patterns, fn ($pattern) => self::matchesPattern($emailAddress, $pattern));
 
-        return false;
     }
 
     /**
@@ -204,7 +199,7 @@ class MicrosoftGraphMailTransport implements TransportInterface
 
             // Send via Graph API – URL uses the Exchange mailbox; From header may be a send_as alias.
             $accessToken = $this->tokenService->getAccessToken($mailboxKey);
-            $url = "{$this->baseUrl}/users/{$graphMailbox}/sendMail";
+            $url = "$this->baseUrl/users/$graphMailbox/sendMail";
 
             logger()->info('Sending email via Microsoft Graph', [
                 'to'           => collect($toRecipients)->pluck('emailAddress.address')->toArray(),
@@ -423,11 +418,11 @@ class MicrosoftGraphMailTransport implements TransportInterface
             $mime = $m[1];
             $ext = explode('/', $mime)[1] ?? 'png';
 
-            $img->setAttribute('src', "cid:{$cid}");
+            $img->setAttribute('src', "cid:$cid");
 
             $inlineAttachments[] = [
                 '@odata.type'  => '#microsoft.graph.fileAttachment',
-                'name'         => "image{$counter}.{$ext}",
+                'name'         => "image$counter.$ext",
                 'contentType'  => $mime,
                 'contentBytes' => $m[2], // already base64-encoded
                 'isInline'     => true,

@@ -97,14 +97,6 @@ class PipelineCookieService
     }
 
     /**
-     * Clear the pipeline cookie
-     */
-    //    public function clearPipelineCookie(): void
-    //    {
-    //        Cookie::queue(Cookie::forget(self::COOKIE_NAME));
-    //    }
-
-    /**
      * Get the effective pipeline ID considering URL parameter and cookie
      *
      * @param  string|int|null  $requestPipelineId  Pipeline ID from request parameter

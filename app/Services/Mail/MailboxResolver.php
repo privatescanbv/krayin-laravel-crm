@@ -82,16 +82,6 @@ class MailboxResolver
     }
 
     /**
-     * Resolve the mailbox key that matches a raw From address string.
-     *
-     * Used to tag outbound Email records with their mailbox_key after sending.
-     */
-    public function resolveKeyFromAddress(string $address): ?string
-    {
-        return MailboxConfig::resolveKeyByAddress($address);
-    }
-
-    /**
      * Resolve mailbox key from a linked entity's department.
      */
     public function resolveKeyFromEntity(?Model $entity): ?string

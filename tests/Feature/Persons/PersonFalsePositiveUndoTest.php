@@ -50,12 +50,6 @@ test('undoing a false positive makes the pair a duplicate again', function () {
         'entity_id' => $this->other->id,
     ])->assertRedirect();
 
-    expect(app(DuplicateFalsePositiveService::class)->shouldIgnore(
-        DuplicateEntityType::PERSON,
-        $this->person->id,
-        $this->other->id
-    ))->toBeFalse();
-
     expect($this->person->fresh()->has_duplicates)->toBeTruthy();
 
     get(route('admin.contacts.persons.view', $this->person->id))

@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Helpers\ValueNormalizer;
 use App\Models\Address;
 use App\Models\Anamnesis;
 use App\Models\Order;
@@ -402,17 +401,6 @@ class OrderMailService
         return '€ '.number_format($numeric, 2, ',', '.');
     }
 
-    protected function interpolate(string $template, array $variables): string
-    {
-        return preg_replace_callback('/\{\{\s*(.*?)\s*\}\}/', function ($matches) use ($variables) {
-            $key = $matches[1];
-
-            return array_key_exists($key, $variables)
-                ? ValueNormalizer::toString($variables[$key])
-                : $matches[0];
-        }, $template) ?? $template;
-    }
-
     protected function isTruthy(mixed $value): bool
     {
         if (is_bool($value)) {
@@ -432,13 +420,8 @@ class OrderMailService
 
     protected function hasDefaultEmail(array $options): bool
     {
-        foreach ($options as $option) {
-            if (! empty($option['is_default'])) {
-                return true;
-            }
-        }
+        return array_any($options, fn ($option) => ! empty($option['is_default']));
 
-        return false;
     }
 
     /**

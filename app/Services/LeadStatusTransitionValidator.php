@@ -75,7 +75,7 @@ class LeadStatusTransitionValidator
         if (isset($rules['required_fields'])) {
             foreach ($rules['required_fields'] as $field) {
                 if (empty($lead->$field)) {
-                    $errors[] = "Het veld '{$field}' is verplicht voor deze status.";
+                    $errors[] = "Het veld '$field' is verplicht voor deze status.";
                 }
             }
         }
@@ -102,26 +102,6 @@ class LeadStatusTransitionValidator
     public static function reset(): void
     {
         self::resetTransitionRules();
-    }
-
-    /**
-     * Krijg alle transitie regels (voor debugging/configuratie).
-     */
-    public static function getAllTransitionRules(): array
-    {
-        self::ensureDefaultRules();
-
-        return self::getAllRegisteredTransitionRules();
-    }
-
-    /**
-     * Controleer of een transitie validatie regels heeft.
-     */
-    public static function hasTransitionRule(string $fromStageCode, string $toStageCode): bool
-    {
-        self::ensureDefaultRules();
-
-        return self::hasRegisteredTransitionRule($fromStageCode, $toStageCode);
     }
 
     /**

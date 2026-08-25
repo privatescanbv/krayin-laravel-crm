@@ -73,14 +73,14 @@ class ContactValidationRules
      */
     public static function strictAddressAttributes(string $prefix = 'address', string $label = ''): array
     {
-        $suffix = $label ? " ({$label})" : '';
+        $suffix = $label ? " ($label)" : '';
 
         return [
-            "{$prefix}.postal_code"  => "Postcode{$suffix}",
-            "{$prefix}.house_number" => "Huisnummer{$suffix}",
-            "{$prefix}.street"       => "Straat{$suffix}",
-            "{$prefix}.city"         => "Stad{$suffix}",
-            "{$prefix}.country"      => "Land{$suffix}",
+            "$prefix.postal_code"  => "Postcode$suffix",
+            "$prefix.house_number" => "Huisnummer$suffix",
+            "$prefix.street"       => "Straat$suffix",
+            "$prefix.city"         => "Stad$suffix",
+            "$prefix.country"      => "Land$suffix",
         ];
     }
 
@@ -117,13 +117,13 @@ class ContactValidationRules
         $others = fn (string $field) => implode(',', array_filter($required, fn ($f) => $f !== $field));
 
         return [
-            "{$prefix}.postal_code"         => 'nullable|string|max:20',
-            "{$prefix}.house_number"        => ['required_with:'.$others("{$prefix}.house_number"), 'nullable', 'string', 'max:20'],
-            "{$prefix}.house_number_suffix" => 'nullable|string|max:20',
-            "{$prefix}.street"              => ['required_with:'.$others("{$prefix}.street"), 'nullable', 'string', 'max:255'],
-            "{$prefix}.city"                => ['required_with:'.$others("{$prefix}.city"), 'nullable', 'string', 'max:255'],
-            "{$prefix}.state"               => 'nullable|string|max:255',
-            "{$prefix}.country"             => ['required_with:'.$others("{$prefix}.country"), 'nullable', 'string', 'max:255'],
+            "$prefix.postal_code"         => 'nullable|string|max:20',
+            "$prefix.house_number"        => ['required_with:'.$others("$prefix.house_number"), 'nullable', 'string', 'max:20'],
+            "$prefix.house_number_suffix" => 'nullable|string|max:20',
+            "$prefix.street"              => ['required_with:'.$others("$prefix.street"), 'nullable', 'string', 'max:255'],
+            "$prefix.city"                => ['required_with:'.$others("$prefix.city"), 'nullable', 'string', 'max:255'],
+            "$prefix.state"               => 'nullable|string|max:255',
+            "$prefix.country"             => ['required_with:'.$others("$prefix.country"), 'nullable', 'string', 'max:255'],
         ];
     }
 

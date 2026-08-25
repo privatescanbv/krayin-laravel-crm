@@ -4,8 +4,6 @@ namespace App\Services;
 
 use App\Enums\FormStatus;
 use App\Enums\FormType;
-use App\Models\Anamnesis;
-use App\Models\AnamnesisGvlForm;
 use Exception;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
@@ -18,10 +16,6 @@ use Webkul\Lead\Models\Lead;
  */
 class FormService
 {
-    public function __construct(
-        private readonly LeadAndSalesService $leadAndSalesService
-    ) {}
-
     public function getOpenForms(int $patientId): int
     {
         $url = $this->buildApiUrl("/api/forms/$patientId/open/count");
@@ -67,7 +61,7 @@ class FormService
      */
     public function getFormStatus(int $formId): array
     {
-        $url = $this->buildApiUrl("/api/forms/{$formId}/status");
+        $url = $this->buildApiUrl("/api/forms/$formId/status");
 
         Log::info('FormService: Fetching form status', [
             'form_id'    => $formId,
@@ -172,7 +166,7 @@ class FormService
     public function downloadForm(int $formId): Response
     {
         // GET /api/forms/{id}/download?lang=de
-        $url = $this->buildApiUrl("/api/forms/{$formId}/download?lang=de");
+        $url = $this->buildApiUrl("/api/forms/$formId/download?lang=de");
 
         return $this->makeRequest('get', $url, ['form_id' => $formId, 'url' => $url]);
     }
@@ -186,7 +180,7 @@ class FormService
      */
     public function deleteForm(int $formId): array
     {
-        $url = $this->buildApiUrl("/api/forms/{$formId}");
+        $url = $this->buildApiUrl("/api/forms/$formId");
 
         Log::info('FormService: Deleting form', [
             'form_id'    => $formId,
@@ -344,21 +338,6 @@ class FormService
             'status'  => $status,
             'json'    => $json,
             'is_html' => $isHtml,
-        ];
-    }
-
-    public function findRelatedEntityByFormId(string $showFormUrl): array
-    {
-        $formId = $this->extractFormIdFromUrl($showFormUrl) ?? $showFormUrl;
-        $gvlForm = AnamnesisGvlForm::where('gvl_form_id', $formId)->firstOrFail();
-        $personId = Anamnesis::where('id', $gvlForm->anamnesis_id)->value('person_id');
-
-        $result = $this->leadAndSalesService->findOpenByPerson($personId);
-
-        return [
-            'lead'      => $result['lead'] ?? null,
-            'sales'     => $result['sales'] ?? null,
-            'person_id' => $personId,
         ];
     }
 

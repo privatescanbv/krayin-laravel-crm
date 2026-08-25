@@ -232,7 +232,7 @@ class EmailLlmLinkingService
         $suggestions = [];
 
         foreach ($salesLead->orders as $order) {
-            if ($excludeOrderId !== null && (int) $order->id === $excludeOrderId) {
+            if ($excludeOrderId !== null && $order->id === $excludeOrderId) {
                 continue;
             }
 

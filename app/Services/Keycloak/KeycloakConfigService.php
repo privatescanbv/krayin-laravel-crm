@@ -12,8 +12,6 @@ use Illuminate\Support\Facades\Log;
 
 class KeycloakConfigService
 {
-    private bool $extraLogging = false;
-
     public function __construct(
         protected KeycloakService $keycloakService,
         protected GetKeycloakClientSecretAction $getClientSecretAction
@@ -202,10 +200,6 @@ class KeycloakConfigService
 
         if ($existingClient) {
             $results['exists'] = true;
-
-            if ($this->extraLogging) {
-                Log::info('Keycloak client exists', ['client_id' => $clientId, 'realm' => $realmName]);
-            }
 
             // Check if update is needed
             $updateData = $this->getClientUpdateData($existingClient, $expectedConfig);

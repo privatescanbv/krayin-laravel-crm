@@ -113,7 +113,7 @@ class AfbDispatchService
 
             $batches[] = [
                 'department_id'        => (int) $departmentId,
-                'department_name'      => $department?->name ?? "(afdeling #{$departmentId})",
+                'department_name'      => $department?->name ?? "(afdeling #$departmentId)",
                 'clinic_name'          => $department?->clinic?->name ?? '—',
                 'department_email'     => $department?->email,
                 'resource_slot_count'  => (int) ($slotsByDepartment[(int) $departmentId] ?? 0),
@@ -350,47 +350,6 @@ class AfbDispatchService
     }
 
     /**
-     * Whether the manual "AFB versturen" button in the order view should be enabled.
-     *
-     * Active when:
-     *   - the current time is within [today AFB_LATE_BOOKING_CUTOFF_HOUR, tomorrow AFB_LATE_BOOKING_CUTOFF_HOUR]
-     *   - the order's first examination falls in the same window
-     *   - at least one department still has a pending AFB
-     */
-    public function isLateBookingWindowActive(Order $order): bool
-    {
-        if ($order->isHerniapoli()) {
-            return false;
-        }
-
-        if (! $this->isInDispatchableStage($order)) {
-            return false;
-        }
-
-        $now = now();
-        $windowStart = $now->copy()->startOfDay()->setTime(self::AFB_LATE_BOOKING_CUTOFF_HOUR, 0);
-        $windowEnd = $windowStart->copy()->addDay();
-
-        if (! $now->between($windowStart, $windowEnd)) {
-            return false;
-        }
-
-        $examAt = $order->firstExaminationCarbon();
-
-        if (! $examAt || ! $examAt->between($windowStart, $windowEnd)) {
-            return false;
-        }
-
-        $departmentIds = $this->getUniqueDepartmentIdsForOrder((int) $order->id);
-
-        if (empty($departmentIds)) {
-            return false;
-        }
-
-        return $this->hasPendingAfbForDepartments((int) $order->id, $departmentIds);
-    }
-
-    /**
      * Geeft de AFB dispatch-gereedheid terug voor weergave op de order view.
      *
      * @return array{is_ready: bool, is_late: bool, is_all_sent: bool, needs_manual_send: bool, is_herniapoli: bool, planned_at: Carbon|null, reasons: list<string>}
@@ -579,7 +538,7 @@ class AfbDispatchService
 
                         $pdfContent = $response->body();
                         $formLabel = strtolower($gvlFormRecord->gvl_form_type?->label() ?? 'gvl');
-                        $suffix = $completedForms->count() > 1 ? "-{$formId}" : '';
+                        $suffix = $completedForms->count() > 1 ? "-$formId" : '';
                         $fileName = sprintf(
                             '%s-%d-%s%s-%s.pdf',
                             $formLabel,
@@ -623,7 +582,7 @@ class AfbDispatchService
         $localDisk = Storage::disk('local');
 
         if (! $localDisk->exists($path)) {
-            throw new RuntimeException("AFB bestand niet gevonden op enige disk: {$path}");
+            throw new RuntimeException("AFB bestand niet gevonden op enige disk: $path");
         }
 
         Storage::put($path, $localDisk->get($path));
@@ -645,7 +604,7 @@ class AfbDispatchService
         int $attachmentCount
     ): Email {
         $recipientEmail = $department->email
-            ?? throw new RuntimeException("Geen e-mailadres voor afdeling ID {$department->id}");
+            ?? throw new RuntimeException("Geen e-mailadres voor afdeling ID $department->id");
 
         $clinic = $department->clinic;
 

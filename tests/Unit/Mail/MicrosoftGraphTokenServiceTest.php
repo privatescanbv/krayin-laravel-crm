@@ -115,16 +115,6 @@ test('fetches separate tokens per mailbox credentials', function () {
     Http::assertSentCount(2);
 });
 
-test('getAccessTokenForAddress resolves mailbox credentials', function () {
-    Http::fake([
-        'login.microsoftonline.com/hp-tenant/*' => Http::response(['access_token' => 'hp-token', 'expires_in' => 3600]),
-    ]);
-
-    $service = new MicrosoftGraphTokenService;
-
-    expect($service->getAccessTokenForAddress('hp@example.com'))->toBe('hp-token');
-});
-
 test('mailbox config resolves key by address', function () {
     expect(MailboxConfig::resolveKeyByAddress('hp@example.com'))->toBe('herniapoli')
         ->and(MailboxConfig::graphCredentials('herniapoli')['tenant_id'])->toBe('hp-tenant');

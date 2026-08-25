@@ -276,7 +276,6 @@ class AfbDocumentGenerator
     {
         return $order->orderItems
             ->where('status', '!=', OrderItemStatus::LOST->value)
-            ->reject(fn ($item) => $item->status === OrderItemStatus::LOST)
             ->flatMap(function ($item) use ($departmentId) {
                 return $item->resourceOrderItems
                     ->filter(fn (ResourceOrderItem $resourceOrderItem) => (int) $resourceOrderItem->resource?->clinic_department_id === $departmentId)

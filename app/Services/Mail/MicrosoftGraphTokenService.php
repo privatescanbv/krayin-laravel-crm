@@ -52,7 +52,7 @@ class MicrosoftGraphTokenService
             // permanent, so retrying it just triples the load and delays the real error.
             ->retry(2, 250, fn ($e) => $e instanceof ConnectionException, throw: false)
             ->post(
-                "https://login.microsoftonline.com/{$tenantId}/oauth2/v2.0/token",
+                "https://login.microsoftonline.com/$tenantId/oauth2/v2.0/token",
                 [
                     'client_id'     => $clientId,
                     'client_secret' => $clientSecret,
@@ -62,7 +62,7 @@ class MicrosoftGraphTokenService
             );
 
         if (! $response->successful()) {
-            throw new Exception("Failed to get access token for mailbox [{$mailboxKey}]: ".$response->body());
+            throw new Exception("Failed to get access token for mailbox [$mailboxKey]: ".$response->body());
         }
 
         $token = (string) $response->json('access_token');
@@ -71,17 +71,6 @@ class MicrosoftGraphTokenService
         Cache::put($cacheKey, $token, $ttl);
 
         return $token;
-    }
-
-    public function getAccessTokenForAddress(string $address): string
-    {
-        $mailboxKey = MailboxConfig::resolveKeyByAddress($address);
-
-        if ($mailboxKey === null) {
-            throw new Exception("No mailbox configured for address [{$address}]");
-        }
-
-        return $this->getAccessToken($mailboxKey);
     }
 
     /**

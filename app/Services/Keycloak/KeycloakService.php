@@ -142,21 +142,6 @@ class KeycloakService
         return $this->resolveKeycloakUrl('/admin/realms'.$realmPath);
     }
 
-    public function getRealmLoginUrl(string $redirectUrl): string
-    {
-        $baseUrl = rtrim($this->getExternalBaseUrl(), '/');
-
-        $realm = $this->getRealm();  // crm
-        $clientId = config('services.keycloak.client_id');   // crm-app
-
-        return $baseUrl.
-            "/realms/{$realm}/protocol/openid-connect/auth".
-            "?client_id={$clientId}".
-            '&response_type=code'.
-            "&redirect_uri={$redirectUrl}".
-            '&scope=openid%20profile%20email';
-    }
-
     /**
      * Check if a realm exists.
      */

@@ -69,7 +69,7 @@ class OrderStatusTransitionValidator
         if (isset($rules['required_fields'])) {
             foreach ($rules['required_fields'] as $field) {
                 if (empty($order->$field)) {
-                    $errors[] = "Het veld '{$field}' is verplicht voor deze order status.";
+                    $errors[] = "Het veld '$field' is verplicht voor deze order status.";
                 }
             }
         }

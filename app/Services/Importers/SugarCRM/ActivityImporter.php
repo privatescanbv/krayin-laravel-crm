@@ -3,11 +3,9 @@
 namespace App\Services\Importers\SugarCRM;
 
 use App\Console\Commands\AbstractSugarCRMImport;
-use App\Enums\ActivityStatus;
 use App\Enums\ActivityType;
 use App\Models\Department;
 use App\Models\Order;
-use App\Services\ActivityStatusService;
 use App\Services\Importers\SugarCRM\Concerns\ImportsSugarHelpers;
 use Exception;
 use Illuminate\Database\QueryException;
@@ -192,7 +190,7 @@ class ActivityImporter
                 return ['imported' => $imported, 'skipped' => $skipped];
             }
 
-            $this->command->infoV('Importing '.count($leadCallActivities)." call activities for lead {$lead->external_id}");
+            $this->command->infoV('Importing '.count($leadCallActivities)." call activities for lead $lead->external_id");
 
             foreach ($leadCallActivities as $callData) {
                 try {
@@ -237,104 +235,15 @@ class ActivityImporter
                     // Keep status consistent with is_done and dates without touching timestamps
                     $this->syncActivityStatus($activity);
 
-                    $this->command->infoV("✓ Imported call activity: {$callData->name} for lead {$lead->external_id}");
+                    $this->command->infoV("✓ Imported call activity: $callData->name for lead $lead->external_id");
                     $imported++;
                 } catch (Exception $e) {
-                    $this->command->error("Failed to import call activity {$callData->id}: ".$e->getMessage());
+                    $this->command->error("Failed to import call activity $callData->id: ".$e->getMessage());
                     // Continue with next call activity
                 }
             }
         } catch (Exception $e) {
-            $this->command->error("Failed to import call activities for lead {$lead->external_id}: ".$e->getMessage());
-        }
-
-        return ['imported' => $imported, 'skipped' => $skipped];
-    }
-
-    /**
-     * Import email activities for a lead
-     *
-     * @param  Lead  $lead  The lead to import activities for
-     * @param  array  $emailActivities  All email activities grouped by lead ID
-     * @return array Statistics about imported and skipped activities
-     */
-    public function importEmailActivities(Lead $lead, array $emailActivities): array
-    {
-        $imported = 0;
-        $skipped = 0;
-
-        try {
-            $leadEmailActivities = $emailActivities[$lead->external_id] ?? [];
-
-            if (empty($leadEmailActivities)) {
-                return ['imported' => $imported, 'skipped' => $skipped];
-            }
-
-            $this->command->infoV('Importing '.count($leadEmailActivities)." email activities for lead {$lead->external_id}");
-
-            foreach ($leadEmailActivities as $emailData) {
-                try {
-                    // Check if activity already exists by external reference
-                    $existingActivity = Activity::where('external_id', $emailData->id)->first();
-                    if ($existingActivity) {
-                        $this->command->infoV("Skipping existing email activity with external_id={$emailData->id}");
-                        $skipped++;
-
-                        continue;
-                    }
-
-                    // Get group_id from lead's department (will throw exception if invalid)
-                    $groupId = Department::getGroupIdForLead($lead);
-
-                    // Create the activity
-                    $activityData = [
-                        'title'       => $emailData->subject ?? 'Email activiteit',
-                        'type'        => 'email',
-                        'comment'     => $this->formatEmailContent($emailData),
-                        'external_id' => $emailData->id,
-                        'additional'  => [
-                            'message_id'       => $emailData->message_id,
-                            'email_type'       => $emailData->type,
-                            'status'           => $emailData->status,
-                            'flagged'          => (bool) $emailData->flagged,
-                            'reply_to_status'  => $emailData->reply_to_status,
-                            'intent'           => $emailData->intent,
-                            'mailbox_id'       => $emailData->mailbox_id,
-                            'parent_type'      => $emailData->parent_type,
-                            'parent_id'        => $emailData->parent_id,
-                        ],
-                        'schedule_from' => $this->parseSugarDate($emailData->date_sent),
-                        'schedule_to'   => $this->parseSugarDate($emailData->date_sent),
-                        'is_done'       => $this->mapEmailStatus($emailData->status),
-                        'user_id'       => $this->mapAssignedUser($emailData->assigned_user_id),
-                        'lead_id'       => $lead->id,
-                        'group_id'      => $groupId,
-                    ];
-
-                    $timestamps = [
-                        'created_at' => $this->parseSugarDate($emailData->date_entered),
-                        'updated_at' => $this->parseSugarDate($emailData->date_modified),
-                    ];
-
-                    $activity = $this->createEntityWithTimestamps(Activity::class, $activityData, $timestamps);
-
-                    // Keep status consistent with is_done and dates
-                    if ($activity->is_done) {
-                        $activity->status = ActivityStatus::DONE;
-                    } else {
-                        $activity->status = ActivityStatusService::computeStatus(null, $activity->schedule_to, ActivityStatus::ACTIVE);
-                    }
-                    $activity->saveQuietly();
-
-                    $this->command->infoV("✓ Imported email activity: {$emailData->subject} for lead {$lead->external_id}");
-                    $imported++;
-                } catch (Exception $e) {
-                    $this->command->error("Failed to import email activity {$emailData->id}: ".$e->getMessage());
-                    // Continue with next email activity
-                }
-            }
-        } catch (Exception $e) {
-            $this->command->error("Failed to import email activities for lead {$lead->external_id}: ".$e->getMessage());
+            $this->command->error("Failed to import call activities for lead $lead->external_id: ".$e->getMessage());
         }
 
         return ['imported' => $imported, 'skipped' => $skipped];
@@ -373,7 +282,7 @@ class ActivityImporter
                     // Check if email already exists by external reference
                     $existingEmail = Email::where('unique_id', $emailData->id)->first();
                     if ($existingEmail) {
-                        $this->command->infoV("Skipping existing email with unique_id={$emailData->id}");
+                        $this->command->infoV("Skipping existing email with unique_id=$emailData->id");
                         $skipped++;
                         $importedEmailIds[$emailData->id] = $existingEmail->id;
 
@@ -413,16 +322,16 @@ class ActivityImporter
                     // Attach import tag to email
                     $email->tags()->attach($importTag->id);
 
-                    $this->command->infoV("✓ Imported email: {$emailData->subject} for lead {$lead->external_id} (Email ID: {$email->id})");
+                    $this->command->infoV("✓ Imported email: $emailData->subject for lead $lead->external_id (Email ID: $email->id)");
                     $imported++;
                     $importedEmailIds[$emailData->id] = $email->id; // Map SugarCRM email ID to Krayin email ID
                 } catch (Exception $e) {
-                    $this->command->error("Failed to import email {$emailData->id}: ".$e->getMessage());
+                    $this->command->error("Failed to import email $emailData->id: ".$e->getMessage());
                     // Continue with next email
                 }
             }
         } catch (Exception $e) {
-            $this->command->error("Failed to import emails for lead {$lead->external_id}: ".$e->getMessage());
+            $this->command->error("Failed to import emails for lead $lead->external_id: ".$e->getMessage());
         }
 
         return ['imported' => $imported, 'skipped' => $skipped, 'email_ids' => $importedEmailIds];
@@ -505,7 +414,7 @@ class ActivityImporter
             return ['imported' => $imported, 'skipped' => $skipped];
         }
 
-        $this->command->infoV('Importing '.count($orderTasks)." task(s) for order external_id={$order->external_id}");
+        $this->command->infoV('Importing '.count($orderTasks)." task(s) for order external_id=$order->external_id");
 
         foreach ($orderTasks as $taskData) {
             try {
@@ -515,7 +424,7 @@ class ActivityImporter
                 if ($existing) {
                     if ($existing->order_id !== $order->id) {
                         $existing->update(['order_id' => $order->id]);
-                        $this->command->infoV("Re-linked task {$taskData->id} to order {$order->external_id}");
+                        $this->command->infoV("Re-linked task $taskData->id to order $order->external_id");
                     }
                     $skipped++;
 
@@ -543,10 +452,10 @@ class ActivityImporter
                 $activity = $this->createEntityWithTimestamps(Activity::class, $activityData, $timestamps);
                 $this->syncActivityStatus($activity);
 
-                $this->command->infoV("✓ Imported task: {$taskData->name} for order {$order->external_id}");
+                $this->command->infoV("✓ Imported task: {$taskData->name} for order $order->external_id");
                 $imported++;
             } catch (Exception $e) {
-                $this->command->error("Failed to import task {$taskData->id}: ".$e->getMessage());
+                $this->command->error("Failed to import task $taskData->id: ".$e->getMessage());
             }
         }
 
@@ -639,7 +548,7 @@ class ActivityImporter
         $importTag = Tag::firstOrCreate(['name' => 'import'], ['color' => '#6B7280', 'user_id' => 1]);
         $folderId = $this->getImportedFolderId();
 
-        $this->command->infoV('Importing '.count($orderEmails)." email(s) for order external_id={$order->external_id}");
+        $this->command->infoV('Importing '.count($orderEmails)." email(s) for order external_id=$order->external_id");
 
         foreach ($orderEmails as $emailData) {
             try {
@@ -650,7 +559,7 @@ class ActivityImporter
                 if ($existing) {
                     if ($existing->order_id !== $order->id) {
                         $existing->update(['order_id' => $order->id]);
-                        $this->command->infoV("Re-linked email {$emailData->id} to order {$order->external_id}");
+                        $this->command->infoV("Re-linked email $emailData->id to order $order->external_id");
                     }
                     $skipped++;
 
@@ -687,10 +596,10 @@ class ActivityImporter
                 $email = $this->createEntityWithTimestamps(Email::class, $emailRecord, $timestamps);
                 $email->tags()->attach($importTag->id);
 
-                $this->command->infoV("✓ Imported email: {$emailData->subject} for order {$order->external_id} (Email ID: {$email->id})");
+                $this->command->infoV("✓ Imported email: $emailData->subject for order $order->external_id (Email ID: $email->id)");
                 $imported++;
             } catch (Exception $e) {
-                $this->command->error("Failed to import order email {$emailData->id}: ".$e->getMessage());
+                $this->command->error("Failed to import order email $emailData->id: ".$e->getMessage());
             }
         }
 
@@ -768,7 +677,7 @@ class ActivityImporter
             return ['imported' => $imported, 'skipped' => $skipped];
         }
 
-        $this->command->infoV('Importing '.count($orderNotes)." note(s) for order external_id={$order->external_id}");
+        $this->command->infoV('Importing '.count($orderNotes)." note(s) for order external_id=$order->external_id");
 
         foreach ($orderNotes as $noteData) {
             try {
@@ -779,7 +688,7 @@ class ActivityImporter
                 if ($existing) {
                     if ($existing->order_id !== $order->id) {
                         $existing->update(['order_id' => $order->id]);
-                        $this->command->infoV("Re-linked note {$noteData->id} to order {$order->external_id}");
+                        $this->command->infoV("Re-linked note $noteData->id to order $order->external_id");
                     }
                     $skipped++;
 
@@ -810,10 +719,10 @@ class ActivityImporter
                 $activity = $this->createEntityWithTimestamps(Activity::class, $activityData, $timestamps);
                 $this->syncActivityStatus($activity);
 
-                $this->command->infoV("✓ Imported note for order {$order->external_id}");
+                $this->command->infoV("✓ Imported note for order $order->external_id");
                 $imported++;
             } catch (Exception $e) {
-                $this->command->error("Failed to import note {$noteData->id}: ".$e->getMessage());
+                $this->command->error("Failed to import note $noteData->id: ".$e->getMessage());
             }
         }
 
@@ -906,7 +815,7 @@ class ActivityImporter
                 if ($existing) {
                     if ($existing->order_id !== $order->id) {
                         $existing->update(['order_id' => $order->id]);
-                        $this->command->infoV("Re-linked call {$callData->id} to order {$order->external_id}");
+                        $this->command->infoV("Re-linked call $callData->id to order $order->external_id");
                     }
                     $skipped++;
 
@@ -938,10 +847,10 @@ class ActivityImporter
                 $activity = $this->createEntityWithTimestamps(Activity::class, $activityData, $timestamps);
                 $this->syncActivityStatus($activity);
 
-                $this->command->infoV("✓ Imported call: {$callData->name} for order {$order->external_id}");
+                $this->command->infoV("✓ Imported call: $callData->name for order $order->external_id");
                 $imported++;
             } catch (Exception $e) {
-                $this->command->error("Failed to import call {$callData->id}: ".$e->getMessage());
+                $this->command->error("Failed to import call $callData->id: ".$e->getMessage());
             }
         }
 
@@ -950,14 +859,12 @@ class ActivityImporter
 
     /**
      * Get the imported folder ID
-     *
-     * @return int|null
      */
-    protected function getImportedFolderId()
+    protected function getImportedFolderId(): ?int
     {
         $folder = Folder::where('name', EmailFolderEnum::PROCESSED->getFolderName())->first();
 
-        return $folder ? $folder->id : null;
+        return $folder?->id;
     }
 
     /**
@@ -979,21 +886,6 @@ class ActivityImporter
         }
 
         return implode("\n\n", $content);
-    }
-
-    /**
-     * Map email status to is_done boolean
-     */
-    private function mapEmailStatus(?string $status): bool
-    {
-        if (! $status) {
-            return false;
-        }
-
-        // Email is considered "done" if it's sent or archived
-        $completedStatuses = ['sent', 'archived', 'delivered'];
-
-        return in_array(strtolower(trim($status)), $completedStatuses);
     }
 
     /**
@@ -1032,7 +924,7 @@ class ActivityImporter
             throw new Exception('User not found by external_id: '.$assignedUserId);
         }
 
-        $this->command->infoV("Mapped assigned user {$assignedUserId} to user: {$user->name} (ID: {$user->id})");
+        $this->command->infoV("Mapped assigned user $assignedUserId to user: $user->name (ID: $user->id)");
 
         return $user->id;
     }

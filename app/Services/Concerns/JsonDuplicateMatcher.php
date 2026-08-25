@@ -73,11 +73,11 @@ trait JsonDuplicateMatcher
 
                     $duplicates = $duplicates->merge($results);
                 } catch (Exception $e) {
-                    Log::error("Error searching for {$fieldName} duplicates: ".$e->getMessage());
+                    Log::error("Error searching for $fieldName duplicates: ".$e->getMessage());
                 }
             }
         } catch (Exception $e) {
-            Log::error("Error in findDuplicatesByJsonField for {$fieldName}: ".$e->getMessage());
+            Log::error("Error in findDuplicatesByJsonField for $fieldName: ".$e->getMessage());
         }
 
         return $duplicates;

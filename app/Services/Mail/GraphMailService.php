@@ -70,11 +70,11 @@ class GraphMailService extends AbstractEmailProcessor
     {
         $accessToken = $this->tokenService->getAccessToken($this->mailboxKey);
 
-        $url = "{$this->baseUrl}/users/{$this->mailbox}/mailFolders('Inbox')/messages";
+        $url = "$this->baseUrl/users/$this->mailbox/mailFolders('Inbox')/messages";
 
         if (config('mail.mailers.microsoft-graph.read_new_mail_filter') === 'multi_environments') {
             $since = now()->subDays(1)->toIso8601String();
-            $filter = "receivedDateTime ge {$since}";
+            $filter = "receivedDateTime ge $since";
         } else {
             $filter = 'isRead eq false';
         }
@@ -207,7 +207,7 @@ class GraphMailService extends AbstractEmailProcessor
         try {
             $accessToken = $this->tokenService->getAccessToken($this->mailboxKey);
             $messageId = $message['id'];
-            $url = "{$this->baseUrl}/users/{$this->mailbox}/messages/{$messageId}/attachments";
+            $url = "{$this->baseUrl}/users/$this->mailbox/messages/{$messageId}/attachments";
 
             $response = Http::withToken($accessToken)->get($url);
 
@@ -228,7 +228,7 @@ class GraphMailService extends AbstractEmailProcessor
     protected function markMessageAsRead($message): void
     {
         try {
-            $url = "{$this->baseUrl}/users/{$this->mailbox}/messages/{$message['id']}";
+            $url = "$this->baseUrl/users/$this->mailbox/messages/{$message['id']}";
 
             Http::withToken($this->tokenService->getAccessToken($this->mailboxKey))
                 ->patch($url, ['isRead' => true]);
@@ -245,11 +245,6 @@ class GraphMailService extends AbstractEmailProcessor
         return 'graph';
     }
 
-    protected function getProcessorName(): string
-    {
-        return 'Microsoft Graph';
-    }
-
     protected function getSyncMetadata(): array
     {
         return [
@@ -260,13 +255,7 @@ class GraphMailService extends AbstractEmailProcessor
 
     protected function extractMessageBody(array $message): string
     {
-        $body = $message['body'] ?? [];
-
-        if (isset($body['contentType']) && $body['contentType'] === 'html') {
-            return $body['content'] ?? '';
-        }
-
-        return $body['content'] ?? '';
+        return $message['body']['content'] ?? '';
     }
 
     protected function extractEmailAddresses(array $recipients): array

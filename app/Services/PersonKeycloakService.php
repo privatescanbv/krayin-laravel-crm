@@ -80,7 +80,7 @@ class PersonKeycloakService
         // ponytail: 30s cache, no invalidation hook - out-of-band Keycloak email edits surface
         // within 30s, which is fine since the read already happens once per request anyway.
         return Cache::remember(
-            "person_keycloak_email:{$person->keycloak_user_id}",
+            "person_keycloak_email:$person->keycloak_user_id",
             30,
             function () use ($person) {
                 $user = $this->keycloakService->getUserById($person->keycloak_user_id);

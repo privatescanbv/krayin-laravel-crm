@@ -26,7 +26,7 @@ class ActivityQueueRegistry
         $definitions = $this->definitions();
 
         if (! isset($definitions[$key])) {
-            throw new InvalidArgumentException("Unknown activity queue key [{$key}].");
+            throw new InvalidArgumentException("Unknown activity queue key [$key].");
         }
 
         return $definitions[$key];

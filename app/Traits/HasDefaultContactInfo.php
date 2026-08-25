@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Support\EmailNormalizer;
 use Exception;
 
 /**
@@ -29,6 +30,28 @@ trait HasDefaultContactInfo
         }
 
         return $this->emails[0]['value'] ?? null;
+    }
+
+    /**
+     * True when $address (case/whitespace-insensitive) is one of this model's own email
+     * addresses. Used to verify an email's entity-link actually recognizes its address —
+     * see App\Console\Commands\DetectMislinkedEmailEntities.
+     */
+    public function hasEmailAddress(string $address): bool
+    {
+        $normalized = EmailNormalizer::normalize($address);
+
+        if ($normalized === null || empty($this->emails)) {
+            return false;
+        }
+
+        foreach ($this->emails as $email) {
+            if (EmailNormalizer::normalize((string) ($email['value'] ?? '')) === $normalized) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function findDefaultPhone(): ?string

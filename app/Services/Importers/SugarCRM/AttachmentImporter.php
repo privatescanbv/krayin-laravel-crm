@@ -149,7 +149,7 @@ class AttachmentImporter
                     // Find the corresponding Krayin email ID
                     $krayinEmailId = $importedEmailIds[$attachmentData->email_id] ?? null;
                     if (! $krayinEmailId) {
-                        $this->command->warn("Krayin email not found for attachment {$attachmentData->id}, SugarCRM email_id: {$attachmentData->email_id}");
+                        $this->command->warn("Krayin email not found for attachment $attachmentData->id, SugarCRM email_id: $attachmentData->email_id");
                         $skipped++;
 
                         continue;
@@ -161,15 +161,13 @@ class AttachmentImporter
                         ->first();
 
                     if ($existingAttachment) {
-                        $this->command->infoVV("Skipping existing email attachment: {$attachmentData->filename}");
+                        $this->command->infoVV("Skipping existing email attachment: $attachmentData->filename");
                         $skipped++;
 
                         continue;
                     }
 
                     // Create file path based on attachment data
-                    $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $attachmentData->filename);
-                    $finalFilename = $this->ensureProperExtension($safeName, $attachmentData->file_mime_type);
                     $filePath = "emails/{$krayinEmailId}/{$attachmentData->id}";
 
                     // do not donwload the file, will be done later by another process
@@ -188,15 +186,15 @@ class AttachmentImporter
                         'updated_at' => $this->parseSugarDate($attachmentData->date_modified),
                     ]);
 
-                    $this->command->infoV("✓ Imported email attachment: {$attachmentData->filename} for email {$krayinEmailId}");
+                    $this->command->infoV("✓ Imported email attachment: $attachmentData->filename for email $krayinEmailId");
                     $imported++;
                 } catch (Exception $e) {
-                    $this->command->error("Failed to import email attachment {$attachmentData->id}: ".$e->getMessage());
+                    $this->command->error("Failed to import email attachment $attachmentData->id: ".$e->getMessage());
                     // Continue with next attachment
                 }
             }
         } catch (Exception $e) {
-            $this->command->error("Failed to import email attachments for lead {$lead->external_id}: ".$e->getMessage());
+            $this->command->error("Failed to import email attachments for lead $lead->external_id: ".$e->getMessage());
         }
 
         return ['imported' => $imported, 'skipped' => $skipped];
@@ -254,125 +252,5 @@ class AttachmentImporter
         $entity->timestamps = true;
 
         return $entity;
-    }
-
-    /**
-     * Ensure proper file extension based on mime type
-     */
-    private function ensureProperExtension(string $filename, ?string $mimeType): string
-    {
-        // If no mime type, return filename as-is
-        if (empty($mimeType)) {
-            return $filename;
-        }
-
-        // Check if filename already has an extension
-        $currentExtension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-
-        // Map mime types to extensions
-        $mimeToExtension = [
-            'application/pdf'                                                           => 'pdf',
-            'application/msword'                                                        => 'doc',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'   => 'docx',
-            'application/vnd.ms-excel'                                                  => 'xls',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'         => 'xlsx',
-            'application/vnd.ms-powerpoint'                                             => 'ppt',
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation' => 'pptx',
-            'text/plain'                                                                => 'txt',
-            'text/html'                                                                 => 'html',
-            'text/csv'                                                                  => 'csv',
-            'image/jpeg'                                                                => 'jpg',
-            'image/png'                                                                 => 'png',
-            'image/gif'                                                                 => 'gif',
-            'application/zip'                                                           => 'zip',
-            'application/octet-stream'                                                  => null, // Keep original extension for binary files
-        ];
-
-        $expectedExtension = $mimeToExtension[$mimeType] ?? null;
-
-        // If we have an expected extension and the file doesn't have it (or has wrong one)
-        if ($expectedExtension && $currentExtension !== $expectedExtension) {
-            // If filename has no extension, add the correct one
-            if (empty($currentExtension)) {
-                return $filename.'.'.$expectedExtension;
-            }
-            // If filename has wrong extension, replace it
-            $nameWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
-
-            return $nameWithoutExt.'.'.$expectedExtension;
-        }
-
-        // For application/octet-stream or unknown types, keep original filename
-        return $filename;
-    }
-
-    /**
-     * Create a minimal valid PDF file
-     */
-    private function createMinimalPdf($attachmentData): string
-    {
-        // Create a minimal but valid PDF structure
-        $pdf = "%PDF-1.4\n";
-        $pdf .= "1 0 obj\n";
-        $pdf .= "<<\n";
-        $pdf .= "/Type /Catalog\n";
-        $pdf .= "/Pages 2 0 R\n";
-        $pdf .= ">>\n";
-        $pdf .= "endobj\n\n";
-
-        $pdf .= "2 0 obj\n";
-        $pdf .= "<<\n";
-        $pdf .= "/Type /Pages\n";
-        $pdf .= "/Kids [3 0 R]\n";
-        $pdf .= "/Count 1\n";
-        $pdf .= ">>\n";
-        $pdf .= "endobj\n\n";
-
-        $pdf .= "3 0 obj\n";
-        $pdf .= "<<\n";
-        $pdf .= "/Type /Page\n";
-        $pdf .= "/Parent 2 0 R\n";
-        $pdf .= "/MediaBox [0 0 612 792]\n";
-        $pdf .= "/Contents 4 0 R\n";
-        $pdf .= ">>\n";
-        $pdf .= "endobj\n\n";
-
-        $content = 'IMPORTED FROM SUGARCRM\\n\\n';
-        $content .= 'Original filename: '.($attachmentData->filename ?? 'Unknown').'\\n';
-        $content .= 'SugarCRM Note ID: '.($attachmentData->id ?? 'Unknown').'\\n';
-        $content .= 'Email ID: '.($attachmentData->email_id ?? 'Unknown').'\\n\\n';
-        $content .= 'This PDF was imported from SugarCRM but the original content was not available.\\n';
-        $content .= 'To restore: Export original from SugarCRM and replace this file.';
-
-        $pdf .= "4 0 obj\n";
-        $pdf .= "<<\n";
-        $pdf .= '/Length '.strlen($content)."\n";
-        $pdf .= ">>\n";
-        $pdf .= "stream\n";
-        $pdf .= "BT\n";
-        $pdf .= "/F1 12 Tf\n";
-        $pdf .= "50 750 Td\n";
-        $pdf .= "($content) Tj\n";
-        $pdf .= "ET\n";
-        $pdf .= "endstream\n";
-        $pdf .= "endobj\n\n";
-
-        $pdf .= "xref\n";
-        $pdf .= "0 5\n";
-        $pdf .= "0000000000 65535 f \n";
-        $pdf .= "0000000009 00000 n \n";
-        $pdf .= "0000000074 00000 n \n";
-        $pdf .= "0000000120 00000 n \n";
-        $pdf .= "0000000179 00000 n \n";
-        $pdf .= "trailer\n";
-        $pdf .= "<<\n";
-        $pdf .= "/Size 5\n";
-        $pdf .= "/Root 1 0 R\n";
-        $pdf .= ">>\n";
-        $pdf .= "startxref\n";
-        $pdf .= "492\n";
-        $pdf .= "%%EOF\n";
-
-        return $pdf;
     }
 }

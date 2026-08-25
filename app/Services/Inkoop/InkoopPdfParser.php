@@ -24,7 +24,7 @@ class InkoopPdfParser
     {
         try {
             // Parse PDF and extract order lines
-            $pdfPath = Storage::disk('public')->path("inkoop_invoices/{$fileName}");
+            $pdfPath = Storage::disk('public')->path("inkoop_invoices/$fileName");
 
             // Check if file exists
             if (! file_exists($pdfPath)) {
@@ -528,16 +528,6 @@ class InkoopPdfParser
                         'last_founded_name' => $lastFoundedName,
                     ]);
                 }
-
-                //                if (!empty($line) && $currentPersonData) {
-                //                    // Update het laatste product met de productnaam
-                //                    $lastIndex = count($currentPersonData['products']) - 1;
-                //                    $currentPersonData['products'][$lastIndex]['product_name'] = trim($line);
-                //                    Log::debug('Update product name', [
-                //                        'line_number' => $lineNumber,
-                //                        'product_name' => trim($line),
-                //                    ]);
-                //                }
             }
         }
 

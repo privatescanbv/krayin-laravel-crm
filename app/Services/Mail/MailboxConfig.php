@@ -52,10 +52,8 @@ class MailboxConfig
                 return $key;
             }
 
-            foreach (self::sendAsAddresses($mailbox) as $alias) {
-                if (strcasecmp($alias, $address) === 0) {
-                    return $key;
-                }
+            if (array_any(self::sendAsAddresses($mailbox), fn ($alias) => strcasecmp($alias, $address) === 0)) {
+                return $key;
             }
         }
 

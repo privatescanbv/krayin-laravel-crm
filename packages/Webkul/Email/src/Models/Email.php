@@ -7,6 +7,7 @@ use App\Helpers\ValueNormalizer;
 use App\Models\Clinic;
 use App\Models\Order;
 use App\Models\SalesLead;
+use App\Services\Mail\EmailQuoteSplitter;
 use App\Services\Mail\MailboxConfig;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
@@ -64,13 +65,6 @@ class Email extends Model implements EmailContract
     ];
 
     /**
-     * Per-instance memoized result of {@see getQuoteSplitAttribute()}.
-     *
-     * @var array{main: string, quoted: string}|null
-     */
-    private ?array $quoteSplitCache = null;
-
-    /**
      * The attributes that are mass assignable.
      *
      * @var array
@@ -105,6 +99,13 @@ class Email extends Model implements EmailContract
     ];
 
     /**
+     * Per-instance memoized result of {@see getQuoteSplitAttribute()}.
+     *
+     * @var array{main: string, quoted: string}|null
+     */
+    private ?array $quoteSplitCache = null;
+
+    /**
      * Foreign keys on `emails` that mean this message is linked to a CRM entity.
      *
      * @see EmailEntityLink
@@ -133,6 +134,140 @@ class Email extends Model implements EmailContract
     }
 
     /**
+     * Apply the same "no entity link" semantics as {@see scopeWhereUnlinkedFromAllEntities} on a base query builder.
+     */
+    public static function applyUnlinkedFromAllEntitiesConstraints(QueryBuilder $query, string $alias = 'emails'): void
+    {
+        foreach (self::entityLinkForeignKeys() as $column) {
+            $query->whereNull("{$alias}.{$column}");
+        }
+    }
+
+    /**
+     * Normalize and validate the 'from' field to the standard structure.
+     *
+     * The standard structure is: {"name": "...", "email": "..."}
+     * If name is not available, it will be an empty string.
+     *
+     * @throws Exception
+     */
+    public static function normalizeFromField(?string $email, ?string $name = null): array
+    {
+        // Validate email is not empty
+        $email = trim((string) $email);
+        if (empty($email)) {
+            throw new Exception('Email address is required for the from field');
+        }
+
+        // Validate email format
+        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new Exception("Invalid email address format: {$email}");
+        }
+
+        // Normalize name (empty string if not provided or empty)
+        $name = trim((string) $name);
+        if (empty($name)) {
+            $name = '';
+        }
+
+        return [
+            'name'  => $name,
+            'email' => $email,
+        ];
+    }
+
+    /**
+     * Restrict a query to the newest email per thread root within a folder (inbox collapse).
+     *
+     * @param  Builder|QueryBuilder  $query
+     */
+    public static function constrainToLatestPerThreadRootInFolder($query, int $folderId, string $idColumn = 'emails.id'): void
+    {
+        [$subquery, $bindings] = static::latestPerThreadRootInFolderSubquerySql($folderId);
+
+        $query->whereRaw("{$idColumn} IN ({$subquery})", $bindings);
+    }
+
+    /**
+     * @return array{0: string, 1: list<mixed>}
+     */
+    public static function latestPerThreadRootInFolderSubquerySql(int $folderId): array
+    {
+        $table = DB::getTablePrefix().(new static)->getTable();
+
+        return [
+            "SELECT MAX(e.id)
+            FROM {$table} e
+            INNER JOIN (
+                WITH RECURSIVE thread_roots AS (
+                    SELECT id, id AS root_id FROM {$table} WHERE parent_id IS NULL
+                    UNION ALL
+                    SELECT e2.id, tr.root_id
+                    FROM {$table} e2
+                    INNER JOIN thread_roots tr ON e2.parent_id = tr.id
+                )
+                SELECT id, root_id FROM thread_roots
+            ) tr ON e.id = tr.id
+            WHERE e.folder_id = ?
+            GROUP BY tr.root_id",
+            [$folderId],
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function inboxFolderNames(): array
+    {
+        return [
+            EmailFolderEnum::INBOX->getFolderName(),
+            EmailFolderEnum::INBOX_HERNIAPOLI->getFolderName(),
+        ];
+    }
+
+    /**
+     * Entity links copied to replies/forwards: omit person/lead when sales is already linked.
+     *
+     * @return array<string, int>
+     */
+    public static function entityLinksToInheritFrom(self $email): array
+    {
+        $links = [];
+
+        foreach (self::entityLinkForeignKeys() as $foreignKey) {
+            if (! empty($email->{$foreignKey})) {
+                $links[$foreignKey] = $email->{$foreignKey};
+            }
+        }
+
+        if (! empty($links['sales_lead_id'])) {
+            unset($links['person_id'], $links['lead_id']);
+        }
+
+        return $links;
+    }
+
+    public static function isOwnMailboxAddress(string $address): bool
+    {
+        return MailboxConfig::resolveKeyByAddress($address) !== null;
+    }
+
+    protected static function booted()
+    {
+        static::creating(function (self $email) {
+            if (empty($email->source)) {
+                $email->source = 'system';
+            }
+            if (empty($email->message_id)) {
+                $email->message_id = (string) Str::uuid();
+            }
+            if (empty($email->user_type)) {
+                $email->user_type = 'user';
+            }
+        });
+    }
+
+    /**
      * @param  Builder<Email>  $query
      */
     public function scopeWhereUnlinkedFromAllEntities(Builder $query): void
@@ -152,31 +287,6 @@ class Email extends Model implements EmailContract
         $query->where(function (Builder $q) use ($table) {
             foreach (self::entityLinkForeignKeys() as $column) {
                 $q->orWhereNotNull("{$table}.{$column}");
-            }
-        });
-    }
-
-    /**
-     * Apply the same "no entity link" semantics as {@see scopeWhereUnlinkedFromAllEntities} on a base query builder.
-     */
-    public static function applyUnlinkedFromAllEntitiesConstraints(QueryBuilder $query, string $alias = 'emails'): void
-    {
-        foreach (self::entityLinkForeignKeys() as $column) {
-            $query->whereNull("{$alias}.{$column}");
-        }
-    }
-
-    protected static function booted()
-    {
-        static::creating(function (self $email) {
-            if (empty($email->source)) {
-                $email->source = 'system';
-            }
-            if (empty($email->message_id)) {
-                $email->message_id = (string) Str::uuid();
-            }
-            if (empty($email->user_type)) {
-                $email->user_type = 'user';
             }
         });
     }
@@ -543,14 +653,14 @@ class Email extends Model implements EmailContract
      * history content starts, so the frontend can render the history
      * collapsed behind a toggle without doing DOM parsing client-side.
      *
-     * @see \App\Services\Mail\EmailQuoteSplitter
+     * @see EmailQuoteSplitter
      *
      * @return array{main: string, quoted: string}
      */
     public function getQuoteSplitAttribute(): array
     {
         if ($this->quoteSplitCache === null) {
-            $this->quoteSplitCache = app(\App\Services\Mail\EmailQuoteSplitter::class)
+            $this->quoteSplitCache = app(EmailQuoteSplitter::class)
                 ->split((string) $this->reply);
         }
 
@@ -567,39 +677,6 @@ class Email extends Model implements EmailContract
     public function getNameAttribute($value): string
     {
         return ValueNormalizer::toString($value);
-    }
-
-    /**
-     * Normalize and validate the 'from' field to the standard structure.
-     *
-     * The standard structure is: {"name": "...", "email": "..."}
-     * If name is not available, it will be an empty string.
-     *
-     * @throws Exception
-     */
-    public static function normalizeFromField(?string $email, ?string $name = null): array
-    {
-        // Validate email is not empty
-        $email = trim((string) $email);
-        if (empty($email)) {
-            throw new Exception('Email address is required for the from field');
-        }
-
-        // Validate email format
-        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new Exception("Invalid email address format: {$email}");
-        }
-
-        // Normalize name (empty string if not provided or empty)
-        $name = trim((string) $name);
-        if (empty($name)) {
-            $name = '';
-        }
-
-        return [
-            'name'  => $name,
-            'email' => $email,
-        ];
     }
 
     /**
@@ -620,55 +697,6 @@ class Email extends Model implements EmailContract
                 })
                 ->groupByRaw('COALESCE(thread.parent_id, thread.id)');
         });
-    }
-
-    /**
-     * Restrict a query to the newest email per thread root within a folder (inbox collapse).
-     *
-     * @param  Builder|QueryBuilder  $query
-     */
-    public static function constrainToLatestPerThreadRootInFolder($query, int $folderId, string $idColumn = 'emails.id'): void
-    {
-        [$subquery, $bindings] = static::latestPerThreadRootInFolderSubquerySql($folderId);
-
-        $query->whereRaw("{$idColumn} IN ({$subquery})", $bindings);
-    }
-
-    /**
-     * @return array{0: string, 1: list<mixed>}
-     */
-    public static function latestPerThreadRootInFolderSubquerySql(int $folderId): array
-    {
-        $table = DB::getTablePrefix().(new static)->getTable();
-
-        return [
-            "SELECT MAX(e.id)
-            FROM {$table} e
-            INNER JOIN (
-                WITH RECURSIVE thread_roots AS (
-                    SELECT id, id AS root_id FROM {$table} WHERE parent_id IS NULL
-                    UNION ALL
-                    SELECT e2.id, tr.root_id
-                    FROM {$table} e2
-                    INNER JOIN thread_roots tr ON e2.parent_id = tr.id
-                )
-                SELECT id, root_id FROM thread_roots
-            ) tr ON e.id = tr.id
-            WHERE e.folder_id = ?
-            GROUP BY tr.root_id",
-            [$folderId],
-        ];
-    }
-
-    /**
-     * @return list<string>
-     */
-    public static function inboxFolderNames(): array
-    {
-        return [
-            EmailFolderEnum::INBOX->getFolderName(),
-            EmailFolderEnum::INBOX_HERNIAPOLI->getFolderName(),
-        ];
     }
 
     /**
@@ -747,25 +775,28 @@ class Email extends Model implements EmailContract
     }
 
     /**
-     * Entity links copied to replies/forwards: omit person/lead when sales is already linked.
-     *
-     * @return array<string, int>
+     * The external party's address for entity linking: the sender when it's external,
+     * otherwise the recipient (outbound CRM mail is sent from our own mailbox, so the
+     * sender is never the customer). Shared by App\Console\Commands\RepairMislinkedEmailThreads
+     * and App\Console\Commands\DetectMislinkedEmailEntities.
      */
-    public static function entityLinksToInheritFrom(self $email): array
+    public function counterpartyEmail(): ?string
     {
-        $links = [];
+        $from = strtolower(trim((string) data_get($this->from, 'email', '')));
 
-        foreach (self::entityLinkForeignKeys() as $foreignKey) {
-            if (! empty($email->{$foreignKey})) {
-                $links[$foreignKey] = $email->{$foreignKey};
+        if ($from !== '' && ! self::isOwnMailboxAddress($from)) {
+            return $from;
+        }
+
+        foreach ($this->reply_to ?? [] as $recipient) {
+            $recipient = strtolower(trim((string) $recipient));
+
+            if ($recipient !== '' && ! self::isOwnMailboxAddress($recipient)) {
+                return $recipient;
             }
         }
 
-        if (! empty($links['sales_lead_id'])) {
-            unset($links['person_id'], $links['lead_id']);
-        }
-
-        return $links;
+        return $from !== '' ? $from : null;
     }
 
     public function getThreadRoot(): self

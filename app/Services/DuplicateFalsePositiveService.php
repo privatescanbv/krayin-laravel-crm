@@ -105,20 +105,6 @@ class DuplicateFalsePositiveService
     }
 
     /**
-     * Check if a combination should be ignored (i.e. exists as false positive).
-     */
-    public function shouldIgnore(DuplicateEntityType $entityType, int $entityIdA, int $entityIdB): bool
-    {
-        [$a, $b] = $this->normalizePair($entityIdA, $entityIdB);
-
-        return DuplicateFalsePositive::query()
-            ->where('entity_type', $entityType->value)
-            ->where('entity_id_1', $a)
-            ->where('entity_id_2', $b)
-            ->exists();
-    }
-
-    /**
      * Filter candidate ids for a given primary id (removes candidates that are stored as false positives with primary).
      *
      * @param  Collection<int,int>|array<int,int>  $candidateIds

@@ -33,7 +33,7 @@ class ImpersonationService
         }
 
         $realm = KeycloakConfig::realm();
-        $url = KeycloakConfig::internalUrl("/admin/realms/{$realm}/users/{$keycloakUserId}/logout");
+        $url = KeycloakConfig::internalUrl("/admin/realms/$realm/users/$keycloakUserId/logout");
 
         $response = Http::withToken($token)->post($url);
 

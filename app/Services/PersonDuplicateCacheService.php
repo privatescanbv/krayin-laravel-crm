@@ -49,37 +49,6 @@ class PersonDuplicateCacheService extends AbstractDuplicateCacheService
     }
 
     /**
-     * Get cached duplicates with full data.
-     */
-    public function getCachedDuplicatesWithData(int $personId): Collection
-    {
-        $duplicateIds = $this->getCachedDuplicates($personId);
-
-        if ($duplicateIds->isEmpty()) {
-            return collect();
-        }
-
-        try {
-            return $this->personRepository
-                ->with(['organization', 'user'])
-                ->whereIn('id', $duplicateIds->toArray())
-                ->get();
-        } catch (Exception $e) {
-            Log::warning("Error loading duplicate data for person {$personId}: ".$e->getMessage());
-
-            return collect();
-        }
-    }
-
-    /**
-     * Check if person has duplicates.
-     */
-    public function hasCachedDuplicates(int $personId): bool
-    {
-        return $this->getCachedDuplicates($personId)->isNotEmpty();
-    }
-
-    /**
      * Invalidate cache for a person.
      */
     public function invalidatePersonCache(int $personId): void

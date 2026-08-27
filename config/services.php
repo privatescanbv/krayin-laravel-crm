@@ -111,5 +111,8 @@ return [
         ],
         'response_format_json' => filter_var(env('LLM_RESPONSE_FORMAT_JSON', true), FILTER_VALIDATE_BOOLEAN),
     ],
+    'feedback_widget' => [
+        'key' => env('FEEDBACK_WIDGET_KEY'),
+    ],
 
 ];

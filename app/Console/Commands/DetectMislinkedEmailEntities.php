@@ -17,12 +17,12 @@ use Webkul\Email\Models\Email;
  * Requirements this implements:
  *  1. Only considers emails linked to MORE than one entity — a single link has nothing to
  *     cross-check against.
- *  2. For each linked field, the mail's own address (Email::counterpartyEmail()) must be
- *     known to that entity:
+ *  2. For each linked field, AT LEAST ONE address on the mail (from / to / cc / bcc) must be
+ *     known to that entity — a link is only wrong if the entity recognizes none of them:
  *       - person_id / lead_id / clinic_id: the entity's own `emails` array
  *         (HasDefaultContactInfo::hasEmailAddress()).
  *       - sales_lead_id / order_id: indirect — any person attached to that sales lead
- *         (or the order's sales lead) has the address.
+ *         (or the order's sales lead) has one of the addresses.
  *  3. --fix removes only the relation(s) that fail the check — an email's other, still
  *     -valid links are left untouched.
  *  4. Default is a dry-run: every checked relation is printed (OK/MISMATCH/UNRESOLVABLE)
@@ -82,9 +82,10 @@ class DetectMislinkedEmailEntities extends Command
             ->with(['person', 'lead', 'clinic', 'salesLead.persons', 'order.salesLead.persons'])
             ->chunkById(self::CHUNK_SIZE, function (Collection $emails) use (&$findings, &$ignored, $bar) {
                 foreach ($emails as $email) {
-                    $address = $email->counterpartyEmail();
+                    $allAddresses = $this->partyEmails($email);
+                    $addresses = array_values(array_diff($allAddresses, self::IGNORED_ADDRESSES));
 
-                    if ($address !== null && in_array(strtolower($address), self::IGNORED_ADDRESSES, true)) {
+                    if ($allAddresses !== [] && $addresses === []) {
                         $ignored++;
                         $bar->advance();
 
@@ -96,7 +97,7 @@ class DetectMislinkedEmailEntities extends Command
                             continue;
                         }
 
-                        $findings->push($this->evaluate($email, $field, $address));
+                        $findings->push($this->evaluate($email, $field, $addresses));
                     }
 
                     $bar->advance();
@@ -117,10 +118,10 @@ class DetectMislinkedEmailEntities extends Command
         }
 
         $this->table(
-            ['Email', 'Mail address', 'Field', 'Entity', 'Status'],
+            ['Email', 'Mail addresses', 'Field', 'Entity', 'Status'],
             $findings->map(fn (array $f) => [
                 $f['email']->id,
-                $f['address'] ?? '—',
+                $f['addresses'] !== '' ? $f['addresses'] : '—',
                 $f['field'],
                 $f['label'],
                 strtoupper($f['status']),
@@ -164,10 +165,47 @@ class DetectMislinkedEmailEntities extends Command
     }
 
     /**
-     * @return array{email: Email, field: string, address: ?string, label: string, status: string}
+     * Every address the mail carries — from, to (reply_to), cc, bcc — lowercased and deduped.
+     * A relation is a mismatch only if the entity recognizes none of these.
+     *
+     * @return list<string>
      */
-    private function evaluate(Email $email, string $field, ?string $address): array
+    private function partyEmails(Email $email): array
     {
+        $raw = [
+            data_get($email->from, 'email'),
+            ...$email->reply_to ?? [],
+            ...$this->flattenAddresses($email->cc),
+            ...$this->flattenAddresses($email->bcc),
+        ];
+
+        return collect($raw)
+            ->map(fn ($a) => strtolower(trim((string) $a)))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * cc/bcc are stored as plain strings or as {email|address: "..."} objects, depending on
+     * which inbound processor wrote the row.
+     */
+    private function flattenAddresses($value): array
+    {
+        return collect((array) $value)
+            ->map(fn ($item) => is_array($item) ? ($item['email'] ?? $item['address'] ?? null) : $item)
+            ->all();
+    }
+
+    /**
+     * @param  list<string>  $addresses
+     * @return array{email: Email, field: string, addresses: string, label: string, status: string}
+     */
+    private function evaluate(Email $email, string $field, array $addresses): array
+    {
+        $joined = implode(', ', $addresses);
+
         $entity = match ($field) {
             'person_id'     => $email->person,
             'lead_id'       => $email->lead,
@@ -177,22 +215,24 @@ class DetectMislinkedEmailEntities extends Command
         };
 
         if (! $entity) {
-            return ['email' => $email, 'field' => $field, 'address' => $address, 'label' => '(niet gevonden)', 'status' => 'unresolvable'];
+            return ['email' => $email, 'field' => $field, 'addresses' => $joined, 'label' => '(niet gevonden)', 'status' => 'unresolvable'];
         }
 
         $label = $this->label($field, $entity);
 
-        if ($address === null) {
-            return ['email' => $email, 'field' => $field, 'address' => $address, 'label' => $label, 'status' => 'unresolvable'];
+        if ($addresses === []) {
+            return ['email' => $email, 'field' => $field, 'addresses' => $joined, 'label' => $label, 'status' => 'unresolvable'];
         }
 
+        $knownToPerson = fn (Person $person) => collect($addresses)->contains(fn (string $a) => $person->hasEmailAddress($a));
+
         $known = match ($field) {
-            'person_id', 'lead_id', 'clinic_id' => $entity->hasEmailAddress($address),
-            'sales_lead_id'                     => $entity->persons->contains(fn (Person $person) => $person->hasEmailAddress($address)),
-            'order_id'                          => (bool) $entity->salesLead?->persons->contains(fn (Person $person) => $person->hasEmailAddress($address)),
+            'person_id', 'lead_id', 'clinic_id' => collect($addresses)->contains(fn (string $a) => $entity->hasEmailAddress($a)),
+            'sales_lead_id'                     => $entity->persons->contains($knownToPerson),
+            'order_id'                          => (bool) $entity->salesLead?->persons->contains($knownToPerson),
         };
 
-        return ['email' => $email, 'field' => $field, 'address' => $address, 'label' => $label, 'status' => $known ? 'ok' : 'mismatch'];
+        return ['email' => $email, 'field' => $field, 'addresses' => $joined, 'label' => $label, 'status' => $known ? 'ok' : 'mismatch'];
     }
 
     private function label(string $field, $entity): string
@@ -204,7 +244,7 @@ class DetectMislinkedEmailEntities extends Command
     }
 
     /**
-     * @param  array{email: Email, field: string, address: ?string, label: string, status: string}  $finding
+     * @param  array{email: Email, field: string, addresses: string, label: string, status: string}  $finding
      */
     private function correct(array $finding, ActivityRepository $activityRepository): void
     {
@@ -216,10 +256,10 @@ class DetectMislinkedEmailEntities extends Command
 
         $activityRepository->createSystem([
             'title' => sprintf(
-                'E-mail #%d: %s-koppeling verwijderd (correctie — mailadres %s niet bekend bij %s)',
+                'E-mail #%d: %s-koppeling verwijderd (correctie — geen van de mailadressen %s bekend bij %s)',
                 $email->id,
                 $field,
-                $finding['address'] ?? '(onbekend)',
+                $finding['addresses'] !== '' ? $finding['addresses'] : '(onbekend)',
                 $finding['label']
             ),
             'additional' => [
@@ -228,7 +268,7 @@ class DetectMislinkedEmailEntities extends Command
                 'new_value'        => null,
                 'email_id'         => $email->id,
                 'email_subject'    => $email->subject,
-                'checked_address'  => $finding['address'],
+                'checked_address'  => $finding['addresses'],
                 'reason'           => 'address_not_known_to_entity',
                 'source'           => 'emails:detect-mislinked-entities',
             ],

@@ -161,6 +161,31 @@ test('the SugarCRM import placeholder sender is ignored, never reported or corre
         ->and(Activity::where('additional->email_id', $email->id)->exists())->toBeFalse();
 });
 
+test('a link is OK when the entity recognizes any address on the mail, not just the sender', function () {
+    // Outbound mail: sender is our own mailbox, the person is the recipient (stored in reply_to).
+    config(['mail.mailboxes' => ['privatescan' => ['address' => 'crm@privatescan.nl']]]);
+
+    $person = makePersonWithEmail('dorithjacobs@gmail.com');
+    $order = Order::factory()->create();
+    $order->salesLead->persons()->attach($person->id);
+
+    $email = app(EmailRepository::class)->create([
+        'source'    => 'email',
+        'user_type' => 'person',
+        'from'      => ['email' => 'crm@privatescan.nl', 'name' => 'Example'],
+        'reply_to'  => ['dorithjacobs@gmail.com'],
+        'person_id' => $person->id,
+        'order_id'  => $order->id,
+    ]);
+
+    Artisan::call('emails:detect-mislinked-entities');
+    $output = Artisan::output();
+
+    expect($output)->toContain('OK')
+        ->and($output)->not->toContain('MISMATCH')
+        ->and($email->fresh()->person_id)->toBe($person->id);
+});
+
 test('--id limits the scan to the given email(s)', function () {
     $person = makePersonWithEmail('bob@example.com');
     $order = Order::factory()->create();

@@ -57,9 +57,44 @@ class PersonDuplicateCacheService extends AbstractDuplicateCacheService
     }
 
     /**
-     * Handle person merge - simple invalidation.
+     * Ids of every (non-trashed) person that currently matches $person on email/phone/name.
+     *
+     * Used to find whose has_duplicates flag might need recomputing after $person changes or
+     * disappears - a duplicate is a pairwise property, so the counterpart must be re-checked too.
+     *
+     * @return Collection<int, int>
      */
-    public function handlePersonMerge(int $primaryPersonId, array $mergedPersonIds): void
+    public function counterpartIdsFor(Person $person): Collection
+    {
+        return $this->personRepository->findPotentialDuplicatesDirectly($person)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id);
+    }
+
+    /**
+     * Recompute + repersist the has_duplicates flag for each id. Ids whose person no longer
+     * exists are skipped by refreshPersonCache(). Bounded: callers pass a handful of counterpart
+     * ids, never the whole table (that stays the job of duplicates:refresh-cache --index).
+     *
+     * @param  iterable<int>  $personIds
+     */
+    public function refreshMany(iterable $personIds): void
+    {
+        collect($personIds)
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->each(fn (int $id) => $this->refreshPersonCache($id));
+    }
+
+    /**
+     * Handle person merge: invalidate primary + merged, clear the merged persons' flags,
+     * recompute the primary, then recompute every counterpart that only matched a merged-away
+     * person so its now-stale has_duplicates flag is cleared immediately (not an hour later).
+     *
+     * @param  array<int>  $mergedPersonIds
+     * @param  array<int>  $counterpartIds  captured before the merged persons were soft-deleted
+     */
+    public function handlePersonMerge(int $primaryPersonId, array $mergedPersonIds, array $counterpartIds = []): void
     {
         $this->handleMerge($primaryPersonId, $mergedPersonIds);
 
@@ -68,6 +103,8 @@ class PersonDuplicateCacheService extends AbstractDuplicateCacheService
         }
 
         $this->getCachedDuplicates($primaryPersonId);
+
+        $this->refreshMany($counterpartIds);
     }
 
     /**

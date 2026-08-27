@@ -13,6 +13,11 @@ use Webkul\Contact\Models\Person;
 class PersonObserver
 {
     /**
+     * Fields that change who a person matches as a duplicate.
+     */
+    private const DUPLICATE_MATCH_FIELDS = ['first_name', 'last_name', 'married_name', 'emails', 'phones'];
+
+    /**
      * Create a new observer instance.
      */
     public function __construct(
@@ -69,13 +74,20 @@ class PersonObserver
         }
 
         // Refresh duplicate cache + has_duplicates flag if relevant fields changed, right away
-        // rather than just invalidating (skipped during bulk imports). Without this, a person
-        // that stops matching (e.g. its email is corrected) keeps a stale has_duplicates=true
-        // forever unless someone happens to view that exact record again - see
-        // PersonDuplicateFlagRatchetTest.
-        $duplicateRelevantFields = ['first_name', 'last_name', 'married_name', 'emails', 'phones'];
-        if (! config('import.skip_duplicate_cache', false) && $person->wasChanged($duplicateRelevantFields)) {
+        // rather than just invalidating (skipped during bulk imports). Both sides of every affected
+        // pair are recomputed: the person itself, the counterparts of its pre-edit identity (so a
+        // now-broken match is cleared) and of its new identity (so a new match is flagged). Without
+        // the pre-edit side a counterpart keeps a stale has_duplicates=true until the hourly index
+        // rebuild - see PersonDuplicateFlagRatchetTest / PersonDuplicateCounterpartTest.
+        if (! config('import.skip_duplicate_cache', false) && $person->wasChanged(self::DUPLICATE_MATCH_FIELDS)) {
+            // getOriginal() still holds the pre-save values during the "updated" event.
+            $preEditIdentity = (new Person)->setRawAttributes($person->getRawOriginal());
+
             $this->duplicateCacheService->refreshPersonCache($person->id);
+            $this->duplicateCacheService->refreshMany(array_merge(
+                $this->duplicateCacheService->counterpartIdsFor($preEditIdentity)->all(),
+                $this->duplicateCacheService->counterpartIdsFor($person)->all(),
+            ));
         }
 
         // Log activities for fixed fields
@@ -89,9 +101,14 @@ class PersonObserver
      */
     public function deleted(Person $person): void
     {
-        // Invalidate duplicate cache for this person (skipped during bulk imports)
+        // Invalidate this person's cache and recompute its counterparts: a person that only
+        // matched the one just deleted must have its stale has_duplicates flag cleared now, not
+        // at the next hourly index rebuild. Skipped during bulk imports.
         if (! config('import.skip_duplicate_cache', false)) {
             $this->duplicateCacheService->invalidatePersonCache($person->id);
+            $this->duplicateCacheService->refreshMany(
+                $this->duplicateCacheService->counterpartIdsFor($person)
+            );
         }
 
         $this->deletePortalAccount($person, 'deleted');

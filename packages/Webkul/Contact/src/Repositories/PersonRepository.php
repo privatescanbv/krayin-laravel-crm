@@ -17,6 +17,7 @@ use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Contracts\Person;
+use Webkul\Contact\Models\Person as PersonModel;
 use Webkul\Core\Eloquent\Repository;
 
 class PersonRepository extends Repository
@@ -68,31 +69,39 @@ class PersonRepository extends Repository
     }
 
     /**
+     * Resolved lazily: PersonDuplicateCacheService depends on this repository.
+     */
+    protected function getCacheService(): PersonDuplicateCacheService
+    {
+        return app(PersonDuplicateCacheService::class);
+    }
+
+    /**
      * Create.
      */
-    public function create(array $data): Person
+    public function create(array $attributes): Person
     {
-        $data = $this->sanitizeRequestedPersonData($data);
+        $attributes = $this->sanitizeRequestedPersonData($attributes);
 
-        if (! empty($data['organization_name'])) {
-            $organization = $this->fetchOrCreateOrganizationByName($data['organization_name']);
+        if (! empty($attributes['organization_name'])) {
+            $organization = $this->fetchOrCreateOrganizationByName($attributes['organization_name']);
 
-            $data['organization_id'] = $organization->id;
+            $attributes['organization_id'] = $organization->id;
         }
 
-        if (isset($data['user_id'])) {
-            $data['user_id'] = $data['user_id'] ?: null;
+        if (isset($attributes['user_id'])) {
+            $attributes['user_id'] = $attributes['user_id'] ?: null;
         }
 
-        $person = parent::create($data);
+        $person = parent::create($attributes);
 
-        $this->attributeValueRepository->save(array_merge($data, [
+        $this->attributeValueRepository->save(array_merge($attributes, [
             'entity_id' => $person->id,
         ]));
 
         // Handle address data for new persons
-        if (isset($data['address']) && ! empty($data['address'])) {
-            app(AddressRepository::class)->upsertForEntity($person, $data['address']);
+        if (isset($attributes['address']) && ! empty($attributes['address'])) {
+            app(AddressRepository::class)->upsertForEntity($person, $attributes['address']);
         }
 
         return $person;
@@ -101,50 +110,50 @@ class PersonRepository extends Repository
     /**
      * Update.
      */
-    public function update(array $data, $id, $attributes = []): Person
+    public function update(array $attributes, $id, $attributeCodes = []): Person
     {
-        $data = $this->sanitizeRequestedPersonData($data);
+        $attributes = $this->sanitizeRequestedPersonData($attributes);
 
-        $data['user_id'] = empty($data['user_id']) ? null : $data['user_id'];
+        $attributes['user_id'] = empty($attributes['user_id']) ? null : $attributes['user_id'];
 
-        if (! empty($data['organization_name'])) {
-            $organization = $this->fetchOrCreateOrganizationByName($data['organization_name']);
+        if (! empty($attributes['organization_name'])) {
+            $organization = $this->fetchOrCreateOrganizationByName($attributes['organization_name']);
 
-            $data['organization_id'] = $organization->id;
+            $attributes['organization_id'] = $organization->id;
 
-            unset($data['organization_name']);
+            unset($attributes['organization_name']);
         }
 
-        $person = parent::update($data, $id);
+        $person = parent::update($attributes, $id);
 
         /**
-         * If attributes are provided then only save the provided attributes and return.
+         * If specific attribute codes are provided then only save those and return.
          */
-        if (! empty($attributes)) {
-            $conditions = ['entity_type' => $data['entity_type']];
+        if (! empty($attributeCodes)) {
+            $conditions = ['entity_type' => $attributes['entity_type']];
 
-            if (isset($data['quick_add'])) {
+            if (isset($attributes['quick_add'])) {
                 $conditions['quick_add'] = 1;
             }
 
-            $attributes = $this->attributeRepository->where($conditions)
-                ->whereIn('code', $attributes)
+            $attributeModels = $this->attributeRepository->where($conditions)
+                ->whereIn('code', $attributeCodes)
                 ->get();
 
-            $this->attributeValueRepository->save(array_merge($data, [
+            $this->attributeValueRepository->save(array_merge($attributes, [
                 'entity_id' => $person->id,
-            ]), $attributes);
+            ]), $attributeModels);
 
             return $person;
         }
 
-        $this->attributeValueRepository->save(array_merge($data, [
+        $this->attributeValueRepository->save(array_merge($attributes, [
             'entity_id' => $person->id,
         ]));
 
         // Handle address data
-        if (isset($data['address']) && ! empty($data['address'])) {
-            app(AddressRepository::class)->upsertForEntity($person, $data['address']);
+        if (isset($attributes['address']) && ! empty($attributes['address'])) {
+            app(AddressRepository::class)->upsertForEntity($person, $attributes['address']);
         }
 
         return $person;
@@ -311,6 +320,17 @@ class PersonRepository extends Repository
 
         $this->guardAgainstMergingPortalDuplicates($duplicatePersons);
 
+        // Capture now, while the duplicates still exist: every third person that matches one of the
+        // merged-away persons needs its has_duplicates flag recomputed afterwards, otherwise it stays
+        // stale (true, but no real match) until the hourly index rebuild.
+        $mergeIds = array_map('intval', [$primaryPersonId, ...$duplicatePersonIds]);
+        $counterpartIds = $duplicatePersons
+            ->flatMap(fn ($dup) => $this->getCacheService()->counterpartIdsFor($dup)) // Collection<int, int>
+            ->reject(fn (int $id) => in_array($id, $mergeIds, true))
+            ->unique()
+            ->values()
+            ->all();
+
         try {
             DB::beginTransaction();
 
@@ -363,8 +383,7 @@ class PersonRepository extends Repository
             DB::commit();
 
             try {
-                $cacheService = app(PersonDuplicateCacheService::class);
-                $cacheService->handlePersonMerge($primaryPersonId, $duplicatePersonIds);
+                $this->getCacheService()->handlePersonMerge($primaryPersonId, $duplicatePersonIds, $counterpartIds);
             } catch (Exception $e) {
                 Log::warning('Error clearing person duplicate cache: '.$e->getMessage());
             }
@@ -592,7 +611,7 @@ class PersonRepository extends Repository
      *
      * Portal duplicates are rejected before this runs; the adopt branch is a last-resort safety net.
      */
-    private function adoptKeycloakAccount(Person $primaryPerson, Person $duplicatePerson): void
+    private function adoptKeycloakAccount(PersonModel $primaryPerson, PersonModel $duplicatePerson): void
     {
         $primaryKeycloakId = $primaryPerson->keycloak_user_id
             ?: DB::table('persons')->where('id', $primaryPerson->id)->value('keycloak_user_id');
@@ -709,11 +728,8 @@ class PersonRepository extends Repository
 
     /**
      * Add merge note to primary person's activities.
-     *
-     * @param  Person  $primaryPerson
-     * @param  Person  $duplicatePerson
      */
-    private function addMergeNote($primaryPerson, $duplicatePerson): void
+    private function addMergeNote(PersonModel $primaryPerson, PersonModel $duplicatePerson): void
     {
         app(ActivityRepository::class)->create([
             'type'      => 'note',

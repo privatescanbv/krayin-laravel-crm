@@ -24,6 +24,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -37,7 +38,6 @@ use Webkul\Admin\Http\Controllers\Concerns\HasAdvancedSearch;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
-use Webkul\Admin\Http\Resources\Json\AnonymousResourceCollection;
 use Webkul\Admin\Http\Resources\PersonResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Contact\Models\Person;
@@ -124,7 +124,7 @@ class PersonController extends Controller
      * Candidates are a union of email, phone, and last-name matches; last-name
      * hits without a similar first name need an extra signal (DOB or postcode).
      */
-    public function findPersonsBasedOnLead(mixed $lead): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    public function findPersonsBasedOnLead(mixed $lead): AnonymousResourceCollection
     {
         $authorizedUserIds = bouncer()->getAuthorizedUserIds();
 
@@ -279,7 +279,12 @@ class PersonController extends Controller
         }]);
 
         // Precompute duplicate count (direct detection ensures indicator shows even if cache cold)
-        $duplicateCount = $this->personRepository->findPotentialDuplicates($person)->count();
+        $duplicates = $this->personRepository->findPotentialDuplicates($person);
+        $duplicateCount = $duplicates->count();
+
+        // This page just computed the real answer directly - self-heal a stale persisted flag
+        // instead of waiting for the hourly index rebuild (same as DuplicateController::index).
+        $this->personDuplicateCacheService->persistHasDuplicatesFlag($person->id, $duplicates->pluck('id'));
         $activitiesCount = $this->activityRepository->countOpen($person)->getData()->data;
         $patientMessageActivity = $person->primaryActivities()
             ->where('type', ActivityType::PATIENT_MESSAGE->value)

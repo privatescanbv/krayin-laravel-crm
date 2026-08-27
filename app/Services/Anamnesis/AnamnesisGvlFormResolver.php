@@ -50,7 +50,8 @@ class AnamnesisGvlFormResolver
         }
 
         return ($anamnesis->relationLoaded('gvlForms') ? $anamnesis->gvlForms : $anamnesis->gvlForms()->get())
-            ->filter(fn (AnamnesisGvlForm $f) => $f->gvl_form_status === FormStatus::Completed)
+            ->filter(fn (AnamnesisGvlForm $f) => $f->gvl_form_status === FormStatus::Completed
+                && ($f->gvl_form_type === null || $f->gvl_form_type->isGvlForm()))
             ->sortByDesc('id')
             ->values();
     }

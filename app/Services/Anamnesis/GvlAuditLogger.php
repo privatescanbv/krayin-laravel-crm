@@ -30,7 +30,7 @@ class GvlAuditLogger
             return; // anamnesis itself already gone (cascade) — nothing to attach to
         }
 
-        $typeLabel = $form->gvl_form_type?->label() ?? 'GVL';
+        $typeLabel = $form->gvl_form_type?->label() ?? 'GVL-formulier';
         $personName = $anamnesis->person?->name ?? 'onbekend';
 
         $order = $this->orderResolver->findActiveOrderForAnamnesis($anamnesis);
@@ -43,7 +43,7 @@ class GvlAuditLogger
         };
 
         $this->activityRepository->createSystem(array_merge($fk, [
-            'title'      => sprintf('GVL-formulier %s: %s — %s', $verb, $typeLabel, $personName),
+            'title'      => sprintf('%s %s: %s', $typeLabel, $verb, $personName),
             'user_id'    => auth()->guard('user')->id(),
             'additional' => [
                 'gvl_form_record_id' => $form->id,

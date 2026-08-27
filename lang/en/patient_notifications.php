@@ -9,4 +9,8 @@ return [
         'title'   => 'GVL form available',
         'summary' => 'A health declaration is ready for you to fill in.',
     ],
+    'diagnosis' => [
+        'title'   => 'Diagnosis form available',
+        'summary' => 'A diagnosis form is ready for you to fill in.',
+    ],
 ];

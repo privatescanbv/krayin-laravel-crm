@@ -149,6 +149,17 @@
                         Geen anamnese beschikbaar voor deze persoon.
                     </div>
                 @endif
+
+                {{-- Herniapoli-only: diagnoseformulieren klaarzetten in het patiëntenportaal --}}
+                @if ($isSales && $entity->getDepartment()?->isHernia())
+                    <div class="border-t border-gray-100 p-4 dark:border-gray-700">
+                        <x-adminc::anamnesis.diagnosis-forms-list
+                            :sales-lead="$entity"
+                            :person="$person"
+                            :return-url="$returnUrlAnamnese"
+                        />
+                    </div>
+                @endif
             </div>
         @endforeach
     @else

@@ -14,11 +14,14 @@ class NotifyPatientFormCompleted
     {
         try {
             PatientNotification::where('patient_id', $event->person->id)
-                ->where('reference_type', NotificationReferenceType::GVL_FORM)
+                ->whereIn('reference_type', [
+                    NotificationReferenceType::GVL_FORM,
+                    NotificationReferenceType::DIAGNOSIS_FORM,
+                ])
                 ->where('reference_id', $event->formId)
                 ->delete();
         } catch (Throwable $e) {
-            Log::error('Failed to delete GVL_FORM patient notification on form completed', [
+            Log::error('Failed to delete form patient notification on form completed', [
                 'person_id' => $event->person->id,
                 'form_id'   => $event->formId,
                 'error'     => $e->getMessage(),

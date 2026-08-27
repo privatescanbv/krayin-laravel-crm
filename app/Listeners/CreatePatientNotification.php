@@ -18,6 +18,10 @@ class CreatePatientNotification
 
     private const GVL_SUMMARY_KEY = 'patient_notifications.gvl.summary';
 
+    private const DIAGNOSIS_TITLE_KEY = 'patient_notifications.diagnosis.title';
+
+    private const DIAGNOSIS_SUMMARY_KEY = 'patient_notifications.diagnosis.summary';
+
     public function handle(PatientNotifyEvent $event): void
     {
         try {
@@ -59,10 +63,14 @@ class CreatePatientNotification
                 ]);
 
                 return;
-            } elseif ($event->referenceType === NotificationReferenceType::GVL_FORM) {
+            } elseif (in_array($event->referenceType, [NotificationReferenceType::GVL_FORM, NotificationReferenceType::DIAGNOSIS_FORM], true)) {
+                [$titleKey, $summaryKey] = $event->referenceType === NotificationReferenceType::DIAGNOSIS_FORM
+                    ? [self::DIAGNOSIS_TITLE_KEY, self::DIAGNOSIS_SUMMARY_KEY]
+                    : [self::GVL_TITLE_KEY, self::GVL_SUMMARY_KEY];
+
                 $existing = PatientNotification::query()
                     ->where('patient_id', $event->patientId)
-                    ->where('reference_type', NotificationReferenceType::GVL_FORM)
+                    ->where('reference_type', $event->referenceType)
                     ->whereNull('dismissed_at')
                     ->where(function ($q) {
                         $q->whereNull('expires_at')
@@ -83,8 +91,8 @@ class CreatePatientNotification
                 PatientNotification::create([
                     'patient_id'     => $event->patientId,
                     'dismissable'    => $event->dismissable,
-                    'title'          => self::GVL_TITLE_KEY,
-                    'summary'        => self::GVL_SUMMARY_KEY,
+                    'title'          => $titleKey,
+                    'summary'        => $summaryKey,
                     'entity_names'   => [$event->entityName],
                     'reference_type' => $event->referenceType,
                     'reference_id'   => $event->referenceId,

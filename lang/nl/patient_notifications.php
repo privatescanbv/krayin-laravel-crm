@@ -9,4 +9,8 @@ return [
         'title'   => 'Gezondheidsvragenlijst beschikbaar',
         'summary' => 'Er staat een gezondheidsverklaring voor u klaar om in te vullen.',
     ],
+    'diagnosis' => [
+        'title'   => 'Diagnoseformulier beschikbaar',
+        'summary' => 'Er staat een diagnoseformulier voor u klaar om in te vullen.',
+    ],
 ];

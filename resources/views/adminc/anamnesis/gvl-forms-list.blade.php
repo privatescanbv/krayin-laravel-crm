@@ -6,7 +6,10 @@
 @php
     use App\Support\GvlFormLink;
 
-    $gvlForms = $anamnesis->relationLoaded('gvlForms') ? $anamnesis->gvlForms : $anamnesis->gvlForms()->get();
+    $gvlForms = ($anamnesis->relationLoaded('gvlForms') ? $anamnesis->gvlForms : $anamnesis->gvlForms()->get())
+        // Only GVL-flow forms belong here; diagnose forms have their own block.
+        ->filter(fn ($f) => $f->gvl_form_type === null || $f->gvl_form_type->isGvlForm())
+        ->values();
 
     $statusLabels = [
         'new'       => ['Nieuw', 'text-gray-600'],
@@ -150,14 +153,16 @@
             if (res.ok) {
                 flash('success', data.message || (isAttach ? 'GVL formulier gekoppeld.' : 'GVL formulier ontkoppeld.'));
                 setTimeout(() => location.reload(), 400);
-            } else {
-                throw new Error(data.message || 'Actie mislukt');
+                return;
             }
+
+            flash('error', data.message || 'Actie mislukt');
         } catch (err) {
             flash('error', err.message || 'Er is een fout opgetreden.');
-            btn.disabled = false;
-            btn.textContent = originalText;
         }
+
+        btn.disabled = false;
+        btn.textContent = originalText;
     });
 </script>
 @endPushOnce

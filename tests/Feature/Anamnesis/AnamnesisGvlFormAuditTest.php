@@ -35,7 +35,7 @@ beforeEach(function () {
 function lastGvlAuditActivity()
 {
     return Activity::where('type', ActivityType::SYSTEM)
-        ->where('title', 'like', 'GVL-formulier %')
+        ->whereNotNull('additional->gvl_form_record_id')
         ->latest('id')
         ->first();
 }

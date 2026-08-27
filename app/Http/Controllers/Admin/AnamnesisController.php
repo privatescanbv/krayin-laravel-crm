@@ -14,6 +14,7 @@ use App\Models\AnamnesisGvlForm;
 use App\Models\Department;
 use App\Models\Order;
 use App\Models\PatientNotification;
+use App\Models\SalesLead;
 use App\Services\Anamnesis\AnamnesisOrderResolver;
 use App\Services\FormService;
 use Exception;
@@ -240,6 +241,98 @@ class AnamnesisController extends Controller
         }
     }
 
+    /**
+     * Set up a Herniapoli diagnose form (lage rugpijn / nekpijn) in the patient portal
+     * from a Sale, for an existing patient — no new lead. Reuses the GVL machinery.
+     */
+    public function attachDiagnosisFormForSales(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'sales_id'  => 'required|integer|exists:salesleads,id',
+            'person_id' => 'required|integer|exists:persons,id',
+            'form_type' => 'required|string|in:'.implode(',', array_map(
+                fn (FormType $t) => $t->value,
+                FormType::diagnosisCases()
+            )),
+        ]);
+
+        $salesId = (int) $data['sales_id'];
+        $personId = (int) $data['person_id'];
+
+        if (! SalesLead::isHerniaPoli($salesId)) {
+            abort(403, 'Diagnoseformulier klaarzetten kan alleen bij een Herniapoli-Sale.');
+        }
+
+        $salesLead = SalesLead::with('persons')->findOrFail($salesId);
+
+        if (! $salesLead->persons->contains('id', $personId)) {
+            return $this->redirectWithReturnUrl('admin.sales-leads.view', [$salesId], 'error', 'Persoon hoort niet bij deze Sale.');
+        }
+
+        $person = Person::find($personId);
+        if (empty($person?->keycloak_user_id)) {
+            return $this->redirectWithReturnUrl('admin.sales-leads.view', [$salesId], 'error', 'Patiënt heeft geen patiëntportaal account. Maak dat eerst aan.');
+        }
+
+        $anamnesis = Anamnesis::firstOrCreate(
+            [
+                'sales_id'  => $salesId,
+                'person_id' => $personId,
+            ],
+            [
+                'id'         => (string) Str::uuid(),
+                'name'       => 'Anamnese voor '.$person->name,
+                'created_by' => auth()->id() ?? $salesLead->user_id ?? 1,
+                'updated_by' => auth()->id() ?? $salesLead->user_id ?? 1,
+            ]
+        );
+
+        // Max one form per diagnose type — the other type is a separate action.
+        if ($anamnesis->gvlForms()->where('gvl_form_type', $data['form_type'])->exists()) {
+            return $this->redirectWithReturnUrl('admin.sales-leads.view', [$salesId], 'warning', 'Dit diagnoseformulier is al klaargezet. Ontkoppel het eerst om een nieuw exemplaar te maken.');
+        }
+
+        $anamnesis->load('person');
+
+        try {
+            $this->attachGvlFormToAnamnesis($anamnesis, $data['form_type']);
+        } catch (Exception $e) {
+            Log::error('AnamnesisController@attachDiagnosisFormForSales failed', [
+                'sales_id'  => $salesId,
+                'person_id' => $personId,
+                'form_type' => $data['form_type'],
+                'error'     => $e->getMessage(),
+            ]);
+
+            return $this->redirectWithReturnUrl('admin.sales-leads.view', [$salesId], 'error', 'Diagnoseformulier klaarzetten is mislukt: '.$e->getMessage());
+        }
+
+        return $this->redirectWithReturnUrl('admin.sales-leads.view', [$salesId], 'success', 'Diagnoseformulier is klaargezet in het patiëntenportaal.');
+    }
+
+    /**
+     * Detach a Herniapoli diagnose form (plain form POST from the Sale anamnese block).
+     */
+    public function detachDiagnosisForm(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'gvl_form_record_id' => 'required|integer|exists:anamnesis_gvl_forms,id',
+        ]);
+
+        $gvlForm = AnamnesisGvlForm::with('anamnesis')->findOrFail($request->integer('gvl_form_record_id'));
+        $salesId = $gvlForm->anamnesis?->sales_id;
+
+        if (! $gvlForm->gvl_form_type?->isDiagnosisForm() || ! $salesId) {
+            abort(404);
+        }
+
+        $response = $this->doDetachGvlFormRecord($gvlForm);
+
+        return $response->getStatusCode() === 200
+            ? $this->redirectWithReturnUrl('admin.sales-leads.view', [$salesId], 'success', 'Diagnoseformulier is ontkoppeld.')
+            : $this->redirectWithReturnUrl('admin.sales-leads.view', [$salesId], 'error', $response->getData(true)['message'] ?? 'Ontkoppelen is mislukt.');
+    }
+
     public function detachGvlForm(Request $request, string $id, int $gvlFormRecordId): JsonResponse
     {
         $gvlForm = AnamnesisGvlForm::findOrFail($gvlFormRecordId);
@@ -275,11 +368,10 @@ class AnamnesisController extends Controller
     public function getLatestGvlFormStatus(string $id): JsonResponse
     {
         $anamnesis = Anamnesis::findOrFail($id);
-        $latestForm = $anamnesis->gvlForms()->latest()->first();
 
         return response()->json([
             'data' => [
-                'status' => $latestForm?->gvl_form_status?->value,
+                'status' => $anamnesis->latestGvlForm?->gvl_form_status?->value,
             ],
         ]);
     }
@@ -527,6 +619,12 @@ class AnamnesisController extends Controller
             $formType = $this->mapFormTypeFromDepartment($department);
         }
 
+        // A Herniapoli diagnose form is only allowed from a Herniapoli Sale — never lead/order.
+        if (FormType::tryFrom($formType)?->isDiagnosisForm()
+            && (! $anamnesis->sales_id || ! SalesLead::isHerniaPoli((int) $anamnesis->sales_id))) {
+            throw new Exception('Een diagnoseformulier kan alleen vanuit een Herniapoli-Sale worden klaargezet.');
+        }
+
         $formData = [
             'user_crm_id'     => $person->id,
             'user_firstname'  => $firstName ?: '-',
@@ -640,7 +738,10 @@ class AnamnesisController extends Controller
 
             if ($personId && $formId) {
                 PatientNotification::where('reference_id', $formId)
-                    ->where('reference_type', NotificationReferenceType::GVL_FORM)
+                    ->whereIn('reference_type', [
+                        NotificationReferenceType::GVL_FORM,
+                        NotificationReferenceType::DIAGNOSIS_FORM,
+                    ])
                     ->where('patient_id', $personId)
                     ->delete();
             }
@@ -678,7 +779,7 @@ class AnamnesisController extends Controller
         PatientNotifyEvent::dispatch(
             $anamnesis->person_id,
             $formLink,
-            NotificationReferenceType::GVL_FORM,
+            $this->notificationReferenceTypeFor($gvlFormRecord->gvl_form_type),
             $gvlFormRecord->gvl_form_id,
             false,
             auth()->id()
@@ -689,6 +790,13 @@ class AnamnesisController extends Controller
             'gvl_form_link'      => $formLink,
             'gvl_form_record_id' => $gvlFormRecord->id,
         ], 200);
+    }
+
+    private function notificationReferenceTypeFor(?FormType $formType): NotificationReferenceType
+    {
+        return $formType?->isDiagnosisForm()
+            ? NotificationReferenceType::DIAGNOSIS_FORM
+            : NotificationReferenceType::GVL_FORM;
     }
 
     private function entityViewUrlForAnamnesis(Anamnesis $anamnesis): string

@@ -363,9 +363,11 @@
                         try {
                             const resp = await axios.get('/admin/contacts/persons/search', { params: { lead_id: this.lead.id } });
                             const list = (resp && resp.data && (resp.data.data || resp.data)) || [];
-                            // Sort by server score if present, else by client score, then limit to 10
-                            const sorted = list.sort((a,b) => ((b.match_score_percentage||b.match_score||0) - (a.match_score_percentage||a.match_score||0)));
-                            this.suggestions = sorted.slice(0, 10);
+                            // Strong matches (email/phone) first, then by score — then limit to 10
+                            const helpers = window.adminc?.personSuggestionHelpers;
+                            this.suggestions = helpers
+                                ? helpers.rankAndLimitSuggestions(list, 10)
+                                : list.sort((a,b) => ((b.match_score_percentage||b.match_score||0) - (a.match_score_percentage||a.match_score||0))).slice(0, 10);
                         } catch (e) {
                             this.suggestions = [];
                         }

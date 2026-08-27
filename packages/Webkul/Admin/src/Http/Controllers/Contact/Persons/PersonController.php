@@ -289,11 +289,24 @@ class PersonController extends Controller
                 return $personResource;
             });
 
-            return PersonResource::collection(
-                $personsWithScores
-                    ->sortByDesc(fn ($personResource) => $personResource->match_score ?? 0)
-                    ->values()
-            );
+            $sorted = $personsWithScores
+                ->sort(function ($a, $b) {
+                    $reasonsA = $a->resource->match_reasons ?? [];
+                    $reasonsB = $b->resource->match_reasons ?? [];
+                    $strongA = in_array(PersonSuggestionService::REASON_EMAIL, $reasonsA, true)
+                        || in_array(PersonSuggestionService::REASON_PHONE, $reasonsA, true) ? 1 : 0;
+                    $strongB = in_array(PersonSuggestionService::REASON_EMAIL, $reasonsB, true)
+                        || in_array(PersonSuggestionService::REASON_PHONE, $reasonsB, true) ? 1 : 0;
+
+                    if ($strongA !== $strongB) {
+                        return $strongB <=> $strongA;
+                    }
+
+                    return ($b->match_score ?? 0) <=> ($a->match_score ?? 0);
+                })
+                ->values();
+
+            return PersonResource::collection($sorted);
         } catch (Exception $e) {
             logger()->warning('Could not calculate match scores for person suggestions', [
                 'lead_id' => $lead->id,
@@ -982,7 +995,7 @@ class PersonController extends Controller
     {
         // Handle array fields (emails, phones)
         if (in_array($field, ['emails', 'phones'])) {
-            return $this->arrayValuesMatch($leadValue, $personValue, $perspective);
+            return $this->arrayValuesMatch($leadValue, $personValue, $perspective, $field);
         }
 
         // Handle date fields
@@ -1002,7 +1015,7 @@ class PersonController extends Controller
     /**
      * Check if array values match (for emails/phones).
      */
-    private function arrayValuesMatch($leadArray, $personArray, string $perspective = 'generic'): bool
+    private function arrayValuesMatch($leadArray, $personArray, string $perspective = 'generic', string $field = 'emails'): bool
     {
         if (!is_array($leadArray) || !is_array($personArray)) {
             return false;
@@ -1010,6 +1023,26 @@ class PersonController extends Controller
 
         $leadValues = $this->extractArrayValues($leadArray);
         $personValues = $this->extractArrayValues($personArray);
+
+        if ($field === 'phones') {
+            $leadValues = array_values(array_filter(array_map(
+                [PhoneNormalizer::class, 'toDutchLocal'],
+                $leadValues
+            )));
+            $personValues = array_values(array_filter(array_map(
+                [PhoneNormalizer::class, 'toDutchLocal'],
+                $personValues
+            )));
+        } elseif ($field === 'emails') {
+            $leadValues = array_values(array_filter(array_map(
+                fn ($v) => EmailNormalizer::normalize($v) ?? strtolower($v),
+                $leadValues
+            )));
+            $personValues = array_values(array_filter(array_map(
+                fn ($v) => EmailNormalizer::normalize($v) ?? strtolower($v),
+                $personValues
+            )));
+        }
 
         // For sync (lead perspective): treat as match if all lead values exist in person values (subset)
         if ($perspective === 'lead') {
@@ -1019,6 +1052,7 @@ class PersonController extends Controller
                     return false;
                 }
             }
+
             return true;
         }
 

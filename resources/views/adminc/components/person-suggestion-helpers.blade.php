@@ -25,6 +25,22 @@
                     return reasonLabels[reason] || reason;
                 },
 
+                /**
+                 * Strong matches (email/phone) first, then by match_score — then cap at limit.
+                 * Prevents name-only crowding from hiding phone/email hits.
+                 */
+                rankAndLimitSuggestions(suggestions, limit = 10) {
+                    const items = Array.isArray(suggestions) ? [...suggestions] : [];
+                    items.sort((a, b) => {
+                        const strongDiff = (this.isStrongSuggestion(b) ? 1 : 0) - (this.isStrongSuggestion(a) ? 1 : 0);
+                        if (strongDiff !== 0) {
+                            return strongDiff;
+                        }
+                        return ((b.match_score_percentage || b.match_score || 0) - (a.match_score_percentage || a.match_score || 0));
+                    });
+                    return items.slice(0, limit);
+                },
+
                 personSuggestionSections(suggestions) {
                     const items = suggestions || [];
                     const strong = items.filter((s) => this.isStrongSuggestion(s));
@@ -52,9 +68,10 @@
                 const response = await axios.post('/admin/contacts/persons/suggest', payload);
                 const result = response?.data?.data ?? response?.data ?? [];
                 const list = Array.isArray(result) ? result : [];
-                return list
-                    .sort((a, b) => ((b.match_score_percentage || b.match_score || 0) - (a.match_score_percentage || a.match_score || 0)))
-                    .slice(0, 10);
+                const helpers = window.adminc.personSuggestionHelpers;
+                return helpers
+                    ? helpers.rankAndLimitSuggestions(list, 10)
+                    : list.slice(0, 10);
             };
         }
     </script>

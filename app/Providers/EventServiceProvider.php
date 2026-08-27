@@ -8,6 +8,7 @@ use App\Events\PatientFormStatusUpdatedEvent;
 use App\Events\PatientNotifyEvent;
 use App\Listeners\CreateFormReviewTask;
 use App\Listeners\CreatePatientNotification;
+use App\Listeners\LogGvlFormCompleted;
 use App\Listeners\NotifyPatientFormCompleted;
 use App\Listeners\SchedulePatientPortalNotifyEmail;
 use App\Listeners\StoreOrderConfirmationPdf;
@@ -41,6 +42,7 @@ class EventServiceProvider extends ServiceProvider
         PatientFormCompletedEvent::class => [
             CreateFormReviewTask::class,
             NotifyPatientFormCompleted::class,
+            LogGvlFormCompleted::class,
         ],
         PatientFormStatusUpdatedEvent::class => [
             UpdateAnamnesisFormStatus::class,

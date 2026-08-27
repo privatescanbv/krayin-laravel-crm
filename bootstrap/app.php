@@ -93,6 +93,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $schedule->command('patient:send-notification-email')->everyFiveMinutes()->withoutOverlapping();
         $schedule->command('afb:send-daily')->dailyAt(AfbDispatchService::AFB_LATE_BOOKING_CUTOFF_HOUR.':00')->withoutOverlapping();
         $schedule->command('revops:check-lead-activity')->hourly()->withoutOverlapping();
+        $schedule->command('forms:sync-anamnesis-status')->hourly()->withoutOverlapping();
         $schedule->command('email-templates:verify-codes')->hourly();
         $schedule->command('queue:monitor-failed-jobs')->everyFiveMinutes()->withoutOverlapping();
     })
@@ -111,7 +112,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->reportable(function (Throwable $e) {
             if (app()->runningInConsole()) {
-                return;
+                return false;
             }
 
             try {

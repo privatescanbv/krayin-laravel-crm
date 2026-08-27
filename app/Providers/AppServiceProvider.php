@@ -4,12 +4,14 @@ namespace App\Providers;
 
 use App\Contracts\Api\ApiHttpTrafficLogger;
 use App\Http\Middleware\CanInstall;
+use App\Models\AnamnesisGvlForm;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PatientMessage;
 use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
 use App\Observers\ActivityObserver;
+use App\Observers\AnamnesisGvlFormObserver;
 use App\Observers\EmailObserver;
 use App\Observers\LeadObserver;
 use App\Observers\OrderItemObserver;
@@ -78,6 +80,7 @@ class AppServiceProvider extends ServiceProvider
         PatientMessage::observe(PatientMessageObserver::class);
         Activity::observe(ActivityObserver::class);
         Email::observe(EmailObserver::class);
+        AnamnesisGvlForm::observe(AnamnesisGvlFormObserver::class);
 
         Password::defaults(fn () => Password::min(8)->mixedCase()->numbers()->symbols());
 

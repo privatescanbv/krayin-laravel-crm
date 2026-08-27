@@ -35,3 +35,5 @@
       </li>
     </ul>
   </template>
+
+@include('adminc.components.person-suggestion-helpers')

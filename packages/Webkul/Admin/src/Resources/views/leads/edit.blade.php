@@ -371,32 +371,16 @@
                         }
                     },
                     isStrongSuggestion(person) {
-                        const reasons = person.match_reasons || [];
-                        return reasons.includes('email') || reasons.includes('phone');
+                        return window.adminc?.personSuggestionHelpers?.isStrongSuggestion(person) ?? false;
                     },
                     suggestionReasonLabel(reason) {
-                        const labels = {
-                            email: 'E-mail',
-                            phone: 'Telefoon',
-                            last_name: 'Achternaam',
-                            first_name_similar: 'Voornaam lijkt',
-                            first_name_differs: 'Voornaam verschilt',
-                            dob: 'Geboortedatum',
-                            postal_code: 'Postcode',
-                        };
-                        return labels[reason] || reason;
+                        return window.adminc?.personSuggestionHelpers?.suggestionReasonLabel(reason) ?? reason;
                     },
                     personSuggestionSections(suggestions) {
-                        const items = suggestions || [];
-                        const strong = items.filter((s) => this.isStrongSuggestion(s));
-                        const possible = items.filter((s) => !this.isStrongSuggestion(s));
-                        if (strong.length && possible.length) {
-                            return [
-                                { key: 'strong', title: 'Waarschijnlijk dezelfde persoon', items: strong },
-                                { key: 'possible', title: 'Mogelijke matches', items: possible },
-                            ];
-                        }
-                        return [{ key: 'all', title: null, items }];
+                        const helpers = window.adminc?.personSuggestionHelpers;
+                        return helpers
+                            ? helpers.personSuggestionSections(suggestions)
+                            : [{ key: 'all', title: null, items: suggestions || [] }];
                     },
                     linkSuggestion(person) {
                         // Voeg toe aan de multi-contactmatcher als gekoppelde persoon

@@ -237,3 +237,151 @@ test('auto-suggest respects individual view permission', function () {
     test()->assertEntityFound($resp, $visible->id);
     test()->assertEntityNotFound($resp, $hidden->id);
 });
+
+function fetchPersonSuggestionsFromFields(array $payload)
+{
+    return test()->postJson(route('admin.contacts.persons.suggest'), $payload);
+}
+
+test('create suggest finds person when phone formats differ (06 vs +31)', function () {
+    $match = makePersonSuggestionPerson([
+        'first_name' => 'Jan',
+        'last_name'  => 'Visser',
+        'phones'     => [['value' => '+31612345678', 'label' => ContactLabel::Eigen->value]],
+    ]);
+
+    $resp = fetchPersonSuggestionsFromFields([
+        'first_name' => 'Johannes',
+        'last_name'  => 'Visser',
+        'phones'     => [['value' => '0612345678', 'label' => ContactLabel::Eigen->value]],
+    ]);
+
+    test()->assertEntityFound($resp, $match->id);
+    $row = collect($resp->json('data'))->firstWhere('id', $match->id);
+    expect($row['match_reasons'])->toContain(PersonSuggestionService::REASON_PHONE)
+        ->and($row['match_score'])->toBeGreaterThan(0);
+});
+
+test('create suggest finds person when phone is stored as local and payload uses e164', function () {
+    $match = makePersonSuggestionPerson([
+        'first_name' => 'Jan',
+        'last_name'  => 'De Vries',
+        'phones'     => [['value' => '0687654321', 'label' => ContactLabel::Eigen->value]],
+    ]);
+
+    $resp = fetchPersonSuggestionsFromFields([
+        'first_name' => 'Johannes',
+        'last_name'  => 'De Vries',
+        'phones'     => [['value' => '+31687654321', 'label' => ContactLabel::Eigen->value]],
+    ]);
+
+    test()->assertEntityFound($resp, $match->id);
+    $row = collect($resp->json('data'))->firstWhere('id', $match->id);
+    expect($row['match_reasons'])->toContain(PersonSuggestionService::REASON_PHONE);
+});
+
+test('create suggest finds person by email with different first name', function () {
+    $match = makePersonSuggestionPerson([
+        'first_name' => 'Jan',
+        'last_name'  => 'Jansen',
+        'emails'     => [['value' => 'jansen@example.com', 'label' => ContactLabel::Eigen->value]],
+    ]);
+
+    $resp = fetchPersonSuggestionsFromFields([
+        'first_name' => 'Johannes',
+        'last_name'  => 'Jansen',
+        'emails'     => [['value' => 'jansen@example.com', 'label' => ContactLabel::Eigen->value]],
+    ]);
+
+    test()->assertEntityFound($resp, $match->id);
+    $row = collect($resp->json('data'))->firstWhere('id', $match->id);
+    expect($row['match_reasons'])->toContain(PersonSuggestionService::REASON_EMAIL)
+        ->and($row['match_reasons'])->toContain(PersonSuggestionService::REASON_FIRST_NAME_DIFFERS);
+});
+
+test('create suggest finds last-name match with same date of birth', function () {
+    $match = makePersonSuggestionPerson([
+        'first_name'    => 'Piet',
+        'last_name'     => 'Jansen',
+        'date_of_birth' => '1984-05-17',
+    ]);
+
+    makePersonSuggestionPerson([
+        'first_name' => 'Klaas',
+        'last_name'  => 'Jansen',
+    ]);
+
+    $resp = fetchPersonSuggestionsFromFields([
+        'first_name'    => 'Linda',
+        'last_name'     => 'Jansen',
+        'date_of_birth' => '1984-05-17',
+    ]);
+
+    test()->assertEntityFound($resp, $match->id);
+    $row = collect($resp->json('data'))->firstWhere('id', $match->id);
+    expect($row['match_reasons'])->toContain(PersonSuggestionService::REASON_DOB);
+
+    test()->assertEntityNotFound($resp, Person::query()->where('first_name', 'Klaas')->first()->id);
+});
+
+test('create suggest finds last-name match with same postal code', function () {
+    $personAddress = Address::factory()->create(['postal_code' => '1234 AB', 'house_number' => '12']);
+
+    $match = makePersonSuggestionPerson([
+        'first_name' => 'Piet',
+        'last_name'  => 'Groot',
+        'address_id' => $personAddress->id,
+    ]);
+
+    $resp = fetchPersonSuggestionsFromFields([
+        'first_name' => 'Linda',
+        'last_name'  => 'Groot',
+        'address'    => ['postal_code' => '1234AB', 'house_number' => '10'],
+    ]);
+
+    test()->assertEntityFound($resp, $match->id);
+    $row = collect($resp->json('data'))->firstWhere('id', $match->id);
+    expect($row['match_reasons'])->toContain(PersonSuggestionService::REASON_POSTAL_CODE);
+});
+
+test('create suggest returns empty list for empty payload', function () {
+    makePersonSuggestionPerson([
+        'first_name' => 'Jan',
+        'last_name'  => 'Niemand',
+        'phones'     => [['value' => '0611111111', 'label' => ContactLabel::Eigen->value]],
+    ]);
+
+    $resp = fetchPersonSuggestionsFromFields([]);
+
+    $resp->assertOk();
+    expect($resp->json('data'))->toBe([]);
+});
+
+test('create suggest respects individual view permission', function () {
+    $otherUser = User::factory()->create(['view_permission' => 'global']);
+    $this->user->update(['view_permission' => 'individual']);
+    $this->actingAs($this->user->fresh(), 'user');
+
+    $visible = makePersonSuggestionPerson([
+        'first_name' => 'Eva',
+        'last_name'  => 'Kuijer',
+        'emails'     => [['value' => 'eva.create@example.com', 'label' => ContactLabel::Eigen->value]],
+        'user_id'    => $this->user->id,
+    ]);
+
+    $hidden = makePersonSuggestionPerson([
+        'first_name' => 'Eva',
+        'last_name'  => 'Kuijer',
+        'emails'     => [['value' => 'eva.create@example.com', 'label' => ContactLabel::Eigen->value]],
+        'user_id'    => $otherUser->id,
+    ]);
+
+    $resp = fetchPersonSuggestionsFromFields([
+        'first_name' => 'Eva',
+        'last_name'  => 'Kuijer',
+        'emails'     => [['value' => 'eva.create@example.com', 'label' => ContactLabel::Eigen->value]],
+    ]);
+
+    test()->assertEntityFound($resp, $visible->id);
+    test()->assertEntityNotFound($resp, $hidden->id);
+});

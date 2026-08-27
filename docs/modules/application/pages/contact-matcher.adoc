@@ -109,13 +109,14 @@ Het systeem zoekt automatisch in de volgende velden wanneer je een persoon opzoe
 
 ===== Contact Zoeken vanuit Lead
 
-Wanneer je een lead bewerkt, kun je de contact matcher gebruiken om bestaande contactpersonen te vinden:
+Bij het **aanmaken** en **bewerken** van een lead toont het systeem automatische person-suggesties via dezelfde matching-logica:
 
-. **Automatische Suggesties**: Het systeem toont automatisch suggesties gebaseerd op de lead informatie
-. **Match Percentages**: Elke suggestie toont een match percentage met kleur-gecodeerde voortgangsbalk
-. **Handmatig Zoeken**: Typ in het zoekveld om aanvullende contacten te zoeken
+. **Automatische Suggesties**: Gebaseerd op lead-velden (e-mail, telefoon met format-varianten, achternaam + DOB/postcode)
+. **Match Percentages**: Elke suggestie toont een match percentage
+. **Match redenen**: Chips zoals e-mail/telefoon of achternaam; sterke hits (e-mail/telefoon) staan onder "Waarschijnlijk dezelfde persoon"
+. **Handmatig Zoeken**: Typ in het zoekveld om aanvullende contacten te zoeken (bewerken)
 . **Contact Bekijken**: Klik op het externe link icoon om contactdetails in nieuwe tab te openen
-. **Contact Selecteren**: Klik op een suggestie om deze te selecteren als gekoppelde contactpersoon
+. **Contact Selecteren / Koppelen**: Klik op een suggestie om deze te selecteren of te koppelen
 
 ===== Match Score Interpretatie
 

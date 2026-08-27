@@ -73,6 +73,11 @@ image::../images/leads-create-top.png[Persoonsgegevens sectie]
 Koppel een bestaande persoon uit het CRM als contactpersoon voor deze lead.
 Gebruik het zoekveld "Selecteer contactpersoon..." om te zoeken op naam.
 
+Aan de rechterkant toont het systeem automatisch *Mogelijke matches gevonden*
+op basis van de ingevulde persoonsgegevens (e-mail, telefoon, naam, geboortedatum, postcode).
+Die suggesties gebruiken dezelfde matching-logica als bij het bewerken van een lead.
+Klik *Koppelen* om een match over te nemen in het formulier.
+
 Activeer de optie *Tevens persoon aanmaken met deze lead gegevens en koppelen* om automatisch
 een nieuw persoonsprofiel aan te maken op basis van de ingevulde persoonsgegevens.
 

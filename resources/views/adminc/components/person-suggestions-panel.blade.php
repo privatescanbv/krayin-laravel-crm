@@ -28,10 +28,12 @@
           </div>
         </div>
         <div class="flex items-center gap-3">
-          <span class="px-2 py-0.5 text-xs rounded-full bg-neutral-bg dark:bg-gray-800 dark:text-gray-200">@{{ Math.round(s.match_score_percentage || s._client_match || 0) }}% match</span>
+          <span class="px-2 py-0.5 text-xs rounded-full bg-neutral-bg dark:bg-gray-800 dark:text-gray-200">@{{ Math.round(s.match_score_percentage || s.match_score || 0) }}% match</span>
           <a :href="`/admin/contacts/persons/view/${s.id}`" target="_blank" rel="noopener" class="text-xs text-blue-700 underline">Bekijken</a>
           <button type="button" class="secondary-button" @click="{{ $buttonHandler ?? 'selectSuggestion' }}(s)">{{ $buttonText ?? 'Koppelen' }}</button>
         </div>
       </li>
     </ul>
   </template>
+
+@include('adminc.components.person-suggestion-helpers')

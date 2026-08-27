@@ -150,8 +150,7 @@
                                             <input
                                                 type="checkbox"
                                                 :checked="selectedPersons.includes(duplicate.id)"
-                                                :disabled="duplicate.has_portal_account"
-                                                :title="duplicate.has_portal_account ? 'Heeft een patiëntportaalaccount - kan niet als duplicaat worden samengevoegd.' : ''"
+                                                :title="duplicate.has_portal_account ? 'Heeft een patiëntportaalaccount - kan alleen als geen duplicaat worden gemarkeerd, niet worden samengevoegd.' : ''"
                                                 @change="togglePersonSelection(duplicate.id)"
                                             />
                                         </td>
@@ -235,8 +234,7 @@
                                                 <input
                                                     type="checkbox"
                                                     :checked="selectedPersons.includes(duplicate.id)"
-                                                    :disabled="duplicate.has_portal_account"
-                                                    :title="duplicate.has_portal_account ? 'Heeft een patiëntportaalaccount - kan niet als duplicaat worden samengevoegd.' : ''"
+                                                    :title="duplicate.has_portal_account ? 'Heeft een patiëntportaalaccount - kan alleen als geen duplicaat worden gemarkeerd, niet worden samengevoegd.' : ''"
                                                     @change="togglePersonSelection(duplicate.id)"
                                                     class="mb-2"
                                                 />
@@ -398,7 +396,7 @@
                         <div class="mt-6 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
                             <div v-if="portalDuplicates.length > 0" class="mb-4 rounded border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-100">
                                 <p>
-                                    Personen met een patiëntportaal kunnen niet als duplicaat worden samengevoegd. Maak die persoon primair, of trek het account eerst met de hand in.
+                                    Personen met een patiëntportaal kunnen niet als duplicaat worden samengevoegd, maar wel als geen duplicaat worden gemarkeerd. Om samen te voegen: maak die persoon primair, of trek het account eerst met de hand in.
                                 </p>
                                 <p v-if="bothSidesHavePortal" class="mt-1 font-medium">
                                     Er zijn meerdere portaalaccounts. Trek er eerst één in voordat je samenvoegt.
@@ -587,7 +585,7 @@
                     },
 
                     togglePersonSelection(personId) {
-                        if (personId === this.primaryPerson.id || this.personHasPortal(personId)) {
+                        if (personId === this.primaryPerson.id) {
                             return;
                         }
 

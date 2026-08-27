@@ -37,6 +37,11 @@ class DuplicateController extends Controller
         $person = $this->personRepository->with(['organization', 'user', 'address'])->findOrFail($personId);
         $duplicates = $this->personRepository->findPotentialDuplicates($person);
 
+        // Viewing this page recomputes duplicates directly (bypassing the cache service), so the
+        // persisted has_duplicates flag would otherwise stay stale until the next hourly index
+        // rebuild even though this page just proved the real answer. Self-heal it here.
+        $this->personDuplicateCacheService->persistHasDuplicatesFlag($person->id, $duplicates->pluck('id'));
+
         // findPotentialDuplicates returns a Support Collection, so load per model.
         $duplicates->each(fn (Person $dup) => $dup->loadMissing(['organization', 'address']));
 

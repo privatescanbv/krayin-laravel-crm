@@ -15,6 +15,21 @@ beforeEach(function () {
     $this->withoutMiddleware(Authenticate::class);
 });
 
+test('viewing the duplicates page clears a stale has_duplicates flag left over from a merge', function () {
+    // Person C used to match B (e.g. shared phone), so both got flagged. B is then merged
+    // into A, which only clears/recomputes A and B's flags - C is left stale (MBS-366).
+    $person = Person::factory()->create([
+        'phones'         => [['value' => '+31651441908', 'label' => 'eigen']],
+        'has_duplicates' => true,
+    ]);
+
+    $response = $this->get(route('admin.contacts.persons.duplicates.index', $person->id))
+        ->assertOk();
+
+    expect($response->viewData('duplicates'))->toBeEmpty()
+        ->and($person->fresh()->has_duplicates)->toBeFalse();
+});
+
 test('person duplicates merge view loads when primary person has phone numbers', function () {
     $person = Person::factory()->create([
         'phones' => [

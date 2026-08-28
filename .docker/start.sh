@@ -14,6 +14,21 @@ fi
 # Ensure sail user is in sail group (fix if it's in www-data group)
 usermod -g sail sail 2>/dev/null || true
 
+# storage/framework and bootstrap/cache aren't volume-mounted, so a fresh
+# container after a deploy only has what the image's build-time mkdir gave it
+# (which doesn't include storage/framework/cache/data). Recreate them here so
+# php-fpm/queue/scheduler, which all start in parallel right after this
+# script, never hit a missing cache directory (file_put_contents ENOENT).
+mkdir -p \
+    storage/framework/cache/data \
+    storage/framework/sessions \
+    storage/framework/views \
+    storage/framework/testing \
+    storage/logs \
+    bootstrap/cache
+chown -R www-data:www-data storage/framework storage/logs bootstrap/cache
+chmod -R 775 storage/framework storage/logs bootstrap/cache
+
 php artisan config:clear
 php artisan optimize:clear
 php artisan config:cache

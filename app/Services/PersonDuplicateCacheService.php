@@ -251,10 +251,19 @@ class PersonDuplicateCacheService extends AbstractDuplicateCacheService
 
     /**
      * Clear all caches (simple version).
+     *
+     * NOTE: This must only remove keys owned by this service (person_duplicates:*). It must
+     * never call Cache::flush(), which would wipe the entire shared cache store, including
+     * unrelated data such as Microsoft Graph OAuth tokens and other alert de-dupe flags.
      */
     public function clearAllCache(): void
     {
-        Cache::flush();
+        DB::table('persons')->select('id')->orderBy('id')->chunk(1000, function ($rows) {
+            foreach ($rows as $row) {
+                $this->invalidateId((int) $row->id);
+            }
+        });
+
         Log::info('Cleared all person duplicate caches');
     }
 

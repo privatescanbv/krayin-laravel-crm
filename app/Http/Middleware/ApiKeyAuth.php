@@ -28,7 +28,17 @@ class ApiKeyAuth
         if ($apiKey) {
             $validApiKeys = config('api.keys', []);
 
-            if (! empty($validApiKeys) && in_array($apiKey, $validApiKeys)) {
+            $isValidKey = false;
+
+            foreach ($validApiKeys as $validApiKey) {
+                if (hash_equals((string) $validApiKey, (string) $apiKey)) {
+                    $isValidKey = true;
+
+                    break;
+                }
+            }
+
+            if ($isValidKey) {
                 return $next($request);
             }
 
@@ -43,7 +53,24 @@ class ApiKeyAuth
         // If no API key is present, fall back to Keycloak bearer token authentication.
         // This is used by external applications (e.g. Forms) that authenticate via Keycloak
         // and call the CRM API with an Authorization: Bearer <token> header.
+        //
+        // IMPORTANT: A Keycloak bearer token only proves who the caller is, not what they may
+        // access. Only routes that additionally scope access to that specific subject (e.g. the
+        // `patient/{id}` routes protected by the `patient.self:id` middleware) are safe to expose
+        // to Keycloak-authenticated callers. All other routes (leads, sales-leads, webhooks, etc.)
+        // are service-to-service only and must require a trusted X-API-KEY.
         $authHeader = $request->header('Authorization');
+
+        if (! $request->is('api/patient/*')) {
+            Log::warning('ApiKeyAuth: unauthorized request - non-patient route requires X-API-KEY', [
+                'path' => $request->path(),
+            ]);
+
+            return response()->json([
+                'error'   => 'Unauthorized',
+                'message' => 'This endpoint requires a valid X-API-KEY',
+            ], Response::HTTP_UNAUTHORIZED);
+        }
 
         if ($authHeader && str_starts_with($authHeader, 'Bearer ')) {
             $accessToken = trim(substr($authHeader, strlen('Bearer ')));

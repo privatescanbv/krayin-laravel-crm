@@ -116,7 +116,12 @@ class LeadController extends Controller
      */
     public function update(LeadForm $request, int $id): JsonResponse
     {
-        $lead = $this->leadService->update($request, $id);
+        // AdminLeadController::update() returns a RedirectResponse|JsonResponse meant for the
+        // admin web UI, never the Lead model itself, so its return value must never be used
+        // directly as the API response payload. Re-fetch the lead afterwards instead.
+        $this->leadService->update($request, $id);
+
+        $lead = $this->leadRepository->with(['address', 'organization'])->findOrFail($id);
 
         return response()->json([
             'message' => 'Lead updated successfully.',
@@ -132,7 +137,16 @@ class LeadController extends Controller
         $this->validate($request, [
             'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
         ]);
-        $lead = $this->leadService->updateStageId($leadId, request()->input('lead_pipeline_stage_id'));
+
+        // updateStageId() returns a JsonResponse (either a validation-error response or a
+        // bare success message), never the Lead model - propagate errors, then re-fetch on success.
+        $response = $this->leadService->updateStageId($leadId, request()->input('lead_pipeline_stage_id'));
+
+        if (! $response->isSuccessful()) {
+            return $response;
+        }
+
+        $lead = $this->leadRepository->with(['address', 'organization'])->findOrFail($leadId);
 
         return response()->json([
             'message' => 'Lead stage updated successfully.',
@@ -180,7 +194,13 @@ class LeadController extends Controller
             ], 404);
         }
 
-        $lead = $this->leadService->updateStageId($id, $nextStage->id);
+        $response = $this->leadService->updateStageId($id, $nextStage->id);
+
+        if (! $response->isSuccessful()) {
+            return $response;
+        }
+
+        $lead = $this->leadRepository->with(['address', 'organization'])->findOrFail($id);
 
         return response()->json([
             'message' => 'Lead stage updated successfully.',

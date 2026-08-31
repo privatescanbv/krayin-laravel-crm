@@ -63,19 +63,24 @@ class Handler extends AppExceptionHandler
             return $this->renderCustomResponse($exception);
         }
 
-        // Log all exceptions in admin context with additional details
-        Log::error('Admin exception occurred', [
-            'exception' => get_class($exception),
-            'message' => $exception->getMessage(),
-            'file' => $exception->getFile(),
-            'line' => $exception->getLine(),
-            'trace' => $exception->getTraceAsString(),
-            'url' => $request->fullUrl(),
-            'method' => $request->method(),
-            'user_id' => auth()->guard('user')->id(),
-            'request_data' => $request->all(),
-            'session_id' => session()->getId(),
-        ]);
+        // A failed form validation is user input error, not an application error. Don't log it -
+        // the `sentry` log channel turns Log::error into a Sentry/Bugsink issue. The response is
+        // still produced below (parent::render turns it into a redirect-back-with-errors).
+        if (! $exception instanceof ValidationException) {
+            // Log all exceptions in admin context with additional details
+            Log::error('Admin exception occurred', [
+                'exception' => get_class($exception),
+                'message' => $exception->getMessage(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'trace' => $exception->getTraceAsString(),
+                'url' => $request->fullUrl(),
+                'method' => $request->method(),
+                'user_id' => auth()->guard('user')->id(),
+                'request_data' => $request->all(),
+                'session_id' => session()->getId(),
+            ]);
+        }
 
         if (! config('app.debug')) {
             return $this->renderCustomResponse($exception);

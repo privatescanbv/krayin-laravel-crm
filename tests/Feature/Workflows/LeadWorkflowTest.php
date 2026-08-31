@@ -2,6 +2,8 @@
 
 use App\Enums\ActivityType;
 use Database\Seeders\TestSeeder;
+use Illuminate\Support\Facades\Log;
+use Mockery;
 use Webkul\Activity\Models\Activity;
 use Webkul\Automation\Models\Workflow;
 use Webkul\Lead\Models\Lead;
@@ -135,4 +137,64 @@ test('lead workflow create_activity without user_id creates activity without spe
 
     expect($activity)->not->toBeNull()
         ->and($activity->user_id)->toBeNull();
+});
+
+test('lead workflow create_activity skips a duplicate open activity without logging an error', function () {
+    $pipeline = Pipeline::factory()->create();
+    $stageA = Stage::create([
+        'name' => 'Start', 'lead_pipeline_id' => $pipeline->id, 'code' => 'start3',
+        'sort_order' => 1, 'is_won' => false, 'is_lost' => false,
+    ]);
+    $stageB = Stage::create([
+        'name' => 'Target', 'lead_pipeline_id' => $pipeline->id, 'code' => 'target3',
+        'sort_order' => 2, 'is_won' => false, 'is_lost' => false,
+    ]);
+
+    Workflow::create([
+        'name'           => 'Test duplicate activity',
+        'description'    => 'Test',
+        'entity_type'    => 'leads',
+        'event'          => 'lead.update_stage.after',
+        'condition_type' => 'and',
+        'conditions'     => [[
+            'value'          => (string) $stageB->id,
+            'operator'       => '==',
+            'attribute'      => 'lead_pipeline_stage_id',
+            'attribute_type' => 'select',
+        ]],
+        'actions' => [[
+            'id'         => 'create_activity',
+            'attributes' => [
+                'title'   => 'Klant data bijwerken',
+                'type'    => ActivityType::TASK->value,
+                'user_id' => '',
+            ],
+        ]],
+    ]);
+
+    $lead = Lead::factory()->create([
+        'lead_pipeline_id'       => $pipeline->id,
+        'lead_pipeline_stage_id' => $stageA->id,
+    ]);
+
+    // An open activity with the same title already exists.
+    Activity::create([
+        'title'   => 'Klant data bijwerken',
+        'type'    => ActivityType::TASK->value,
+        'lead_id' => $lead->id,
+        'is_done' => 0,
+    ]);
+
+    Log::spy();
+
+    $lead->update(['lead_pipeline_stage_id' => $stageB->id]);
+
+    // No second activity, and the benign duplicate is logged as a warning - not an error
+    // (the `sentry` log channel would turn an error into a Bugsink issue).
+    expect(Activity::where('lead_id', $lead->id)->where('title', 'Klant data bijwerken')->count())->toBe(1);
+
+    Log::shouldNotHaveReceived('error', [Mockery::pattern('/duplicate/i')]);
+    Log::shouldHaveReceived('warning')
+        ->withArgs(fn ($message) => str_contains($message, 'duplicate'))
+        ->once();
 });

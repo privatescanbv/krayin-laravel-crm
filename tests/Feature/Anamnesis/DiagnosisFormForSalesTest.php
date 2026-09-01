@@ -124,7 +124,9 @@ it('refuses a diagnose form for a non-Herniapoli sale', function () {
     attachDiagnosis($salesLead, $person, FormType::HerniaBackPainForm->value)->assertForbidden();
 
     expect(AnamnesisGvlForm::count())->toBe(0);
-    Http::assertNothingSent();
+    // No diagnose form pushed to the portal. Scoped to the forms API so an unrelated
+    // stray request from a sibling test in the same parallel worker can't fail this.
+    Http::assertNotSent(fn ($r) => str_contains($r->url(), '/api/forms'));
 });
 
 it('refuses a diagnose form when the patient has no portal account', function () {
@@ -135,7 +137,9 @@ it('refuses a diagnose form when the patient has no portal account', function ()
         ->assertSessionHas('error');
 
     expect(AnamnesisGvlForm::count())->toBe(0);
-    Http::assertNothingSent();
+    // No diagnose form pushed to the portal. Scoped to the forms API so an unrelated
+    // stray request from a sibling test in the same parallel worker can't fail this.
+    Http::assertNotSent(fn ($r) => str_contains($r->url(), '/api/forms'));
 });
 
 it('rejects a non-diagnose form_type on the diagnosis-form route', function () {

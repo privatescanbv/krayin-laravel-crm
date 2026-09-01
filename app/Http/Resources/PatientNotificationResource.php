@@ -48,8 +48,9 @@ class PatientNotificationResource extends JsonResource
         }
 
         return match ($type) {
-            NotificationReferenceType::FILE     => config('services.portal.patient.web_url').'/patient/documents',
-            NotificationReferenceType::GVL_FORM => config('services.portal.patient.web_url')."/patient/forms/$id/step/1"
+            NotificationReferenceType::FILE           => config('services.portal.patient.web_url').'/patient/documents',
+            NotificationReferenceType::GVL_FORM,
+            NotificationReferenceType::DIAGNOSIS_FORM => config('services.portal.patient.web_url')."/patient/forms/$id/step/1",
         };
     }
 }

@@ -473,6 +473,56 @@ it('creates a new GVL_FORM notification when existing one is expired', function 
     expect($new->entity_names)->toBe([$newName]);
 });
 
+it('returns diagnosis form notifications with a portal form url', function () {
+    config(['services.portal.patient.web_url' => 'https://patient.example']);
+
+    $keycloakUserId = (string) Str::uuid();
+    $person = Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
+
+    PatientNotification::query()->create([
+        'patient_id'     => $person->id,
+        'dismissable'    => false,
+        'title'          => 'patient_notifications.diagnosis.title',
+        'summary'        => 'patient_notifications.diagnosis.summary',
+        'reference_type' => NotificationReferenceType::DIAGNOSIS_FORM,
+        'reference_id'   => 61,
+        'dismissed_at'   => null,
+        'expires_at'     => null,
+    ]);
+
+    $this->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->getJson("/api/patient/{$keycloakUserId}/notifications")
+        ->assertOk()
+        ->assertJsonPath('data.0.title', 'Diagnoseformulier beschikbaar')
+        ->assertJsonPath('data.0.reference.type', 'diagnosis_form')
+        ->assertJsonPath('data.0.reference.id', 61)
+        ->assertJsonPath('data.0.reference.url', 'https://patient.example/patient/forms/61/step/1');
+});
+
+it('returns gvl form notifications with a portal form url', function () {
+    config(['services.portal.patient.web_url' => 'https://patient.example']);
+
+    $keycloakUserId = (string) Str::uuid();
+    $person = Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
+
+    PatientNotification::query()->create([
+        'patient_id'     => $person->id,
+        'dismissable'    => false,
+        'title'          => 'patient_notifications.gvl.title',
+        'summary'        => 'patient_notifications.gvl.summary',
+        'reference_type' => NotificationReferenceType::GVL_FORM,
+        'reference_id'   => 62,
+        'dismissed_at'   => null,
+        'expires_at'     => null,
+    ]);
+
+    $this->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->getJson("/api/patient/{$keycloakUserId}/notifications")
+        ->assertOk()
+        ->assertJsonPath('data.0.title', 'Gezondheidsvragenlijst beschikbaar')
+        ->assertJsonPath('data.0.reference.url', 'https://patient.example/patient/forms/62/step/1');
+});
+
 // ── API localisation tests ───────────────────────────────────────────────────
 
 it('returns Dutch translated strings when person has no preferred_language', function () {

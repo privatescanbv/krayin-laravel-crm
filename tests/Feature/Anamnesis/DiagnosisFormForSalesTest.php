@@ -29,6 +29,7 @@ beforeEach(function () {
     $this->actingAs(getDefaultAdmin(), 'user');
 
     config([
+        'api.keys'                            => ['valid-api-key-123'],
         'services.portal.patient.api_url'   => 'http://forms',
         'services.portal.patient.api_token' => 'test-token',
         'services.portal.patient.web_url'   => 'http://portal',
@@ -94,6 +95,13 @@ it('sets up a diagnose form from a Herniapoli sale for an existing patient', fun
         ->first();
     expect($notification)->not->toBeNull()
         ->and($notification->title)->toBe('patient_notifications.diagnosis.title');
+
+    test()->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->getJson("/api/patient/{$person->keycloak_user_id}/notifications")
+        ->assertOk()
+        ->assertJsonPath('data.0.reference.type', 'diagnosis_form')
+        ->assertJsonPath('data.0.reference.id', (int) $form->gvl_form_id)
+        ->assertJsonPath('data.0.reference.url', 'http://portal/patient/forms/'.$form->gvl_form_id.'/step/1');
 
     // no new lead was created
     expect(Lead::count())->toBe(1);

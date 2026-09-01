@@ -34,7 +34,7 @@
                 </p>
             </div>
 
-            @if (bouncer()->hasPermission('activities.create'))
+            @if (bouncer()->hasPermission('inkoop-afletteren'))
                 <a
                     href="{{ route('admin.inkoop.clinics.upload', $clinic->id) }}"
                     class="primary-button flex shrink-0 items-center gap-1"

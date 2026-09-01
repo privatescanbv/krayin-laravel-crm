@@ -455,8 +455,8 @@ class PersonController extends Controller
         }
 
         // Load anamnesis sorted by newest first
-        $person->load(['anamnesis' => function($query) {
-            $query->orderBy('updated_at', 'desc');
+        $person->load(['anamnesis' => function ($query) {
+            $query->with(['order.salesLead', 'sales', 'lead', 'gvlForms'])->orderBy('updated_at', 'desc');
         }]);
 
         // Precompute duplicate count (direct detection ensures indicator shows even if cache cold)

@@ -1,6 +1,7 @@
 @props([
     'anamneses',
-    'persons'
+    'persons',
+    'lead',
 ])
 <div class="flex w-full flex-col gap-4 rounded-lg">
 
@@ -21,8 +22,24 @@
             @php
                 /** @var \Illuminate\Support\Collection $anamneses */
                 $personAnamnesis = $anamneses->firstWhere('person_id', $person->id);
+                $returnUrlAnamnese = strtok(url()->current(), '#') . '#anamnese';
             @endphp
-            <x-adminc::anamnesis.card :person="$person" :anamnesis="$personAnamnesis" />
+            <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                <div class="border-b border-gray-100 px-4 py-3 dark:border-gray-700">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-200">{{ $person->name }}</span>
+                </div>
+                <div class="border-b border-gray-100 px-4 py-3 dark:border-gray-700">
+                    <x-adminc::anamnesis.forms-overview
+                        :entity="$lead"
+                        entityType="lead"
+                        :person="$person"
+                        :effectiveAnamnesis="$personAnamnesis"
+                        :personHasPortalAccount="!empty($person->keycloak_user_id)"
+                        :returnUrl="$returnUrlAnamnese"
+                    />
+                </div>
+                <x-adminc::anamnesis.card :person="$person" :anamnesis="$personAnamnesis" />
+            </div>
         @endforeach
     @else
         <div class="rounded-lg border border-neutral-border bg-neutral-muted p-6 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">

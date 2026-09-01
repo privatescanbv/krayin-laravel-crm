@@ -99,11 +99,9 @@ Route::prefix('anamnesis')->group(function () {
     Route::delete('revert-override', [AnamnesisController::class, 'revertOverride'])->name('admin.anamnesis.revert-override');
     Route::get('edit/{id}', [AnamnesisController::class, 'edit'])->name('admin.anamnesis.edit');
     Route::put('edit/{id}', [AnamnesisController::class, 'update'])->name('admin.anamnesis.update');
-    Route::post('create-and-attach-gvl-form', [AnamnesisController::class, 'createAndAttachGvlForm'])->name('admin.anamnesis.create-and-attach-gvl-form');
     Route::post('diagnosis-form', [AnamnesisController::class, 'attachDiagnosisFormForSales'])->name('admin.anamnesis.diagnosis-form.attach');
     Route::post('diagnosis-form/detach', [AnamnesisController::class, 'detachDiagnosisForm'])->name('admin.anamnesis.diagnosis-form.detach');
     Route::post('{id}/gvl-form', [AnamnesisController::class, 'attachGvlForm'])->name('admin.anamnesis.gvl-form.attach');
     Route::delete('{id}/gvl-form/{gvlFormRecordId}', [AnamnesisController::class, 'detachGvlForm'])->name('admin.anamnesis.gvl-form.detach');
     Route::get('{id}/gvl-form/{gvlFormRecordId}/status', [AnamnesisController::class, 'getGvlFormStatus'])->name('admin.anamnesis.gvl-form.status');
-    Route::get('{id}/gvl-form/latest-status', [AnamnesisController::class, 'getLatestGvlFormStatus'])->name('admin.anamnesis.gvl-form.latest-status');
 });

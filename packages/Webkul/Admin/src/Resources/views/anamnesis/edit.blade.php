@@ -18,6 +18,8 @@
             <div
                 class="flex items-center justify-between rounded-lg border bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
+                    <x-adminc::anamnesis.coupled-to :anamnesis="$anamnesis" />
+
                     <div class="flex items-center gap-x-2.5">
                         @if (request()->filled('return_url'))
                             <a href="{{ request('return_url') }}" class="text-activity-note-text hover:underline">

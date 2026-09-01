@@ -6,7 +6,9 @@ use App\Enums\FormStatus;
 use App\Models\Anamnesis;
 use App\Models\AnamnesisGvlForm;
 use App\Models\Order;
+use App\Models\SalesLead;
 use Illuminate\Support\Collection;
+use Webkul\Lead\Models\Lead;
 
 class AnamnesisGvlFormResolver
 {
@@ -23,7 +25,39 @@ class AnamnesisGvlFormResolver
             ->where('order_id', $order->id)
             ->when($salesLeadId, fn ($q) => $q->orWhere('sales_id', $salesLeadId))
             ->when($leadId, fn ($q) => $q->orWhere('lead_id', $leadId))
-            ->with('gvlForms')
+            ->with($this->anamnesisRelations())
+            ->get();
+    }
+
+    /**
+     * Load all anamnesis records for a sales lead (sales + parent lead + child orders).
+     */
+    public function loadForSales(SalesLead $salesLead): Collection
+    {
+        $leadId = $salesLead->lead_id;
+        $orderIds = $salesLead->orders()->pluck('id');
+
+        return Anamnesis::query()
+            ->where('sales_id', $salesLead->id)
+            ->when($leadId, fn ($q) => $q->orWhere('lead_id', $leadId))
+            ->when($orderIds->isNotEmpty(), fn ($q) => $q->orWhereIn('order_id', $orderIds))
+            ->with($this->anamnesisRelations())
+            ->get();
+    }
+
+    /**
+     * Load all anamnesis records for a lead (lead + downstream sales + their orders).
+     */
+    public function loadForLead(Lead $lead): Collection
+    {
+        $salesIds = SalesLead::query()->where('lead_id', $lead->id)->pluck('id');
+        $orderIds = Order::query()->whereIn('sales_lead_id', $salesIds)->pluck('id');
+
+        return Anamnesis::query()
+            ->where('lead_id', $lead->id)
+            ->when($salesIds->isNotEmpty(), fn ($q) => $q->orWhereIn('sales_id', $salesIds))
+            ->when($orderIds->isNotEmpty(), fn ($q) => $q->orWhereIn('order_id', $orderIds))
+            ->with($this->anamnesisRelations())
             ->get();
     }
 
@@ -54,5 +88,13 @@ class AnamnesisGvlFormResolver
                 && ($f->gvl_form_type === null || $f->gvl_form_type->isGvlForm()))
             ->sortByDesc('id')
             ->values();
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function anamnesisRelations(): array
+    {
+        return ['gvlForms', 'lead', 'sales', 'order'];
     }
 }

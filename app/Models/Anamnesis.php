@@ -22,6 +22,7 @@ use Webkul\Lead\Models\Lead;
 
 /**
  * @method static Builder forOrder(Order $order)
+ *
  * @mixin IdeHelperAnamnesis
  */
 class Anamnesis extends Model
@@ -256,7 +257,7 @@ class Anamnesis extends Model
 
     public function getLabelAttribute(): string
     {
-        return $this->person?->name ?? $this->order?->title ?? $this->sales?->name ?? $this->lead?->title ?? 'Onbekend';
+        return $this->person?->name ?? $this->order?->title ?? $this->sales?->name ?? $this->lead?->name ?? 'Onbekend';
     }
 
     public function gvlForms(): HasMany

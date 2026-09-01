@@ -141,11 +141,11 @@ test('lead workflow create_activity without user_id creates activity without spe
 test('lead workflow create_activity skips a duplicate open activity without logging an error', function () {
     $pipeline = Pipeline::factory()->create();
     $stageA = Stage::create([
-        'name' => 'Start', 'lead_pipeline_id' => $pipeline->id, 'code' => 'start3',
+        'name'       => 'Start', 'lead_pipeline_id' => $pipeline->id, 'code' => 'start3',
         'sort_order' => 1, 'is_won' => false, 'is_lost' => false,
     ]);
     $stageB = Stage::create([
-        'name' => 'Target', 'lead_pipeline_id' => $pipeline->id, 'code' => 'target3',
+        'name'       => 'Target', 'lead_pipeline_id' => $pipeline->id, 'code' => 'target3',
         'sort_order' => 2, 'is_won' => false, 'is_lost' => false,
     ]);
 

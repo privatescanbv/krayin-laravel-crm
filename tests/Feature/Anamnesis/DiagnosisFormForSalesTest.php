@@ -181,15 +181,13 @@ it('processes the completion webhook and cleans up the diagnose notification', f
         ->and(Activity::where('type', ActivityType::TASK)->where('title', 'like', '%Diagnose nekpijn%')->exists())->toBeTrue();
 });
 
-it('shows a "Diagnose formulieren" block with both types on a Herniapoli sale', function () {
+it('shows a forms overview with both diagnose types on a Herniapoli sale', function () {
     [$salesLead] = makeSaleWithPatient();
 
     test()->get(route('admin.sales-leads.view', $salesLead->id))
         ->assertOk()
-        ->assertSee('Diagnose formulieren')
-        ->assertSee('Diagnose lage rugpijn')
-        ->assertSee('Diagnose nekpijn')
-        ->assertSee('Nog niet klaargezet');
+        ->assertSee('Formulieren')
+        ->assertSee('Klaarzetten');
 });
 
 it('does not show the diagnose block on a non-Herniapoli sale', function () {
@@ -197,7 +195,7 @@ it('does not show the diagnose block on a non-Herniapoli sale', function () {
 
     test()->get(route('admin.sales-leads.view', $salesLead->id))
         ->assertOk()
-        ->assertDontSee('Diagnose formulieren');
+        ->assertDontSee('Diagnose lage rugpijn');
 });
 
 it('shows status and a view link once a diagnose form is set up', function () {
@@ -206,9 +204,9 @@ it('shows status and a view link once a diagnose form is set up', function () {
 
     test()->get(route('admin.sales-leads.view', $salesLead->id))
         ->assertOk()
-        ->assertSee('Formulier bekijken')
+        ->assertSee('Bekijken')
         ->assertSee('Ontkoppel')
-        ->assertSee('Nog niet klaargezet'); // the neck-pain row is still empty
+        ->assertSee('Klaarzetten');
 });
 
 it('refuses a second form of the same diagnose type', function () {

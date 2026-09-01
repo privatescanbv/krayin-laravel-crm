@@ -9,14 +9,14 @@ use Webkul\Activity\Repositories\ActivityRepository;
  * Writes a system activity ("wijzigingslogboek") whenever a GVL form is created,
  * removed, or completed, so employees can validate afterwards who did what and when.
  *
- * One FK is set, resolved in the same order CreateFormReviewTask uses:
- * active (open) order -> lead -> sales lead -> person.
+ * The log is attached to the record the anamnesis itself is coupled to
+ * (order -> sales lead -> lead -> person), so the entry shows up where the
+ * action was performed rather than on some unrelated open order.
  */
 class GvlAuditLogger
 {
     public function __construct(
         private readonly ActivityRepository $activityRepository,
-        private readonly AnamnesisOrderResolver $orderResolver,
     ) {}
 
     /**
@@ -33,12 +33,10 @@ class GvlAuditLogger
         $typeLabel = $form->gvl_form_type?->label() ?? 'GVL-formulier';
         $personName = $anamnesis->person?->name ?? 'onbekend';
 
-        $order = $this->orderResolver->findActiveOrderForAnamnesis($anamnesis);
-
         $fk = match (true) {
-            $order !== null             => ['order_id' => $order->id],
-            (bool) $anamnesis->lead_id  => ['lead_id' => $anamnesis->lead_id],
+            (bool) $anamnesis->order_id => ['order_id' => $anamnesis->order_id],
             (bool) $anamnesis->sales_id => ['sales_lead_id' => $anamnesis->sales_id],
+            (bool) $anamnesis->lead_id  => ['lead_id' => $anamnesis->lead_id],
             default                     => ['person_id' => $anamnesis->person_id],
         };
 

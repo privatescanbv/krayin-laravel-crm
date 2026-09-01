@@ -155,7 +155,7 @@
                 @include('admin::activities.partials.tab-activities', ['entityId' => $person->id, 'entityType' => 'contacts.persons'])
             </div>
             <div v-else-if="leadDetailSection === 'anamnese'" class="flex w-full flex-col gap-4 rounded-lg">
-                <x-adminc::anamnesis.index :anamnesis="$person->anamnesis"/>
+                <x-adminc::anamnesis.index :person="$person"/>
             </div>
             <div v-else-if="leadDetailSection === 'leads'" class="flex w-full flex-col gap-4 rounded-lg">
                 <x-admin::leads :person="$person"/>

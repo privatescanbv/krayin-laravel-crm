@@ -83,6 +83,7 @@ $registerAuthenticatedApiRoutes = function () {
 
     // Keycloak mapping: get person id for a given Keycloak user id
     Route::get('keycloak/persons/{keycloakUserId}', [KeycloakUserController::class, 'findPersonByKeycloakId'])
+        ->middleware('patient.self:keycloakUserId')
         ->name('api.keycloak.persons.findByKeycloakId');
 
     // Patient unauthenticated-flow routes (API-key only; no patient token available yet)

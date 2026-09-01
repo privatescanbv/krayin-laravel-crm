@@ -20,6 +20,7 @@ class AnamnesisGvlForm extends Model
         'gvl_form_id',
         'gvl_form_status',
         'gvl_form_type',
+        'completed_at',
         'created_by',
         'updated_by',
     ];
@@ -27,6 +28,7 @@ class AnamnesisGvlForm extends Model
     protected $casts = [
         'gvl_form_status' => FormStatus::class,
         'gvl_form_type'   => FormType::class,
+        'completed_at'    => 'immutable_datetime',
     ];
 
     protected static function booted(): void

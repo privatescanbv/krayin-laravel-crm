@@ -139,6 +139,20 @@
                     </div>
                 </div>
 
+                {{-- Formulieren overzicht (cross-level) --}}
+                <div class="border-b border-gray-100 px-4 py-3 dark:border-gray-700">
+                    <x-adminc::anamnesis.forms-overview
+                        :entity="$entity"
+                        :entityType="$entityType"
+                        :person="$person"
+                        :effectiveAnamnesis="$personAnamnesis"
+                        :personHasPortalAccount="!empty($person->keycloak_user_id)"
+                        :showDiagnosisAttach="$isSales && $entity->getDepartment()?->isHernia()"
+                        :salesLead="$isSales ? $entity : null"
+                        :returnUrl="$returnUrlAnamnese"
+                    />
+                </div>
+
                 {{-- Anamnesis card content --}}
                 @if ($personAnamnesis)
                     <div class="p-0">
@@ -147,17 +161,6 @@
                 @else
                     <div class="p-6 text-sm text-gray-500 dark:text-gray-400">
                         Geen anamnese beschikbaar voor deze persoon.
-                    </div>
-                @endif
-
-                {{-- Herniapoli-only: diagnoseformulieren klaarzetten in het patiëntenportaal --}}
-                @if ($isSales && $entity->getDepartment()?->isHernia())
-                    <div class="border-t border-gray-100 p-4 dark:border-gray-700">
-                        <x-adminc::anamnesis.diagnosis-forms-list
-                            :sales-lead="$entity"
-                            :person="$person"
-                            :return-url="$returnUrlAnamnese"
-                        />
                     </div>
                 @endif
             </div>

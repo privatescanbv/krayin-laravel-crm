@@ -314,6 +314,7 @@ namespace App\Models{
  * @property string $anamnesis_id
  * @property string|null $gvl_form_id
  * @property \App\Enums\FormStatus|null $gvl_form_status
+ * @property \Carbon\CarbonImmutable|null $completed_at
  * @property \App\Enums\FormType|null $gvl_form_type
  * @property int|null $created_by
  * @property int|null $updated_by
@@ -327,6 +328,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm whereAnamnesisId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm whereCompletedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm whereCreatedBy($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AnamnesisGvlForm whereGvlFormId($value)

@@ -56,12 +56,13 @@ class ApiKeyAuth
         //
         // IMPORTANT: A Keycloak bearer token only proves who the caller is, not what they may
         // access. Only routes that additionally scope access to that specific subject (e.g. the
-        // `patient/{id}` routes protected by the `patient.self:id` middleware) are safe to expose
-        // to Keycloak-authenticated callers. All other routes (leads, sales-leads, webhooks, etc.)
-        // are service-to-service only and must require a trusted X-API-KEY.
+        // `patient/{id}` routes protected by the `patient.self:id` middleware, or
+        // `keycloak/persons/{keycloakUserId}` with `patient.self:keycloakUserId`) are safe to
+        // expose to Keycloak-authenticated callers. All other routes (leads, sales-leads,
+        // webhooks, etc.) are service-to-service only and must require a trusted X-API-KEY.
         $authHeader = $request->header('Authorization');
 
-        if (! $request->is('api/patient/*')) {
+        if (! $this->allowsKeycloakBearerFallback($request)) {
             Log::warning('ApiKeyAuth: unauthorized request - non-patient route requires X-API-KEY', [
                 'path' => $request->path(),
             ]);
@@ -117,5 +118,15 @@ class ApiKeyAuth
             'error'   => 'Unauthorized',
             'message' => 'Provide a valid API key in X-API-KEY or a valid Keycloak Bearer token',
         ], Response::HTTP_UNAUTHORIZED);
+    }
+
+    /**
+     * Routes where a Keycloak bearer token may substitute for X-API-KEY.
+     * Each route must enforce that the token subject matches the requested resource.
+     */
+    private function allowsKeycloakBearerFallback(Request $request): bool
+    {
+        return $request->is('api/patient/*')
+            || $request->is('api/keycloak/persons/*');
     }
 }

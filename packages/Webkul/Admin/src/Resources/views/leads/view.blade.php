@@ -181,7 +181,7 @@
             </div>
 
             <div v-else-if="leadDetailSection === 'anamnese'" class="flex w-full flex-col gap-4 rounded-lg">
-                @include('admin::leads.view.anamnese', ['anamneses' => $lead->anamnesis, 'persons' => $persons ?? collect()])
+                @include('admin::leads.view.anamnese', ['anamneses' => $lead->anamnesis, 'persons' => $persons ?? collect(), 'lead' => $lead])
             </div>
 
             <div v-else-if="leadDetailSection === 'marketing'" class="flex w-full flex-col gap-4 rounded-lg">

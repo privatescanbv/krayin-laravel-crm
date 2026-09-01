@@ -3,7 +3,6 @@
 use App\Enums\ActivityType;
 use Database\Seeders\TestSeeder;
 use Illuminate\Support\Facades\Log;
-use Mockery;
 use Webkul\Activity\Models\Activity;
 use Webkul\Automation\Models\Workflow;
 use Webkul\Lead\Models\Lead;

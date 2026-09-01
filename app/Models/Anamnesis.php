@@ -22,7 +22,6 @@ use Webkul\Lead\Models\Lead;
 
 /**
  * @method static Builder forOrder(Order $order)
- *
  * @mixin IdeHelperAnamnesis
  */
 class Anamnesis extends Model

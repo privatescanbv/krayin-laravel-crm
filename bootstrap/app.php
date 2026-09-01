@@ -14,6 +14,7 @@ use App\Http\Middleware\TrustProxies;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Services\Afb\AfbDispatchService;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Database\LostConnectionDetector;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -109,6 +110,15 @@ $app = Application::configure(basePath: dirname(__DIR__))
             NotFoundHttpException::class,
             EmailSendingBlockedException::class,
         ]);
+
+        // Long-running workers (queue:work / schedule:work) lose their idle MySQL
+        // connection when the server times it out or restarts. Laravel detects this,
+        // stops the worker and supervisor restarts it with a fresh connection, so the
+        // "MySQL server has gone away" PDOException is self-healing noise, not a bug.
+        $exceptions->dontReportWhen(
+            fn (Throwable $e) => app()->runningInConsole()
+                && (new LostConnectionDetector)->causedByLostConnection($e)
+        );
 
         $exceptions->reportable(function (Throwable $e) {
             if (app()->runningInConsole()) {

@@ -227,16 +227,8 @@ class InkoopStep2Controller extends Controller
             ->orderByDesc('id')
             ->get()
             ->filter(function (OrderItem $item) use ($invoice) {
-                if ($invoice->reference_date) {
-                    $examAt = $item->order?->firstExaminationCarbon();
-
-                    if (
-                        $examAt === null
-                        || $examAt->year !== (int) $invoice->reference_date->year
-                        || $examAt->month !== (int) $invoice->reference_date->month
-                    ) {
-                        return false;
-                    }
+                if (! $invoice->matchesExpectedExaminationMonth($item->order?->firstExaminationCarbon())) {
+                    return false;
                 }
 
                 $purchaseTotal = (float) $item->resolvedPurchasePrice()->purchase_price;

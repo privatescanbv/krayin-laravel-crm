@@ -6,6 +6,7 @@ use Database\Seeders\TestSeeder;
 use Illuminate\Support\Facades\Config;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User;
+use Mockery;
 use Webkul\Contact\Models\Person;
 
 beforeEach(function () {
@@ -78,7 +79,7 @@ it('accepts keycloak bearer token for own keycloak person lookup', function () {
     $socialiteUser->setRaw(['sub' => $keycloakUserId]);
     $socialiteUser->map(['id' => $keycloakUserId]);
 
-    $provider = \Mockery::mock();
+    $provider = Mockery::mock();
     $provider->shouldReceive('userFromToken')->once()->andReturn($socialiteUser);
     Socialite::shouldReceive('driver')->with('keycloak')->once()->andReturn($provider);
 
@@ -107,7 +108,7 @@ it('forbids keycloak bearer token for another users keycloak person lookup', fun
     $socialiteUser->setRaw(['sub' => $tokenSubject]);
     $socialiteUser->map(['id' => $tokenSubject]);
 
-    $provider = \Mockery::mock();
+    $provider = Mockery::mock();
     $provider->shouldReceive('userFromToken')->once()->andReturn($socialiteUser);
     Socialite::shouldReceive('driver')->with('keycloak')->once()->andReturn($provider);
 

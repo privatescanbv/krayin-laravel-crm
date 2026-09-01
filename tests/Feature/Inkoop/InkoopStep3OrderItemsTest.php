@@ -28,7 +28,8 @@ beforeEach(function () {
     $this->invoice = InkoopInvoice::create([
         'clinic_id'       => $this->clinic->id,
         'pdf_path'        => 'test/test.pdf',
-        'reference_date'  => '2025-06-15',
+        // Factuur van juli hoort bij onderzoeken in juni (kliniek factureert een maand achteraf).
+        'reference_date'  => '2025-07-15',
     ]);
 
     $this->crmPerson = Person::factory()->create();

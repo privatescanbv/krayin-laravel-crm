@@ -13,6 +13,7 @@
                         Gefilterd op kliniek: <strong>{{ $invoice->clinic?->name ?? 'Onbekend' }}</strong>
                         @if ($invoice->reference_date)
                             · Referentiemaand: <strong>{{ $invoice->reference_date->translatedFormat('F Y') }}</strong>
+                            · Onderzoeksmaand: <strong>{{ $invoice->expectedExaminationMonth()->translatedFormat('F Y') }}</strong>
                         @endif
                     </div>
                 </div>

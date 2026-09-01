@@ -156,40 +156,42 @@ it('excludes order items booked at a different clinic', function () {
         ->and($ids->contains($otherClinicItem->id))->toBeFalse();
 });
 
-it('filters order items to the reference_date month when set', function () {
-    $this->invoice->update(['reference_date' => '2025-08-15']);
+it('filters order items to the month before the reference_date month', function () {
+    // Klinieken factureren een maand achteraf: een factuur met referentiedatum
+    // in september hoort bij onderzoeken in augustus.
+    $this->invoice->update(['reference_date' => '2025-09-15']);
 
-    $sameMonthOrder = Order::factory()->create();
-    $otherMonthOrder = Order::factory()->create();
+    $augustOrder = Order::factory()->create();
+    $septemberOrder = Order::factory()->create();
 
-    $sameMonthItem = createOrderItemForClinic(
-        $sameMonthOrder,
+    $augustItem = createOrderItemForClinic(
+        $augustOrder,
         $this->crmPerson,
         $this->resource,
         OrderItemStatus::WON->value,
         Carbon::parse('2025-08-10 10:00:00'),
     );
-    $otherMonthItem = createOrderItemForClinic(
-        $otherMonthOrder,
+    $septemberItem = createOrderItemForClinic(
+        $septemberOrder,
         $this->crmPerson,
         $this->resource,
         OrderItemStatus::WON->value,
-        Carbon::parse('2025-07-10 10:00:00'),
+        Carbon::parse('2025-09-10 10:00:00'),
     );
 
     $response = $this->get(route('admin.inkoop.step2', $this->invoice->id));
 
     $response->assertOk();
     $ids = step2ItemIds($response);
-    expect($ids->contains($sameMonthItem->id))->toBeTrue()
-        ->and($ids->contains($otherMonthItem->id))->toBeFalse();
+    expect($ids->contains($augustItem->id))->toBeTrue()
+        ->and($ids->contains($septemberItem->id))->toBeFalse();
 });
 
-it('uses first_examination_at override for the reference_date month filter', function () {
+it('uses first_examination_at override for the examination month filter', function () {
     $this->invoice->update(['reference_date' => '2025-06-15']);
 
     $order = Order::factory()->create([
-        'first_examination_at' => '2025-06-11',
+        'first_examination_at' => '2025-05-11',
     ]);
 
     $item = createOrderItemForClinic(

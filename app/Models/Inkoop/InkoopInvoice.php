@@ -5,6 +5,7 @@ namespace App\Models\Inkoop;
 use App\Enums\Inkoop\InkoopInvoiceParser;
 use App\Enums\Inkoop\InkoopInvoiceStatus;
 use App\Models\Clinic;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -92,5 +93,33 @@ class InkoopInvoice extends Model
     public function getSupplierTypeAttribute(): ?string
     {
         return $this->parser?->supplierType();
+    }
+
+    /**
+     * Klinieken factureren de onderzoeken steeds een maand achteraf: de
+     * referentiedatum (factuurdatum) ligt in de maand ná de onderzoeken.
+     * De bijbehorende orders hebben hun eerste onderzoek dus in de maand
+     * vóór de referentiemaand.
+     */
+    public function expectedExaminationMonth(): ?Carbon
+    {
+        return $this->reference_date?->copy()->startOfMonth()->subMonthNoOverflow();
+    }
+
+    /**
+     * Of een order met deze eerste-onderzoeksdatum bij deze factuur hoort.
+     * Zonder referentiedatum vervalt de maandfilter en telt elke order mee.
+     */
+    public function matchesExpectedExaminationMonth(?Carbon $examAt): bool
+    {
+        $expected = $this->expectedExaminationMonth();
+
+        if ($expected === null) {
+            return true;
+        }
+
+        return $examAt !== null
+            && $examAt->year === $expected->year
+            && $examAt->month === $expected->month;
     }
 }

@@ -30,9 +30,9 @@ beforeEach(function () {
 
     config([
         'api.keys'                            => ['valid-api-key-123'],
-        'services.portal.patient.api_url'   => 'http://forms',
-        'services.portal.patient.api_token' => 'test-token',
-        'services.portal.patient.web_url'   => 'http://portal',
+        'services.portal.patient.api_url'     => 'http://forms',
+        'services.portal.patient.api_token'   => 'test-token',
+        'services.portal.patient.web_url'     => 'http://portal',
     ]);
 
     Http::fake([

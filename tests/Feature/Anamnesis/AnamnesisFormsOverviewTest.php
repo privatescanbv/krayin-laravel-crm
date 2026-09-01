@@ -269,6 +269,22 @@ test('chainsForPerson returns separate chains for unrelated leads', function () 
     expect($this->builder->chainsForPerson($person))->toHaveCount(2);
 });
 
+test('chainsForPerson skips an anamnesis whose lead/sales/order was deleted', function () {
+    $person = Person::factory()->create();
+
+    $liveLead = Lead::factory()->create();
+    Anamnesis::factory()->create(['lead_id' => $liveLead->id, 'person_id' => $person->id]);
+
+    $deletedLead = Lead::factory()->create();
+    Anamnesis::factory()->create(['lead_id' => $deletedLead->id, 'person_id' => $person->id]);
+    $deletedLead->delete();
+
+    $chains = $this->builder->chainsForPerson($person);
+
+    expect($chains)->toHaveCount(1)
+        ->and($chains->first()['lead']->id)->toBe($liveLead->id);
+});
+
 // ---------------------------------------------------------------------------
 // Attach duplicate confirmation (HTTP)
 // ---------------------------------------------------------------------------

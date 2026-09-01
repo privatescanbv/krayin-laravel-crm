@@ -10,7 +10,7 @@ use App\Models\Order;
 use App\Models\SalesLead;
 use App\Support\GvlFormLink;
 use Illuminate\Support\Collection;
-use InvalidArgumentException;
+use Illuminate\Support\Facades\Log;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 
@@ -65,7 +65,23 @@ class AnamnesisFormsOverviewBuilder
                 $leadId = $this->chainLeadIdFromAnamnesis($effective);
                 $lead = $leadId ? Lead::find($leadId) : null;
 
-                [$entity, $entityType] = $this->resolveOverviewContext($lead, $effective);
+                $context = $this->resolveOverviewContext($lead, $effective);
+
+                if ($context === null) {
+                    // Orphaned anamnesis: its lead/sales/order was deleted. Skip the
+                    // chain rather than crash the whole person view.
+                    Log::warning('Anamnesis has no resolvable overview context; skipping chain', [
+                        'anamnesis_id' => $effective->id,
+                        'person_id'    => $effective->person_id,
+                        'lead_id'      => $effective->lead_id,
+                        'sales_id'     => $effective->sales_id,
+                        'order_id'     => $effective->order_id,
+                    ]);
+
+                    return null;
+                }
+
+                [$entity, $entityType] = $context;
 
                 $herniaSalesLead = $chainAnamneses
                     ->pluck('sales_id')
@@ -82,6 +98,7 @@ class AnamnesisFormsOverviewBuilder
                     'hernia_sales_lead'   => $herniaSalesLead,
                 ];
             })
+            ->filter()
             ->values();
     }
 
@@ -670,9 +687,9 @@ class AnamnesisFormsOverviewBuilder
     }
 
     /**
-     * @return array{0: Lead|SalesLead|Order, 1: string}
+     * @return array{0: Lead|SalesLead|Order, 1: string}|null
      */
-    private function resolveOverviewContext(?Lead $lead, Anamnesis $effective): array
+    private function resolveOverviewContext(?Lead $lead, Anamnesis $effective): ?array
     {
         if ($lead) {
             return [$lead, 'lead'];
@@ -686,6 +703,6 @@ class AnamnesisFormsOverviewBuilder
             return [$effective->order, 'order'];
         }
 
-        throw new InvalidArgumentException('Anamnesis has no resolvable overview context.');
+        return null;
     }
 }

@@ -187,7 +187,9 @@ it('shows a forms overview with both diagnose types on a Herniapoli sale', funct
     test()->get(route('admin.sales-leads.view', $salesLead->id))
         ->assertOk()
         ->assertSee('Formulieren')
-        ->assertSee('Klaarzetten');
+        ->assertSee('Diagnose lage rugpijn')
+        ->assertSee('Diagnose nekpijn')
+        ->assertSee('Koppel formulier');
 });
 
 it('does not show the diagnose block on a non-Herniapoli sale', function () {
@@ -195,7 +197,8 @@ it('does not show the diagnose block on a non-Herniapoli sale', function () {
 
     test()->get(route('admin.sales-leads.view', $salesLead->id))
         ->assertOk()
-        ->assertDontSee('Diagnose lage rugpijn');
+        ->assertDontSee('Diagnose lage rugpijn')
+        ->assertDontSee('Diagnose nekpijn');
 });
 
 it('shows status and a view link once a diagnose form is set up', function () {
@@ -206,7 +209,7 @@ it('shows status and a view link once a diagnose form is set up', function () {
         ->assertOk()
         ->assertSee('Bekijken')
         ->assertSee('Ontkoppel')
-        ->assertSee('Klaarzetten');
+        ->assertSee('Diagnose nekpijn');
 });
 
 it('refuses a second form of the same diagnose type', function () {

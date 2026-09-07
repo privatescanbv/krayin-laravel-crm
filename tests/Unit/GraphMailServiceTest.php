@@ -10,7 +10,9 @@ use App\Services\Mail\MicrosoftGraphTokenService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 use ReflectionClass;
 use Tests\TestCase;
 use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
@@ -58,6 +60,8 @@ class GraphMailServiceTest extends TestCase
         );
 
         $this->service->configureMailbox('test@example.com', 'privatescan');
+
+        Sleep::fake();
     }
 
     public function test_implements_inbound_email_processor_contract()
@@ -149,6 +153,81 @@ class GraphMailServiceTest extends TestCase
         $this->assertCount(1, $messages);
         $this->assertEquals('msg-1', $messages[0]['id']);
         $this->assertEquals('Test Subject', $messages[0]['subject']);
+    }
+
+    public function test_fetch_messages_retries_on_concurrency_limit()
+    {
+        Http::fake([
+            'login.microsoftonline.com/*' => Http::response([
+                'access_token' => 'test-token',
+                'token_type'   => 'Bearer',
+                'expires_in'   => 3600,
+            ], 200),
+            'graph.microsoft.com/*' => Http::sequence()
+                ->push([
+                    'error' => ['code' => 'CommandConcurrencyLimitReached', 'message' => 'Command Concurrency Limit Reached'],
+                ], 429, ['Retry-After' => '0'])
+                ->push(['value' => [['id' => 'msg-1', 'subject' => 'Recovered']]], 200),
+        ]);
+
+        $method = (new ReflectionClass($this->service))->getMethod('fetchMessages');
+        $method->setAccessible(true);
+
+        $messages = $method->invoke($this->service);
+
+        $this->assertCount(1, $messages);
+        $this->assertEquals('msg-1', $messages[0]['id']);
+        Sleep::assertSleptTimes(1);
+    }
+
+    public function test_fetch_messages_retries_on_connection_failure()
+    {
+        $attempts = 0;
+
+        Http::fake(function ($request) use (&$attempts) {
+            if (str_contains($request->url(), 'login.microsoftonline.com')) {
+                return Http::response(['access_token' => 'test-token', 'token_type' => 'Bearer', 'expires_in' => 3600], 200);
+            }
+
+            if (++$attempts === 1) {
+                throw new ConnectionException('cURL error 28: SSL connection timeout');
+            }
+
+            return Http::response(['value' => [['id' => 'msg-1']]], 200);
+        });
+
+        $method = (new ReflectionClass($this->service))->getMethod('fetchMessages');
+        $method->setAccessible(true);
+
+        $messages = $method->invoke($this->service);
+
+        $this->assertCount(1, $messages);
+        $this->assertEquals(2, $attempts);
+    }
+
+    public function test_fetch_messages_throws_after_exhausting_retries()
+    {
+        Http::fake([
+            'login.microsoftonline.com/*' => Http::response([
+                'access_token' => 'test-token',
+                'token_type'   => 'Bearer',
+                'expires_in'   => 3600,
+            ], 200),
+            'graph.microsoft.com/*' => Http::response([
+                'error' => ['code' => 'CommandConcurrencyLimitReached', 'message' => 'Command Concurrency Limit Reached'],
+            ], 429, ['Retry-After' => '0']),
+        ]);
+
+        $method = (new ReflectionClass($this->service))->getMethod('fetchMessages');
+        $method->setAccessible(true);
+
+        try {
+            $method->invoke($this->service);
+            $this->fail('Expected exception was not thrown');
+        } catch (Exception $e) {
+            $this->assertStringContainsString('Failed to fetch messages', $e->getMessage());
+            Sleep::assertSleptTimes(2);
+        }
     }
 
     public function test_process_message_creates_email()

@@ -4,6 +4,8 @@ namespace App\Services\Mail;
 
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Webkul\Email\Enums\EmailFolderEnum;
@@ -80,6 +82,23 @@ class GraphMailService extends AbstractEmailProcessor
         }
 
         $response = Http::withToken($accessToken)
+            // Fail fast on TLS handshakes that never complete (cURL 7 / 28) rather than
+            // sitting out the default connect timeout; they're usually gone next attempt.
+            ->connectTimeout(5)
+            ->retry(3, function (int $attempt, $e) {
+                $retryAfter = $e instanceof RequestException ? $e->response->header('Retry-After') : null;
+
+                return is_numeric($retryAfter) ? min(30, (int) $retryAfter) * 1000 : $attempt * 5000;
+            }, function ($e) {
+                // Retry transient failures only: connection blips, and Exchange Online's
+                // per-mailbox concurrency limit (CommandConcurrencyLimitReached, HTTP
+                // 429/503), which clears within seconds. A 4xx is permanent — let it through.
+                return $e instanceof ConnectionException
+                    || ($e instanceof RequestException && (
+                        in_array($e->response->status(), [429, 503, 504], true)
+                        || str_contains($e->response->body(), 'ConcurrencyLimit')
+                    ));
+            }, throw: false)
             ->get($url, [
                 '$filter'  => $filter,
                 '$select'  => 'id,subject,from,toRecipients,ccRecipients,bccRecipients,receivedDateTime,isRead,hasAttachments,body,attachments,internetMessageId,conversationId,replyTo,internetMessageHeaders',

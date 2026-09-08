@@ -352,7 +352,9 @@
                                     if (response.status == 200) {
                                         this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
 
-                                        this.$emit('on-discard');
+                                        // Leave the view page - the email is no longer in this folder.
+                                        // Just resetting state here would keep it on screen (looks like nothing happened).
+                                        window.location.href = window.location.pathname.replace(/\/\d+\/?$/, '');
                                     }
                                 });
                             }

@@ -42,7 +42,8 @@ return [
     |
     */
 
-    'enabled' => filter_var(env('LLM_AI_SUMMARY_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+    // Off by default; enable per environment (local + ACC on, PROD off).
+    'enabled' => filter_var(env('LLM_AI_SUMMARY_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
 
     'scheduled_queue' => env('LLM_AI_SUMMARY_SCHEDULED_QUEUE', 'ai-summary-scheduled'),
 

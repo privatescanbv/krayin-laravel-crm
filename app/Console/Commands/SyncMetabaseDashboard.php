@@ -56,8 +56,8 @@ class SyncMetabaseDashboard extends Command
             $dashboard = $sourceClient->getDashboard($dashboardId);
 
             $this->line('');
-            $this->line("Source:    {$sourceClient->label}");
-            $this->line("Target:    {$targetClient->label}");
+            $this->line("Source:    {$sourceClient->label} ({$sourceClient->baseUrl()})");
+            $this->line("Target:    {$targetClient->label} ({$targetClient->baseUrl()})");
             $this->line("Dashboard: {$dashboardId} - ".($dashboard['name'] ?? '(no name)'));
             $this->line('');
 

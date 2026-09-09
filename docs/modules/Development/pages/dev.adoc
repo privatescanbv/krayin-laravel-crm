@@ -110,6 +110,24 @@ Als je stack als productie wil testen. Zet je APP_ENV op production en bouw de a
 Je zult het verschil zien in de src link van css en js files in de html broncode.
 
 
+=== Analytics database
+
+Het `analytics`-schema is een aparte MySQL-database (star schema: `dim_*` / `fact_*` / `v_*`) die volledig herbouwd wordt uit de CRM-data. De opbouwscripts staan in `database/analytics/` en worden gedraaid via:
+
+[source,bash]
+----
+docker-compose exec crm php artisan analytics:setup
+----
+
+Standaard herlaadt dit alleen de procedure, het event en de views (`003`/`004`/`005`). Bij aanpassingen aan een bestaand schema- of initieel-script (`001_schema.sql`, `006_initieel.sql`) is een volledige herbouw nodig:
+
+[source,bash]
+----
+docker-compose exec crm php artisan analytics:setup --force
+----
+
+`--force` doet DROP + CREATE van alle tabellen en draait `CALL analytics.sync_all()` opnieuw. `sync_all()` is een full reload, dus opnieuw draaien is altijd veilig.
+
 === Migratie script opschonen
 
 Na verloop van tijd zal het aantal migratie files groeien. Dit kan ervoor zorgen dat het opzetten van een nieuwe omgeving lang duurt. Laravel biedt de mogelijkheid om de huidige database structuur te dumpen naar een sql file en alle migratie files te verwijderen.

@@ -269,6 +269,36 @@ services:
       - public
       - backend
 
+#  metabase2:
+#    image: metabase/metabase:latest
+#    container_name: metabase2
+#    restart: unless-stopped
+#    environment:
+#      JAVA_TIMEZONE: Europe/Amsterdam
+#
+#      # Metabase metadata DB
+#      MB_DB_TYPE: ${DB_CONNECTION}
+#      MB_DB_DBNAME: metabase2
+#      MB_DB_PORT: ${DB_PORT}
+#      MB_DB_USER: metabase2
+#      MB_DB_PASS: ${METABASE_DB_PASSWORD}
+#      MB_DB_HOST: ${DB_HOST}
+#
+#    labels:
+#      - traefik.enable=true
+#      - traefik.http.routers.metabase2.rule=Host("reports2.local.privatescan.nl")
+#      - traefik.http.routers.metabase2.entrypoints=https
+#      - traefik.http.routers.metabase2.tls=true
+#      - traefik.http.routers.metabase2.service=metabase2
+#      - traefik.http.services.metabase2.loadbalancer.server.port=3000
+#      - traefik.docker.network=public
+#      - logging=promtail
+#    depends_on:
+#      - mysql_crm
+#    networks:
+#      - public
+#      - backend
+
   keycloak:
     image: quay.io/keycloak/keycloak:26.6
     container_name: keycloak

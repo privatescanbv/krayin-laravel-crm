@@ -29,6 +29,8 @@ Route::prefix('contacts')->group(function () {
 
         Route::get('search', 'search')->name('admin.contacts.persons.search');
 
+        Route::post('suggest', 'suggest')->name('admin.contacts.persons.suggest');
+
         Route::get('searchByLead/{lead}', 'searchByLead')->name('admin.contacts.persons.searchbylead');
         // Single-person variant, query params lead_id & person_id
         Route::get('searchByLead', 'searchByLeadSingle')->name('admin.contacts.persons.searchbylead_single');
@@ -93,6 +95,8 @@ Route::prefix('contacts')->group(function () {
             Route::post('merge', 'merge')->name('admin.contacts.persons.duplicates.merge');
 
             Route::post('false-positive', 'markFalsePositive')->name('admin.contacts.persons.duplicates.false_positive');
+
+            Route::delete('false-positive', 'unmarkFalsePositive')->name('admin.contacts.persons.duplicates.false_positive.destroy');
         });
     });
 

@@ -304,7 +304,7 @@ class SalesLeadController extends Controller
                 'message' => 'Deze Sales heeft geen gekoppelde lead. Sales: '.$salesLead->name,
             ], 404);
         }
-        $lead = Lead::findOrFail($salesLead->lead_id);
+        $lead = Lead::find($salesLead->lead_id);
         if (! $lead) {
             Log::warning('Lead not found for SalesLead', [
                 'sales_lead_id' => $id,

@@ -47,15 +47,41 @@ class AttachmentRepository extends Repository
         foreach ($data['attachments'] as $attachment) {
             $attributes = $this->prepareData($email, $attachment);
 
-            if (
-                ! empty($attachment->contentId)
-                && $data['source'] === 'email'
-            ) {
-                $attributes['content_id'] = $attachment->contentId;
+            if ($contentId = $this->resolveContentId($attachment, $data['source'])) {
+                $attributes['content_id'] = $contentId;
             }
 
             $this->create($attributes);
         }
+    }
+
+    /**
+     * Resolve the MIME Content-ID for an inbound email attachment, so `cid:` references
+     * in the HTML body can later be matched to the stored attachment.
+     *
+     * Webklex\PHPIMAP\Attachment exposes the Content-ID header via its `id` property
+     * (not `contentId`), falling back to a content hash when no header is present —
+     * that fallback must be ignored since it never appears in a `cid:` reference.
+     */
+    private function resolveContentId($attachment, string $source): ?string
+    {
+        if ($source !== 'email') {
+            return null;
+        }
+
+        if ($attachment instanceof ImapAttachment) {
+            // Read into locals first: Webklex\PHPIMAP\Attachment resolves these via
+            // __get() with no __isset(), so empty()/isset()/?? treat them as unset
+            // and would silently discard a real Content-ID here.
+            $id = $attachment->id;
+            $hash = $attachment->hash;
+
+            return $id !== null && $id !== '' && $id !== $hash
+                ? $id
+                : null;
+        }
+
+        return $attachment->contentId ?? null;
     }
 
     /**
@@ -80,13 +106,19 @@ class AttachmentRepository extends Repository
 
         Storage::put($path, $content);
 
-        $this->create([
+        $attributes = [
             'email_id'     => $email->id,
             'name'         => $name,
             'content_type' => $graphAttachment['contentType'] ?? 'application/octet-stream',
             'size'         => strlen($content) ?: ($graphAttachment['size'] ?? 0),
             'path'         => $path,
-        ]);
+        ];
+
+        if (! empty($graphAttachment['contentId'])) {
+            $attributes['content_id'] = $graphAttachment['contentId'];
+        }
+
+        $this->create($attributes);
     }
 
     /**

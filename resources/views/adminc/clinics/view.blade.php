@@ -53,7 +53,7 @@
                 :showOrders="false"
                 :showAnamnesis="false"
                 :showMarketing="false"
-                :showInkoopAfletteren="true"
+                :showInkoopAfletteren="bouncer()->hasPermission('inkoop-afletteren')"
                 :showPartnerProducts="true"
                 :showResources="true"
                 :showAfbDispatches="true"
@@ -105,9 +105,11 @@
                 <x-adminc::clinics.partials.departments :clinic="$clinic"/>
             </div>
 
-            <div v-else-if="leadDetailSection === 'inkoop-afletteren'" class="flex w-full flex-col gap-4 rounded-lg">
-                @include('adminc::clinics.partials.tab-inkoop-afletteren', ['clinic' => $clinic])
-            </div>
+            @if (bouncer()->hasPermission('inkoop-afletteren'))
+                <div v-else-if="leadDetailSection === 'inkoop-afletteren'" class="flex w-full flex-col gap-4 rounded-lg">
+                    @include('adminc::clinics.partials.tab-inkoop-afletteren', ['clinic' => $clinic])
+                </div>
+            @endif
         </div>
 
         <!-- Right Panel Container -->

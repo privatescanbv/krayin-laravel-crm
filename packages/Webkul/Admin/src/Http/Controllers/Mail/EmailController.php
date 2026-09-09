@@ -413,12 +413,14 @@ class EmailController extends Controller
             $parentId = $email->parent_id;
 
             if (request('type') == 'trash') {
-                $trashFolder = Folder::where('name', EmailFolderEnum::TRASH->getFolderName())->first();
-                $alreadyInTrash = $trashFolder && $email->folder_id === $trashFolder->id;
+                $trashFolder = Folder::firstOrCreate(
+                    ['name' => EmailFolderEnum::TRASH->getFolderName()],
+                    ['parent_id' => null, 'is_deletable' => false]
+                );
 
-                if ($alreadyInTrash) {
+                if ($email->folder_id === $trashFolder->id) {
                     $this->emailRepository->delete($id);
-                } elseif ($trashFolder) {
+                } else {
                     $this->emailRepository->update([
                         'folder_id' => $trashFolder->id,
                     ], $id);

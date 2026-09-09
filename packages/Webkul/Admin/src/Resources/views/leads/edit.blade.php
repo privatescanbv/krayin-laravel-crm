@@ -363,12 +363,26 @@
                         try {
                             const resp = await axios.get('/admin/contacts/persons/search', { params: { lead_id: this.lead.id } });
                             const list = (resp && resp.data && (resp.data.data || resp.data)) || [];
-                            // Sort by server score if present, else by client score, then limit to 10
-                            const sorted = list.sort((a,b) => ((b.match_score_percentage||b.match_score||0) - (a.match_score_percentage||a.match_score||0)));
-                            this.suggestions = sorted.slice(0, 10);
+                            // Strong matches (email/phone) first, then by score — then limit to 10
+                            const helpers = window.adminc?.personSuggestionHelpers;
+                            this.suggestions = helpers
+                                ? helpers.rankAndLimitSuggestions(list, 10)
+                                : list.sort((a,b) => ((b.match_score_percentage||b.match_score||0) - (a.match_score_percentage||a.match_score||0))).slice(0, 10);
                         } catch (e) {
                             this.suggestions = [];
                         }
+                    },
+                    isStrongSuggestion(person) {
+                        return window.adminc?.personSuggestionHelpers?.isStrongSuggestion(person) ?? false;
+                    },
+                    suggestionReasonLabel(reason) {
+                        return window.adminc?.personSuggestionHelpers?.suggestionReasonLabel(reason) ?? reason;
+                    },
+                    personSuggestionSections(suggestions) {
+                        const helpers = window.adminc?.personSuggestionHelpers;
+                        return helpers
+                            ? helpers.personSuggestionSections(suggestions)
+                            : [{ key: 'all', title: null, items: suggestions || [] }];
                     },
                     linkSuggestion(person) {
                         // Voeg toe aan de multi-contactmatcher als gekoppelde persoon

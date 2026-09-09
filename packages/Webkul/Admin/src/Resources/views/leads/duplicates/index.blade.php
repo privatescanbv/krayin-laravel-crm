@@ -24,6 +24,7 @@
             <v-duplicates-manager
                 :primary-lead="{{ json_encode($leadData) }}"
                 :duplicates="{{ json_encode($duplicatesData) }}"
+                :preselected-lead-ids="{{ json_encode($preselectedLeadIds ?? []) }}"
                 merge-url="{{ route('admin.leads.duplicates.merge', $lead->id) }}"
                 false-positive-url="{{ route('admin.leads.duplicates.false_positive', $lead->id) }}"
                 redirect-url="{{ route('admin.leads.view', $lead->id) }}"
@@ -113,14 +114,27 @@
                                     </tr>
                                     <tr v-for="duplicate in duplicates" :key="'dup-row-' + duplicate.id" class="border-b border-gray-100 dark:border-gray-800">
                                         <td class="p-3"><a :href="'{{ route('admin.leads.view', 'place_holder') }}'.replace('place_holder', duplicate.id)">@{{ duplicate.id }}</a></td>
-                                        <td class="p-3 text-sm">@{{ duplicate.first_name }} @{{ duplicate.last_name }}</td>
+                                        <td class="p-3 text-sm">
+                                            @{{ duplicate.first_name }} @{{ duplicate.last_name }}
+                                            <span
+                                                v-if="duplicate.has_sales_lead"
+                                                class="ml-1 inline-flex items-center rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                                title="Deze lead heeft al een sales (verkooptraject) en kan daarom niet als duplicaat worden samengevoegd. Start het samenvoegen vanaf deze lead om hem te behouden."
+                                            >sales</span>
+                                        </td>
                                         <td class="p-3 text-sm">@{{ duplicate.stage?.name || '-' }}</td>
                                         <td class="p-3 text-sm">@{{ duplicate.created_at || '-' }}</td>
                                         <td class="p-3 text-xs">@{{ (duplicate.matched_emails || []).join(', ') || '-' }}</td>
                                         <td class="p-3 text-xs">@{{ (duplicate.matched_phones || []).join(', ') || '-' }}</td>
                                         <td class="p-3 text-xs">@{{ duplicate.name_reason || '-' }}</td>
                                         <td class="p-3 text-center">
-                                            <input type="checkbox" :checked="selectedLeads.includes(duplicate.id)" @change="toggleLeadSelection(duplicate.id)" />
+                                            <input
+                                                type="checkbox"
+                                                :checked="selectedLeads.includes(duplicate.id)"
+                                                :disabled="duplicate.has_sales_lead"
+                                                :title="duplicate.has_sales_lead ? 'Heeft al een sales (verkooptraject) - kan niet als duplicaat worden samengevoegd.' : ''"
+                                                @change="toggleLeadSelection(duplicate.id)"
+                                            />
                                         </td>
                                     </tr>
                                 </tbody>
@@ -165,11 +179,17 @@
                                                 <input
                                                     type="checkbox"
                                                     :checked="selectedLeads.includes(duplicate.id)"
+                                                    :disabled="duplicate.has_sales_lead"
+                                                    :title="duplicate.has_sales_lead ? 'Heeft al een sales (verkooptraject) - kan niet als duplicaat worden samengevoegd.' : ''"
                                                     @change="toggleLeadSelection(duplicate.id)"
                                                     class="mb-2"
                                                 />
                                                 <span class="text-sm font-medium">Duplicaat</span>
                                                 <span class="text-xs text-gray-500">ID: @{{ duplicate.id }}</span>
+                                                <span
+                                                    v-if="duplicate.has_sales_lead"
+                                                    class="mt-1 inline-flex items-center rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                                >sales</span>
                                             </div>
                                         </th>
                                     </tr>
@@ -337,17 +357,33 @@
         <script type="module">
             app.component('v-duplicates-manager', {
                 template: '#v-duplicates-manager-template',
-                props: ['primaryLead', 'duplicates', 'mergeUrl', 'falsePositiveUrl', 'redirectUrl'],
+                props: {
+                    primaryLead: { type: Object, required: true },
+                    duplicates: { type: Array, required: true },
+                    mergeUrl: { type: String, required: true },
+                    falsePositiveUrl: { type: String, required: true },
+                    redirectUrl: { type: String, required: true },
+                    preselectedLeadIds: { type: Array, default: () => [] },
+                },
                 data() {
+                    const initialSelected = [this.primaryLead.id];
+
+                    (this.preselectedLeadIds || []).forEach((id) => {
+                        const leadId = Number(id);
+
+                        if (leadId && ! initialSelected.includes(leadId)) {
+                            initialSelected.push(leadId);
+                        }
+                    });
+
                     return {
-                        selectedLeads: [this.primaryLead.id], // Primary lead is always selected
+                        selectedLeads: initialSelected, // Primary lead is always selected
                         fieldMappings: {},
                         isLoading: false,
                         showIdenticalFields: false, // Control visibility of identical fields
                         fieldConfigurations: [
                             // Personal Information
                             { field: 'salutation', label: 'Aanhef', type: 'simple' },
-                            { field: 'title', label: 'Titel', type: 'simple' },
                             { field: 'first_name', label: 'Voornaam', type: 'simple' },
                             { field: 'last_name', label: 'Achternaam', type: 'simple' },
                             { field: 'lastname_prefix', label: 'Voorvoegsel achternaam', type: 'simple' },
@@ -367,10 +403,21 @@
                             { field: 'address', label: 'Adres', type: 'address' },
 
                             // Lead Information
-                            { field: 'status', label: 'Status', type: 'stage' }, // Special handling for status as stage name
+                            // 'status' is deliberately not selectable: it showed the pipeline stage name
+                            // while the merge copied the unrelated leads.status column. The stage is
+                            // already listed above as a readonly row.
                             { field: 'description', label: 'Beschrijving', type: 'simple', cssClass: 'text-sm text-center break-words max-w-xs' },
                             { field: 'lost_reason', label: 'Reden verlies', type: 'simple' },
 
+                            // Fields whose stored value is an id or enum: `displayField` only changes what
+                            // is shown, the radio keeps submitting the real column name.
+                            { field: 'mri_status', label: 'MRI-status', type: 'simple', displayField: 'mri_status_label' },
+                            // 'diagnosis_form' is not a column: choosing it copies diagnosis_form_id and
+                            // diagnoseform_pdf_url together (see LeadRepository::mergeLeads).
+                            { field: 'diagnosis_form', label: 'Diagnoseformulier', type: 'simple' },
+                            { field: 'national_identification_number', label: 'BSN', type: 'simple' },
+                            { field: 'organization_id', label: 'Organisatie', type: 'simple', displayField: 'organization_name' },
+                            { field: 'contact_person_id', label: 'Contactpersoon', type: 'simple', displayField: 'contact_person_name' },
                         ]
                     };
                 },
@@ -493,42 +540,53 @@
                         return lead[fieldConfig.field] || 'N/A';
                     },
 
+                    // These values end up in v-html, and lead data is free text (BSN, description,
+                    // organisation name, PDF url), so escape before interpolating.
+                    esc(value) {
+                        const div = document.createElement('div');
+                        div.textContent = value ?? '';
+                        return div.innerHTML;
+                    },
+
                     renderFieldValue(lead, fieldConfig) {
                         const cssClass = fieldConfig.cssClass || 'text-sm text-center break-words';
 
                         switch (fieldConfig.type) {
                             case 'simple':
-                                let value = lead[fieldConfig.field] || 'N/A';
+                                let value = lead[fieldConfig.displayField ?? fieldConfig.field] || 'N/A';
                                 if (fieldConfig.field === 'description' && typeof value === 'string' && value.length > 100) {
                                     value = value.substring(0, 100) + '…';
                                 }
-                                return `<span class="${cssClass}">${value}</span>`;
+                                return `<span class="${cssClass}">${this.esc(value)}</span>`;
 
                             case 'stage':
                                 const stageName = lead.stage?.name || 'N/A';
-                                return `<span class="${cssClass}">${stageName}</span>`;
+                                return `<span class="${cssClass}">${this.esc(stageName)}</span>`;
+
+                            case 'readonly':
+                                return `<span class="${cssClass}">${this.esc(lead[fieldConfig.field]?.name || 'N/A')}</span>`;
 
                             case 'array':
                                 if (!lead[fieldConfig.field] || lead[fieldConfig.field].length === 0) {
                                     const emptyText = fieldConfig.field === 'emails' ? 'Geen e-mails' : 'Geen telefoonnummers';
                                     return `<div class="text-xs text-center"><span class="text-gray-400">${emptyText}</span></div>`;
                                 }
-                                const items = lead[fieldConfig.field].map(item => `<div class="mb-1">${item.value}</div>`).join('');
+                                const items = lead[fieldConfig.field].map(item => `<div class="mb-1">${this.esc(item.value)}</div>`).join('');
                                 return `<div class="text-xs text-center">${items}</div>`;
 
                             case 'address':
                                 if (!lead.address) {
                                     return '<div class="text-xs text-center"><span class="text-gray-400">Geen adres</span></div>';
                                 }
-                                let addressHtml = `<div class="text-xs text-center"><div class="mb-1"><div>${lead.address.full_address || 'N/A'}</div>`;
+                                let addressHtml = `<div class="text-xs text-center"><div class="mb-1"><div>${this.esc(lead.address.full_address || 'N/A')}</div>`;
                                 if (lead.address.street && lead.address.house_number) {
-                                    addressHtml += `<div>${lead.address.street} ${lead.address.house_number}${lead.address.house_number_suffix || ''}</div>`;
+                                    addressHtml += `<div>${this.esc(lead.address.street)} ${this.esc(lead.address.house_number)}${this.esc(lead.address.house_number_suffix || '')}</div>`;
                                 }
                                 if (lead.address.postal_code || lead.address.city) {
-                                    addressHtml += `<div>${lead.address.postal_code || ''} ${lead.address.city || ''}</div>`;
+                                    addressHtml += `<div>${this.esc(lead.address.postal_code || '')} ${this.esc(lead.address.city || '')}</div>`;
                                 }
                                 if (lead.address.state || lead.address.country) {
-                                    addressHtml += `<div>${lead.address.state || ''} ${lead.address.country || ''}</div>`;
+                                    addressHtml += `<div>${this.esc(lead.address.state || '')} ${this.esc(lead.address.country || '')}</div>`;
                                 }
                                 addressHtml += '</div></div>';
                                 return addressHtml;

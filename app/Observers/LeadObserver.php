@@ -28,6 +28,11 @@ use Webkul\Lead\Repositories\LeadRepository;
 class LeadObserver
 {
     /**
+     * Fields that decide which other leads this lead matches (see JsonDuplicateMatcher).
+     */
+    private const DUPLICATE_MATCH_FIELDS = ['first_name', 'last_name', 'married_name', 'emails', 'phones'];
+
+    /**
      * Create a new observer instance.
      */
     public function __construct(
@@ -267,8 +272,38 @@ class LeadObserver
         try {
             $cacheService = app(LeadDuplicateCacheService::class);
             $cacheService->invalidateLeadCache($lead->id);
+
+            // Also drop the counterparts' caches: their (possibly empty) result was computed before
+            // this lead existed/changed/closed, which is what made the duplicate show up on one side
+            // only. Only worth the extra detection queries when the lead is new, its matching fields
+            // changed, or it crossed into/out of a won/lost stage - applyDuplicateFilters() hides
+            // closed leads from duplicate results, so a stage move does change who sees this lead.
+            $enteredOrLeftClosedStage = $lead->wasChanged('lead_pipeline_stage_id')
+                && ($this->isStageClosed($lead->lead_pipeline_stage_id) || $this->isStageClosed($lead->getOriginal('lead_pipeline_stage_id')));
+
+            if (! $lead->wasRecentlyCreated && ! $lead->wasChanged(self::DUPLICATE_MATCH_FIELDS) && ! $enteredOrLeftClosedStage) {
+                return;
+            }
+
+            // Raw candidates, not findPotentialDuplicatesDirectly(): that applies applyDuplicateFilters()
+            // against $lead itself first, which would return nothing once $lead is closed - exactly
+            // the case we need to reach the counterpart in.
+            foreach ($this->leadRepository->findRawDuplicateCandidates($lead) as $related) {
+                $cacheService->invalidateLeadCache((int) $related->id);
+            }
         } catch (Exception $e) {
             Log::warning('Failed to invalidate duplicate cache for lead '.$lead->id.': '.$e->getMessage());
         }
+    }
+
+    private function isStageClosed(?int $stageId): bool
+    {
+        if (! $stageId) {
+            return false;
+        }
+
+        $stage = Stage::find($stageId);
+
+        return (bool) ($stage?->is_won || $stage?->is_lost);
     }
 }

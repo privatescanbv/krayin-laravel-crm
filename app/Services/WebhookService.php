@@ -16,8 +16,6 @@ class WebhookService
     {
         // Check if webhooks are globally disabled
         if (! config('webhook.enabled', true)) {
-            //            Log::info('Webhooks are disabled - skipping webhook: '.$webhookType->value.'; from: '.$caller, $data);
-
             return true; // Return true to indicate "successful" skip
         }
 
@@ -74,7 +72,7 @@ class WebhookService
     {
         $endpoint = config('webhook.endpoints')[$webhookType->value] ?? null;
         if (! $endpoint) {
-            throw new Exception("Webhook endpoint not configured for type: {$webhookType->value}");
+            throw new Exception("Webhook endpoint not configured for type: $webhookType->value");
         }
 
         return config('webhook.base_url').$endpoint;

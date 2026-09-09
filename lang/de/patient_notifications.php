@@ -9,4 +9,8 @@ return [
         'title'   => 'GVL-Formular verfügbar',
         'summary' => 'Eine Gesundheitserklärung wartet darauf, von Ihnen ausgefüllt zu werden.',
     ],
+    'diagnosis' => [
+        'title'   => 'Diagnoseformular verfügbar',
+        'summary' => 'Ein Diagnoseformular wartet darauf, von Ihnen ausgefüllt zu werden.',
+    ],
 ];

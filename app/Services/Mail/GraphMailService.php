@@ -4,6 +4,8 @@ namespace App\Services\Mail;
 
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Webkul\Email\Enums\EmailFolderEnum;
@@ -70,16 +72,33 @@ class GraphMailService extends AbstractEmailProcessor
     {
         $accessToken = $this->tokenService->getAccessToken($this->mailboxKey);
 
-        $url = "{$this->baseUrl}/users/{$this->mailbox}/mailFolders('Inbox')/messages";
+        $url = "$this->baseUrl/users/$this->mailbox/mailFolders('Inbox')/messages";
 
         if (config('mail.mailers.microsoft-graph.read_new_mail_filter') === 'multi_environments') {
             $since = now()->subDays(1)->toIso8601String();
-            $filter = "receivedDateTime ge {$since}";
+            $filter = "receivedDateTime ge $since";
         } else {
             $filter = 'isRead eq false';
         }
 
         $response = Http::withToken($accessToken)
+            // Fail fast on TLS handshakes that never complete (cURL 7 / 28) rather than
+            // sitting out the default connect timeout; they're usually gone next attempt.
+            ->connectTimeout(5)
+            ->retry(3, function (int $attempt, $e) {
+                $retryAfter = $e instanceof RequestException ? $e->response->header('Retry-After') : null;
+
+                return is_numeric($retryAfter) ? min(30, (int) $retryAfter) * 1000 : $attempt * 5000;
+            }, function ($e) {
+                // Retry transient failures only: connection blips, and Exchange Online's
+                // per-mailbox concurrency limit (CommandConcurrencyLimitReached, HTTP
+                // 429/503), which clears within seconds. A 4xx is permanent — let it through.
+                return $e instanceof ConnectionException
+                    || ($e instanceof RequestException && (
+                        in_array($e->response->status(), [429, 503, 504], true)
+                        || str_contains($e->response->body(), 'ConcurrencyLimit')
+                    ));
+            }, throw: false)
             ->get($url, [
                 '$filter'  => $filter,
                 '$select'  => 'id,subject,from,toRecipients,ccRecipients,bccRecipients,receivedDateTime,isRead,hasAttachments,body,attachments,internetMessageId,conversationId,replyTo,internetMessageHeaders',
@@ -207,7 +226,7 @@ class GraphMailService extends AbstractEmailProcessor
         try {
             $accessToken = $this->tokenService->getAccessToken($this->mailboxKey);
             $messageId = $message['id'];
-            $url = "{$this->baseUrl}/users/{$this->mailbox}/messages/{$messageId}/attachments";
+            $url = "{$this->baseUrl}/users/$this->mailbox/messages/{$messageId}/attachments";
 
             $response = Http::withToken($accessToken)->get($url);
 
@@ -228,7 +247,7 @@ class GraphMailService extends AbstractEmailProcessor
     protected function markMessageAsRead($message): void
     {
         try {
-            $url = "{$this->baseUrl}/users/{$this->mailbox}/messages/{$message['id']}";
+            $url = "$this->baseUrl/users/$this->mailbox/messages/{$message['id']}";
 
             Http::withToken($this->tokenService->getAccessToken($this->mailboxKey))
                 ->patch($url, ['isRead' => true]);
@@ -245,11 +264,6 @@ class GraphMailService extends AbstractEmailProcessor
         return 'graph';
     }
 
-    protected function getProcessorName(): string
-    {
-        return 'Microsoft Graph';
-    }
-
     protected function getSyncMetadata(): array
     {
         return [
@@ -260,13 +274,7 @@ class GraphMailService extends AbstractEmailProcessor
 
     protected function extractMessageBody(array $message): string
     {
-        $body = $message['body'] ?? [];
-
-        if (isset($body['contentType']) && $body['contentType'] === 'html') {
-            return $body['content'] ?? '';
-        }
-
-        return $body['content'] ?? '';
+        return $message['body']['content'] ?? '';
     }
 
     protected function extractEmailAddresses(array $recipients): array

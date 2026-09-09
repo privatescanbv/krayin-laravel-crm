@@ -1003,13 +1003,26 @@ class OrderController extends SimpleEntityController
 
     public function search(Request $request): JsonResponse
     {
+        // Optional filter: only active (non-won/lost) orders for the given lead(s).
+        // Used by the "suggestions based on sender" panel to surface an open order
+        // once a matching lead has been found by sender email.
+        $leadIds = array_filter((array) $request->query('lead_id', []), fn ($id) => is_numeric($id));
+
         $result = $this->performAdvancedSearch(
             repository: $this->orderRepository,
             getFieldsSearchable: fn () => $this->orderRepository->getFieldsSearchable(),
             eagerLoadRelations: ['stage', 'user'],
-            getResults: function ($repository) {
+            getResults: function ($repository) use ($leadIds) {
                 $repository->pushCriteria(app(RequestCriteria::class));
                 $this->applyPermissionFilter($repository);
+
+                if ($leadIds !== []) {
+                    $repository->scopeQuery(function ($query) use ($leadIds) {
+                        return $query
+                            ->whereHas('salesLead', fn ($q) => $q->whereIn('lead_id', $leadIds))
+                            ->whereHas('stage', fn ($q) => $q->where('is_won', false)->where('is_lost', false));
+                    });
+                }
 
                 return $repository->all();
             },

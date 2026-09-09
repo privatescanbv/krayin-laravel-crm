@@ -218,11 +218,6 @@ class ImapEmailProcessor extends AbstractEmailProcessor
         return 'imap';
     }
 
-    protected function getProcessorName(): string
-    {
-        return 'IMAP';
-    }
-
     protected function getSyncMetadata(): array
     {
         return [

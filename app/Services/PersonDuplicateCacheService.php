@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 
 class PersonDuplicateCacheService extends AbstractDuplicateCacheService
@@ -36,42 +37,15 @@ class PersonDuplicateCacheService extends AbstractDuplicateCacheService
         });
 
         // Always apply false-positive filtering at read-time (so new markings take effect immediately).
-        return $this->falsePositiveService->filterCandidateIdsForPrimary(
+        $filteredIds = $this->falsePositiveService->filterCandidateIdsForPrimary(
             DuplicateEntityType::PERSON,
             $personId,
             $duplicateIds
         );
-    }
 
-    /**
-     * Get cached duplicates with full data.
-     */
-    public function getCachedDuplicatesWithData(int $personId): Collection
-    {
-        $duplicateIds = $this->getCachedDuplicates($personId);
+        $this->persistHasDuplicatesFlag($personId, $filteredIds);
 
-        if ($duplicateIds->isEmpty()) {
-            return collect();
-        }
-
-        try {
-            return $this->personRepository
-                ->with(['organization', 'user'])
-                ->whereIn('id', $duplicateIds->toArray())
-                ->get();
-        } catch (Exception $e) {
-            Log::warning("Error loading duplicate data for person {$personId}: ".$e->getMessage());
-
-            return collect();
-        }
-    }
-
-    /**
-     * Check if person has duplicates.
-     */
-    public function hasCachedDuplicates(int $personId): bool
-    {
-        return $this->getCachedDuplicates($personId)->isNotEmpty();
+        return $filteredIds;
     }
 
     /**
@@ -83,11 +57,54 @@ class PersonDuplicateCacheService extends AbstractDuplicateCacheService
     }
 
     /**
-     * Handle person merge - simple invalidation.
+     * Ids of every (non-trashed) person that currently matches $person on email/phone/name.
+     *
+     * Used to find whose has_duplicates flag might need recomputing after $person changes or
+     * disappears - a duplicate is a pairwise property, so the counterpart must be re-checked too.
+     *
+     * @return Collection<int, int>
      */
-    public function handlePersonMerge(int $primaryPersonId, array $mergedPersonIds): void
+    public function counterpartIdsFor(Person $person): Collection
+    {
+        return $this->personRepository->findPotentialDuplicatesDirectly($person)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id);
+    }
+
+    /**
+     * Recompute + repersist the has_duplicates flag for each id. Ids whose person no longer
+     * exists are skipped by refreshPersonCache(). Bounded: callers pass a handful of counterpart
+     * ids, never the whole table (that stays the job of duplicates:refresh-cache --index).
+     *
+     * @param  iterable<int>  $personIds
+     */
+    public function refreshMany(iterable $personIds): void
+    {
+        collect($personIds)
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->each(fn (int $id) => $this->refreshPersonCache($id));
+    }
+
+    /**
+     * Handle person merge: invalidate primary + merged, clear the merged persons' flags,
+     * recompute the primary, then recompute every counterpart that only matched a merged-away
+     * person so its now-stale has_duplicates flag is cleared immediately (not an hour later).
+     *
+     * @param  array<int>  $mergedPersonIds
+     * @param  array<int>  $counterpartIds  captured before the merged persons were soft-deleted
+     */
+    public function handlePersonMerge(int $primaryPersonId, array $mergedPersonIds, array $counterpartIds = []): void
     {
         $this->handleMerge($primaryPersonId, $mergedPersonIds);
+
+        foreach ($mergedPersonIds as $id) {
+            $this->persistHasDuplicatesFlag((int) $id, collect());
+        }
+
+        $this->getCachedDuplicates($primaryPersonId);
+
+        $this->refreshMany($counterpartIds);
     }
 
     /**
@@ -103,6 +120,102 @@ class PersonDuplicateCacheService extends AbstractDuplicateCacheService
 
             return $this->personRepository->findPotentialDuplicatesDirectly($person)->pluck('id');
         });
+
+        $this->getCachedDuplicates($personId);
+    }
+
+    /**
+     * Count non-deleted persons currently flagged as having duplicates.
+     *
+     * @param  array<int>|null  $authorizedUserIds  null = no user restriction
+     */
+    public function countPersonsWithDuplicates(?array $authorizedUserIds = null): int
+    {
+        $query = Person::query()
+            ->where('has_duplicates', true);
+
+        if ($authorizedUserIds !== null) {
+            $query->whereIn('user_id', $authorizedUserIds);
+        }
+
+        return $query->count();
+    }
+
+    /**
+     * URL for the persons list pre-filtered to duplicates.
+     */
+    public function personsIndexUrlWithDuplicateFilter(): string
+    {
+        return route('admin.contacts.persons.index', [
+            'filters' => [
+                'has_duplicates' => ['1'],
+            ],
+        ]);
+    }
+
+    /**
+     * Recompute persons.has_duplicates for the whole table in one pass.
+     *
+     * Deliberately not per person: detecting duplicates for one person costs ~4 full scans, which
+     * runs into hours on a large table. Instead every person is bucketed by the values that make
+     * two persons a duplicate (see duplicateKeys), and every bucket holding more than one person
+     * flags its members.
+     *
+     * @return array{processed:int, flagged:int, turned_on:int, turned_off:int}
+     */
+    public function rebuildHasDuplicatesIndex(): array
+    {
+        $processed = 0;
+        $buckets = [];
+
+        Person::query()
+            ->select(['id', 'first_name', 'last_name', 'married_name', 'emails', 'phones'])
+            ->orderBy('id')
+            ->chunk(2000, function ($persons) use (&$buckets, &$processed) {
+                foreach ($persons as $person) {
+                    foreach ($this->duplicateKeys($person) as $key) {
+                        $buckets[$key][] = (int) $person->id;
+                    }
+
+                    $processed++;
+                }
+            });
+
+        $flagged = [];
+
+        foreach ($buckets as $ids) {
+            if (count($ids) < 2) {
+                continue;
+            }
+
+            foreach ($ids as $id) {
+                $flagged[$id] = true;
+            }
+        }
+
+        unset($buckets);
+
+        $this->applyFalsePositives($flagged);
+
+        return $this->writeFlags($flagged) + ['processed' => $processed, 'flagged' => count($flagged)];
+    }
+
+    /**
+     * Persist the denormalized has_duplicates flag without touching updated_at.
+     *
+     * @param  Collection<int, int>  $duplicateIds
+     */
+    public function persistHasDuplicatesFlag(int $personId, Collection $duplicateIds): void
+    {
+        $hasDuplicates = $duplicateIds->isNotEmpty();
+
+        $this->writeHasDuplicatesFlag($personId, $hasDuplicates);
+
+        if ($hasDuplicates) {
+            foreach ($duplicateIds as $duplicateId) {
+                $this->writeHasDuplicatesFlag((int) $duplicateId, true);
+            }
+        }
     }
 
     /**
@@ -138,11 +251,123 @@ class PersonDuplicateCacheService extends AbstractDuplicateCacheService
 
     /**
      * Clear all caches (simple version).
+     *
+     * NOTE: This must only remove keys owned by this service (person_duplicates:*). It must
+     * never call Cache::flush(), which would wipe the entire shared cache store, including
+     * unrelated data such as Microsoft Graph OAuth tokens and other alert de-dupe flags.
      */
     public function clearAllCache(): void
     {
-        Cache::flush();
+        DB::table('persons')->select('id')->orderBy('id')->chunk(1000, function ($rows) {
+            foreach ($rows as $row) {
+                $this->invalidateId((int) $row->id);
+            }
+        });
+
         Log::info('Cleared all person duplicate caches');
+    }
+
+    /**
+     * The values that make two persons a potential duplicate: any shared key means a match.
+     *
+     * Mirrors JsonDuplicateMatcher::findDuplicatesByJsonField/findDuplicatesByName, which does the
+     * same comparison in SQL for a single person. PersonDuplicateIndexRebuildTest asserts both
+     * agree, so a change to the matching rules there fails the test here.
+     *
+     * @return array<int, string>
+     */
+    private function duplicateKeys(Person $person): array
+    {
+        $keys = [];
+
+        foreach (['emails', 'phones'] as $field) {
+            foreach ((array) ($person->{$field} ?? []) as $item) {
+                $value = is_array($item) ? ($item['value'] ?? '') : $item;
+
+                if ($value !== null && $value !== '') {
+                    $keys[] = $field.':'.$value;
+                }
+            }
+        }
+
+        $first = mb_strtolower((string) $person->first_name);
+
+        if ($first !== '') {
+            foreach (array_filter([$person->last_name, $person->married_name]) as $name) {
+                $keys[] = 'name:'.$first.'|'.mb_strtolower((string) $name);
+            }
+        }
+
+        return $keys;
+    }
+
+    /**
+     * Persons carrying a "not a duplicate" marking need the pair-level answer, which the buckets
+     * cannot give. There are few of them, so they are recomputed with the regular detection.
+     *
+     * @param  array<int, bool>  $flagged
+     */
+    private function applyFalsePositives(array &$flagged): void
+    {
+        $markedIds = DB::table('duplicates_false_positives')
+            ->where('entity_type', DuplicateEntityType::PERSON->value)
+            ->get(['entity_id_1', 'entity_id_2'])
+            ->flatMap(fn ($row) => [(int) $row->entity_id_1, (int) $row->entity_id_2])
+            ->unique();
+
+        foreach ($markedIds as $id) {
+            $person = $this->personRepository->find($id);
+
+            if (! $person) {
+                continue;
+            }
+
+            if ($this->personRepository->findPotentialDuplicates($person)->isNotEmpty()) {
+                $flagged[$id] = true;
+            } else {
+                unset($flagged[$id]);
+            }
+        }
+    }
+
+    /**
+     * Write only the flags that actually change, so the update touches few rows.
+     *
+     * @param  array<int, bool>  $flagged
+     * @return array{turned_on:int, turned_off:int}
+     */
+    private function writeFlags(array $flagged): array
+    {
+        $currentlyTrue = Person::withTrashed()
+            ->where('has_duplicates', true)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $turnOn = array_diff(array_keys($flagged), $currentlyTrue);
+        $turnOff = array_diff($currentlyTrue, array_keys($flagged));
+
+        Person::withoutTimestamps(function () use ($turnOn, $turnOff): void {
+            foreach (array_chunk($turnOn, 1000) as $chunk) {
+                Person::withTrashed()->whereIn('id', $chunk)->update(['has_duplicates' => true]);
+            }
+
+            foreach (array_chunk($turnOff, 1000) as $chunk) {
+                Person::withTrashed()->whereIn('id', $chunk)->update(['has_duplicates' => false]);
+            }
+        });
+
+        return ['turned_on' => count($turnOn), 'turned_off' => count($turnOff)];
+    }
+
+    private function writeHasDuplicatesFlag(int $personId, bool $hasDuplicates): void
+    {
+        Person::withoutTimestamps(function () use ($personId, $hasDuplicates): void {
+            Person::withTrashed()
+                ->whereKey($personId)
+                ->where('has_duplicates', '!=', $hasDuplicates)
+                ->update(['has_duplicates' => $hasDuplicates]);
+        });
     }
 
     /**

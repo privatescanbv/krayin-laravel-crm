@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Services\Mail\EmailEntityLinker;
-use App\Services\Mail\MailboxConfig;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
@@ -91,7 +90,7 @@ class RepairMislinkedEmailThreads extends Command
                     continue;
                 }
 
-                $address = $this->counterpartyAddress($email);
+                $address = $email->counterpartyEmail();
                 $resolved = $address !== null ? $entityLinker->link([], $address) : [];
                 $links = $this->extractLinkerKeys($resolved);
 
@@ -344,35 +343,6 @@ class RepairMislinkedEmailThreads extends Command
             $normalized,
             $normalized !== '' ? '<'.$normalized.'>' : null,
         ])));
-    }
-
-    /**
-     * The external party for entity linking: the sender when it is external, otherwise the
-     * recipient (outbound CRM mail is sent from our own mailbox, so the sender is never the
-     * customer). Mirrors how inbound mail links on the "from" address.
-     */
-    private function counterpartyAddress(Email $email): ?string
-    {
-        $from = strtolower(trim((string) data_get($email->from, 'email', '')));
-
-        if ($from !== '' && ! $this->isOwnMailbox($from)) {
-            return $from;
-        }
-
-        foreach ($email->reply_to ?? [] as $recipient) {
-            $recipient = strtolower(trim((string) $recipient));
-
-            if ($recipient !== '' && ! $this->isOwnMailbox($recipient)) {
-                return $recipient;
-            }
-        }
-
-        return $from !== '' ? $from : null;
-    }
-
-    private function isOwnMailbox(string $address): bool
-    {
-        return MailboxConfig::resolveKeyByAddress($address) !== null;
     }
 
     /**

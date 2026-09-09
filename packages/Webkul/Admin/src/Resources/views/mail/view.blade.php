@@ -724,14 +724,21 @@
                                     <li
                                         v-for="lead in leads"
                                         :key="lead.id"
+                                        :title="leadTooltip(lead)"
                                         class="flex cursor-pointer gap-2 px-4 py-2 text-gray-800 transition-colors hover:bg-blue-100 dark:text-white dark:hover:bg-gray-900"
                                         @click="linkLead(lead)"
                                     >
                                         <x-admin::avatar ::name="lead.name" />
 
                                         <!-- Lead Title -->
-                                        <div class="flex flex-col gap-1">
+                                        <div class="flex flex-1 items-center justify-between gap-2">
                                             <span>@{{ lead.name }}</span>
+                                            <span
+                                                v-if="lead.stage?.name"
+                                                class="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                                            >
+                                                @{{ lead.stage.name }}
+                                            </span>
                                         </div>
                                     </li>
 
@@ -809,15 +816,28 @@
 
                         <ul class="max-h-40 divide-y divide-gray-100 overflow-y-auto dark:divide-gray-700">
                             <li
-                                v-for="salesLead in salesLeads"
+                                v-for="salesLead in sortedSalesLeads"
                                 :key="salesLead.id"
+                                :title="salesLeadTooltip(salesLead)"
                                 class="flex cursor-pointer gap-2 px-4 py-2 text-gray-800 transition-colors hover:bg-blue-100 dark:text-white dark:hover:bg-gray-900"
                                 @click="linkSalesLead(salesLead)"
                             >
                                 <x-admin::avatar ::name="salesLead.name" />
-                                <div class="flex flex-col gap-1">
+                                <div class="flex flex-1 items-center justify-between gap-2">
                                     <span>@{{ salesLead.name }}</span>
-                                    <span class="text-xs text-gray-500">@{{ salesLead.stage?.name }}</span>
+                                    <span
+                                        v-if="salesLead.stage?.name"
+                                        :class="[
+                                            'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
+                                            salesLead.stage?.is_won
+                                                ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                                                : salesLead.stage?.is_lost
+                                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                                                    : 'bg-slate-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'
+                                        ]"
+                                    >
+                                        @{{ salesLead.stage.name }}
+                                    </span>
                                 </div>
                             </li>
                             <li v-if="salesLeads.length === 0" class="px-4 py-2 text-gray-800 dark:text-gray-300">
@@ -1439,10 +1459,7 @@
                             ((item.name || item.title || '')).toLowerCase().includes(term)
                         );
                         // Exclude won/lost stages
-                        list = list.filter(lead => {
-                            const code = lead?.stage?.code || '';
-                            return !(code.startsWith('won') || code.startsWith('lost'));
-                        });
+                        list = list.filter(lead => !(lead?.stage?.is_won || lead?.stage?.is_lost));
                         // If email has a selected person, filter to leads containing that person
                         const pid = this.$parent?.email?.person_id || this.email?.person_id || null;
                         if (pid) {
@@ -1453,6 +1470,8 @@
                                 return arr.some(p => p.id === pid);
                             });
                         }
+                        // Most recently created (most likely relevant) lead first
+                        list = [...list].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
                         return list;
                     },
                 },
@@ -1564,6 +1583,22 @@
 
                         this.$emit('open-lead-modal');
                     },
+
+                    /**
+                     * Tooltip text with the creation date, used to help
+                     * distinguish between multiple similarly named leads.
+                     *
+                     * @param {Object} lead
+                     *
+                     * @return {string|undefined}
+                     */
+                    leadTooltip(lead) {
+                        if (! lead.created_at) {
+                            return undefined;
+                        }
+
+                        return 'Aangemaakt op ' + this.$admin.formatDate(lead.created_at, 'd MMM yyyy, HH:mm');
+                    },
                 },
             });
         </script>
@@ -1583,6 +1618,26 @@
                         salesLeads: [],
                         selectedItem: {},
                     };
+                },
+
+                computed: {
+                    /**
+                     * Active/ongoing sales leads first, most recently created first.
+                     *
+                     * @return {Array}
+                     */
+                    sortedSalesLeads() {
+                        return [...this.salesLeads].sort((a, b) => {
+                            const aClosed = a.stage?.is_won || a.stage?.is_lost ? 1 : 0;
+                            const bClosed = b.stage?.is_won || b.stage?.is_lost ? 1 : 0;
+
+                            if (aClosed !== bClosed) {
+                                return aClosed - bClosed;
+                            }
+
+                            return new Date(b.created_at) - new Date(a.created_at);
+                        });
+                    },
                 },
 
                 methods: {
@@ -1605,7 +1660,7 @@
                             }
                         })
                             .then(response => {
-                                this.salesLeads = response.data;
+                                this.salesLeads = response.data.data ?? [];
                             })
                             .catch(error => {
                                 this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
@@ -1619,6 +1674,22 @@
                         this.$emit('link-sales-lead', salesLead);
                         this.showPopup = false;
                         this.selectedItem = salesLead;
+                    },
+
+                    /**
+                     * Tooltip text with the creation date, used to help
+                     * distinguish between multiple similarly named sales leads.
+                     *
+                     * @param {Object} salesLead
+                     *
+                     * @return {string|undefined}
+                     */
+                    salesLeadTooltip(salesLead) {
+                        if (! salesLead.created_at) {
+                            return undefined;
+                        }
+
+                        return 'Aangemaakt op ' + this.$admin.formatDate(salesLead.created_at, 'd MMM yyyy, HH:mm');
                     },
                 },
 

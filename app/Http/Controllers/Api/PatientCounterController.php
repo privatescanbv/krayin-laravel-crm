@@ -6,7 +6,6 @@ use App\Enums\AppointmentTimeFilter;
 use App\Enums\PatientMessageSenderType;
 use App\Http\Controllers\Controller;
 use App\Models\PatientMessage;
-use App\Repositories\ActivityRepository;
 use App\Repositories\OrderRepository;
 use App\Services\FormService;
 use App\Services\Keycloak\KeycloakService;
@@ -17,7 +16,6 @@ class PatientCounterController extends Controller
     public function __construct(
         private readonly KeycloakService $keycloakService,
         private readonly OrderRepository $orderRepository,
-        private readonly ActivityRepository $activityRepository,
         private readonly FormService $formService,
     ) {}
 
@@ -54,12 +52,6 @@ class PatientCounterController extends Controller
         $appointmentsCount = $this->orderRepository
             ->getPatientAppointmentOrdersForPerson($person, AppointmentTimeFilter::FUTURE, $now)
             ->count();
-
-        foreach (PatientAppointmentController::PORTAL_ACTIVITY_TYPES as $type) {
-            $appointmentsCount += $this->activityRepository
-                ->queryPatientActivitiesForPerson($person, $type, AppointmentTimeFilter::FUTURE, $now)
-                ->count();
-        }
 
         $openForms = $this->formService->getOpenForms($person->id);
 

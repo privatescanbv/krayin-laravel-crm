@@ -26,7 +26,7 @@
                     // Check if query contains colon but is not a valid fielded search pattern
                     // If it contains colon but doesn't match known patterns, treat as plain text
                     const hasColon = cleaned.includes(':');
-                    const looksLikeFieldedSearch = /^(email|emails|phone|phones|name|first_name|last_name|married_name|organization\.name|user\.name):/.test(cleaned);
+                    const looksLikeFieldedSearch = /^(email|emails|phone|phones|name|first_name|firstname|last_name|lastname|married_name|organization\.name|user\.name):/.test(cleaned);
 
                     if (hasColon && !looksLikeFieldedSearch) {
                         // Contains colon but not a valid field pattern - treat as plain text query
@@ -44,7 +44,6 @@
 
                 const response = await axios.get('/admin/contacts/persons/search', { params });
                 const result = response?.data?.data ?? response?.data ?? [];
-                console.log('[fetchPersons] response.data:', response?.data, 'result:', result);
                 return Array.isArray(result) ? result : [];
             };
         }

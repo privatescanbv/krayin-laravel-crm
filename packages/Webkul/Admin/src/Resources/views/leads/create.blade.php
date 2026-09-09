@@ -617,7 +617,15 @@ $salutationToGenderMapping = [
 
                     // Attach blur/change listeners to trigger suggestions
                     this.$nextTick(() => {
-                        const blurFields = ['first_name','last_name','emails[0][value]','phones[0][value]'];
+                        const blurFields = [
+                            'first_name',
+                            'last_name',
+                            'married_name',
+                            'date_of_birth',
+                            'emails[0][value]',
+                            'phones[0][value]',
+                            'address[postal_code]',
+                        ];
                         blurFields.forEach(name => {
                             const input = this.$refs.leadForm?.querySelector(`[name="${name}"]`);
                             if (input) {
@@ -867,33 +875,48 @@ $salutationToGenderMapping = [
                     async fetchSuggestions() {
                         if (this.suggestionsDisabled || this.selectedPersonId) { this.suggestions = []; return; }
                         try {
-                            const firstName = (this.$refs.leadForm?.querySelector('[name="first_name"]').value || '').trim();
-                            const lastName = (this.$refs.leadForm?.querySelector('[name="last_name"]').value || '').trim();
-                            const email = (this.$refs.leadForm?.querySelector('input[name^="emails"][name$="[value]"]').value || '').trim();
-                            const phone = (this.$refs.leadForm?.querySelector('input[name^="phones"][name$="[value]"]').value || '').trim();
+                            const form = this.$refs.leadForm;
+                            if (!form) { this.suggestions = []; return; }
 
-                            // Build a single fielded query string
-                            let queryParts = [];
-                            if (firstName) queryParts.push(`firstname:${firstName}`);
-                            if (lastName) queryParts.push(`lastname:${lastName}`);
-                            if (email) queryParts.push(`email:${email}`);
-                            if (phone) {
-                                const onlyDigits = phone.replace(/\D+/g, '');
-                                if (onlyDigits) queryParts.push(`phone:${onlyDigits}`);
-                            }
+                            const val = (name) => (form.querySelector(`[name="${name}"]`)?.value || '').trim();
+                            const contactValues = (prefix) => {
+                                return Array.from(form.querySelectorAll(`input[name^="${prefix}"][name$="[value]"]`))
+                                    .map((input) => (input.value || '').trim())
+                                    .filter(Boolean)
+                                    .map((value) => ({ value, label: 'eigen' }));
+                            };
 
-                            const composed = queryParts.join(';') + (queryParts.length ? ';' : '');
-                            if (!composed) { this.suggestions = []; return; }
+                            const payload = {
+                                first_name: val('first_name'),
+                                last_name: val('last_name'),
+                                lastname_prefix: val('lastname_prefix'),
+                                married_name: val('married_name'),
+                                married_name_prefix: val('married_name_prefix'),
+                                initials: val('initials'),
+                                date_of_birth: val('date_of_birth'),
+                                salutation: val('salutation'),
+                                gender: val('gender'),
+                                emails: contactValues('emails'),
+                                phones: contactValues('phones'),
+                                address: {
+                                    street: val('address[street]'),
+                                    house_number: val('address[house_number]'),
+                                    house_number_suffix: val('address[house_number_suffix]'),
+                                    postal_code: val('address[postal_code]'),
+                                    city: val('address[city]'),
+                                    state: val('address[state]'),
+                                    country: val('address[country]'),
+                                },
+                            };
 
-                            const fetcher = (window.adminc && typeof window.adminc.fetchPersons === 'function') ? window.adminc.fetchPersons : null;
-                            const list = fetcher ? await fetcher(composed, {}, false) : [];
+                            const hasSignal = payload.last_name
+                                || payload.married_name
+                                || payload.emails.length
+                                || payload.phones.length;
+                            if (!hasSignal) { this.suggestions = []; return; }
 
-                            const scored = (list || []).map(p => this.calculateMatchScore(p, firstName, lastName, email, phone))
-                                .filter(p => p._client_match > 0)
-                                .sort((a,b) => (b._client_match||0) - (a._client_match||0))
-                                .slice(0, 10);
-
-                            this.suggestions = scored;
+                            const fetcher = window.adminc?.fetchPersonSuggestionsFromFields;
+                            this.suggestions = fetcher ? await fetcher(payload) : [];
                         } catch (e) {
                             this.suggestions = [];
                         }
@@ -901,20 +924,19 @@ $salutationToGenderMapping = [
 
                     clearSuggestions() { this.suggestions = []; },
 
-                    calculateMatchScore(p, firstName, lastName, email, phone) {
-                        // We can't use the server side match score, because the lead hasn't been persisted yet.
-                        let score = 0;
-                        const pEmail = (p.emails && p.emails[0] && (p.emails[0].value||'').toLowerCase()) || '';
-                        const pPhone = (p.phones && p.phones[0] && (p.phones[0].value||'')) || '';
-                        const pFirst = (p.first_name||'').toLowerCase();
-                        const pLast = (p.last_name||'').toLowerCase();
-                        if (email && pEmail && pEmail === email.toLowerCase()) score += 60;
-                        if (phone && pPhone && pPhone.replace(/\D/g,'') === phone.replace(/\D/g,'')) score += 40;
-                        if (firstName && pFirst && pFirst === firstName.toLowerCase()) score += 20;
-                        if (lastName && pLast && pLast === lastName.toLowerCase()) score += 20;
-                        if (!score && (pEmail.includes((email||'').toLowerCase()) || pPhone.includes(phone||''))) score += 20;
-                        p._client_match = Math.min(100, score);
-                        return p;
+                    isStrongSuggestion(person) {
+                        return window.adminc?.personSuggestionHelpers?.isStrongSuggestion(person) ?? false;
+                    },
+
+                    suggestionReasonLabel(reason) {
+                        return window.adminc?.personSuggestionHelpers?.suggestionReasonLabel(reason) ?? reason;
+                    },
+
+                    personSuggestionSections(suggestions) {
+                        const helpers = window.adminc?.personSuggestionHelpers;
+                        return helpers
+                            ? helpers.personSuggestionSections(suggestions)
+                            : [{ key: 'all', title: null, items: suggestions || [] }];
                     },
 
                     selectSuggestion(person) {

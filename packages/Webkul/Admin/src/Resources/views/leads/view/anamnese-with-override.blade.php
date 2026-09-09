@@ -139,6 +139,20 @@
                     </div>
                 </div>
 
+                {{-- Formulieren overzicht (cross-level) --}}
+                <div class="border-b border-gray-100 px-4 py-3 dark:border-gray-700">
+                    <x-adminc::anamnesis.forms-overview
+                        :entity="$entity"
+                        :entityType="$entityType"
+                        :person="$person"
+                        :effectiveAnamnesis="$personAnamnesis"
+                        :personHasPortalAccount="!empty($person->keycloak_user_id)"
+                        :showDiagnosisAttach="$isSales && $entity->getDepartment()?->isHernia()"
+                        :salesLead="$isSales ? $entity : null"
+                        :returnUrl="$returnUrlAnamnese"
+                    />
+                </div>
+
                 {{-- Anamnesis card content --}}
                 @if ($personAnamnesis)
                     <div class="p-0">

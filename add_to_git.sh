@@ -17,6 +17,7 @@ packages
 lang
 docs
 ai-agents
+public
 "
 
 for dir in $DIRS; do

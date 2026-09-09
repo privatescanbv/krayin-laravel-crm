@@ -14,6 +14,7 @@ SHORT_SHA=$(git rev-parse --short HEAD)
 
 docker build --platform linux/amd64 \
   -t $IMAGE_NAME \
+  --build-arg SENTRY_RELEASE="$BRANCH-$SHORT_SHA" \
   -f docker/php/Dockerfile .
 
 FULL_IMAGE="$GITHUB_REGISTRY/$GITHUB_USERNAME/$REPO_NAME/$IMAGE_NAME"

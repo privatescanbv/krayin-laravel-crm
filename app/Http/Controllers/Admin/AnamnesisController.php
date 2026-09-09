@@ -14,6 +14,8 @@ use App\Models\AnamnesisGvlForm;
 use App\Models\Department;
 use App\Models\Order;
 use App\Models\PatientNotification;
+use App\Models\SalesLead;
+use App\Services\Anamnesis\AnamnesisFormsOverviewBuilder;
 use App\Services\Anamnesis\AnamnesisOrderResolver;
 use App\Services\FormService;
 use Exception;
@@ -25,7 +27,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Webkul\Contact\Models\Person;
-use Webkul\Lead\Repositories\LeadRepository;
 
 class AnamnesisController extends Controller
 {
@@ -37,9 +38,9 @@ class AnamnesisController extends Controller
      * @return void
      */
     public function __construct(
-        protected LeadRepository $leadRepository,
         protected FormService $formService,
         protected AnamnesisOrderResolver $anamnesisOrderResolver,
+        protected AnamnesisFormsOverviewBuilder $formsOverviewBuilder,
     ) {}
 
     /**
@@ -47,7 +48,7 @@ class AnamnesisController extends Controller
      */
     public function edit(string $id): View
     {
-        $anamnesis = Anamnesis::with(['lead', 'sales', 'person', 'gvlForms'])->findOrFail($id);
+        $anamnesis = Anamnesis::with(['lead', 'sales', 'order', 'person', 'gvlForms'])->findOrFail($id);
 
         return view('admin::anamnesis.edit', ['anamnesis' => $anamnesis]);
     }
@@ -153,8 +154,16 @@ class AnamnesisController extends Controller
     {
         $anamnesis = Anamnesis::with('person', 'lead', 'order', 'sales')->findOrFail($id);
         $formTypeOverride = $request->input('form_type');
+        $force = $request->boolean('force');
 
         try {
+            if (! $force) {
+                $duplicateResponse = $this->duplicateAttachConfirmationResponse($anamnesis, $formTypeOverride);
+                if ($duplicateResponse !== null) {
+                    return $duplicateResponse;
+                }
+            }
+
             return $this->attachGvlFormToAnamnesis($anamnesis, $formTypeOverride);
         } catch (Exception $e) {
             Log::error('AnamnesisController@attachGvlForm failed', [
@@ -169,75 +178,108 @@ class AnamnesisController extends Controller
     }
 
     /**
-     * Create anamnesis and attach GVL form for a person (used from order edit page)
+     * Set up a Herniapoli diagnose form (lage rugpijn / nekpijn) in the patient portal
+     * from a Sale, for an existing patient — no new lead. Reuses the GVL machinery.
      */
-    public function createAndAttachGvlForm(Request $request): JsonResponse
+    public function attachDiagnosisFormForSales(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'lead_id'   => 'required|integer|exists:leads,id',
+            'sales_id'  => 'required|integer|exists:salesleads,id',
             'person_id' => 'required|integer|exists:persons,id',
-            'form_type' => 'nullable|string|in:'.implode(',', FormType::values()),
+            'form_type' => 'required|string|in:'.implode(',', array_map(
+                fn (FormType $t) => $t->value,
+                FormType::diagnosisCases()
+            )),
+            'force'     => 'sometimes|boolean',
         ]);
 
-        $leadId = $data['lead_id'];
-        $personId = $data['person_id'];
-        $formTypeOverride = $data['form_type'] ?? null;
+        $salesId = (int) $data['sales_id'];
+        $personId = (int) $data['person_id'];
+
+        if (! SalesLead::isHerniaPoli($salesId)) {
+            abort(403, 'Diagnoseformulier klaarzetten kan alleen bij een Herniapoli-Sale.');
+        }
+
+        $salesLead = SalesLead::with('persons')->findOrFail($salesId);
+
+        if (! $salesLead->persons->contains('id', $personId)) {
+            return $this->redirectWithReturnUrl('admin.sales-leads.view', [$salesId], 'error', 'Persoon hoort niet bij deze Sale.');
+        }
+
+        $person = Person::find($personId);
+        if (empty($person?->keycloak_user_id)) {
+            return $this->redirectWithReturnUrl('admin.sales-leads.view', [$salesId], 'error', 'Patiënt heeft geen patiëntportaal account. Maak dat eerst aan.');
+        }
+
+        $anamnesis = Anamnesis::firstOrCreate(
+            [
+                'sales_id'  => $salesId,
+                'person_id' => $personId,
+            ],
+            [
+                'id'         => (string) Str::uuid(),
+                'name'       => 'Anamnese voor '.$person->name,
+                'created_by' => auth()->id() ?? $salesLead->user_id ?? 1,
+                'updated_by' => auth()->id() ?? $salesLead->user_id ?? 1,
+            ]
+        );
+
+        // Max one form per diagnose type — the other type is a separate action.
+        if ($anamnesis->gvlForms()->where('gvl_form_type', $data['form_type'])->exists()) {
+            return $this->redirectWithReturnUrl('admin.sales-leads.view', [$salesId], 'warning', 'Dit diagnoseformulier is al klaargezet. Ontkoppel het eerst om een nieuw exemplaar te maken.');
+        }
+
+        $anamnesis->load('person');
+
+        if (! $request->boolean('force')) {
+            $duplicateResponse = $this->duplicateAttachConfirmationResponse($anamnesis, $data['form_type']);
+            if ($duplicateResponse !== null) {
+                return $this->redirectWithReturnUrl(
+                    'admin.sales-leads.view',
+                    [$salesId],
+                    'warning',
+                    $duplicateResponse->getData(true)['message'] ?? 'Formulier van hetzelfde type bestaat al op een ander niveau.'
+                );
+            }
+        }
 
         try {
-            // Get or create anamnesis
-            $lead = $this->leadRepository->find($leadId);
-            if (! $lead) {
-                return response()->json([
-                    'message' => 'Lead niet gevonden.',
-                ], 404);
-            }
-
-            $anamnesis = Anamnesis::firstOrCreate(
-                [
-                    'lead_id'   => $leadId,
-                    'person_id' => $personId,
-                ],
-                [
-                    'id'         => Str::uuid(),
-                    'name'       => 'Anamnese voor '.$lead->name,
-                    'created_by' => auth()->id() ?? $lead->user_id ?? 1,
-                    'updated_by' => auth()->id() ?? $lead->user_id ?? 1,
-                ]
-            );
-
-            // Load relations
-            $anamnesis->load('person', 'lead');
-
-            if (! $anamnesis->person) {
-                return response()->json([
-                    'message' => 'Persoon niet gevonden.',
-                ], 422);
-            }
-
-            $response = $this->attachGvlFormToAnamnesis($anamnesis, $formTypeOverride);
-
-            if ($response->getStatusCode() !== 200) {
-                return $response;
-            }
-
-            $payload = $response->getData(true);
-
-            return response()->json([
-                'message'       => 'Anamnesis aangemaakt en GVL formulier gekoppeld.',
-                'gvl_form_link' => $payload['gvl_form_link'],
-                'anamnesis_id'  => $anamnesis->id,
-            ], 200);
+            $this->attachGvlFormToAnamnesis($anamnesis, $data['form_type']);
         } catch (Exception $e) {
-            Log::error('AnamnesisController@createAndAttachGvlForm failed', [
-                'lead_id'   => $leadId,
+            Log::error('AnamnesisController@attachDiagnosisFormForSales failed', [
+                'sales_id'  => $salesId,
                 'person_id' => $personId,
+                'form_type' => $data['form_type'],
                 'error'     => $e->getMessage(),
             ]);
 
-            return response()->json([
-                'message' => 'Anamnesis aanmaken en GVL formulier koppelen is mislukt: '.$e->getMessage(),
-            ], 500);
+            return $this->redirectWithReturnUrl('admin.sales-leads.view', [$salesId], 'error', 'Diagnoseformulier klaarzetten is mislukt: '.$e->getMessage());
         }
+
+        return $this->redirectWithReturnUrl('admin.sales-leads.view', [$salesId], 'success', 'Diagnoseformulier is klaargezet in het patiëntenportaal.');
+    }
+
+    /**
+     * Detach a Herniapoli diagnose form (plain form POST from the Sale anamnese block).
+     */
+    public function detachDiagnosisForm(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'gvl_form_record_id' => 'required|integer|exists:anamnesis_gvl_forms,id',
+        ]);
+
+        $gvlForm = AnamnesisGvlForm::with('anamnesis')->findOrFail($request->integer('gvl_form_record_id'));
+        $salesId = $gvlForm->anamnesis?->sales_id;
+
+        if (! $gvlForm->gvl_form_type?->isDiagnosisForm() || ! $salesId) {
+            abort(404);
+        }
+
+        $response = $this->doDetachGvlFormRecord($gvlForm);
+
+        return $response->getStatusCode() === 200
+            ? $this->redirectWithReturnUrl('admin.sales-leads.view', [$salesId], 'success', 'Diagnoseformulier is ontkoppeld.')
+            : $this->redirectWithReturnUrl('admin.sales-leads.view', [$salesId], 'error', $response->getData(true)['message'] ?? 'Ontkoppelen is mislukt.');
     }
 
     public function detachGvlForm(Request $request, string $id, int $gvlFormRecordId): JsonResponse
@@ -270,18 +312,6 @@ class AnamnesisController extends Controller
         foreach ($incomplete as $gvlForm) {
             $this->doDetachGvlFormRecord($gvlForm);
         }
-    }
-
-    public function getLatestGvlFormStatus(string $id): JsonResponse
-    {
-        $anamnesis = Anamnesis::findOrFail($id);
-        $latestForm = $anamnesis->gvlForms()->latest()->first();
-
-        return response()->json([
-            'data' => [
-                'status' => $latestForm?->gvl_form_status?->value,
-            ],
-        ]);
     }
 
     public function getGvlFormStatus(string $anamnesisId, int $gvlFormRecordId): JsonResponse
@@ -527,6 +557,12 @@ class AnamnesisController extends Controller
             $formType = $this->mapFormTypeFromDepartment($department);
         }
 
+        // A Herniapoli diagnose form is only allowed from a Herniapoli Sale — never lead/order.
+        if (FormType::tryFrom($formType)?->isDiagnosisForm()
+            && (! $anamnesis->sales_id || ! SalesLead::isHerniaPoli((int) $anamnesis->sales_id))) {
+            throw new Exception('Een diagnoseformulier kan alleen vanuit een Herniapoli-Sale worden klaargezet.');
+        }
+
         $formData = [
             'user_crm_id'     => $person->id,
             'user_firstname'  => $firstName ?: '-',
@@ -640,7 +676,10 @@ class AnamnesisController extends Controller
 
             if ($personId && $formId) {
                 PatientNotification::where('reference_id', $formId)
-                    ->where('reference_type', NotificationReferenceType::GVL_FORM)
+                    ->whereIn('reference_type', [
+                        NotificationReferenceType::GVL_FORM,
+                        NotificationReferenceType::DIAGNOSIS_FORM,
+                    ])
                     ->where('patient_id', $personId)
                     ->delete();
             }
@@ -665,6 +704,49 @@ class AnamnesisController extends Controller
         }
     }
 
+    private function duplicateAttachConfirmationResponse(Anamnesis $anamnesis, ?string $formTypeOverride): ?JsonResponse
+    {
+        if (! $anamnesis->person) {
+            return null;
+        }
+
+        $formType = $formTypeOverride
+            ? FormType::fromValue($formTypeOverride)
+            : FormType::defaultForAnamnesis($anamnesis);
+
+        $context = $this->formsOverviewBuilder->contextForAnamnesis($anamnesis);
+
+        if ($context === null) {
+            return null;
+        }
+
+        $duplicate = $this->formsOverviewBuilder->activeDuplicateOnOtherLevel(
+            $context['entity'],
+            $anamnesis->person,
+            $context['type'],
+            $anamnesis,
+            $formType,
+        );
+
+        if ($duplicate === null) {
+            return null;
+        }
+
+        $levelLabels = ['lead' => 'Lead', 'sales' => 'Sales', 'order' => 'Order'];
+        $levels = collect($duplicate['levels'])
+            ->map(fn (string $level) => $levelLabels[$level] ?? $level)
+            ->join(', ');
+
+        return response()->json([
+            'message'               => sprintf(
+                '%s staat al open op %s-niveau. Weet je zeker dat je een tweede formulier van hetzelfde type wilt koppelen?',
+                $duplicate['type_label'],
+                $levels,
+            ),
+            'requires_confirmation' => true,
+        ], 409);
+    }
+
     private function attachGvlFormToAnamnesis(Anamnesis $anamnesis, ?string $formTypeOverride = null): JsonResponse
     {
         if (! $anamnesis->person) {
@@ -678,7 +760,7 @@ class AnamnesisController extends Controller
         PatientNotifyEvent::dispatch(
             $anamnesis->person_id,
             $formLink,
-            NotificationReferenceType::GVL_FORM,
+            $this->notificationReferenceTypeFor($gvlFormRecord->gvl_form_type),
             $gvlFormRecord->gvl_form_id,
             false,
             auth()->id()
@@ -689,6 +771,13 @@ class AnamnesisController extends Controller
             'gvl_form_link'      => $formLink,
             'gvl_form_record_id' => $gvlFormRecord->id,
         ], 200);
+    }
+
+    private function notificationReferenceTypeFor(?FormType $formType): NotificationReferenceType
+    {
+        return $formType?->isDiagnosisForm()
+            ? NotificationReferenceType::DIAGNOSIS_FORM
+            : NotificationReferenceType::GVL_FORM;
     }
 
     private function entityViewUrlForAnamnesis(Anamnesis $anamnesis): string

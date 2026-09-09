@@ -44,19 +44,6 @@ class PersonValidationService
     }
 
     /**
-     * Get validation rules specifically for API endpoints
-     */
-    public static function getApiValidationRules($request = null): array
-    {
-        $rules = self::getValidationRules($request);
-
-        // For API, make some fields required that are optional in web
-        // Add any API-specific requirements here if needed
-
-        return $rules;
-    }
-
-    /**
      * Get validation rules for web forms.
      * Overrides address rules with strict all-or-nothing validation.
      */
@@ -66,18 +53,5 @@ class PersonValidationService
             self::getValidationRules($request),
             ContactValidationRules::strictAddressRules(),
         );
-    }
-
-    /**
-     * Get validation rules for creating persons from lead contact matcher
-     */
-    public static function getContactMatcherValidationRules($request = null): array
-    {
-        $rules = self::getValidationRules($request);
-
-        // For contact matcher, we might have less strict requirements
-        // since data comes from lead forms
-
-        return $rules;
     }
 }

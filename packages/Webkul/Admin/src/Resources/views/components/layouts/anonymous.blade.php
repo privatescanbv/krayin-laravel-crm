@@ -125,6 +125,8 @@
     <script type="text/javascript">
         {!! core()->getConfigData('general.content.custom_scripts.custom_javascript') !!}
     </script>
+
+    <x-admin::layouts.feedback-widget />
 </body>
 
 </html>

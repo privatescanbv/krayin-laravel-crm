@@ -9,9 +9,13 @@ return [
     ],
 
     'person' => [
-        'merge_success'     => 'Personen succesvol samengevoegd.',
-        'merge_failed'      => 'Samenvoegen mislukt: :error',
-        'match_score_error' => 'Kon de matchscore niet berekenen.',
+        'merge_success'                 => 'Personen succesvol samengevoegd.',
+        'merge_failed'                  => 'Samenvoegen mislukt: :error',
+        'match_score_error'             => 'Kon de matchscore niet berekenen.',
+        'delete_blocked_portal'         => 'Deze persoon heeft een patiëntportaalaccount en kan niet worden verwijderd. Trek het account eerst in.',
+        'mass_delete_blocked_portal'    => 'Een of meer geselecteerde personen hebben een patiëntportaalaccount (:ids) en kunnen niet worden verwijderd. Trek die accounts eerst in.',
+        'portal_email_locked'           => 'Het e-mailadres van het patiëntportaal mag niet worden gewijzigd of verwijderd.',
+        'portal_email_locked_unverified'=> 'Het patiëntportaal-e-mailadres kon niet worden gecontroleerd. Bestaande e-mailadressen mogen daarom niet worden gewijzigd of verwijderd.',
     ],
 
     'lead' => [

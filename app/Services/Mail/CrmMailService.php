@@ -133,7 +133,7 @@ class CrmMailService
             ->first();
 
         if (! $template) {
-            throw new RuntimeException("Email template '{$codeOrName}' not found.");
+            throw new RuntimeException("Email template '$codeOrName' not found.");
         }
 
         $variables = $this->templateRendering->resolveVariablesFromEntities($entities);

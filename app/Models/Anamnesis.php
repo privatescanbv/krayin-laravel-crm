@@ -256,7 +256,7 @@ class Anamnesis extends Model
 
     public function getLabelAttribute(): string
     {
-        return $this->person?->name ?? $this->order?->title ?? $this->sales?->name ?? $this->lead?->title ?? 'Onbekend';
+        return $this->person?->name ?? $this->order?->title ?? $this->sales?->name ?? $this->lead?->name ?? 'Onbekend';
     }
 
     public function gvlForms(): HasMany
@@ -267,10 +267,16 @@ class Anamnesis extends Model
     public function getLatestGvlFormAttribute(): ?AnamnesisGvlForm
     {
         if ($this->relationLoaded('gvlForms')) {
-            return $this->gvlForms->sortByDesc('id')->first();
+            return $this->gvlForms
+                ->filter(fn (AnamnesisGvlForm $f) => $f->gvl_form_type === null || $f->gvl_form_type->isGvlForm())
+                ->sortByDesc('id')
+                ->first();
         }
 
-        return $this->gvlForms()->latest()->first();
+        return $this->gvlForms()
+            ->where(fn ($q) => $q->whereNull('gvl_form_type')->orWhereIn('gvl_form_type', FormType::gvlValues()))
+            ->latest()
+            ->first();
     }
 
     public function getGvlFormLinkAttribute(): ?string

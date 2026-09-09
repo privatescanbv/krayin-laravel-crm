@@ -8,17 +8,26 @@ use App\Support\PhoneNormalizer;
 use App\Actions\Persons\DeletePortalAccountAction;
 use App\Enums\ActivityType;
 use App\Enums\ContactLabel;
+use App\Enums\DuplicateEntityType;
 use App\Enums\PortalRevocationReason;
 use App\Helpers\Comparable;
 use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
+use App\Http\Requests\Admin\PersonSuggestRequest;
+use App\Models\Address;
 use App\Repositories\AddressRepository;
+use App\Services\DuplicateFalsePositiveService;
+use App\Services\PersonDuplicateCacheService;
+use App\Services\PersonKeycloakService;
+use App\Services\PersonSuggestionService;
 use App\Services\PersonValidationService;
+use App\Support\NameSimilarity;
 use BackedEnum;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -32,7 +41,6 @@ use Webkul\Admin\Http\Controllers\Concerns\HasAdvancedSearch;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
-use Webkul\Admin\Http\Resources\Json\AnonymousResourceCollection;
 use Webkul\Admin\Http\Resources\PersonResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Contact\Models\Person;
@@ -57,6 +65,10 @@ class PersonController extends Controller
         private readonly CreatePortalAccountAction $createPortalAccountAction,
         private readonly DeletePortalAccountAction $deletePortalAccountAction,
         private readonly ActivityRepository $activityRepository,
+        private readonly PersonDuplicateCacheService $personDuplicateCacheService,
+        private readonly PersonSuggestionService $personSuggestionService,
+        private readonly PersonKeycloakService $personKeycloakService,
+        private readonly DuplicateFalsePositiveService $falsePositiveService,
     )
     {
         request()->request->add(['entity_type' => 'persons']);
@@ -110,45 +122,199 @@ class PersonController extends Controller
     }
 
     /**
-     * Searches on first name and last name
-     * Created for suggestions in edit lead.
-     * @param mixed $lead
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     * Auto-suggest persons for a lead (edit lead, no search query).
+     *
+     * Candidates are a union of email, phone, and last-name matches; last-name
+     * hits without a similar first name need an extra signal (DOB or postcode).
      */
-    public function findPersonsBasedOnLead(mixed $lead): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    public function findPersonsBasedOnLead(mixed $lead): AnonymousResourceCollection
     {
-        $leadFirstName = trim($lead->first_name ?? '');
-        $leadLastName = trim($lead->last_name ?? '');
+        $authorizedUserIds = bouncer()->getAuthorizedUserIds();
 
-        // Search persons with the same first + last name as this lead.
-        // Keep permission filtering consistent with the regular search() endpoint.
-        if ($leadLastName === '') {
-            $result = PersonResource::collection(collect());
+        $persons = $this->personSuggestionService->findCandidates(
+            $lead,
+            is_array($authorizedUserIds) ? $authorizedUserIds : null
+        );
+
+        return PersonResource::collection($persons);
+    }
+
+    /**
+     * Auto-suggest persons from unsaved lead form fields (create lead).
+     *
+     * Uses the same PersonSuggestionService + scoring as edit-lead auto-match.
+     */
+    public function suggest(PersonSuggestRequest $request): JsonResource|JsonResponse
+    {
+        $lead = $this->makeLeadFromSuggestPayload($request->validated());
+
+        if (! $this->leadHasSuggestSignal($lead)) {
+            return PersonResource::collection(collect());
+        }
+
+        $result = $this->findPersonsBasedOnLead($lead);
+
+        return $this->attachMatchScoresToPersonResources($result, $lead);
+    }
+
+    /**
+     * Build an unsaved Lead (and optional Address) from suggest form payload.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected function makeLeadFromSuggestPayload(array $data): Lead
+    {
+        $addressData = is_array($data['address'] ?? null) ? $data['address'] : null;
+        unset($data['address']);
+
+        $emails = $this->normalizeEmailsArray($data['emails'] ?? []);
+        $phones = $this->normalizePhonesArray($data['phones'] ?? []);
+
+        $attrs = [
+            'first_name'          => $this->nullableTrimmedString($data['first_name'] ?? null),
+            'last_name'           => $this->nullableTrimmedString($data['last_name'] ?? null),
+            'lastname_prefix'     => $this->nullableTrimmedString($data['lastname_prefix'] ?? null),
+            'married_name'        => $this->nullableTrimmedString($data['married_name'] ?? null),
+            'married_name_prefix' => $this->nullableTrimmedString($data['married_name_prefix'] ?? null),
+            'initials'            => $this->nullableTrimmedString($data['initials'] ?? null),
+            'date_of_birth'       => $this->nullableTrimmedString($data['date_of_birth'] ?? null),
+            'emails'              => $emails ?? [],
+            'phones'              => $phones ?? [],
+        ];
+
+        $salutation = $this->nullableTrimmedString($data['salutation'] ?? null);
+        if ($salutation !== null) {
+            $attrs['salutation'] = $salutation;
+        }
+
+        $gender = $this->nullableTrimmedString($data['gender'] ?? null);
+        if ($gender !== null) {
+            $attrs['gender'] = $gender;
+        }
+
+        $lead = Lead::make($attrs);
+
+        if ($addressData !== null && $this->addressPayloadHasValue($addressData)) {
+            $lead->setRelation('address', Address::make([
+                'street'              => $this->nullableTrimmedString($addressData['street'] ?? null),
+                'house_number'        => $this->nullableTrimmedString($addressData['house_number'] ?? null) ?? '',
+                'house_number_suffix' => $this->nullableTrimmedString($addressData['house_number_suffix'] ?? null),
+                'postal_code'         => $this->nullableTrimmedString($addressData['postal_code'] ?? null),
+                'city'                => $this->nullableTrimmedString($addressData['city'] ?? null),
+                'state'               => $this->nullableTrimmedString($addressData['state'] ?? null),
+                'country'             => $this->nullableTrimmedString($addressData['country'] ?? null),
+            ]));
         } else {
-            $repository = $this->personRepository->with(['address']);
+            $lead->setRelation('address', null);
+        }
 
-            $repository->scopeQuery(function ($query) use ($leadFirstName, $leadLastName) {
-                if ($leadFirstName !== '') {
-                    $query->whereRaw('LOWER(first_name) = ?', [mb_strtolower($leadFirstName)]);
+        return $lead;
+    }
+
+    /**
+     * Whether the unsaved lead has at least one signal used by PersonSuggestionService.
+     */
+    protected function leadHasSuggestSignal(Lead $lead): bool
+    {
+        if (! NameSimilarity::isBlank($lead->last_name) || ! NameSimilarity::isBlank($lead->married_name)) {
+            return true;
+        }
+
+        foreach ([$lead->emails, $lead->phones] as $contacts) {
+            if (! is_array($contacts)) {
+                continue;
+            }
+
+            foreach ($contacts as $item) {
+                $value = is_array($item) ? ($item['value'] ?? '') : $item;
+                if (is_string($value) && trim($value) !== '') {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<string, mixed>  $address
+     */
+    protected function addressPayloadHasValue(array $address): bool
+    {
+        foreach (['street', 'house_number', 'house_number_suffix', 'postal_code', 'city', 'state', 'country'] as $key) {
+            if ($this->nullableTrimmedString($address[$key] ?? null) !== null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function nullableTrimmedString(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $trimmed = trim((string) $value);
+
+        return $trimmed === '' ? null : $trimmed;
+    }
+
+    /**
+     * Attach match scores to a PersonResource collection against a lead.
+     */
+    protected function attachMatchScoresToPersonResources(
+        AnonymousResourceCollection $result,
+        Lead $lead
+    ): AnonymousResourceCollection {
+        try {
+            $personsWithScores = $result->collection->map(function ($personResource) use ($lead) {
+                $person = $personResource->resource;
+                $score = $this->calculateMatchScore($lead, $person);
+
+                $personResource->match_score = $score;
+                $personResource->match_score_percentage = round($score, 1);
+
+                if ($this->enableLogging) {
+                    Log::info('Person being scored', [
+                        'person_id' => $person->id,
+                        'person_name' => $person->name,
+                        'person_first_name' => $person->first_name,
+                        'person_last_name' => $person->last_name,
+                        'calculated_score' => $score,
+                    ]);
                 }
 
-                if ($leadLastName !== '') {
-                    $lowerLast = mb_strtolower($leadLastName);
-
-                    $query->where(function ($q) use ($lowerLast) {
-                        $q->whereRaw('LOWER(last_name) = ?', [$lowerLast])
-                            ->orWhereRaw('LOWER(married_name) = ?', [$lowerLast]);
-                    });
-                }
-
-                return $query->limit(30);
+                return $personResource;
             });
 
-            $this->applyPermissionFilter($repository);
+            $sorted = $personsWithScores
+                ->sort(function ($a, $b) {
+                    $reasonsA = $a->resource->match_reasons ?? [];
+                    $reasonsB = $b->resource->match_reasons ?? [];
+                    $strongA = in_array(PersonSuggestionService::REASON_EMAIL, $reasonsA, true)
+                        || in_array(PersonSuggestionService::REASON_PHONE, $reasonsA, true) ? 1 : 0;
+                    $strongB = in_array(PersonSuggestionService::REASON_EMAIL, $reasonsB, true)
+                        || in_array(PersonSuggestionService::REASON_PHONE, $reasonsB, true) ? 1 : 0;
 
-            $result = PersonResource::collection($repository->all());
+                    if ($strongA !== $strongB) {
+                        return $strongB <=> $strongA;
+                    }
+
+                    return ($b->match_score ?? 0) <=> ($a->match_score ?? 0);
+                })
+                ->values();
+
+            return PersonResource::collection($sorted);
+        } catch (Exception $e) {
+            logger()->warning('Could not calculate match scores for person suggestions', [
+                'lead_id' => $lead->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $result;
         }
-        return $result;
     }
 
     /**
@@ -174,7 +340,12 @@ class PersonController extends Controller
             return datagrid(PersonDataGrid::class)->process();
         }
 
-        return view('admin::contacts.persons.index');
+        return view('admin::contacts.persons.index', [
+            'personDuplicateCount' => $this->personDuplicateCacheService->countPersonsWithDuplicates(
+                bouncer()->getAuthorizedUserIds()
+            ),
+            'personDuplicatesUrl'  => $this->personDuplicateCacheService->personsIndexUrlWithDuplicateFilter(),
+        ]);
     }
 
     /**
@@ -284,21 +455,33 @@ class PersonController extends Controller
         }
 
         // Load anamnesis sorted by newest first
-        $person->load(['anamnesis' => function($query) {
-            $query->orderBy('updated_at', 'desc');
+        $person->load(['anamnesis' => function ($query) {
+            $query->with(['order.salesLead', 'sales', 'lead', 'gvlForms'])->orderBy('updated_at', 'desc');
         }]);
 
         // Precompute duplicate count (direct detection ensures indicator shows even if cache cold)
-        $duplicateCount = $this->personRepository->findPotentialDuplicates($person)->count();
+        $duplicates = $this->personRepository->findPotentialDuplicates($person);
+        $duplicateCount = $duplicates->count();
+
+        // This page just computed the real answer directly - self-heal a stale persisted flag
+        // instead of waiting for the hourly index rebuild (same as DuplicateController::index).
+        $this->personDuplicateCacheService->persistHasDuplicatesFlag($person->id, $duplicates->pluck('id'));
         $activitiesCount = $this->activityRepository->countOpen($person)->getData()->data;
         $patientMessageActivity = $person->primaryActivities()
             ->where('type', ActivityType::PATIENT_MESSAGE->value)
             ->orderByDesc('updated_at')
             ->first();
 
+        // Persons this one was marked "not a duplicate" with, so a wrong marking can be undone from the UI.
+        $falsePositivePersons = Person::whereIn(
+            'id',
+            $this->falsePositiveService->partnerIdsFor(DuplicateEntityType::PERSON, $person->id)
+        )->get();
+
         return view('admin::contacts.persons.view', [
-            'person'          => $person,
-            'duplicateCount'  => $duplicateCount,
+            'person'               => $person,
+            'duplicateCount'       => $duplicateCount,
+            'falsePositivePersons' => $falsePositivePersons,
             'sortedLeads'     => $sortedLeads,
             'activitiesCount' => $activitiesCount,
             'patientMessageActivity' => $patientMessageActivity,
@@ -313,7 +496,17 @@ class PersonController extends Controller
         $person = $this->personRepository->with('address')->findOrFail($id);
         $returnUrl = $this->resolveReturnUrl();
 
-        return view('admin::contacts.persons.edit', compact('person', 'returnUrl'));
+        $portalEmail = $person->hasPortalAccount()
+            ? $this->personKeycloakService->getAccountEmail($person)
+            : null;
+        $portalEmailUnverified = $person->hasPortalAccount() && $portalEmail === null;
+
+        return view('admin::contacts.persons.edit', compact(
+            'person',
+            'returnUrl',
+            'portalEmail',
+            'portalEmailUnverified',
+        ));
     }
 
     /**
@@ -340,6 +533,12 @@ class PersonController extends Controller
 
         $data = $request->all();
         $data['entity_type'] = 'persons';
+
+        $person = $this->personRepository->findOrFail($id);
+
+        if ($person->hasPortalAccount() && $this->personKeycloakService->emailsChanged($person->emails, $data['emails'] ?? null)) {
+            $this->personKeycloakService->assertPortalEmailPreserved($person, $data['emails'] ?? null);
+        }
 
         // Normalize enum-like fields to strings for persistence
         if (isset($data['salutation']) && $data['salutation'] instanceof BackedEnum) {
@@ -422,54 +621,9 @@ class PersonController extends Controller
             return $result;
         }
 
-        // Extract persons from the resource collection
-        $persons = $result->collection;
-
         // Check if we need to calculate match scores against a lead
         if ($lead) {
-            try {
-                // Calculate match scores for each person
-                // Note: $persons contains PersonResource objects, we need to get the underlying Person model
-                $personsWithScores = $persons->map(function ($personResource) use ($lead) {
-                    // Get the underlying Person model from the resource
-                    $person = $personResource->resource;
-
-                    // Calculate match score using the Person model
-                    $score = $this->calculateMatchScore($lead, $person);
-
-                    // Add score to the resource (which will be included in toArray())
-                    $personResource->match_score = $score;
-                    $personResource->match_score_percentage = round($score, 1);
-
-                    // Debug: Log which persons are being scored
-                    if ($this->enableLogging) {
-                        Log::info('Person being scored', [
-                            'person_id' => $person->id,
-                            'person_name' => $person->name,
-                            'person_first_name' => $person->first_name,
-                            'person_last_name' => $person->last_name,
-                            'calculated_score' => $score,
-                        ]);
-                    }
-
-                    return $personResource;
-                });
-
-                // Sort by match score (highest first); keep all results, even with score 0 (required for multiple persons for lead)
-                $personsWithScores = $personsWithScores
-                    ->sortByDesc(function ($personResource) {
-                        return $personResource->match_score ?? 0;
-                    })
-                    ->values();
-
-                return PersonResource::collection($personsWithScores);
-            } catch (Exception $e) {
-                // If lead not found or error in scoring, return regular results
-                logger()->warning('Could not calculate match scores for search', [
-                    'lead_id' => $leadId,
-                    'error' => $e->getMessage(),
-                ]);
-            }
+            return $this->attachMatchScoresToPersonResources($result, $lead);
         }
 
         return $result;
@@ -841,7 +995,7 @@ class PersonController extends Controller
     {
         // Handle array fields (emails, phones)
         if (in_array($field, ['emails', 'phones'])) {
-            return $this->arrayValuesMatch($leadValue, $personValue, $perspective);
+            return $this->arrayValuesMatch($leadValue, $personValue, $perspective, $field);
         }
 
         // Handle date fields
@@ -861,7 +1015,7 @@ class PersonController extends Controller
     /**
      * Check if array values match (for emails/phones).
      */
-    private function arrayValuesMatch($leadArray, $personArray, string $perspective = 'generic'): bool
+    private function arrayValuesMatch($leadArray, $personArray, string $perspective = 'generic', string $field = 'emails'): bool
     {
         if (!is_array($leadArray) || !is_array($personArray)) {
             return false;
@@ -869,6 +1023,26 @@ class PersonController extends Controller
 
         $leadValues = $this->extractArrayValues($leadArray);
         $personValues = $this->extractArrayValues($personArray);
+
+        if ($field === 'phones') {
+            $leadValues = array_values(array_filter(array_map(
+                [PhoneNormalizer::class, 'toDutchLocal'],
+                $leadValues
+            )));
+            $personValues = array_values(array_filter(array_map(
+                [PhoneNormalizer::class, 'toDutchLocal'],
+                $personValues
+            )));
+        } elseif ($field === 'emails') {
+            $leadValues = array_values(array_filter(array_map(
+                fn ($v) => EmailNormalizer::normalize($v) ?? strtolower($v),
+                $leadValues
+            )));
+            $personValues = array_values(array_filter(array_map(
+                fn ($v) => EmailNormalizer::normalize($v) ?? strtolower($v),
+                $personValues
+            )));
+        }
 
         // For sync (lead perspective): treat as match if all lead values exist in person values (subset)
         if ($perspective === 'lead') {
@@ -878,6 +1052,7 @@ class PersonController extends Controller
                     return false;
                 }
             }
+
             return true;
         }
 
@@ -1055,6 +1230,12 @@ class PersonController extends Controller
     {
         $person = $this->personRepository->findOrFail($id);
 
+        if ($person->hasPortalAccount()) {
+            return response()->json([
+                'message' => __('messages.person.delete_blocked_portal'),
+            ], 422);
+        }
+
         try {
             Event::dispatch('contacts.person.delete.before', $id);
 
@@ -1079,6 +1260,19 @@ class PersonController extends Controller
     public function massDestroy(MassDestroyRequest $massDestroyRequest): JsonResponse
     {
         $persons = $this->personRepository->findWhereIn('id', $massDestroyRequest->get('indices'));
+
+        $portalIds = $persons
+            ->filter(fn ($person): bool => $person->hasPortalAccount())
+            ->pluck('id')
+            ->all();
+
+        if ($portalIds !== []) {
+            return response()->json([
+                'message' => __('messages.person.mass_delete_blocked_portal', [
+                    'ids' => implode(', ', $portalIds),
+                ]),
+            ], 422);
+        }
 
         foreach ($persons as $person) {
             Event::dispatch('contact.person.delete.before', $person);

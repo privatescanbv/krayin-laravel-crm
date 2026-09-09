@@ -29,6 +29,7 @@
                     <div class="flex flex-col gap-2">
                         <label class="text-sm font-medium text-gray-800 dark:text-gray-200" for="reference_date">Referentiedatum</label>
                         <input id="reference_date" name="reference_date" type="date" value="{{ old('reference_date', optional($invoice->reference_date)->format('Y-m-d')) }}" class="w-full rounded-md border px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">De factuurdatum. Onderzoeken worden een maand eerder gezocht: een factuur van september koppelt aan orders met eerste onderzoek in augustus.</p>
                     </div>
                 </div>
             </div>

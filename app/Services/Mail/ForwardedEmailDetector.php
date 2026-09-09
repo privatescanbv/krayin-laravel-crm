@@ -24,12 +24,7 @@ class ForwardedEmailDetector
 
         $normalizedBody = html_entity_decode(strip_tags($body));
 
-        foreach (self::BODY_MARKERS as $marker) {
-            if (str_contains($normalizedBody, $marker)) {
-                return true;
-            }
-        }
+        return array_any(self::BODY_MARKERS, fn ($marker) => str_contains($normalizedBody, $marker));
 
-        return false;
     }
 }

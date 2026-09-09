@@ -215,7 +215,9 @@ class UserController extends Controller
 
         // Don't hash password here - let the User model's mutator handle it
         // This allows UserObserver to capture the plaintext password
-        if (!array_key_exists('password', $data)) {
+        // The edit form always submits a password field, so check for an
+        // empty value (not just field absence) to avoid wiping the password.
+        if (empty($data['password'])) {
             unset($data['password'], $data['confirm_password']);
         }
 
@@ -325,18 +327,18 @@ class UserController extends Controller
 
         $users = $this->userRepository->findWhereIn('id', $massDestroyRequest->input('indices'));
 
-        foreach ($users as $users) {
-            if (auth()->guard('user')->user()->id == $users->id) {
+        foreach ($users as $user) {
+            if (auth()->guard('user')->user()->id == $user->id) {
                 continue;
             }
 
-            Event::dispatch('settings.user.update.before', $users->id);
+            Event::dispatch('settings.user.update.before', $user->id);
 
             $this->userRepository->update([
                 'status' => $massDestroyRequest->input('value'),
-            ], $users->id);
+            ], $user->id);
 
-            Event::dispatch('settings.user.update.after', $users->id);
+            Event::dispatch('settings.user.update.after', $user->id);
 
             $count++;
         }

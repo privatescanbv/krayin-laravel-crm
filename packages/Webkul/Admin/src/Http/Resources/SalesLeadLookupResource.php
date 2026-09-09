@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Resources;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class SalesLeadLookupResource extends JsonResource
@@ -10,7 +11,7 @@ class SalesLeadLookupResource extends JsonResource
      * Transform the resource into an array.
      * Minimal resource for lookup/search operations to avoid N+1 queries.
      *
-     * @param  \Illuminate\Http\Request
+     * @param  Request
      * @return array
      */
     public function toArray($request)
@@ -19,20 +20,23 @@ class SalesLeadLookupResource extends JsonResource
             'id'                   => $this->id,
             'name'                 => $this->name,
             'description'          => $this->description,
+            'created_at'           => $this->created_at,
 
             // Minimal relationship data - only IDs and names, no nested relationships
             'pipeline_stage_id'    => $this->pipeline_stage_id,
             'stage'                => $this->when(
                 $this->relationLoaded('stage'),
-                fn() => $this->pipelineStage ? [
-                    'id'   => $this->pipelineStage->id,
-                    'name' => $this->pipelineStage->name,
+                fn () => $this->stage ? [
+                    'id'      => $this->stage->id,
+                    'name'    => $this->stage->name,
+                    'is_won'  => (bool) $this->stage->is_won,
+                    'is_lost' => (bool) $this->stage->is_lost,
                 ] : null
             ),
             'user_id'              => $this->user_id,
             'user'                 => $this->when(
                 $this->relationLoaded('user'),
-                fn() => $this->user ? [
+                fn () => $this->user ? [
                     'id'   => $this->user->id,
                     'name' => $this->user->name,
                 ] : null
@@ -43,4 +47,3 @@ class SalesLeadLookupResource extends JsonResource
         ];
     }
 }
-

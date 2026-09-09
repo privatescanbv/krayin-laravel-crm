@@ -41,6 +41,25 @@ return [
         'base_url' => env('SUGARCRM_BASE_URL', 'http://localhost:81/'),
     ],
 
+    /*
+    | Metabase environments for `php artisan metabase:sync-dashboard`.
+    | Each known name reads its own METABASE_<NAME>_URL / METABASE_<NAME>_API_KEY
+    | pair; an environment only shows up when its URL is set. Passing a full URL
+    | to --source/--target also works as long as that URL matches one listed here
+    | (so the API key can be looked up).
+    */
+    'metabase' => [
+        'environments' => collect(['local', 'dev', 'test', 'acc', 'staging', 'prod'])
+            ->mapWithKeys(fn (string $name): array => [$name => [
+                'url'     => env('METABASE_'.strtoupper($name).'_URL'),
+                'api_key' => env('METABASE_'.strtoupper($name).'_API_KEY'),
+            ]])
+            ->filter(fn (array $env): bool => ! empty($env['url']))
+            ->all(),
+
+        'timeout' => (int) env('METABASE_SYNC_TIMEOUT', 30),
+    ],
+
     'keycloak' => [
         'client_id'                   => KeyCloakClient::CRM->clientId(),
         'client_secret'               => env(KeyCloakClient::CRM->envKeySecret()),
@@ -111,6 +130,9 @@ return [
         ],
         // AI summary settings live in config/ai_summaries.php (per subject).
         'response_format_json' => filter_var(env('LLM_RESPONSE_FORMAT_JSON', true), FILTER_VALIDATE_BOOLEAN),
+    ],
+    'feedback_widget' => [
+        'key' => env('FEEDBACK_WIDGET_KEY'),
     ],
 
 ];

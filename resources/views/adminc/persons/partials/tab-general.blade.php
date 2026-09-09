@@ -17,11 +17,21 @@
                 @endif
 
                 @if (bouncer()->hasPermission('persons.delete'))
+                    @if ($person->hasPortalAccount())
+                        <span
+                            class="secondary-button flex items-center gap-1 border border-red-100 text-status-expired-text opacity-50"
+                            title="Deze persoon heeft een patiëntportaalaccount en kan niet worden verwijderd. Trek het account eerst in."
+                        >
+                            <span class="icon-delete text-base"></span>
+                            <span>Verwijderen</span>
+                        </span>
+                    @else
                     <v-person-delete
                         delete-url="{{ route('admin.contacts.persons.delete', $person->id) }}"
                         redirect-url="{{ route('admin.contacts.persons.index') }}"
                         person-name="{{ $person->name }}"
                     />
+                    @endif
                 @endif
             </div>
         </div>

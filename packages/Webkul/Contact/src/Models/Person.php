@@ -17,6 +17,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -86,6 +87,7 @@ class Person extends Model implements PersonContract
         'gender'                              => PersonGender::class,
         'salutation'                          => PersonSalutation::class,
         'is_active'                           => 'boolean',
+        'has_duplicates'                      => 'boolean',
         'preferred_language'                  => PreferredLanguage::class,
         'national_identification_number'      => EncryptedString::class,
         'onboarding_completed_at'             => 'datetime',
@@ -295,6 +297,11 @@ class Person extends Model implements PersonContract
         $this->attributes['salutation'] = $value;
     }
 
+    public function hasPortalAccount(): bool
+    {
+        return ! empty($this->keycloak_user_id);
+    }
+
     /**
      * Get the user that owns the lead.
      */
@@ -378,9 +385,17 @@ class Person extends Model implements PersonContract
     }
 
     /**
+     * Activities linked directly via person_id (notes, system audit trail, etc.).
+     */
+    public function activities()
+    {
+        return $this->hasMany(ActivityProxy::modelClass(), 'person_id');
+    }
+
+    /**
      * Get the address that belongs to the person.
      */
-    public function address()
+    public function address(): BelongsTo
     {
         return $this->belongsTo(Address::class);
     }

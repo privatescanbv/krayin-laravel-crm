@@ -3,17 +3,10 @@
 namespace App\Services;
 
 use App\Models\SalesLead;
-use App\Repositories\SalesLeadRepository;
 use Webkul\Lead\Models\Lead as LeadModel;
-use Webkul\Lead\Repositories\LeadRepository;
 
 class LeadAndSalesService
 {
-    public function __construct(
-        private LeadRepository $leadRepository,
-        private SalesLeadRepository $salesRepository
-    ) {}
-
     /**
      * Finds open sales and lead for a given person.
      *

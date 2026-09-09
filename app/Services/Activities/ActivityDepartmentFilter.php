@@ -41,12 +41,7 @@ class ActivityDepartmentFilter
     {
         $joins = $query->joins ?? [];
 
-        foreach ($joins as $join) {
-            if ($join->table === $table) {
-                return true;
-            }
-        }
+        return array_any($joins, fn ($join) => $join->table === $table);
 
-        return false;
     }
 }

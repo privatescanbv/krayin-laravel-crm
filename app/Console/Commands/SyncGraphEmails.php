@@ -6,6 +6,7 @@ use App\Services\Mail\GraphMailService;
 use App\Services\Mail\MicrosoftGraphTokenService;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Sentry\State\Scope;
 use Webkul\Email\Enums\EmailFolderEnum;
@@ -75,13 +76,20 @@ class SyncGraphEmails extends Command
             $this->info("Syncing mailbox [{$key}] {$address} ...");
 
             try {
-                $tokenService->clearToken($key);
                 $graphService->configureMailbox($address, $key, $folderName);
                 $graphService->processMessagesFromAllFolders();
+
+                // Sync recovered — re-arm alerting for this mailbox.
+                Cache::forget("graph-sync-failed:{$key}");
 
                 $this->info('  -> Done.');
             } catch (Exception $e) {
                 $this->error("  -> Failed: {$e->getMessage()}");
+
+                // GraphMailService has no 401 recovery of its own, so drop the cached token: if the
+                // failure was a rejected token, the next run starts with a fresh one instead of
+                // replaying the bad one until it expires.
+                $tokenService->clearToken($key);
 
                 Log::error('Graph mailbox sync failed', [
                     'mailbox'   => $key,
@@ -89,14 +97,22 @@ class SyncGraphEmails extends Command
                     'exception' => $e,
                 ]);
 
-                // Report the underlying exception to Sentry with mailbox context so the
-                // actual cause is visible, instead of the generic scheduler
-                // "Scheduled command [...] failed with exit code [1]" wrapper.
-                withScope(function (Scope $scope) use ($e, $key, $address): void {
-                    $scope->setTag('mailbox', $key);
-                    $scope->setContext('mailbox', ['key' => $key, 'address' => $address]);
-                    captureException($e);
-                });
+                // This command runs every minute, so a multi-hour Graph outage would otherwise
+                // report the same exception 60+ times. Report to Sentry once per distinct
+                // failure per mailbox; a new error type still alerts, the success path above
+                // clears the marker, and the 6h TTL re-alerts on a sustained outage.
+                if (Cache::get("graph-sync-failed:{$key}") !== $e::class) {
+                    Cache::put("graph-sync-failed:{$key}", $e::class, now()->addHours(6));
+
+                    // Report the underlying exception to Sentry with mailbox context so the
+                    // actual cause is visible, instead of the generic scheduler
+                    // "Scheduled command [...] failed with exit code [1]" wrapper.
+                    withScope(function (Scope $scope) use ($e, $key, $address): void {
+                        $scope->setTag('mailbox', $key);
+                        $scope->setContext('mailbox', ['key' => $key, 'address' => $address]);
+                        captureException($e);
+                    });
+                }
 
                 $errors++;
             }

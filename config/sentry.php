@@ -18,7 +18,9 @@ return [
 
     // The release version of your application
     // Example with dynamic git hash: trim(exec('git --git-dir ' . base_path('.git') . ' log --pretty="%h" -n1 HEAD'))
-    'release' => env('SENTRY_RELEASE'),
+    // `?: null` because the Docker image always defines SENTRY_RELEASE, empty when it was built
+    // without the build arg - an empty string would tag every event with a blank release.
+    'release' => env('SENTRY_RELEASE') ?: null,
 
     // When left empty or `null` the Laravel environment will be used (usually discovered from `APP_ENV` in your `.env`)
     'environment' => env('SENTRY_ENVIRONMENT'),

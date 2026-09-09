@@ -1,10 +1,11 @@
 @pushOnce('scripts')
 @verbatim
     <script type="text/x-template" id="v-lead-suggestion-template">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between" :title="createdAtTooltip">
             <div class="flex-1">
                 <div class="flex items-center">
                     <div class="font-medium">{{ lead.name || (lead.first_name && lead.last_name ? `${lead.first_name} ${lead.last_name}` : 'Lead #' + lead.id) }}</div>
+                    <span v-if="lead.stage && lead.stage.name" class="ml-2 shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200">{{ lead.stage.name }}</span>
                     <span class="ml-2 text-status-active-text text-xs">+ Toevoegen</span>
                 </div>
                 <div class="text-sm text-gray-600">
@@ -34,6 +35,15 @@
             app.component('v-lead-suggestion', {
                 template: '#v-lead-suggestion-template',
                 props: ['lead'],
+                computed: {
+                    createdAtTooltip() {
+                        if (! this.lead.created_at) {
+                            return undefined;
+                        }
+
+                        return 'Aangemaakt op ' + this.$admin.formatDate(this.lead.created_at, 'd MMM yyyy, HH:mm');
+                    }
+                },
                 methods: {
                     getScoreColorClass(score) {
                         if (score >= 80) {

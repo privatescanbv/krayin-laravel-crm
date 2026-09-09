@@ -14,6 +14,7 @@ use App\Http\Middleware\TrustProxies;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Services\Afb\AfbDispatchService;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Database\LostConnectionDetector;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -88,12 +89,15 @@ $app = Application::configure(basePath: dirname(__DIR__))
             ->withoutOverlapping();
         $schedule->command('activities:release-overdue')->hourly();
         $schedule->command('activities:sync-statuses')->hourly();
-        $schedule->command('duplicates:refresh-cache --clear')->hourly();
+        // The index is what the duplicate counters and the persons list read, so it is rebuilt
+        // hourly now that a rebuild is one pass instead of a detection per person.
+        $schedule->command('duplicates:refresh-cache --index')->hourly()->withoutOverlapping();
         $schedule->command('emails:cleanup-logs')->daily();
         $schedule->command('emails:cleanup-graph-inbox')->daily();
         $schedule->command('patient:send-notification-email')->everyFiveMinutes()->withoutOverlapping();
         $schedule->command('afb:send-daily')->dailyAt(AfbDispatchService::AFB_LATE_BOOKING_CUTOFF_HOUR.':00')->withoutOverlapping();
         $schedule->command('revops:check-lead-activity')->hourly()->withoutOverlapping();
+        $schedule->command('forms:sync-anamnesis-status')->hourly()->withoutOverlapping();
         $schedule->command('email-templates:verify-codes')->hourly();
         $schedule->command('queue:monitor-failed-jobs')->everyFiveMinutes()->withoutOverlapping();
         $schedule->command('ai:refresh-summaries')->daily()->withoutOverlapping();
@@ -111,9 +115,18 @@ $app = Application::configure(basePath: dirname(__DIR__))
             EmailSendingBlockedException::class,
         ]);
 
+        // Long-running workers (queue:work / schedule:work) lose their idle MySQL
+        // connection when the server times it out or restarts. Laravel detects this,
+        // stops the worker and supervisor restarts it with a fresh connection, so the
+        // "MySQL server has gone away" PDOException is self-healing noise, not a bug.
+        $exceptions->dontReportWhen(
+            fn (Throwable $e) => app()->runningInConsole()
+                && (new LostConnectionDetector)->causedByLostConnection($e)
+        );
+
         $exceptions->reportable(function (Throwable $e) {
             if (app()->runningInConsole()) {
-                return;
+                return false;
             }
 
             try {

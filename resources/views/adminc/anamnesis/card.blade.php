@@ -33,6 +33,8 @@
             </div>
         </div>
 
+        <x-adminc::anamnesis.coupled-to :anamnesis="$anamnesis" class="mb-3" />
+
         <div class="space-y-4">
             {{-- Description --}}
             @if ($anamnesis->comment_clinic)
@@ -66,15 +68,7 @@
                     @endif
                 </div>
             @endif
-            @php
-                $gvlDefaultFormType = \App\Enums\FormType::defaultForAnamnesis($anamnesis)->value;
-            @endphp
-            <x-adminc::anamnesis.gvl-forms-list
-                :anamnesis="$anamnesis"
-                :defaultFormType="$gvlDefaultFormType"
-                :personHasPortalAccount="!empty(($person ?? $anamnesis->person)?->keycloak_user_id)"
-            />
-
+            {{-- GVL formulieren: see forms-overview component on entity views --}}
             {{-- Conditions --}}
             @php
                 $conditions = collect([

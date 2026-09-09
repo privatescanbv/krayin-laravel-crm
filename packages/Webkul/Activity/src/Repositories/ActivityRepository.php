@@ -50,10 +50,8 @@ class ActivityRepository extends Repository
     /**
      * Create a system log activity (type=SYSTEM, is_done=1).
      * Caller provides title, additional, user_id and any FK fields (lead_id, order_id, …).
-     *
-     * @return \Webkul\Activity\Contracts\Activity
      */
-    public function createSystem(array $data)
+    public function createSystem(array $data): Activity
     {
         return $this->create(array_merge($data, [
             'type'    => ActivityType::SYSTEM,
@@ -63,10 +61,8 @@ class ActivityRepository extends Repository
 
     /**
      * Create pipeline.
-     *
-     * @return \Webkul\Activity\Contracts\Activity
      */
-    public function create(array $data)
+    public function create(array $data): Activity
     {
         $activity = parent::create($data);
 
@@ -88,17 +84,11 @@ class ActivityRepository extends Repository
      *
      * @param int $id
      * @param string $attribute
-     * @return \Webkul\Activity\Contracts\Activity
      */
-    public function update(array $data, $id, $attribute = 'id')
+    public function update(array $data, $id, $attribute = 'id') : Activity
     {
         Activity::normalizeForeignKeys($data);
-
-        $activity = parent::update($data, $id);
-
-        // Participants functionality removed - using only user_id for assignment
-
-        return $activity;
+        return parent::update($data, $id);
     }
 
     public function getActivities(array $dateRange, ?string $view = null)

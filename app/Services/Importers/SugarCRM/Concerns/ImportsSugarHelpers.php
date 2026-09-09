@@ -4,10 +4,8 @@ namespace App\Services\Importers\SugarCRM\Concerns;
 
 use App\Enums\ActivityStatus;
 use App\Services\ActivityStatusService;
-use Exception;
 use Illuminate\Support\Carbon;
 use Webkul\Activity\Models\Activity;
-use Webkul\User\Models\User;
 
 trait ImportsSugarHelpers
 {
@@ -55,28 +53,6 @@ trait ImportsSugarHelpers
         $entity->timestamps = true;
 
         return $entity;
-    }
-
-    /**
-     * Map assigned user from SugarCRM to local user by external_id.
-     * Expects `$this->command` with info logging capability.
-     */
-    protected function mapAssignedUser(?string $assignedUserId): ?int
-    {
-        if (empty($assignedUserId)) {
-            return null;
-        }
-
-        $user = User::where('external_id', $assignedUserId)->first();
-        if (is_null($user)) {
-            throw new Exception('User not found by external_id: '.$assignedUserId);
-        }
-
-        if (property_exists($this, 'command') && $this->command) {
-            $this->command->info("Mapped assigned user {$assignedUserId} to user: {$user->name} (ID: {$user->id})");
-        }
-
-        return $user->id;
     }
 
     /**

@@ -98,8 +98,8 @@ class OrderCheckService
 
             foreach ($reportingTypes as $reportingType) {
                 $checkName = $person
-                    ? "Partner product rapportage: {$reportingType} — {$person->name}"
-                    : "Partner product rapportage: {$reportingType}";
+                    ? "Partner product rapportage: $reportingType — $person->name"
+                    : "Partner product rapportage: $reportingType";
 
                 $checkNames->push($checkName);
             }

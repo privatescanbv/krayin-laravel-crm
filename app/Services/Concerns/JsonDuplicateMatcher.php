@@ -2,6 +2,7 @@
 
 namespace App\Services\Concerns;
 
+use Closure;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -33,8 +34,13 @@ trait JsonDuplicateMatcher
 
     /**
      * Generic helper to find duplicates based on JSON field values.
+     *
+     * @param  Closure(Builder): void|null  $scopeQuery  Optional extra constraint (e.g. a recency
+     *                                                   window) applied to every candidate query,
+     *                                                   so it's pushed down to SQL instead of
+     *                                                   filtering the fetched result in PHP.
      */
-    protected function findDuplicatesByJsonField(Lead|Person $entity, string $fieldName): Collection
+    protected function findDuplicatesByJsonField(Lead|Person $entity, string $fieldName, ?Closure $scopeQuery = null): Collection
     {
         $duplicates = collect();
 
@@ -60,21 +66,27 @@ trait JsonDuplicateMatcher
                     $query = $this->model->newQuery()->where('id', '!=', $entity->id);
                     // Use shared trait for robust matching
                     $query = $this->applyJsonValueMatch($query, $fieldName, (string) $value);
+                    if ($scopeQuery) {
+                        $scopeQuery($query);
+                    }
                     $results = $query->get();
 
                     $duplicates = $duplicates->merge($results);
                 } catch (Exception $e) {
-                    Log::error("Error searching for {$fieldName} duplicates: ".$e->getMessage());
+                    Log::error("Error searching for $fieldName duplicates: ".$e->getMessage());
                 }
             }
         } catch (Exception $e) {
-            Log::error("Error in findDuplicatesByJsonField for {$fieldName}: ".$e->getMessage());
+            Log::error("Error in findDuplicatesByJsonField for $fieldName: ".$e->getMessage());
         }
 
         return $duplicates;
     }
 
-    protected function findDuplicatesByName(Person|Lead $entity): Collection
+    /**
+     * @param  Closure(Builder): void|null  $scopeQuery  See findDuplicatesByJsonField().
+     */
+    protected function findDuplicatesByName(Person|Lead $entity, ?Closure $scopeQuery = null): Collection
     {
         if (empty($entity->first_name) && empty($entity->last_name)) {
             return collect();
@@ -84,36 +96,28 @@ trait JsonDuplicateMatcher
         try {
             $query = $this->model->newQuery()
                 ->where('id', '!=', $entity->id);
-
-            // Exact first + last name match (case-insensitive, MySQL compatible)
-            if (! empty($entity->first_name) && ! empty($entity->last_name)) {
-                $first = mb_strtolower($entity->first_name);
-                $last = mb_strtolower($entity->last_name);
-
-                $exactMatches = (clone $query)
-                    ->whereRaw('LOWER(first_name) = ?', [$first])
-                    ->whereRaw('LOWER(last_name) = ?', [$last])
-                    ->get();
-                $duplicates = $duplicates->merge($exactMatches);
+            if ($scopeQuery) {
+                $scopeQuery($query);
             }
 
-            // Married name variations
-            if (! empty($entity->married_name) && ! empty($entity->first_name)) {
-                $firstLower = mb_strtolower($entity->first_name);
-                $marriedLower = mb_strtolower($entity->married_name);
-                $lastLower = ! empty($entity->last_name) ? mb_strtolower($entity->last_name) : null;
+            // Compare every name the entity carries (last_name and married_name) against both
+            // name columns of the candidate, so a match is found from either side of the pair.
+            if (! empty($entity->first_name)) {
+                $first = mb_strtolower($entity->first_name);
 
-                $marriedQuery = (clone $query)
-                    ->whereRaw('LOWER(first_name) = ?', [$firstLower])
-                    ->where(function ($q) use ($marriedLower, $lastLower) {
-                        $q->whereRaw('LOWER(last_name) = ?', [$marriedLower]);
-                        if ($lastLower !== null) {
-                            $q->orWhereRaw('LOWER(married_name) = ?', [$lastLower]);
-                        }
-                    });
+                foreach (array_filter([$entity->last_name, $entity->married_name]) as $name) {
+                    $nameLower = mb_strtolower($name);
 
-                $marriedMatches = $marriedQuery->get();
-                $duplicates = $duplicates->merge($marriedMatches);
+                    $matches = (clone $query)
+                        ->whereRaw('LOWER(first_name) = ?', [$first])
+                        ->where(function ($q) use ($nameLower) {
+                            $q->whereRaw('LOWER(last_name) = ?', [$nameLower])
+                                ->orWhereRaw('LOWER(married_name) = ?', [$nameLower]);
+                        })
+                        ->get();
+
+                    $duplicates = $duplicates->merge($matches);
+                }
             }
         } catch (Exception $e) {
             Log::error('Error searching for person name duplicates: '.$e->getMessage());

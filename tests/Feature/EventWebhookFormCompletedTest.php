@@ -341,6 +341,32 @@ test('UpdateAnamnesisFormStatus listener sets status to completed', function () 
     expect($gvlForm->fresh()->gvl_form_status)->toBe(FormStatus::Completed);
 });
 
+test('UpdateAnamnesisFormStatus listener stamps completed_at once and keeps it stable', function () {
+    $lead = Lead::factory()->create();
+    $formId = 'form-completed-at-1';
+
+    $anamnesis = Anamnesis::factory()->create(['lead_id' => $lead->id, 'sales_id' => null]);
+    $gvlForm = AnamnesisGvlForm::create([
+        'anamnesis_id'    => $anamnesis->id,
+        'gvl_form_id'     => $formId,
+        'gvl_form_status' => FormStatus::Step3_completed,
+    ]);
+
+    expect($gvlForm->completed_at)->toBeNull();
+
+    $listener = app(UpdateAnamnesisFormStatus::class);
+    $listener->handle(new PatientFormStatusUpdatedEvent($formId, FormStatus::Completed, FormType::PrivateScan));
+
+    $firstStamp = $gvlForm->fresh()->completed_at;
+    expect($firstStamp)->not->toBeNull();
+
+    // A second completed event must not move the timestamp.
+    $this->travel(1)->hours();
+    $listener->handle(new PatientFormStatusUpdatedEvent($formId, FormStatus::Completed, FormType::PrivateScan));
+
+    expect($gvlForm->fresh()->completed_at->equalTo($firstStamp))->toBeTrue();
+});
+
 test('UpdateAnamnesisFormStatus listener logs error when no anamnesis found', function () {
     Log::shouldReceive('info')->zeroOrMoreTimes();
     Log::shouldReceive('error')

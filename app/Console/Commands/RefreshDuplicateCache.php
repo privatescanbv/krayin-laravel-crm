@@ -7,6 +7,7 @@ use App\Services\PersonDuplicateCacheService;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Webkul\Lead\Repositories\LeadRepository;
 
 /**
  * Used in cronjob to refresh duplicate detection caches every hour
@@ -18,6 +19,7 @@ class RefreshDuplicateCache extends Command
      */
     protected $signature = 'duplicates:refresh-cache
                           {--full : Rebuild cache for all entities}
+                          {--index : Rebuild persons.has_duplicates flags from detection}
                           {--stats : Show cache statistics}
                           {--clear : Clear all duplicate caches}';
 
@@ -30,6 +32,7 @@ class RefreshDuplicateCache extends Command
     {
         try {
             $doFull = (bool) $this->option('full');
+            $doIndex = (bool) $this->option('index');
             $doStats = (bool) $this->option('stats');
             $doClear = (bool) $this->option('clear');
 
@@ -104,6 +107,14 @@ class RefreshDuplicateCache extends Command
 
                 $this->info('✅ Full rebuild completed');
 
+                $this->rebuildPersonDuplicateIndex($personCache);
+
+                return Command::SUCCESS;
+            }
+
+            if ($doIndex) {
+                $this->rebuildPersonDuplicateIndex($personCache);
+
                 return Command::SUCCESS;
             }
 
@@ -114,8 +125,12 @@ class RefreshDuplicateCache extends Command
                 $personCache->refreshPersonCache((int) $pid);
             }
 
-            $this->info('Incremental refresh (last 24h) for leads...');
-            $recentLeads = DB::table('leads')->where('updated_at', '>=', now()->subDay())->pluck('id');
+            // Leads older than the duplicate search window (see LeadRepository::applyDuplicateFilters)
+            // can never be flagged as a duplicate again, on the assumption they've already been
+            // handled - so only leads created within that same window need their cache kept warm.
+            $duplicateWindowWeeks = LeadRepository::DUPLICATE_SEARCH_PERIOD_WEEKS;
+            $this->info("Incremental refresh (last $duplicateWindowWeeks weeks) for leads...");
+            $recentLeads = DB::table('leads')->where('created_at', '>=', now()->subWeeks($duplicateWindowWeeks))->pluck('id');
             foreach ($recentLeads as $lid) {
                 $leadCache->refreshLeadCache((int) $lid);
             }
@@ -128,5 +143,13 @@ class RefreshDuplicateCache extends Command
 
             return Command::FAILURE;
         }
+    }
+
+    private function rebuildPersonDuplicateIndex(PersonDuplicateCacheService $personCache): void
+    {
+        $this->info('Rebuilding persons.has_duplicates index...');
+        $result = $personCache->rebuildHasDuplicatesIndex();
+        $this->info("✅ Indexed {$result['processed']} persons: {$result['flagged']} with duplicates ".
+            "(+{$result['turned_on']} / -{$result['turned_off']} changed)");
     }
 }

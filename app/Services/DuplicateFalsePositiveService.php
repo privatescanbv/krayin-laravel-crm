@@ -71,9 +71,29 @@ class DuplicateFalsePositiveService
     }
 
     /**
-     * Check if a combination should be ignored (i.e. exists as false positive).
+     * Ids that are stored as false positive together with the given entity.
+     *
+     * @return Collection<int,int>
      */
-    public function shouldIgnore(DuplicateEntityType $entityType, int $entityIdA, int $entityIdB): bool
+    public function partnerIdsFor(DuplicateEntityType $entityType, int $entityId): Collection
+    {
+        return DuplicateFalsePositive::query()
+            ->where('entity_type', $entityType->value)
+            ->where(function ($q) use ($entityId) {
+                $q->where('entity_id_1', $entityId)->orWhere('entity_id_2', $entityId);
+            })
+            ->get(['entity_id_1', 'entity_id_2'])
+            ->map(fn ($row) => $row->entity_id_1 === $entityId ? $row->entity_id_2 : $row->entity_id_1)
+            ->unique()
+            ->values();
+    }
+
+    /**
+     * Remove a stored false positive pair (undo a wrong marking).
+     *
+     * @return int Number of deleted rows.
+     */
+    public function removePair(DuplicateEntityType $entityType, int $entityIdA, int $entityIdB): int
     {
         [$a, $b] = $this->normalizePair($entityIdA, $entityIdB);
 
@@ -81,7 +101,7 @@ class DuplicateFalsePositiveService
             ->where('entity_type', $entityType->value)
             ->where('entity_id_1', $a)
             ->where('entity_id_2', $b)
-            ->exists();
+            ->delete();
     }
 
     /**

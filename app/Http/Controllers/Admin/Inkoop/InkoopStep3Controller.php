@@ -56,17 +56,7 @@ class InkoopStep3Controller extends Controller
                         $q->where('clinic_id', $invoice->clinic_id);
                     })
                     ->get()
-                    ->filter(function (OrderItem $item) use ($invoice) {
-                        if (! $invoice->reference_date) {
-                            return true;
-                        }
-
-                        $examAt = $item->order?->firstExaminationCarbon();
-
-                        return $examAt !== null
-                            && $examAt->year === (int) $invoice->reference_date->year
-                            && $examAt->month === (int) $invoice->reference_date->month;
-                    })
+                    ->filter(fn (OrderItem $item) => $invoice->matchesExpectedExaminationMonth($item->order?->firstExaminationCarbon()))
                     ->values();
 
                 return [$person->id => $orderItems];

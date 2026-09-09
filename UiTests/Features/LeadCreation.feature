@@ -13,7 +13,7 @@ Feature: Lead aanmaken
 
     Scenario: Aanmaken van lead met een person te kiezen in stap 1
         Given I open the lead create page
-        When I select the first person suggestion for query "test"
+        When I select the first person suggestion for first name "CI Test" and last name "PersonOne"
         And I go to step 2
         And I fill the required lead fields
         And I save the lead

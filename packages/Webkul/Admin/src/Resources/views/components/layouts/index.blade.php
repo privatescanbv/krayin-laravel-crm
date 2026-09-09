@@ -118,10 +118,7 @@
         <!-- Page Header Blade Component -->
         <x-admin::layouts.header />
 
-        <div
-            class="group/container sidebar-collapsed flex gap-4"
-            ref="appLayout"
-        >
+        <div class="group/container sidebar-collapsed flex gap-4">
             <!-- Page Sidebar Blade Component -->
             <x-admin::layouts.sidebar.desktop />
 
@@ -158,6 +155,8 @@
     </script>
 
     {!! view_render_event('admin.layout.vue-app-mount.after') !!}
+
+    <x-admin::layouts.feedback-widget />
 </body>
 
 </html>

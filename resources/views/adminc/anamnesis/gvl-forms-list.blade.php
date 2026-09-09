@@ -6,7 +6,10 @@
 @php
     use App\Support\GvlFormLink;
 
-    $gvlForms = $anamnesis->relationLoaded('gvlForms') ? $anamnesis->gvlForms : $anamnesis->gvlForms()->get();
+    $gvlForms = ($anamnesis->relationLoaded('gvlForms') ? $anamnesis->gvlForms : $anamnesis->gvlForms()->get())
+        // Only GVL-flow forms belong here; diagnose forms have their own block.
+        ->filter(fn ($f) => $f->gvl_form_type === null || $f->gvl_form_type->isGvlForm())
+        ->values();
 
     $statusLabels = [
         'new'       => ['Nieuw', 'text-gray-600'],
@@ -36,22 +39,28 @@
                     $detachUrl = route('admin.anamnesis.gvl-form.detach', [$anamnesis->id, $gvlForm->id]);
                 @endphp
                 <div class="flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800">
-                    <div class="flex flex-1 items-center gap-3 overflow-hidden text-sm">
-                        @if ($gvlForm->gvl_form_type)
-                            <span class="shrink-0 font-medium text-gray-600 dark:text-gray-400">{{ $gvlForm->gvl_form_type->label() }}</span>
-                            <span class="text-gray-300 dark:text-gray-600">|</span>
-                        @endif
-                        <span class="{{ $statusColor }} shrink-0 font-medium">{{ $statusText }}</span>
-                        @if ($openUrl)
-                            <span class="text-gray-300 dark:text-gray-600">|</span>
-                            @if ($personHasPortalAccount || $openUrl)
-                                <a href="{{ $openUrl }}" target="_blank" class="truncate text-activity-note-text hover:underline">
-                                    Formulier bekijken
-                                </a>
-                            @else
-                                <span class="truncate text-gray-500">{{ $gvlForm->gvl_form_id }}</span>
+                    <div class="flex flex-1 flex-col gap-0.5 overflow-hidden">
+                        <div class="flex items-center gap-3 overflow-hidden text-sm">
+                            @if ($gvlForm->gvl_form_type)
+                                <span class="shrink-0 font-medium text-gray-600 dark:text-gray-400">{{ $gvlForm->gvl_form_type->label() }}</span>
+                                <span class="text-gray-300 dark:text-gray-600">|</span>
                             @endif
-                        @endif
+                            <span class="{{ $statusColor }} shrink-0 font-medium">{{ $statusText }}</span>
+                            @if ($openUrl)
+                                <span class="text-gray-300 dark:text-gray-600">|</span>
+                                @if ($personHasPortalAccount || $openUrl)
+                                    <a href="{{ $openUrl }}" target="_blank" class="truncate text-activity-note-text hover:underline">
+                                        Formulier bekijken
+                                    </a>
+                                @else
+                                    <span class="truncate text-gray-500">{{ $gvlForm->gvl_form_id }}</span>
+                                @endif
+                            @endif
+                        </div>
+                        <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                            <span>Aangemaakt: {{ $gvlForm->created_at?->format('d-m-Y H:i') ?? '—' }}</span>
+                            <span>Voltooid: {{ $gvlForm->completed_at?->format('d-m-Y H:i') ?? '—' }}</span>
+                        </div>
                     </div>
                     <button
                         type="button"
@@ -150,14 +159,16 @@
             if (res.ok) {
                 flash('success', data.message || (isAttach ? 'GVL formulier gekoppeld.' : 'GVL formulier ontkoppeld.'));
                 setTimeout(() => location.reload(), 400);
-            } else {
-                throw new Error(data.message || 'Actie mislukt');
+                return;
             }
+
+            flash('error', data.message || 'Actie mislukt');
         } catch (err) {
             flash('error', err.message || 'Er is een fout opgetreden.');
-            btn.disabled = false;
-            btn.textContent = originalText;
         }
+
+        btn.disabled = false;
+        btn.textContent = originalText;
     });
 </script>
 @endPushOnce

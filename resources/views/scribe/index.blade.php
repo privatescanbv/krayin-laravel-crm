@@ -30,9 +30,9 @@
         var useCsrf = Boolean();
         var csrfUrl = "/sanctum/csrf-cookie";
     </script>
-    <script src="{{ asset("/vendor/scribe/js/tryitout-5.10.0.js") }}"></script>
+    <script src="{{ asset("/vendor/scribe/js/tryitout-5.11.0.js") }}"></script>
 
-    <script src="{{ asset("/vendor/scribe/js/theme-default-5.10.0.js") }}"></script>
+    <script src="{{ asset("/vendor/scribe/js/theme-default-5.11.0.js") }}"></script>
 
 </head>
 
@@ -45,12 +45,12 @@
     </span>
 </a>
 <div class="tocify-wrapper">
-    
+
             <div class="lang-selector">
                                             <button type="button" class="lang-button" data-language-name="bash">bash</button>
                                             <button type="button" class="lang-button" data-language-name="javascript">javascript</button>
                     </div>
-    
+
     <div class="search">
         <input type="text" class="search" id="input-search" placeholder="Search">
     </div>
@@ -128,6 +128,9 @@
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-POSTapi-keycloak-webhooks">
                                 <a href="#endpoints-POSTapi-keycloak-webhooks">POST api/keycloak/webhooks</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="endpoints-POSTapi-patient-forgot-password">
+                                <a href="#endpoints-POSTapi-patient-forgot-password">Trigger a patient password-reset e-mail.</a>
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-POSTapi-patient-forgot-password">
                                 <a href="#endpoints-POSTapi-patient-forgot-password">Trigger a patient password-reset e-mail.</a>
@@ -267,7 +270,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: August 3, 2026</li>
+        <li>Last updated: September 9, 2026</li>
     </ul>
 </div>
 
@@ -290,7 +293,7 @@ You can switch the language used with the tabs at the top right (or from the nav
 
         <h1 id="application-webhooks">Application webhooks</h1>
 
-    
+
 
                                 <h2 id="application-webhooks-PUTapi-webhooks-event">Handle an application webhook event.</h2>
 
@@ -544,7 +547,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="endpoints">Endpoints</h1>
 
-    
+
 
                                 <h2 id="endpoints-POSTapi-leads-hernia">Create a Hernia lead from the inbound (Gravity Forms) payload schema.</h2>
 
@@ -572,7 +575,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"salutation\": \"Dhr.\",
     \"first_name\": \"architecto\",
     \"last_name\": \"architecto\",
-    \"birthdate\": \"2026-08-03\",
+    \"birthdate\": \"2026-09-09\",
     \"email1\": \"zbailey@example.net\",
     \"phone_mobile\": \"0612345678\",
     \"primary_huisnr_c\": \"12\",
@@ -621,7 +624,7 @@ let body = {
     "salutation": "Dhr.",
     "first_name": "architecto",
     "last_name": "architecto",
-    "birthdate": "2026-08-03",
+    "birthdate": "2026-09-09",
     "email1": "zbailey@example.net",
     "phone_mobile": "0612345678",
     "primary_huisnr_c": "12",
@@ -847,10 +850,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="birthdate"                data-endpoint="POSTapi-leads-hernia"
-               value="2026-08-03"
+               value="2026-09-09"
                data-component="body">
     <br>
-<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-08-03</code></p>
+<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-09-09</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>email1</code></b>&nbsp;&nbsp;
@@ -1909,7 +1912,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The <code>id</code> of an existing record in the users table.</p>
+<p>Must match an existing stored value.</p>
         </div>
         </form>
 
@@ -1962,7 +1965,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 5cfef3db-333e-46ab-8e26-2d5e970f2d76
+x-request-id: 71edcfab-86bf-4a9a-8f28-1eac72421a12
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 59
  </code></pre></details>         <pre>
@@ -2220,7 +2223,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The <code>id</code> of an existing record in the users table.</p>
+<p>Must match an existing stored value.</p>
         </div>
         </form>
 
@@ -2380,7 +2383,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="architecto"
                data-component="body">
     <br>
-<p>The <code>id</code> of an existing record in the lead_pipeline_stages table. Example: <code>architecto</code></p>
+<p>Must match an existing stored value. Example: <code>architecto</code></p>
         </div>
         </form>
 
@@ -2989,7 +2992,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 06725185-44bc-476d-a514-8e799dc6cd2f
+x-request-id: da3baeea-d1c0-4098-ae58-17c91610a34c
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 58
  </code></pre></details>         <pre>
@@ -3147,7 +3150,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: d3c80582-4d1f-421d-a640-3f3ea9078339
+x-request-id: 01d57cd8-73e5-4dfb-bd45-ff2c1a7bbbd7
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 57
  </code></pre></details>         <pre>
@@ -3427,7 +3430,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The <code>id</code> of an existing record in the lead_pipelines table.</p>
+<p>Must match an existing stored value.</p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>pipeline_stage_id</code></b>&nbsp;&nbsp;
@@ -3439,7 +3442,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The <code>id</code> of an existing record in the lead_pipeline_stages table.</p>
+<p>Must match an existing stored value.</p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>lead_id</code></b>&nbsp;&nbsp;
@@ -3451,7 +3454,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="architecto"
                data-component="body">
     <br>
-<p>The <code>id</code> of an existing record in the leads table. Example: <code>architecto</code></p>
+<p>Must match an existing stored value. Example: <code>architecto</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>user_id</code></b>&nbsp;&nbsp;
@@ -3463,7 +3466,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The <code>id</code> of an existing record in the users table.</p>
+<p>Must match an existing stored value.</p>
         </div>
         </form>
 
@@ -3516,7 +3519,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 14b84f3f-12b8-4c94-80c6-3ce1093d9156
+x-request-id: 54743496-841a-490c-9acf-f1d927d33cc0
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 56
  </code></pre></details>         <pre>
@@ -3644,11 +3647,11 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"type\": \"task\",
+    \"type\": \"note\",
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_to\": \"2026-08-03 11:43:14\"
+    \"schedule_to\": \"2026-09-09 16:51:00\"
 }"
 </code></pre></div>
 
@@ -3665,11 +3668,11 @@ const headers = {
 };
 
 let body = {
-    "type": "task",
+    "type": "note",
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_to": "2026-08-03 11:43:14"
+    "schedule_to": "2026-09-09 16:51:00"
 };
 
 fetch(url, {
@@ -3786,10 +3789,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="type"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="task"
+               value="note"
                data-component="body">
     <br>
-<p>Example: <code>task</code></p>
+<p>Example: <code>note</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>task</code></li> <li><code>meeting</code></li> <li><code>call</code></li> <li><code>note</code></li> <li><code>file</code></li></ul>
         </div>
@@ -3839,7 +3842,7 @@ Must be one of:
                value=""
                data-component="body">
     <br>
-<p>The <code>id</code> of an existing record in the users table.</p>
+<p>Must match an existing stored value.</p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>schedule_to</code></b>&nbsp;&nbsp;
@@ -3848,10 +3851,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-08-03 11:43:14"
+               value="2026-09-09 16:51:00"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-08-03 11:43:14</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-09-09 16:51:00</code></p>
         </div>
         </form>
 
@@ -4292,7 +4295,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="keycloak">Keycloak</h1>
 
-    
+
 
                                 <h2 id="keycloak-GETapi-keycloak-persons--keycloakUserId-">Haal person id op op basis van Keycloak user id.</h2>
 
@@ -4688,7 +4691,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-naw">Patient NAW</h1>
 
-    
+
 
                                 <h2 id="patient-naw-GETapi-patient--id--naw">Get NAW data for a patient.</h2>
 
@@ -5454,7 +5457,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-password">Patient Password</h1>
 
-    
+
 
                                 <h2 id="patient-password-PUTapi-patient--id--password">Update the password for a patient.</h2>
 
@@ -5902,7 +5905,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-appointments">Patient appointments</h1>
 
-    
+
 
                                 <h2 id="patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders and published Activities).</h2>
 
@@ -6142,7 +6145,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-counters">Patient counters</h1>
 
-    
+
 
                                 <h2 id="patient-counters-GETapi-patient--id--counters">Get notification counters for the patient portal menu badges.</h2>
 
@@ -6316,7 +6319,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-documents">Patient documents</h1>
 
-    
+
 
                                 <h2 id="patient-documents-GETapi-patient--id--documents">Get all documents for a patient (FILE activities published to their portal via pivot).</h2>
 
@@ -6585,7 +6588,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --form "name=Bloeduitslag"\
     --form "description=Resultaten van het bloedonderzoek."\
-    --form "file=@/tmp/phpct3pdu8uirrt3ytjUr8" </code></pre></div>
+    --form "file=@/tmp/phpt5n2g15ku180bhaQH83" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -6774,7 +6777,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The file to upload (max 20 MB). Example: <code>/tmp/phpct3pdu8uirrt3ytjUr8</code></p>
+<p>The file to upload (max 20 MB). Example: <code>/tmp/phpt5n2g15ku180bhaQH83</code></p>
         </div>
         </form>
 
@@ -6827,7 +6830,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: e2d5a6fe-0de0-4f84-bbb0-fa4c5cf5aeff
+x-request-id: 04f519e9-ed79-4b51-8a65-2c029ffa05ce
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 55
  </code></pre></details>         <pre>
@@ -6959,7 +6962,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-messages">Patient messages</h1>
 
-    
+
 
                                 <h2 id="patient-messages-GETapi-patient--id--messages">Get all patient messages for a person, grouped by thread.</h2>
 
@@ -7344,7 +7347,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-notifications">Patient notifications</h1>
 
-    
+
 
                                 <h2 id="patient-notifications-GETapi-patient--id--notifications">Get notifications for a patient.</h2>
 
@@ -7402,7 +7405,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 8ee78cc4-1af1-408a-b0c2-f78efb459150
+x-request-id: 2d9220cc-e9aa-4cdc-be95-f9061997be9b
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 54
  </code></pre></details>         <pre>
@@ -7839,7 +7842,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-preferences">Patient preferences</h1>
 
-    
+
 
                                 <h2 id="patient-preferences-GETapi-patient--id--preferences">Get preferences for a patient.</h2>
 
@@ -7890,7 +7893,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 8917e8e8-92b1-4c14-bacd-c6e9f7cbf792
+x-request-id: 20c83246-edf4-46c8-98e6-8e0f47819681
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 53
  </code></pre></details>         <pre>
@@ -8071,7 +8074,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"preferences\": {
         \"email_notifications_enabled\": true,
         \"language\": \"architecto\",
-        \"onboarding_completed_at\": \"2026-08-03T11:43:14\"
+        \"onboarding_completed_at\": \"2026-09-09T16:51:01\"
     }
 }"
 </code></pre></div>
@@ -8092,7 +8095,7 @@ let body = {
     "preferences": {
         "email_notifications_enabled": true,
         "language": "architecto",
-        "onboarding_completed_at": "2026-08-03T11:43:14"
+        "onboarding_completed_at": "2026-09-09T16:51:01"
     }
 };
 
@@ -8264,10 +8267,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="preferences.onboarding_completed_at"                data-endpoint="PUTapi-patient--id--preferences"
-               value="2026-08-03T11:43:14"
+               value="2026-09-09T16:51:01"
                data-component="body">
     <br>
-<p>Het veld value is geen geldige datum. Example: <code>2026-08-03T11:43:14</code></p>
+<p>Het veld value is geen geldige datum. Example: <code>2026-09-09T16:51:01</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>email_notifications_enabled</code></b>&nbsp;&nbsp;
@@ -8295,9 +8298,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </div>
         </form>
 
-            
 
-        
+
+
     </div>
     <div class="dark-box">
                     <div class="lang-selector">

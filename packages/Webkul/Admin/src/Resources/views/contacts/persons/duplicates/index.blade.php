@@ -25,6 +25,8 @@
                 merge-url="{{ route('admin.contacts.persons.duplicates.merge', $person->id) }}"
                 false-positive-url="{{ route('admin.contacts.persons.duplicates.false_positive', $person->id) }}"
                 redirect-url="{{ route('admin.contacts.persons.view', $person->id) }}"
+                person-view-url="{{ route('admin.contacts.persons.view', ['id' => '__ID__']) }}"
+                duplicates-index-url="{{ route('admin.contacts.persons.duplicates.index', ['id' => '__ID__']) }}"
             >
                 <!-- Loading State -->
                 <div class="flex items-center justify-center p-8">
@@ -78,7 +80,7 @@
                                 </div>
                             </div>
                         </div>
-                        <p class="text-sm text-gray-600">Controleer de redenen per duplicaat en selecteer welke personen je wilt samenvoegen.</p>
+                        <p class="text-sm text-gray-600">Controleer de redenen per duplicaat en selecteer welke personen je wilt samenvoegen. Een persoon met een patiëntportaal kan niet als duplicaat worden samengevoegd.</p>
                     </div>
 
                     <div class="p-4">
@@ -94,12 +96,21 @@
                                         <th class="p-3">Telefoon matches</th>
                                         <th class="p-3">Naam reden</th>
                                         <th class="p-3 w-24 text-center">Selecteer</th>
+                                        <th class="p-3 w-40 text-center">Acties</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr class="border-b border-gray-100 dark:border-gray-800">
                                         <td class="p-3">@{{ primaryPerson.id }}</td>
-                                        <td class="p-3 text-sm">@{{ primaryPerson.first_name }} @{{ primaryPerson.last_name }}</td>
+                                        <td class="p-3 text-sm">
+                                            @{{ primaryPerson.first_name }} @{{ primaryPerson.last_name }}
+                                            <span class="ml-1 inline-flex items-center rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-800">Primair</span>
+                                            <span
+                                                v-if="primaryPerson.has_portal_account"
+                                                class="ml-1 inline-flex items-center rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-800"
+                                                title="Deze persoon heeft een patiëntportaalaccount. Dat account blijft op de primaire persoon staan."
+                                            >portaal</span>
+                                        </td>
                                         <td class="p-3 text-sm">@{{ primaryPerson.organization?.name || '-' }}</td>
                                         <td class="p-3 text-sm">@{{ primaryPerson.created_at || '-' }}</td>
                                         <td class="p-3 text-xs">@{{ (primaryPerson.matched_emails || []).join(', ') || '-' }}</td>
@@ -108,17 +119,58 @@
                                         <td class="p-3 text-center">
                                             <input type="checkbox" :checked="selectedPersons.includes(primaryPerson.id)" disabled />
                                         </td>
+                                        <td class="p-3">
+                                            <div class="flex items-center justify-center gap-2">
+                                                <a
+                                                    :href="personHref(primaryPerson.id)"
+                                                    target="_blank"
+                                                    rel="noopener"
+                                                    class="icon-eye text-xl text-gray-600 hover:text-blue-700"
+                                                    title="Bekijk persoon"
+                                                ></a>
+                                            </div>
+                                        </td>
                                     </tr>
                                     <tr v-for="duplicate in duplicates" :key="'dup-row-' + duplicate.id" class="border-b border-gray-100 dark:border-gray-800">
                                         <td class="p-3">@{{ duplicate.id }}</td>
-                                        <td class="p-3 text-sm">@{{ duplicate.first_name }} @{{ duplicate.last_name }}</td>
+                                        <td class="p-3 text-sm">
+                                            @{{ duplicate.first_name }} @{{ duplicate.last_name }}
+                                            <span
+                                                v-if="duplicate.has_portal_account"
+                                                class="ml-1 inline-flex items-center rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-800"
+                                                title="Deze persoon heeft een patiëntportaalaccount. Maak deze persoon primair, of trek het account eerst in."
+                                            >portaal</span>
+                                        </td>
                                         <td class="p-3 text-sm">@{{ duplicate.organization?.name || '-' }}</td>
                                         <td class="p-3 text-sm">@{{ duplicate.created_at || '-' }}</td>
                                         <td class="p-3 text-xs">@{{ (duplicate.matched_emails || []).join(', ') || '-' }}</td>
                                         <td class="p-3 text-xs">@{{ (duplicate.matched_phones || []).join(', ') || '-' }}</td>
                                         <td class="p-3 text-xs">@{{ duplicate.name_reason || '-' }}</td>
                                         <td class="p-3 text-center">
-                                            <input type="checkbox" :checked="selectedPersons.includes(duplicate.id)" @change="togglePersonSelection(duplicate.id)" />
+                                            <input
+                                                type="checkbox"
+                                                :checked="selectedPersons.includes(duplicate.id)"
+                                                :title="duplicate.has_portal_account ? 'Heeft een patiëntportaalaccount - kan alleen als geen duplicaat worden gemarkeerd, niet worden samengevoegd.' : ''"
+                                                @change="togglePersonSelection(duplicate.id)"
+                                            />
+                                        </td>
+                                        <td class="p-3">
+                                            <div class="flex items-center justify-center gap-2">
+                                                <a
+                                                    :href="personHref(duplicate.id)"
+                                                    target="_blank"
+                                                    rel="noopener"
+                                                    class="icon-eye text-xl text-gray-600 hover:text-blue-700"
+                                                    title="Bekijk persoon"
+                                                ></a>
+                                                <a
+                                                    :href="makePrimaryHref(duplicate.id)"
+                                                    class="rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                                                    title="Deze persoon als primaire kiezen"
+                                                >
+                                                    Maak primair
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -151,14 +203,26 @@
                                                     class="mb-2"
                                                 />
                                                 <span class="text-sm font-medium">Primaire Persoon</span>
+                                                <span
+                                                    v-if="primaryPerson.has_portal_account"
+                                                    class="mt-1 inline-flex items-center rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-800"
+                                                >portaal</span>
                                                 <span class="text-xs text-gray-500">ID:
                                                    <a
-                                                       :href="`{{ route('admin.contacts.persons.view', ['id' => '___ID___']) }}`
-                                                            .replace('___ID___', primaryPerson.id)"
+                                                       :href="personHref(primaryPerson.id)"
+                                                       target="_blank"
+                                                       rel="noopener"
                                                    >
                                                         @{{ primaryPerson.id }}
                                                     </a>
                                                 </span>
+                                                <a
+                                                    :href="personHref(primaryPerson.id)"
+                                                    target="_blank"
+                                                    rel="noopener"
+                                                    class="icon-eye mt-1 text-xl text-gray-600 hover:text-blue-700"
+                                                    title="Bekijk persoon"
+                                                ></a>
                                             </div>
                                         </th>
                                         <th
@@ -170,18 +234,40 @@
                                                 <input
                                                     type="checkbox"
                                                     :checked="selectedPersons.includes(duplicate.id)"
+                                                    :title="duplicate.has_portal_account ? 'Heeft een patiëntportaalaccount - kan alleen als geen duplicaat worden gemarkeerd, niet worden samengevoegd.' : ''"
                                                     @change="togglePersonSelection(duplicate.id)"
                                                     class="mb-2"
                                                 />
                                                 <span class="text-sm font-medium">Duplicaat</span>
+                                                <span
+                                                    v-if="duplicate.has_portal_account"
+                                                    class="mt-1 inline-flex items-center rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-800"
+                                                >portaal</span>
                                                 <span class="text-xs text-gray-500">ID:
                                                     <a
-                                                        :href="`{{ route('admin.contacts.persons.view', ['id' => '___ID___']) }}`
-                                                            .replace('___ID___', duplicate.id)"
+                                                        :href="personHref(duplicate.id)"
+                                                        target="_blank"
+                                                        rel="noopener"
                                                     >
                                                         @{{ duplicate.id }}
                                                     </a>
                                                 </span>
+                                                <div class="mt-2 flex items-center justify-center gap-2">
+                                                    <a
+                                                        :href="personHref(duplicate.id)"
+                                                        target="_blank"
+                                                        rel="noopener"
+                                                        class="icon-eye text-xl text-gray-600 hover:text-blue-700"
+                                                        title="Bekijk persoon"
+                                                    ></a>
+                                                    <a
+                                                        :href="makePrimaryHref(duplicate.id)"
+                                                        class="rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                                                        title="Deze persoon als primaire kiezen"
+                                                    >
+                                                        Maak primair
+                                                    </a>
+                                                </div>
                                             </div>
                                         </th>
                                     </tr>
@@ -308,6 +394,14 @@
 
                         <!-- Action Buttons -->
                         <div class="mt-6 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+                            <div v-if="portalDuplicates.length > 0" class="mb-4 rounded border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-100">
+                                <p>
+                                    Personen met een patiëntportaal kunnen niet als duplicaat worden samengevoegd, maar wel als geen duplicaat worden gemarkeerd. Om samen te voegen: maak die persoon primair, of trek het account eerst met de hand in.
+                                </p>
+                                <p v-if="bothSidesHavePortal" class="mt-1 font-medium">
+                                    Er zijn meerdere portaalaccounts. Trek er eerst één in voordat je samenvoegt.
+                                </p>
+                            </div>
                             <div class="flex items-center justify-between">
                                 <div class="text-sm text-gray-600 dark:text-gray-300">
                                     <span class="font-medium">Geselecteerd:</span> @{{ selectedPersons.length }} persoon/personen voor samenvoegen
@@ -331,7 +425,7 @@
                                     </button>
                                     <button
                                         @click="mergePersons"
-                                        :disabled="selectedPersons.length < 2 || isLoading"
+                                        :disabled="!canMerge || isLoading"
                                         class="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                     >
                                         <span v-if="isLoading" class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
@@ -349,7 +443,7 @@
         <script type="module">
             app.component('v-person-duplicates-manager', {
                 template: '#v-person-duplicates-manager-template',
-                props: ['primaryPerson', 'duplicates', 'mergeUrl', 'falsePositiveUrl', 'redirectUrl'],
+                props: ['primaryPerson', 'duplicates', 'mergeUrl', 'falsePositiveUrl', 'redirectUrl', 'personViewUrl', 'duplicatesIndexUrl'],
                 data() {
                     return {
                         selectedPersons: [this.primaryPerson.id], // Primary person is always selected
@@ -368,9 +462,12 @@
                             { field: 'date_of_birth', label: 'Geboortedatum', type: 'simple' },
                             { field: 'gender', label: 'Geslacht', type: 'simple' },
                             { field: 'job_title', label: 'Functie', type: 'simple' },
+                            { field: 'national_identification_number', label: 'BSN', type: 'simple' },
+                            { field: 'preferred_language', label: 'Taalvoorkeur', type: 'simple', displayField: 'preferred_language_label' },
+                            { field: 'is_active', label: 'Actief/inactief', type: 'simple', displayField: 'is_active_label' },
 
-                            // Organization Information (readonly)
-                            { field: 'organization', label: 'Organisatie', type: 'readonly' },
+                            // Organization (stored as id; displayField only changes what is shown)
+                            { field: 'organization_id', label: 'Organisatie', type: 'simple', displayField: 'organization_name' },
 
                             // Contact Information
                             { field: 'emails', label: 'E-mailadressen', type: 'array' },
@@ -389,6 +486,19 @@
                         return this.fieldConfigurations.filter(config => {
                             return !this.hasFieldDifferences(config);
                         });
+                    },
+                    portalDuplicates() {
+                        return this.duplicates.filter(duplicate => duplicate.has_portal_account);
+                    },
+                    bothSidesHavePortal() {
+                        return !!this.primaryPerson.has_portal_account && this.portalDuplicates.length > 0;
+                    },
+                    canMerge() {
+                        if (this.selectedPersons.length < 2) {
+                            return false;
+                        }
+
+                        return !this.selectedPersons.some(id => id !== this.primaryPerson.id && this.personHasPortal(id));
                     }
                 },
                 mounted() {
@@ -431,6 +541,10 @@
 
                         switch (fieldConfig.type) {
                             case 'simple':
+                                // Booleans (is_active): keep false distinct from empty.
+                                if (typeof fieldValue === 'boolean') {
+                                    return fieldValue;
+                                }
                                 return fieldValue || '';
 
                             case 'array':
@@ -443,7 +557,6 @@
                                 if (!person.address) {
                                     return '';
                                 }
-                                // Create a normalized address string for comparison
                                 return [
                                     person.address.full_address || '',
                                     person.address.street || '',
@@ -462,20 +575,17 @@
 
                     areValuesEqual(value1, value2, fieldType) {
                         if (fieldType === 'array') {
-                            // Compare arrays
                             if (value1.length !== value2.length) {
                                 return false;
                             }
                             return value1.every((item, index) => item === value2[index]);
                         }
 
-                        // Compare strings/primitives
                         return value1 === value2;
                     },
 
                     togglePersonSelection(personId) {
                         if (personId === this.primaryPerson.id) {
-                            // Primary person must always be selected
                             return;
                         }
 
@@ -487,11 +597,36 @@
                         }
                     },
 
+                    personHasPortal(personId) {
+                        if (personId === this.primaryPerson.id) {
+                            return !!this.primaryPerson.has_portal_account;
+                        }
+
+                        const duplicate = this.duplicates.find(item => item.id === personId);
+
+                        return !!(duplicate && duplicate.has_portal_account);
+                    },
+
+                    personHref(personId) {
+                        return this.personViewUrl.replace('__ID__', personId);
+                    },
+
+                    makePrimaryHref(personId) {
+                        return this.duplicatesIndexUrl.replace('__ID__', personId);
+                    },
+
                     getFieldValue(person, fieldConfig) {
                         if (fieldConfig.type === 'readonly') {
                             return person[fieldConfig.field]?.name || 'N/A';
                         }
-                        return person[fieldConfig.field] || 'N/A';
+                        return person[fieldConfig.displayField ?? fieldConfig.field] || 'N/A';
+                    },
+
+                    // Values end up in v-html; escape free text (BSN, names, addresses).
+                    esc(value) {
+                        const div = document.createElement('div');
+                        div.textContent = value ?? '';
+                        return div.innerHTML;
                     },
 
                     renderFieldValue(person, fieldConfig) {
@@ -499,30 +634,33 @@
 
                         switch (fieldConfig.type) {
                             case 'simple':
-                                let value = person[fieldConfig.field] || 'N/A';
-                                return `<span class="${cssClass}">${value}</span>`;
+                                let value = person[fieldConfig.displayField ?? fieldConfig.field];
+                                if (value === null || value === undefined || value === '') {
+                                    value = 'N/A';
+                                }
+                                return `<span class="${cssClass}">${this.esc(String(value))}</span>`;
 
                             case 'array':
                                 if (!person[fieldConfig.field] || person[fieldConfig.field].length === 0) {
                                     const emptyText = fieldConfig.field === 'emails' ? 'Geen e-mails' : 'Geen telefoonnummers';
                                     return `<div class="text-xs text-center"><span class="text-gray-400">${emptyText}</span></div>`;
                                 }
-                                const items = person[fieldConfig.field].map(item => `<div class="mb-1">${item.value}</div>`).join('');
+                                const items = person[fieldConfig.field].map(item => `<div class="mb-1">${this.esc(item.value)}</div>`).join('');
                                 return `<div class="text-xs text-center">${items}</div>`;
 
                             case 'address':
                                 if (!person.address) {
                                     return '<div class="text-xs text-center"><span class="text-gray-400">Geen adres</span></div>';
                                 }
-                                let addressHtml = `<div class="text-xs text-center"><div class="mb-1"><div>${person.address.full_address || 'N/A'}</div>`;
+                                let addressHtml = `<div class="text-xs text-center"><div class="mb-1"><div>${this.esc(person.address.full_address || 'N/A')}</div>`;
                                 if (person.address.street && person.address.house_number) {
-                                    addressHtml += `<div>${person.address.street} ${person.address.house_number}${person.address.house_number_suffix || ''}</div>`;
+                                    addressHtml += `<div>${this.esc(person.address.street)} ${this.esc(person.address.house_number)}${this.esc(person.address.house_number_suffix || '')}</div>`;
                                 }
                                 if (person.address.postal_code || person.address.city) {
-                                    addressHtml += `<div>${person.address.postal_code || ''} ${person.address.city || ''}</div>`;
+                                    addressHtml += `<div>${this.esc(person.address.postal_code || '')} ${this.esc(person.address.city || '')}</div>`;
                                 }
                                 if (person.address.state || person.address.country) {
-                                    addressHtml += `<div>${person.address.state || ''} ${person.address.country || ''}</div>`;
+                                    addressHtml += `<div>${this.esc(person.address.state || '')} ${this.esc(person.address.country || '')}</div>`;
                                 }
                                 addressHtml += '</div></div>';
                                 return addressHtml;
@@ -533,8 +671,8 @@
                     },
 
                     async mergePersons() {
-                        if (this.selectedPersons.length < 2) {
-                            alert('Selecteer ten minste één duplicaat persoon om samen te voegen.');
+                        if (!this.canMerge) {
+                            alert('Selecteer ten minste één duplicaat zonder patiëntportaal om samen te voegen.');
                             return;
                         }
 

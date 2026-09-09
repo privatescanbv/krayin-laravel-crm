@@ -702,6 +702,10 @@
 
                         mailboxes: @json($mailboxList),
 
+                        // Pre-formatted (with a leading blank line) so every call site just
+                        // checks/concatenates this instead of re-fetching+formatting the signature.
+                        userSignatureHtml: @json(($signature = auth()->guard('user')->user()->signature ?? null) ? '<p><br></p>' . $signature : ''),
+
                         datagridSrc: @json($mailDatagridSrc),
 
                         draft: {
@@ -780,6 +784,28 @@
                 },
 
                 methods: {
+                    // Retries until TinyMCE has finished (re)initializing before setting content -
+                    // a fixed setTimeout races TinyMCE's CDN load and loses intermittently, especially
+                    // right after a fresh page navigation. With onlyIfEmpty, skips content the user
+                    // already started typing instead of overwriting it; otherwise falls back to the
+                    // reactive draft once retries are exhausted, so content isn't silently dropped.
+                    setReplyContentWithRetry(html, {onlyIfEmpty = false, retries = 25} = {}) {
+                        const editor = window.tinymce?.get('reply');
+
+                        if (editor && !editor.removed) {
+                            if (!onlyIfEmpty || !editor.getContent().trim()) {
+                                editor.setContent(html);
+                            }
+                            return;
+                        }
+
+                        if (retries > 0) {
+                            setTimeout(() => this.setReplyContentWithRetry(html, {onlyIfEmpty, retries: retries - 1}), 200);
+                        } else if (!onlyIfEmpty) {
+                            this.draft.reply = html;
+                        }
+                    },
+
                     loadTemplates() {
                         this.$axios.get('{{ route('admin.mail.templates') }}', {
                             params: {entity_type: @json(EmailTemplateType::ALGEMEEN->value) }
@@ -806,21 +832,10 @@
                         })
                             .then(response => {
                                 const templateContent = response.data.data.content || '';
-                                const signature = @json(auth()->guard('user')->user()->signature ?? '');
+                                const fullContent = templateContent + this.userSignatureHtml;
 
-                                // Combine template content with signature; add blank line before signature so user can type above it
-                                const fullContent = templateContent + (signature ? '<p><br></p>' + signature : '');
-
-                                // Set content in TinyMCE or textarea
                                 this.$nextTick(() => {
-                                    setTimeout(() => {
-                                        if (window.tinymce && window.tinymce.get('reply')) {
-                                            const editor = window.tinymce.get('reply');
-                                            editor.setContent(fullContent);
-                                        } else {
-                                            this.draft.reply = fullContent;
-                                        }
-                                    }, 300);
+                                    this.setReplyContentWithRetry(fullContent);
                                 });
                             })
                             .catch(error => {
@@ -850,29 +865,21 @@
                         this.draft.from = this.mailboxes.length ? this.mailboxes[0].address : '';
                         this.draft.reply_to = [];
                         this.draft.subject = '';
-                        this.draft.reply = '';
                         this.selectedTemplate = '';
 
-                        // Add user signature to the email body by default
-                        @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
-                            this.draft.reply = '<p><br></p>' + @json(auth()->guard('user')->user()->signature);
-                        @endif
+                        // Reset body to just the signature (empty string if the user has none)
+                        this.draft.reply = this.userSignatureHtml;
 
-                            this.$refs.toggleComposeModal.toggle();
+                        this.$refs.toggleComposeModal.toggle();
 
-                        // Wait for TinyMCE to initialize, then set the signature
-                        this.$nextTick(() => {
-                            setTimeout(() => {
-                                if (window.tinymce && window.tinymce.get('reply')) {
-                                    const editor = window.tinymce.get('reply');
-                                    @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
-                                    if (!editor.getContent() || editor.getContent().trim() === '') {
-                                        editor.setContent('<p><br></p>' + @json(auth()->guard('user')->user()->signature));
-                                    }
-                                    @endif
-                                }
-                            }, 500);
-                        });
+                        // Wait for TinyMCE to (re)initialize, then fill in the signature if the
+                        // editor still ends up empty (the initial-value binding above loses the
+                        // race against TinyMCE's async/CDN load on repeat opens).
+                        if (this.userSignatureHtml) {
+                            this.$nextTick(() => {
+                                this.setReplyContentWithRetry(this.userSignatureHtml, {onlyIfEmpty: true});
+                            });
+                        }
                     },
 
                     save(params, {resetForm, setErrors}) {

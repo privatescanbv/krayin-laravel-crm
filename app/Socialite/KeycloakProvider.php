@@ -20,6 +20,13 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
     protected string $realm;
 
     /**
+     * The id_token from the last token exchange, needed as id_token_hint on logout
+     * so Keycloak's end-session endpoint redirects back immediately instead of
+     * showing its own logout confirmation page.
+     */
+    protected ?string $idToken = null;
+
+    /**
      * {@inheritdoc}
      */
     public function __construct($request, $clientId, $clientSecret, $redirectUrl, $guzzle = [])
@@ -69,6 +76,8 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
         try {
             $response = parent::getAccessTokenResponse($code);
 
+            $this->idToken = $response['id_token'] ?? null;
+
             return $response;
         } catch (ClientException $e) {
             $responseBody = $e->getResponse() ? $e->getResponse()->getBody()->getContents() : null;
@@ -111,6 +120,14 @@ class KeycloakProvider extends AbstractProvider implements ProviderInterface
 
             throw $e;
         }
+    }
+
+    /**
+     * Get the id_token from the last token exchange (available after ->user() is called).
+     */
+    public function getIdToken(): ?string
+    {
+        return $this->idToken;
     }
 
     /**

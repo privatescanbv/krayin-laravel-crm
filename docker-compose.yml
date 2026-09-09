@@ -269,21 +269,54 @@ services:
       - public
       - backend
 
+#  metabase2:
+#    image: metabase/metabase:latest
+#    container_name: metabase2
+#    restart: unless-stopped
+#    environment:
+#      JAVA_TIMEZONE: Europe/Amsterdam
+#
+#      # Metabase metadata DB
+#      MB_DB_TYPE: ${DB_CONNECTION}
+#      MB_DB_DBNAME: metabase2
+#      MB_DB_PORT: ${DB_PORT}
+#      MB_DB_USER: metabase2
+#      MB_DB_PASS: ${METABASE_DB_PASSWORD}
+#      MB_DB_HOST: ${DB_HOST}
+#
+#    labels:
+#      - traefik.enable=true
+#      - traefik.http.routers.metabase2.rule=Host("reports2.local.privatescan.nl")
+#      - traefik.http.routers.metabase2.entrypoints=https
+#      - traefik.http.routers.metabase2.tls=true
+#      - traefik.http.routers.metabase2.service=metabase2
+#      - traefik.http.services.metabase2.loadbalancer.server.port=3000
+#      - traefik.docker.network=public
+#      - logging=promtail
+#    depends_on:
+#      - mysql_crm
+#    networks:
+#      - public
+#      - backend
+
   keycloak:
-    image: quay.io/keycloak/keycloak:24.0
+    image: quay.io/keycloak/keycloak:26.6
     container_name: keycloak
     restart: unless-stopped
     env_file:
       - .env.keycloak
     environment:
       TZ: Europe/Amsterdam
-      KC_HOSTNAME: "sso.local.privatescan.nl"
+      # KC 26 gebruikt de hostname-v2-provider: die leest het schema (https) uit
+      # KC_HOSTNAME zelf (vandaar de volledige URL) en vertrouwt Traefik's
+      # X-Forwarded-* headers via KC_PROXY_HEADERS. De oude v1-opties
+      # (KC_PROXY=edge, KC_PROXY_ADDRESS_FORWARDING, KC_HOSTNAME_STRICT_HTTPS)
+      # worden door v2 genegeerd en gaven daardoor http:// in gegenereerde URLs.
+      KC_HOSTNAME: "https://sso.local.privatescan.nl"
       KC_HOSTNAME_STRICT: "false"
-      KC_HOSTNAME_STRICT_HTTPS: "false"
       KC_HTTP_ENABLED: "true"
       KC_HEALTH_ENABLED: "true"
-      KC_PROXY: "edge"
-      KC_PROXY_ADDRESS_FORWARDING: "true"
+      KC_PROXY_HEADERS: "xforwarded"
       KC_THEME_CACHE: "false"
       KC_THEME_STATIC_MAX_AGE: "-1"
       KC_SPI_THEME_CACHE_THEMES: "false"

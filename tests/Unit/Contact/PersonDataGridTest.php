@@ -3,6 +3,7 @@
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Webkul\Admin\DataGrids\Contact\PersonDataGrid;
 use Webkul\DataGrid\ColumnTypes\Date;
 
@@ -82,6 +83,22 @@ test('date_of_birth filter leaves range unchanged when both from and to are set'
         ->and($filters['date_of_birth'][0][1])->toBe('2008-05-31');
 });
 
+test('duplicates column is a filterable dropdown', function () {
+    $dataGrid = app(PersonDataGrid::class);
+    $dataGrid->prepareColumns();
+
+    $column = collect($dataGrid->getColumns())
+        ->first(fn ($column) => $column->getIndex() === 'has_duplicates');
+
+    expect($column->getFilterable())->toBeTrue()
+        ->and($column->getSortable())->toBeTrue()
+        ->and($column->getFilterableType())->toBe('dropdown')
+        ->and($column->getFilterableOptions())->toBe([
+            ['label' => 'Heeft duplicaten', 'value' => '1'],
+            ['label' => 'Geen duplicaten', 'value' => '0'],
+        ]);
+});
+
 test('Date column processFilter uses midnight (00:00:00) as start of day', function () {
     $col = new Date([
         'index'      => 'date_of_birth',
@@ -110,4 +127,28 @@ test('Date column processFilter uses midnight (00:00:00) as start of day', funct
 
     expect($capturedBindings[0])->toBe('2008-05-16 00:00:00')
         ->and($capturedBindings[1])->toBe('2008-05-16 23:59:59');
+});
+
+test('duplicates column renders from the indexed flag without querying', function () {
+    $dataGrid = app(PersonDataGrid::class);
+    $dataGrid->prepareColumns();
+
+    $closure = collect($dataGrid->getColumns())
+        ->first(fn ($column) => $column->getIndex() === 'has_duplicates')
+        ->getClosure();
+
+    DB::enableQueryLog();
+
+    $flagged = $closure((object) ['id' => 42, 'has_duplicates' => 1]);
+    $plain = $closure((object) ['id' => 43, 'has_duplicates' => 0]);
+
+    // Rendering must not detect duplicates: that cost a query per row and wrote has_duplicates,
+    // which made simply browsing the list change the counts.
+    expect(DB::getQueryLog())->toBeEmpty();
+
+    DB::disableQueryLog();
+
+    expect($flagged)->toContain('icon-warning')
+        ->and($flagged)->toContain('/duplicates')
+        ->and($plain)->toBe('');
 });

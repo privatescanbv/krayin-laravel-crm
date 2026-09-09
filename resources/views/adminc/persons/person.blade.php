@@ -72,16 +72,6 @@
 
         <!-- Portal / mail actions -->
         @if ($person && bouncer()->hasPermission('contacts.persons.edit'))
-            @php
-                $defaultEmail = null;
-                if ($person->emails && is_array($person->emails) && count($person->emails) > 0) {
-                    $defaultEmail = collect($person->emails)->firstWhere('is_default', true) ?? $person->emails[0] ?? null;
-                }
-
-                $hasPortalAccount = !empty($person->keycloak_user_id);
-                $canSendInfoMail = $defaultEmail && $hasPortalAccount;
-            @endphp
-
             <div class="pt-4 border-t border-gray-200 dark:border-gray-800 flex items-center gap-3 flex-wrap">
                 @if (!is_null($lead))
                 <x-adminc::persons.person-lead-actions
@@ -91,7 +81,6 @@
                     :is-lead="true"
                     :is-sales-lead="false"
                     :show-sync-link="true"
-                    :show-anamnesis="true"
                     :detach-route="null"
                     :override-return-url="$returnUrl"
                 />
@@ -103,7 +92,6 @@
                         :is-lead="false"
                         :is-sales-lead="false"
                         :show-sync-link="false"
-                        :show-anamnesis="false"
                         :detach-route="null"
                         :override-return-url="$returnUrl"
                     />

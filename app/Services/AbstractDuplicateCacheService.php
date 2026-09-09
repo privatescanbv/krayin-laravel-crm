@@ -18,11 +18,6 @@ abstract class AbstractDuplicateCacheService
         $this->cacheTtlSeconds = $cacheTtlSeconds;
     }
 
-    public function hasCachedIds(int $id): bool
-    {
-        return $this->rememberIdsUsing($id, fn () => collect())->isNotEmpty();
-    }
-
     public function invalidateId(int $id): void
     {
         Cache::forget($this->getCacheKey($id));

@@ -1,3 +1,13 @@
 === Release flow
 
 TODO
+
+=== Handmatig testen na uitrol
+
+Na het uitrollen van een nieuwe versie op productie
+minimaal onderstaande stappen handmatig controleren:
+
+1. Inloggen in de CRM (`/admin/login`) met een geldig account.
+2. Inloggen in het patiëntportaal via impersonation: open een contactpersoon
+   (Contacts > Persons) met een gekoppeld patiëntportaal-account en klik op de
+   impersonate-knop. Dit wisselt naar het patiëntportaal als die persoon.

@@ -143,7 +143,7 @@ class InboundLeadPayloadMapper
             if ($value === '') {
                 return;
             }
-            $parts[] = "{$label}: {$value}";
+            $parts[] = "$label: $value";
         };
 
         // Prefer explicit description, but enrich it with structured fields if present.
@@ -177,7 +177,6 @@ class InboundLeadPayloadMapper
         return match ($normalized) {
             'mr.', 'dhr', 'dhr.'    => PersonSalutation::Dhr->value,
             'mrs.', 'mevr', 'mevr.' => PersonSalutation::Mevr->value,
-            ''                      => null,
             default                 => null,
         };
     }

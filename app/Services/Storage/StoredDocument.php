@@ -8,6 +8,5 @@ final class StoredDocument
         public readonly string $path,
         public readonly string $disk,
         public readonly int $size,
-        public readonly ?string $checksum = null,
     ) {}
 }

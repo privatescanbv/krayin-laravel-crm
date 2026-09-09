@@ -31,7 +31,7 @@ class UserSeeder extends Seeder
         return [
             'robschwankhuizen@gmail.com'   => '8H5jc!e123',
             'mark.bulthuis@privatescan.nl' => '8AAZ5jc%e&AF',
-            'mark.klaucke@privatescan.nl'  => '8AAZ5jc%e&Ad',
+            'mark@privatescan.nl'          => '8AAZ5jc%e&Ad',
             'linda@privatescan.nl'         => '8AAZ5jc%e&3d',
             'petra@privatescan.nl'         => '8BBZ5jc%e&Ad',
             'wout@privatescan.nl'          => '8EEZ5jc%e&Ad',
@@ -112,13 +112,13 @@ class UserSeeder extends Seeder
             [
                 'first_name'      => 'Mark',
                 'last_name'       => 'Klaucke',
-                'email'           => 'mark.klaucke@privatescan.nl',
-                'password'        => $passwords['mark.klaucke@privatescan.nl'],
+                'email'           => 'mark@privatescan.nl',
+                'password'        => $passwords['mark@privatescan.nl'],
                 'status'          => 1,
                 'role_id'         => 1,
                 'view_permission' => 'global',
                 'group_id'        => null, // Admin has no specific group
-                'signature'       => $this->signatureTemplate('Mark', 'Klaucke', 'mark.klaucke@privatescan.nl'),
+                'signature'       => $this->signatureTemplate('Mark', 'Klaucke', 'mark@privatescan.nl'),
             ],
             [
                 'first_name'      => 'Linda',

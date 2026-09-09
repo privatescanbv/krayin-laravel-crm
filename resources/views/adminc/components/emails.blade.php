@@ -8,6 +8,8 @@
         :value='@json($value ?? [])'
         :errors='@json($errors->getMessages() ?? [])'
         :readonly='@json($readonly ?? false)'
+        locked-email="{{ $lockedEmail ?? '' }}"
+        :lock-existing='@json((bool) ($lockExisting ?? false))'
     ></v-emails-component>
 </div>
 
@@ -34,8 +36,11 @@
                                 v-model="email.value"
                                 :class="getInputClass(index)"
                                 placeholder="Voer email-adres in"
-                                :readonly="readonly"
+                                :readonly="readonly || isEmailLocked(email)"
                             />
+                            <div v-if="isEmailLocked(email)" class="mt-1 text-xs text-gray-500">
+                                Dit adres hoort bij het patiëntportaal en kan niet worden gewijzigd.
+                            </div>
                             <div v-if="getEmailError(index)" class="mt-1 text-sm text-status-expired-text">
                                 {{ getEmailError(index) }}
                             </div>
@@ -84,7 +89,7 @@
                         </div>
 
                         <button
-                            v-if="!readonly"
+                            v-if="!readonly && !isEmailLocked(email)"
                             type="button"
                             @click="removeEmail(index)"
                             class="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
@@ -137,14 +142,27 @@
                 readonly: {
                     type: Boolean,
                     default: false
+                },
+                lockedEmail: {
+                    type: String,
+                    default: ''
+                },
+                lockExisting: {
+                    type: Boolean,
+                    default: false
                 }
             },
 
             data() {
+                const processed = this.processEmails(this.value);
+
                 return {
-                    emails: this.processEmails(this.value),
+                    emails: processed,
                     labelOptions: CONTACT_LABEL_OPTIONS,
                     defaultLabel: CONTACT_LABEL_DEFAULT,
+                    initiallyLockedValues: this.lockExisting
+                        ? processed.map(email => this.normalizeEmailValue(email.value)).filter(Boolean)
+                        : [],
                 }
             },
 
@@ -195,6 +213,10 @@
                 },
 
                 removeEmail(index) {
+                    if (this.isEmailLocked(this.emails[index])) {
+                        return;
+                    }
+
                     if (this.emails.length > 1) {
                         const wasDefault = this.emails[index].is_default === true || this.emails[index].is_default === 'on';
                         this.emails.splice(index, 1);
@@ -233,6 +255,24 @@
                     if (!hasDefault && this.emails.length > 0) {
                         this.emails[0].is_default = true;
                     }
+                },
+
+                normalizeEmailValue(value) {
+                    return String(value || '').toLowerCase().trim();
+                },
+
+                isEmailLocked(email) {
+                    const value = this.normalizeEmailValue(email?.value);
+
+                    if (!value) {
+                        return false;
+                    }
+
+                    if (this.lockedEmail && value === this.normalizeEmailValue(this.lockedEmail)) {
+                        return true;
+                    }
+
+                    return this.lockExisting && this.initiallyLockedValues.includes(value);
                 },
 
 

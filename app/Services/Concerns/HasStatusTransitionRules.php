@@ -73,22 +73,4 @@ trait HasStatusTransitionRules
         static::$transitionRules = [];
         static::$defaultsInitialized = false;
     }
-
-    /**
-     * Retourneer alle huidige transitie regels.
-     */
-    public static function getAllRegisteredTransitionRules(): array
-    {
-        return static::$transitionRules;
-    }
-
-    /**
-     * Controleer of er een regel bestaat voor een specifieke bron/doel combinatie.
-     */
-    public static function hasRegisteredTransitionRule(string $fromStageCode, string $toStageCode): bool
-    {
-        $transitionKey = $fromStageCode.'->'.$toStageCode;
-
-        return isset(static::$transitionRules[$transitionKey]);
-    }
 }

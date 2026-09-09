@@ -121,10 +121,17 @@ class LeadDuplicateCacheService extends AbstractDuplicateCacheService
 
     /**
      * Clear all caches (simple version).
+     *
+     * NOTE: This must only remove keys owned by this service (lead_duplicates:*). It must
+     * never call Cache::flush(), which would wipe the entire shared cache store, including
+     * unrelated data such as Microsoft Graph OAuth tokens and other alert de-dupe flags.
      */
     public function clearAllCache(): void
     {
-        Cache::flush();
+        $this->leadRepository->all(['id'])->pluck('id')->each(
+            fn ($id) => $this->invalidateId((int) $id)
+        );
+
         Log::info('Cleared all lead duplicate caches');
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
@@ -75,6 +76,7 @@ class AuditTrailServiceProvider extends ServiceProvider
             public function creator()
             {
                 return function () {
+                    /** @var Model $this */
                     return $this->belongsTo(User::class, 'created_by');
                 };
             }
@@ -82,6 +84,7 @@ class AuditTrailServiceProvider extends ServiceProvider
             public function updater()
             {
                 return function () {
+                    /** @var Model $this */
                     return $this->belongsTo(User::class, 'updated_by');
                 };
             }

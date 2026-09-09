@@ -1,4 +1,3 @@
-@php use Illuminate\Database\Eloquent\ModelNotFoundException; @endphp
 @props([
     'person',
     'entity',
@@ -6,42 +5,11 @@
     'isLead' => false,
     'isSalesLead' => false,
     'showSyncLink' => true,
-    'showAnamnesis' => true,
     'detachRoute' => null,
     'overrideReturnUrl' => null,
 ])
 
 @php
-    // Get default email and anamnesis for this person
-    $defaultEmail = null;
-    if ($person->emails && count($person->emails) > 0) {
-        $defaultEmail = collect($person->emails)->firstWhere('is_default', true) ?? $person->emails[0] ?? null;
-    }
-
-    $personAnamnesis = null;
-    $anamnesisId = null;
-    if ($showAnamnesis) {
-        try {
-            // For sales leads, use the related lead to get anamnesis
-            if ($isSalesLead && $entity->lead && method_exists($entity->lead, 'findAnamnesisByPersonId')) {
-                $personAnamnesis = $entity->lead->findAnamnesisByPersonId($person->id);
-            } elseif ($isLead && method_exists($entity, 'findAnamnesisByPersonId')) {
-                $personAnamnesis = $entity->findAnamnesisByPersonId($person->id);
-            }
-        } catch (ModelNotFoundException $e) {
-            // Anamnesis not found for this person-lead combination, which is fine
-            $personAnamnesis = null;
-        }
-    }
-
-    if ($personAnamnesis) {
-        $anamnesisId = $personAnamnesis->id;
-    }
-
-    // Check if person has a patient portal account (Keycloak user)
-    $hasPortalAccount = !empty($person->keycloak_user_id);
-    $canSendInfoMail = $isLead && $defaultEmail && $hasPortalAccount;
-
     // Determine return URL for edit action
     if ($overrideReturnUrl) {
         $returnUrl = $overrideReturnUrl;
@@ -55,20 +23,6 @@
 @endphp
 
 <div class="flex items-center gap-1">
-    @if ($isLead && $defaultEmail)
-        <button
-            type="button"
-            id="info-mail-{{ $person->id }}-{{ $entityId }}"
-            class="icon-mail rounded-md p-1.5 text-xl transition-all hover:bg-neutral-bg dark:hover:bg-gray-950 {{ $canSendInfoMail ? 'text-activity-note-text hover:text-blue-700' : 'text-gray-400 cursor-not-allowed opacity-50' }}"
-            title="{{ $hasPortalAccount ? 'Stuur informatieve mail met GVL link' : 'Persoon heeft geen patient portaal account. Maak eerst een portaalaccount aan.' }}"
-            @if (!$canSendInfoMail) disabled @endif
-            data-person-id="{{ $person->id }}"
-            data-lead-id="{{ $entityId }}"
-            data-default-email="{{ $defaultEmail['value'] ?? '' }}"
-            @if ($anamnesisId) data-anamnesis-id="{{ $anamnesisId }}" data-status-url="{{ route('admin.anamnesis.gvl-form.latest-status', $anamnesisId) }}" @endif
-        ></button>
-    @endif
-
     @if (bouncer()->hasPermission('contacts.persons.edit'))
         <a
             href="{{ route('admin.contacts.persons.edit', $person->id) }}{{ $returnUrl ? '?return_url=' . urlencode($returnUrl) : '' }}"
@@ -118,83 +72,3 @@
         ></button>
     @endif
 </div>
-
-@if ($isLead)
-    @pushOnce('scripts')
-    <script type="module">
-        (function() {
-            const createGvlFormUrl = "{{ route('admin.anamnesis.create-and-attach-gvl-form') }}";
-
-            // Use event delegation on document body to catch all clicks
-            // This ensures clicks are caught even if buttons are replaced by Vue
-            let globalClickHandlerRegistered = false;
-            if (!globalClickHandlerRegistered) {
-                document.addEventListener('click', async function(e) {
-                    // Check if clicked element or its parent is an info-mail button
-                    let target = e.target;
-                    let button = null;
-
-                    // Walk up the DOM tree to find the button
-                    while (target && target !== document.body) {
-                        if (target.id && target.id.startsWith('info-mail-')) {
-                            button = target;
-                            break;
-                        }
-                        target = target.parentElement;
-                    }
-
-                    if (!button || button.disabled) {
-                        return;
-                    }
-
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    if (window.privatescan?.handleInfoMailButtonClick) {
-                        await window.privatescan.handleInfoMailButtonClick(button, createGvlFormUrl);
-                    }
-                }, true); // Use capture phase
-                globalClickHandlerRegistered = true;
-            }
-
-            // Initialize info mail buttons
-            const initInfoMailButtons = () => {
-                document.querySelectorAll('[id^="info-mail-"]').forEach(button => {
-                    if (button.dataset.initialized === 'true') {
-                        return; // Already initialized
-                    }
-
-                    button.dataset.initialized = 'true';
-
-                    // Check GVL form status if anamnesis ID is present
-                    if (button.dataset.anamnesisId && button.dataset.statusUrl && window.privatescan?.checkGvlFormStatus) {
-                        window.privatescan.checkGvlFormStatus(button);
-                    }
-                });
-            };
-
-            // Initialize on page load
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initInfoMailButtons);
-            } else {
-                initInfoMailButtons();
-            }
-
-            // Re-initialize after Vue renders (for dynamic content)
-            // Use a debounce to prevent too many re-initializations
-            let initTimeout;
-            const observer = new MutationObserver(() => {
-                clearTimeout(initTimeout);
-                initTimeout = setTimeout(() => {
-                    initInfoMailButtons();
-                }, 100);
-            });
-
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
-        })();
-    </script>
-    @endPushOnce
-@endif

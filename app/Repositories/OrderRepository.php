@@ -14,7 +14,6 @@ use App\Models\SalesLead;
 use App\Observers\OrderObserver;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Webkul\Contact\Models\Person;
 use Webkul\Core\Eloquent\Repository;
@@ -112,20 +111,6 @@ class OrderRepository extends Repository
     }
 
     /**
-     * Get all order ids for a given patient (Person).
-     *
-     * @return array<int>
-     */
-    public function getIdsForPerson(Person $person): array
-    {
-        return Order::query()
-            ->forPerson($person)
-            ->pluck('id')
-            ->map(fn ($id) => (int) $id)
-            ->all();
-    }
-
-    /**
      * Base query for patient-portal orders (pipeline + person). Eager-loads relations needed for
      * {@see Order::firstExaminationCarbon()}. Does not apply future/past filter (use
      * {@see getPatientAppointmentOrdersForPerson()}).
@@ -155,23 +140,6 @@ class OrderRepository extends Repository
             ->filter(fn (Order $order) => $order->matchesAppointmentTimeFilter($filter, $now))
             ->sortBy(fn (Order $o) => $o->firstExaminationCarbon()?->getTimestamp() ?? PHP_INT_MAX)
             ->values();
-    }
-
-    /**
-     * Paginate orders that are shown as patient appointments.
-     */
-    public function paginatePatientAppointmentsForPerson(Person $person, int $perPage, ?AppointmentTimeFilter $filter = null, ?Carbon $now = null): LengthAwarePaginator
-    {
-        $orders = $this->getPatientAppointmentOrdersForPerson($person, $filter, $now);
-        $page = max(1, (int) request()->query('page', 1));
-
-        return new LengthAwarePaginator(
-            $orders->forPage($page, $perPage)->values(),
-            $orders->count(),
-            $perPage,
-            $page,
-            ['path' => request()->url(), 'query' => request()->query()],
-        );
     }
 
     public function resolveClinicDepartmentForOrder(Order $order): ?ClinicDepartment

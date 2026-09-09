@@ -145,3 +145,21 @@ test('it hides duplicates when marked as false positive', function () {
     $duplicatesAfter = $this->personRepository->findPotentialDuplicates($p1);
     expect($duplicatesAfter->count())->toBe(0);
 });
+
+test('it detects a married name duplicate from both sides', function () {
+    $birthName = Person::factory()->create([
+        'first_name' => 'Marie',
+        'last_name'  => 'Vries',
+    ]);
+
+    $marriedName = Person::factory()->create([
+        'first_name'   => 'Marie',
+        'last_name'    => 'Jansen',
+        'married_name' => 'Vries',
+    ]);
+
+    expect($this->personRepository->findPotentialDuplicates($birthName)->pluck('id')->toArray())
+        ->toBe([$marriedName->id])
+        ->and($this->personRepository->findPotentialDuplicates($marriedName)->pluck('id')->toArray())
+        ->toBe([$birthName->id]);
+});

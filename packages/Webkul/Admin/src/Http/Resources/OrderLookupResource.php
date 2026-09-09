@@ -27,6 +27,7 @@ class OrderLookupResource extends JsonResource
             'name'              => $name,
             'order_number'      => $this->order_number,
             'title'             => $this->title,
+            'created_at'        => $this->created_at,
 
             'pipeline_stage_id' => $this->pipeline_stage_id,
             'stage'             => $this->when(

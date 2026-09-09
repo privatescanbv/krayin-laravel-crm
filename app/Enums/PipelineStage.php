@@ -96,8 +96,8 @@ enum PipelineStage: string
      *   id:int,
      *   pipeline:int,
      *   label:string,
-     *   entity:'lead'|'sales'|'order'|'tech',
-     *   status:'won'|'lost'|null,
+     *   entity: 'lead'|'sales'|'order'|'tech',
+     *   status: 'won'|'lost'|null,
      *   status_category:StageCategory|null,
      *   is_default:bool
      * }>
@@ -749,7 +749,11 @@ enum PipelineStage: string
             'id'               => $this->id(),
             'code'             => $this->value,
             'name'             => $this->name(),
-            'probability'      => $this->isWon() ? 100 : ($this->isLost() ? 0 : 100),
+            // Assumption: no current code multiplies value * probability for forecasting, so this
+            // is a data-correctness fix, not a behavior change today. Open stages should never
+            // carry the same 100% probability as a won stage - that would silently make every
+            // in-progress deal look "certain" the moment a weighted-forecast feature reads it.
+            'probability'      => $this->isWon() ? 100 : ($this->isLost() ? 0 : 50),
             'sort_order'       => $this->id(),
             'lead_pipeline_id' => $this->pipeline(),
             'is_won'           => $this->isWon(),
@@ -769,8 +773,8 @@ enum PipelineStage: string
      *   id:int,
      *   pipeline:int,
      *   label:string,
-     *   entity:'lead'|'sales'|'order'|'tech',
-     *   status:'won'|'lost'|null,
+     *   entity: 'lead'|'sales'|'order'|'tech',
+     *   status: 'won'|'lost'|null,
      *   status_category:StageCategory|null
      * }
      */

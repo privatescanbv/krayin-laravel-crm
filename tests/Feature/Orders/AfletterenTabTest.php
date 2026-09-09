@@ -59,3 +59,19 @@ test('afletteren tab shows order items that are not LOST when they have purchase
     $response->assertOk();
     $response->assertSee($product->name, false);
 });
+
+test('afletteren tab shows order items without a purchase price', function () {
+    $order = Order::factory()->create();
+    $product = Product::factory()->create(['name' => 'TestProductGeenInkoop_'.uniqid()]);
+
+    OrderItem::factory()->create([
+        'order_id'   => $order->id,
+        'product_id' => $product->id,
+        'status'     => OrderItemStatus::WON,
+    ]);
+
+    $response = $this->get(route('admin.orders.view', $order->id));
+    $response->assertOk();
+    $response->assertSee($product->name, false);
+    $response->assertSee('Geen inkoopprijs', false);
+});

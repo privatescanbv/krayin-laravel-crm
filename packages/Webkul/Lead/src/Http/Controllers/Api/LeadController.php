@@ -116,7 +116,12 @@ class LeadController extends Controller
      */
     public function update(LeadForm $request, int $id): JsonResponse
     {
-        $lead = $this->leadService->update($request, $id);
+        // AdminLeadController::update() returns a RedirectResponse|JsonResponse meant for the
+        // admin web UI, never the Lead model itself, so its return value must never be used
+        // directly as the API response payload. Re-fetch the lead afterwards instead.
+        $this->leadService->update($request, $id);
+
+        $lead = $this->leadRepository->with(['address', 'organization'])->findOrFail($id);
 
         return response()->json([
             'message' => 'Lead updated successfully.',
@@ -132,7 +137,16 @@ class LeadController extends Controller
         $this->validate($request, [
             'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
         ]);
-        $lead = $this->leadService->updateStageId($leadId, request()->input('lead_pipeline_stage_id'));
+
+        // updateStageId() returns a JsonResponse (either a validation-error response or a
+        // bare success message), never the Lead model - propagate errors, then re-fetch on success.
+        $response = $this->leadService->updateStageId($leadId, request()->input('lead_pipeline_stage_id'));
+
+        if (! $response->isSuccessful()) {
+            return $response;
+        }
+
+        $lead = $this->leadRepository->with(['address', 'organization'])->findOrFail($leadId);
 
         return response()->json([
             'message' => 'Lead stage updated successfully.',
@@ -180,7 +194,13 @@ class LeadController extends Controller
             ], 404);
         }
 
-        $lead = $this->leadService->updateStageId($id, $nextStage->id);
+        $response = $this->leadService->updateStageId($id, $nextStage->id);
+
+        if (! $response->isSuccessful()) {
+            return $response;
+        }
+
+        $lead = $this->leadRepository->with(['address', 'organization'])->findOrFail($id);
 
         return response()->json([
             'message' => 'Lead stage updated successfully.',
@@ -208,21 +228,38 @@ class LeadController extends Controller
             return $response;
         }
 
-        $leadId = $this->leadIdFromCreateResponse($response);
+        // The lead itself is already committed at this point. A failure below (missing lead_id in
+        // the just-built response, or the marketing-data insert itself) must not surface as a plain
+        // 201/200 nor as an uncontrolled, unstructured 500 — always return a structured error that
+        // still names the lead_id so it can be found and its marketing data retried/backfilled.
+        try {
+            $leadId = $this->leadIdFromCreateResponse($response);
 
-        if (! empty($marketingData)) {
-            $this->persistMarketingData($leadId, $marketingData);
+            if (! empty($marketingData)) {
+                $this->persistMarketingData($leadId, $marketingData);
 
-            if (
-                array_key_exists('campaign_id', $marketingData)
-                && Campaign::query()->where('external_id', $marketingData['campaign_id'])->first() === null
-            ) {
-                Log::error('Campaign not found by campaign_id', [
-                    'campaign_id' => $marketingData['campaign_id'],
-                    'lead_id'     => $leadId,
-                    'endpoint'    => $endpoint,
-                ]);
+                if (
+                    array_key_exists('campaign_id', $marketingData)
+                    && Campaign::query()->where('external_id', $marketingData['campaign_id'])->first() === null
+                ) {
+                    Log::error('Campaign not found by campaign_id', [
+                        'campaign_id' => $marketingData['campaign_id'],
+                        'lead_id'     => $leadId,
+                        'endpoint'    => $endpoint,
+                    ]);
+                }
             }
+        } catch (Exception $e) {
+            Log::error('Lead created but marketing data could not be persisted', [
+                'error'    => $e->getMessage(),
+                'lead_id'  => $leadId ?? null,
+                'endpoint' => $endpoint,
+            ]);
+
+            return response()->json([
+                'message' => 'Lead created, but marketing data could not be stored.',
+                'lead_id' => $leadId ?? null,
+            ], 500);
         }
 
         return $response;

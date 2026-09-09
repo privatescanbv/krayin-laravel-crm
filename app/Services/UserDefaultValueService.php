@@ -34,34 +34,4 @@ class UserDefaultValueService
 
         return $leadDefaults;
     }
-
-    /**
-     * Set a default value for a user
-     */
-    public function setDefault(int $userId, string $key, string $value): UserDefaultValue
-    {
-        return UserDefaultValue::updateOrCreate(
-            [
-                'user_id' => $userId,
-                'key'     => $key,
-            ],
-            [
-                'value'      => $value,
-                'created_by' => $userId,
-                'updated_by' => $userId,
-            ]
-        );
-    }
-
-    /**
-     * Get a specific default value for a user
-     */
-    public function getDefault(int $userId, string $key): ?string
-    {
-        $default = UserDefaultValue::where('user_id', $userId)
-            ->where('key', $key)
-            ->first();
-
-        return $default ? $default->value : null;
-    }
 }

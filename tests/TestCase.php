@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Routing\Route;
+use Illuminate\Support\Facades\Cache;
 use RuntimeException;
 
 abstract class TestCase extends BaseTestCase
@@ -16,6 +17,10 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // The array cache store is not rolled back by RefreshDatabase, so cached entries keyed by
+        // model id (e.g. person_duplicates:{id}) would leak into the next test as SQLite reuses ids.
+        Cache::flush();
 
         // Set locale to English for consistent test messages
         app()->setLocale('en');

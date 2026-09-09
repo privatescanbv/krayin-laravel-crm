@@ -98,6 +98,46 @@ it('can create user', function () {
     expect($userId)->toBe('new-user-123');
 });
 
+it('replaces blank firstName/lastName with the empty-name placeholder on create', function () {
+    KeycloakHttpHelpers::fakeAdminToken();
+    KeycloakHttpHelpers::fakeUserOperations([
+        'create_responses' => ['new-user-123'],
+    ]);
+
+    $service = app(KeycloakService::class);
+    $service->createUser([
+        'username'  => 'test@example.com',
+        'email'     => 'test@example.com',
+        'firstName' => '',
+        'lastName'  => '   ',
+        'enabled'   => true,
+    ]);
+
+    Http::assertSent(function ($request) {
+        $body = json_decode($request->body(), true);
+
+        return $request->method() === 'POST'
+            && ($body['firstName'] ?? null) === KeycloakService::EMPTY_NAME_PLACEHOLDER
+            && ($body['lastName'] ?? null) === KeycloakService::EMPTY_NAME_PLACEHOLDER;
+    });
+});
+
+it('does not touch firstName/lastName when omitted from a partial update', function () {
+    KeycloakHttpHelpers::fakeAdminToken();
+    KeycloakHttpHelpers::fakeUserOperations();
+
+    $service = app(KeycloakService::class);
+    $service->updateUser('user-123', ['enabled' => true]);
+
+    Http::assertSent(function ($request) {
+        $body = json_decode($request->body(), true);
+
+        return $request->method() === 'PUT'
+            && ! array_key_exists('firstName', $body)
+            && ! array_key_exists('lastName', $body);
+    });
+});
+
 it('can set user password', function () {
     KeycloakHttpHelpers::fakeAdminToken();
     KeycloakHttpHelpers::fakeUserOperations();

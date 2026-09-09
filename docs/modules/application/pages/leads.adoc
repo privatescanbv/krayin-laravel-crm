@@ -57,14 +57,17 @@ Leads zijn potentiële klanten die interesse hebben getoond in je producten of d
 
 ===== Automatische Suggesties
 
-Het systeem toont automatisch mogelijke matches met bestaande contactpersonen:
+Het systeem toont automatisch mogelijke matches met bestaande contactpersonen.
+Zowel bij **lead aanmaken** als bij **lead bewerken** gebruikt dit dezelfde suggestie-engine (`PersonSuggestionService`): e-mail, telefoon (inclusief `06` ↔ `+31` varianten), achternaam plus eventueel geboortedatum of postcode.
 
 . **Match Percentage**: Toont hoe goed de lead overeenkomt
+. **Match redenen**: Labels zoals e-mail, telefoon of achternaam
 . **Contact Details**: Naam, email en telefoon van gevonden contacten
 . **Snelle Acties**:
   * 👁️ Bekijk contactdetails
-  * 🔄 Synchroniseer gegevens
+  * 🔄 Synchroniseer gegevens (alleen bij bewerken)
 
+Bij aanmaken worden suggesties bijgewerkt wanneer je velden zoals naam, e-mail, telefoon, geboortedatum of postcode invult of verlaat.
 ===== Handmatig Zoeken
 
 . Typ in het zoekveld naar naam, email of telefoon

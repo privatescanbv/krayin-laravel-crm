@@ -33,20 +33,28 @@ namespace UiTests.Steps
             await Assertions.Expect(_driver.Page.GetByText("Lead gegevens", new() { Exact = true })).ToBeVisibleAsync();
         }
 
-        [When(@"I select the first person suggestion for query ""(.*)""")]
-        public async Task WhenISelectFirstPersonForQuery(string query)
+        [When(@"I select the first person suggestion for first name ""(.*)"" and last name ""(.*)""")]
+        public async Task WhenISelectFirstPersonSuggestionForFirstAndLastName(string firstNameValue, string lastNameValue)
         {
-            // New flow: trigger suggestions by filling a field and blurring
+            // Person suggestions on create use PersonSuggestionService and need last name
+            // (and/or email/phone). Filling only first name yields no matches.
             var firstName = _driver.Page.Locator("input[name=first_name]");
+            var lastName = _driver.Page.Locator("input[name=last_name]");
+
             if (await firstName.CountAsync() > 0)
             {
-                await firstName.FillAsync(query);
-                await firstName.BlurAsync();
+                await firstName.FillAsync(firstNameValue);
             }
 
-            // Wait for right-hand suggestions panel
+            if (await lastName.CountAsync() > 0)
+            {
+                await lastName.FillAsync(lastNameValue);
+                await lastName.BlurAsync();
+            }
+
+            // Wait for right-hand suggestions panel (debounce 300ms + suggest API)
             var suggestionsHeader = _driver.Page.GetByText("Mogelijke matches gevonden").First;
-            await suggestionsHeader.WaitForAsync(new() { State = WaitForSelectorState.Visible });
+            await suggestionsHeader.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30000 });
 
             // Click first Koppelen
             var firstLinkButton = _driver.Page.Locator("button:has-text('Koppelen')").First;

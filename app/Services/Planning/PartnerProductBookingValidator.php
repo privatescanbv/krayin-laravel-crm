@@ -97,10 +97,10 @@ class PartnerProductBookingValidator
             return null;
         }
 
-        $clinicName = Clinic::query()->whereKey($clinicId)->value('name') ?? "clinic {$clinicId}";
+        $clinicName = Clinic::query()->whereKey($clinicId)->value('name') ?? "clinic $clinicId";
         $productName = $orderItem->relationLoaded('product')
-            ? ($orderItem->product?->name ?? "product {$orderItem->product_id}")
-            : ($orderItem->product()->value('name') ?? "product {$orderItem->product_id}");
+            ? ($orderItem->product?->name ?? "product $orderItem->product_id")
+            : ($orderItem->product()->value('name') ?? "product $orderItem->product_id");
 
         return response()->json([
             'message' => sprintf(

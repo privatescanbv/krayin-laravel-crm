@@ -11,6 +11,7 @@ use App\Models\OrderItem;
 use App\Models\PurchasePrice;
 use App\Models\ResourceType;
 use App\Repositories\OrderItemRepository;
+use App\Services\Inkoop\AfletterenAuditLogger;
 use App\Services\OrderItemPurchasePriceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -27,6 +28,7 @@ class OrderItemController extends SimpleEntityController
         protected OrderItemRepository $orderItemRepository,
         protected PersonRepository $personRepository,
         protected OrderItemPurchasePriceService $orderItemPurchasePriceService,
+        protected AfletterenAuditLogger $afletterenAuditLogger,
     ) {
         parent::__construct($orderItemRepository);
 
@@ -47,8 +49,12 @@ class OrderItemController extends SimpleEntityController
 
         $entity = $this->repository->update($this->transformPayload($request->all(), $id), $id);
 
+        $oldInvoiceTotal = (float) ($entity->invoicePurchasePrice()->first()?->purchase_price ?? 0);
+
         $this->saveOrderItemPurchasePrice($entity, $request);
-        $this->saveInvoicePurchasePrice($entity, $request);
+        $newInvoiceTotal = $this->saveInvoicePurchasePrice($entity, $request);
+
+        $this->logInvoicePriceChange($entity, $oldInvoiceTotal, $newInvoiceTotal, AfletterenAuditLogger::SCREEN_ORDERITEM_EDIT);
 
         Event::dispatch("settings.{$this->entityName}.update.after", $entity);
 
@@ -84,7 +90,11 @@ class OrderItemController extends SimpleEntityController
         }
         $data['purchase_price'] = $total;
 
+        $oldTotal = (float) ($item->invoicePurchasePrice?->purchase_price ?? 0);
+
         $item->invoicePurchasePrice()->updateOrCreate(['type' => PurchasePriceType::INVOICE], $data);
+
+        $this->logInvoicePriceChange($item, $oldTotal, $total, AfletterenAuditLogger::SCREEN_ORDER_AFLETTEREN);
 
         return response()->json(['message' => 'Invoice prijs opgeslagen.']);
     }
@@ -94,10 +104,20 @@ class OrderItemController extends SimpleEntityController
         $item = OrderItem::findOrFail($id);
         $force = $request->boolean('force', true);
 
+        $wasForced = (bool) $item->invoicePurchasePrice?->force_received;
+
         $item->invoicePurchasePrice()->updateOrCreate(
             ['type' => PurchasePriceType::INVOICE],
             ['force_received' => $force]
         );
+
+        if ($wasForced !== $force && $item->order_id) {
+            $this->afletterenAuditLogger->log(
+                $item->order_id,
+                AfletterenAuditLogger::SCREEN_ORDER_AFLETTEREN,
+                [($force ? 'forced' : 'unforced') => [$this->auditLabel($item)]],
+            );
+        }
 
         return response()->json(['message' => $force ? 'Geforceerd als geheel ontvangen.' : 'Force verwijderd.']);
     }
@@ -163,7 +183,7 @@ class OrderItemController extends SimpleEntityController
         $this->orderItemPurchasePriceService->saveFromRequest($entity, $data);
     }
 
-    protected function saveInvoicePurchasePrice(OrderItem $entity, Request $request): void
+    protected function saveInvoicePurchasePrice(OrderItem $entity, Request $request): float
     {
         $suffixes = PurchasePrice::priceSuffixes();
         $data = ['type' => PurchasePriceType::INVOICE];
@@ -175,6 +195,8 @@ class OrderItemController extends SimpleEntityController
         }
         $data['purchase_price'] = $total;
         $entity->invoicePurchasePrice()->updateOrCreate(['type' => PurchasePriceType::INVOICE], $data);
+
+        return (float) $total;
     }
 
     protected function getCreateSuccessMessage(): string
@@ -269,5 +291,26 @@ class OrderItemController extends SimpleEntityController
         }
 
         return $payload;
+    }
+
+    private function logInvoicePriceChange(OrderItem $item, float $oldTotal, float $newTotal, string $screen): void
+    {
+        if (round($oldTotal, 2) === round($newTotal, 2) || ! $item->order_id) {
+            return;
+        }
+
+        $line = sprintf(
+            '%s: € %s → € %s',
+            $this->auditLabel($item),
+            number_format($oldTotal, 2, ',', '.'),
+            number_format($newTotal, 2, ',', '.'),
+        );
+
+        $this->afletterenAuditLogger->log($item->order_id, $screen, ['price_changes' => [$line]]);
+    }
+
+    private function auditLabel(OrderItem $item): string
+    {
+        return ($item->getProductName() ?: 'Onbekend product')." (#{$item->id})";
     }
 }

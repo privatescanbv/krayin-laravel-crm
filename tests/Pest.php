@@ -11,15 +11,20 @@
 |
  */
 
+use App\Enums\PurchasePriceType;
+use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PartnerProduct;
 use App\Models\Resource;
+use App\Models\ResourceOrderItem;
 use App\Models\Shift;
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
+use Webkul\Contact\Models\Person;
 use Webkul\User\Models\User;
 
 uses(TestCase::class)->in('Feature', 'Unit');
@@ -143,4 +148,51 @@ function resourceWithShiftCovering(Carbon $date, bool $allowOutside = false): Re
     ]);
 
     return $resource->fresh('shifts');
+}
+
+/**
+ * Create an order item booked on a clinic resource, with the given status.
+ * Observers force status to "planned" on create, so it is set directly afterwards.
+ */
+function createOrderItemForClinic(
+    Order $order,
+    Person $person,
+    Resource $resource,
+    string $status,
+    ?Carbon $from = null,
+): OrderItem {
+    $from ??= now();
+
+    $item = OrderItem::factory()->create([
+        'order_id'  => $order->id,
+        'person_id' => $person->id,
+    ]);
+
+    ResourceOrderItem::create([
+        'resource_id'  => $resource->id,
+        'orderitem_id' => $item->id,
+        'from'         => $from,
+        'to'           => $from->copy()->addHour(),
+    ]);
+
+    DB::table('order_items')->where('id', $item->id)->update(['status' => $status]);
+    $item->refresh();
+
+    return $item;
+}
+
+/**
+ * Attach a MAIN purchase price (all value in the "misc" component) to an order item.
+ */
+function createMainPurchasePrice(OrderItem $item, float $amount): void
+{
+    $item->purchasePrice()->create([
+        'type'                      => PurchasePriceType::MAIN,
+        'purchase_price_misc'       => $amount,
+        'purchase_price_doctor'     => 0,
+        'purchase_price_cardiology' => 0,
+        'purchase_price_clinic'     => 0,
+        'purchase_price_radiology'  => 0,
+        'purchase_price'            => $amount,
+    ]);
 }

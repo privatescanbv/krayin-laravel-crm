@@ -10,6 +10,8 @@ use App\Models\Inkoop\InkoopInvoiceItem;
 use App\Models\Inkoop\InkoopInvoiceItemCrmProduct;
 use App\Models\Inkoop\InkoopPerson;
 use App\Models\OrderItem;
+use App\Services\Inkoop\AfletterenAuditLogger;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,6 +21,10 @@ use Illuminate\Support\Facades\Log;
 
 class InkoopStep2Controller extends Controller
 {
+    public function __construct(
+        private readonly AfletterenAuditLogger $auditLogger,
+    ) {}
+
     public function store(Request $request, InkoopInvoice $invoice)
     {
         $crmIds = $request->input('crm_ids', []);
@@ -64,9 +70,11 @@ class InkoopStep2Controller extends Controller
             ->sortBy(fn ($person) => $person->invoiceItems->min('date'))
             ->values();
 
+        $examMonthOverride = $this->parseExamMonth($request->query('exam_month'));
+
         $allPersonsByInvoiceCount = InkoopPerson::where('invoice_id', $invoice->id)->count();
         $percentageResolvedInvoiceItems = $invoice->calculateResolvedInvoiceItemsPercentage();
-        $orderItemsByPerson = $this->findOrderItemsByPerson($personsWithCRMRelation, $invoice);
+        $orderItemsByPerson = $this->findOrderItemsByPerson($personsWithCRMRelation, $invoice, $examMonthOverride);
         $orderProductsByPerson = $this->formatOrderItemsByPerson($orderItemsByPerson);
         $filteredProductsByInvoiceItemId = $this->suggestOrderItemsByInvoiceItem($personsWithCRMRelation, $orderItemsByPerson);
 
@@ -82,6 +90,9 @@ class InkoopStep2Controller extends Controller
             'orderProductsByPerson'           => $orderProductsByPerson,
             'orderItemsByPerson'              => $orderItemsByPerson,
             'filteredProductsByInvoiceItemId' => $filteredProductsByInvoiceItemId,
+            'examMonth'                       => ($examMonthOverride ?? $invoice->expectedExaminationMonth())?->format('Y-m'),
+            'examMonthLabel'                  => ($examMonthOverride ?? $invoice->expectedExaminationMonth())?->translatedFormat('F Y'),
+            'examMonthOverridden'             => $examMonthOverride !== null,
         ]);
     }
 
@@ -178,10 +189,17 @@ class InkoopStep2Controller extends Controller
 
         $invoiceItem->crmProducts()->delete();
 
+        $unlinkedByOrder = [];
         foreach ($linkedOrderItemIds as $orderItemId) {
             $orderItem = OrderItem::find($orderItemId);
             $orderItem?->invoicePurchasePrice()?->delete();
+
+            if ($orderItem?->order_id) {
+                $unlinkedByOrder[$orderItem->order_id][] = $this->orderItemLabel($orderItem);
+            }
         }
+
+        $this->logAfletteren($invoice, $unlinkedByOrder, 'unlinked');
 
         return redirect()->back()->with('success', 'CRM koppelingen zijn gereset.');
     }
@@ -193,20 +211,44 @@ class InkoopStep2Controller extends Controller
         $orderItemIds = InkoopInvoiceItemCrmProduct::whereIn('inkoop_invoice_item_id', $itemIds)
             ->pluck('crm_id');
 
+        $forcedByOrder = [];
         foreach ($orderItemIds as $orderItemId) {
             $orderItem = OrderItem::find($orderItemId);
-            if ($orderItem) {
-                $orderItem->invoicePurchasePrice()->updateOrCreate(
-                    ['type' => PurchasePriceType::INVOICE],
-                    ['force_received' => true]
-                );
+            if (! $orderItem) {
+                continue;
+            }
+
+            $wasForced = (bool) $orderItem->invoicePurchasePrice?->force_received;
+
+            $orderItem->invoicePurchasePrice()->updateOrCreate(
+                ['type' => PurchasePriceType::INVOICE],
+                ['force_received' => true]
+            );
+
+            if (! $wasForced && $orderItem->order_id) {
+                $forcedByOrder[$orderItem->order_id][] = $this->orderItemLabel($orderItem);
             }
         }
+
+        $this->logAfletteren($invoice, $forcedByOrder, 'forced');
 
         return redirect()->back()->with('success', count($orderItemIds).' order regel(s) geforceerd als geheel ontvangen.');
     }
 
-    private function findOrderItemsByPerson(Collection $persons, InkoopInvoice $invoice): Collection
+    private function parseExamMonth(?string $value): ?Carbon
+    {
+        if (! is_string($value) || ! preg_match('/^\d{4}-\d{2}$/', $value)) {
+            return null;
+        }
+
+        try {
+            return Carbon::createFromFormat('Y-m-d', $value.'-01')->startOfMonth();
+        } catch (Exception) {
+            return null;
+        }
+    }
+
+    private function findOrderItemsByPerson(Collection $persons, InkoopInvoice $invoice, ?Carbon $examMonthOverride = null): Collection
     {
         $allOrderItems = OrderItem::query()
             ->with([
@@ -226,8 +268,8 @@ class InkoopStep2Controller extends Controller
             })
             ->orderByDesc('id')
             ->get()
-            ->filter(function (OrderItem $item) use ($invoice) {
-                if (! $invoice->matchesExpectedExaminationMonth($item->order?->firstExaminationCarbon())) {
+            ->filter(function (OrderItem $item) use ($invoice, $examMonthOverride) {
+                if (! $invoice->matchesExpectedExaminationMonth($item->order?->firstExaminationCarbon(), $examMonthOverride)) {
                     return false;
                 }
 
@@ -323,6 +365,37 @@ class InkoopStep2Controller extends Controller
     private function orderItemProductName(OrderItem $orderItem): string
     {
         return $orderItem->getProductName() ?: 'Onbekend product';
+    }
+
+    private function orderItemLabel(OrderItem $orderItem): string
+    {
+        return $this->orderItemProductName($orderItem)." (#{$orderItem->id})";
+    }
+
+    /**
+     * @param  array<int, list<string>>  $changesByOrder  order_id => mensleesbare regels
+     */
+    private function logAfletteren(InkoopInvoice $invoice, array $changesByOrder, string $changeKey): void
+    {
+        if ($changesByOrder === []) {
+            return;
+        }
+
+        $invoice->loadMissing('clinic');
+        $meta = [
+            'invoice_id'     => $invoice->id,
+            'invoice_number' => $invoice->invoice_number,
+            'clinic'         => $invoice->clinic?->name,
+        ];
+
+        foreach ($changesByOrder as $orderId => $lines) {
+            $this->auditLogger->log(
+                (int) $orderId,
+                AfletterenAuditLogger::SCREEN_INKOOP_STEP2,
+                [$changeKey => $lines],
+                $meta,
+            );
+        }
     }
 
     private function orderItemStatusValue(OrderItem $orderItem): string

@@ -76,6 +76,9 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+    depends_on:
+      keycloak:
+        condition: service_healthy
     networks:
       - backend
       - public
@@ -338,11 +341,14 @@ services:
       - traefik.http.middlewares.keycloak-forward-headers.headers.customrequestheaders.X-Forwarded-Host=sso.${PRIVATESCAN_BASE_DOMAIN}
       - traefik.docker.network=public
       - logging=promtail
-#    healthcheck:
-#      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
-#      interval: 30s
-#      timeout: 10s
-#      retries: 5
+    # Keycloak 26 serves health on the management port (9000); the image has no
+    # curl, so probe the raw socket with bash's /dev/tcp.
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nhost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
 
   keycloak-db:
     image: postgres:15-alpine

@@ -1,7 +1,6 @@
 <?php
 
 use App\Enums\OrderItemStatus;
-use App\Enums\PurchasePriceType;
 use App\Models\Clinic;
 use App\Models\ClinicDepartment;
 use App\Models\Inkoop\InkoopInvoice;
@@ -9,13 +8,10 @@ use App\Models\Inkoop\InkoopInvoiceItem;
 use App\Models\Inkoop\InkoopInvoiceItemCrmProduct;
 use App\Models\Inkoop\InkoopPerson;
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\Resource;
-use App\Models\ResourceOrderItem;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Webkul\Contact\Models\Person;
 use Webkul\User\Models\User;
 
@@ -45,47 +41,6 @@ beforeEach(function () {
 
     $this->order = Order::factory()->create();
 });
-
-function createOrderItemForClinic(
-    Order $order,
-    Person $person,
-    Resource $resource,
-    string $status,
-    ?Carbon $from = null,
-): OrderItem {
-    $from ??= now();
-
-    $item = OrderItem::factory()->create([
-        'order_id'  => $order->id,
-        'person_id' => $person->id,
-    ]);
-
-    ResourceOrderItem::create([
-        'resource_id'  => $resource->id,
-        'orderitem_id' => $item->id,
-        'from'         => $from,
-        'to'           => $from->copy()->addHour(),
-    ]);
-
-    // Observers auto-set status to planned; override directly to set desired status.
-    DB::table('order_items')->where('id', $item->id)->update(['status' => $status]);
-    $item->refresh();
-
-    return $item;
-}
-
-function createMainPurchasePrice(OrderItem $item, float $amount): void
-{
-    $item->purchasePrice()->create([
-        'type'                      => PurchasePriceType::MAIN,
-        'purchase_price_misc'       => $amount,
-        'purchase_price_doctor'     => 0,
-        'purchase_price_cardiology' => 0,
-        'purchase_price_clinic'     => 0,
-        'purchase_price_radiology'  => 0,
-        'purchase_price'            => $amount,
-    ]);
-}
 
 function step2ItemIds($response): Collection
 {
@@ -206,6 +161,34 @@ it('uses first_examination_at override for the examination month filter', functi
 
     $response->assertOk();
     expect(step2ItemIds($response)->contains($item->id))->toBeTrue();
+});
+
+it('lets the exam_month query param override the reference_date month filter', function () {
+    // Factuur wijst naar augustus, maar de gebruiker wil checken of juli resultaten geeft.
+    $this->invoice->update(['reference_date' => '2025-09-15']);
+
+    $augustItem = createOrderItemForClinic(
+        Order::factory()->create(),
+        $this->crmPerson,
+        $this->resource,
+        OrderItemStatus::WON->value,
+        Carbon::parse('2025-08-10 10:00:00'),
+    );
+    $julyItem = createOrderItemForClinic(
+        Order::factory()->create(),
+        $this->crmPerson,
+        $this->resource,
+        OrderItemStatus::WON->value,
+        Carbon::parse('2025-07-10 10:00:00'),
+    );
+
+    $response = $this->get(route('admin.inkoop.step2', $this->invoice->id).'?exam_month=2025-07');
+
+    $response->assertOk();
+    $ids = step2ItemIds($response);
+    expect($ids->contains($julyItem->id))->toBeTrue()
+        ->and($ids->contains($augustItem->id))->toBeFalse()
+        ->and($response->viewData('examMonthOverridden'))->toBeTrue();
 });
 
 it('includes order items from any month when reference_date is not set', function () {

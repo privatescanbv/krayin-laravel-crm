@@ -5,6 +5,7 @@ namespace App\Models\Inkoop;
 use App\Enums\Inkoop\InkoopInvoiceParser;
 use App\Enums\Inkoop\InkoopInvoiceStatus;
 use App\Models\Clinic;
+use App\Traits\HasAuditTrail;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class InkoopInvoice extends Model
 {
-    use HasFactory;
+    use HasAuditTrail, HasFactory;
 
     protected $table = 'inkoop_invoices';
 
@@ -42,20 +43,6 @@ class InkoopInvoice extends Model
         'status'         => InkoopInvoiceStatus::class,
         'parser'         => InkoopInvoiceParser::class,
     ];
-
-    protected static function boot(): void
-    {
-        parent::boot();
-
-        static::creating(function (self $model) {
-            $model->created_by = $model->created_by ?: auth()->guard('user')->id();
-            $model->updated_by = $model->updated_by ?: auth()->guard('user')->id();
-        });
-
-        static::updating(function (self $model) {
-            $model->updated_by = auth()->guard('user')->id();
-        });
-    }
 
     public function clinic(): BelongsTo
     {
@@ -109,10 +96,11 @@ class InkoopInvoice extends Model
     /**
      * Of een order met deze eerste-onderzoeksdatum bij deze factuur hoort.
      * Zonder referentiedatum vervalt de maandfilter en telt elke order mee.
+     * Geef $expectedOverride om tijdelijk een andere onderzoeksmaand te testen.
      */
-    public function matchesExpectedExaminationMonth(?Carbon $examAt): bool
+    public function matchesExpectedExaminationMonth(?Carbon $examAt, ?Carbon $expectedOverride = null): bool
     {
-        $expected = $this->expectedExaminationMonth();
+        $expected = $expectedOverride ?? $this->expectedExaminationMonth();
 
         if ($expected === null) {
             return true;

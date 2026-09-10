@@ -102,7 +102,10 @@ services:
       retries: 3
       start_period: 30s
     depends_on:
-      - mysql_crm
+      mysql_crm:
+        condition: service_started
+      keycloak:
+        condition: service_healthy
 
   mysql_crm:
     image: 'mysql/mysql-server:8.0'
@@ -349,6 +352,14 @@ services:
       - traefik.http.routers.keycloak.middlewares=keycloak-forward-headers
       - traefik.docker.network=public
       - logging=promtail
+    # Keycloak 26 serves health on the management port (9000); the image has no
+    # curl, so probe the raw socket with bash's /dev/tcp.
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nhost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
 
   keycloak-db:
     image: postgres:15-alpine

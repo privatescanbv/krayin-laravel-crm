@@ -1,6 +1,20 @@
 <x-admin::layouts>
     <x-slot:title>Inkoop stap 2</x-slot>
 
+    <form method="GET" action="{{ route('admin.inkoop.step2', $invoice->id) }}"
+          class="mb-4 flex flex-wrap items-end gap-3 rounded-lg border bg-white px-4 py-3 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div class="flex flex-col gap-1">
+            <label for="exam_month" class="text-xs font-medium text-gray-600 dark:text-gray-400">Onderzoeksmaand testen</label>
+            <input type="month" id="exam_month" name="exam_month" value="{{ $examMonth }}"
+                   class="rounded-md border px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300">
+        </div>
+        <button type="submit" class="secondary-button">Toepassen</button>
+        @if ($examMonthOverridden)
+            <a href="{{ route('admin.inkoop.step2', $invoice->id) }}" class="text-xs text-blue-600 hover:underline dark:text-blue-400">Reset</a>
+            <span class="text-xs text-amber-700 dark:text-amber-400">Tijdelijke filter — niet opgeslagen op de factuur.</span>
+        @endif
+    </form>
+
     <x-admin::form :action="route('admin.inkoop.save-product-crm-ids', $invoice->id)" method="POST">
         @method('PUT')
 
@@ -13,7 +27,9 @@
                         Gefilterd op kliniek: <strong>{{ $invoice->clinic?->name ?? 'Onbekend' }}</strong>
                         @if ($invoice->reference_date)
                             · Referentiemaand: <strong>{{ $invoice->reference_date->translatedFormat('F Y') }}</strong>
-                            · Onderzoeksmaand: <strong>{{ $invoice->expectedExaminationMonth()->translatedFormat('F Y') }}</strong>
+                        @endif
+                        @if ($examMonthLabel)
+                            · Onderzoeksmaand: <strong>{{ $examMonthLabel }}</strong>@if ($examMonthOverridden) <span class="text-amber-700 dark:text-amber-400">(tijdelijk)</span>@endif
                         @endif
                     </div>
                 </div>

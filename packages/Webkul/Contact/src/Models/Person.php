@@ -7,8 +7,8 @@ use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
 use App\Enums\PreferredLanguage;
 use App\Models\Address;
-use App\Models\Concerns\HasAiSummary;
 use App\Models\Anamnesis;
+use App\Models\Concerns\HasAiSummary;
 use App\Models\PatientMessage;
 use App\Models\SalesLead;
 use App\Traits\HasDefaultContactInfo;
@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -329,7 +330,7 @@ class Person extends Model implements PersonContract
     /**
      * Get the organization that owns the person.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function organization()
     {
@@ -379,7 +380,7 @@ class Person extends Model implements PersonContract
     /**
      * The tags that belong to the person.
      */
-    public function tags()
+    public function tags(): BelongsToMany
     {
         return $this->belongsToMany(TagProxy::modelClass(), 'person_tags');
     }

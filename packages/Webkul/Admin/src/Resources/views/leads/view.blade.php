@@ -1,4 +1,8 @@
-@php use Webkul\Admin\Http\Controllers\Lead\ActivityController; @endphp
+@php
+    use App\Services\Ai\AiSubjectRegistry;use Webkul\Admin\Http\Controllers\Lead\ActivityController;
+
+    $aiSummaryEnabled = app(AiSubjectRegistry::class)->isEnabled('leads');
+@endphp
 <x-admin::layouts>
     <x-slot:title>
         {{ $lead->name }}
@@ -84,7 +88,8 @@
                         {!! view_render_event('admin.leads.view.actions.before', ['lead' => $lead]) !!}
 
                         @if (bouncer()->hasPermission('mail.create'))
-                            <x-admin::activities.actions.mail :entity="$lead" entity-control-name="lead_id" :emails="$lead->resolveDefaultEmails()"/>
+                            <x-admin::activities.actions.mail :entity="$lead" entity-control-name="lead_id"
+                                                              :emails="$lead->resolveDefaultEmails()"/>
                         @endif
 
                         @if (bouncer()->hasPermission('activities.create'))
@@ -109,31 +114,34 @@
                 </div>
             </div>
             @if($lead->diagnoseform_pdf_url || $lead->mri_status)
-            <div class="flex flex-col border-t border-gray-200 dark:border-gray-800">
-                <div class="flex items-center gap-3 p-4">
-                    <span class="icon-file text-2xl text-gray-400"></span>
+                <div class="flex flex-col border-t border-gray-200 dark:border-gray-800">
+                    <div class="flex items-center gap-3 p-4">
+                        <span class="icon-file text-2xl text-gray-400"></span>
 
-                    <div class="flex flex-col">
-                        <span class="font-semibold text-gray-800 dark:text-white">Diagnoseformulier</span>
+                        <div class="flex flex-col">
+                            <span class="font-semibold text-gray-800 dark:text-white">Diagnoseformulier</span>
 
-                        <span class="text-xs {{ $lead->diagnoseform_pdf_url ? 'text-green-600' : 'text-red-600' }}">
-                            <a href="{{ ($lead->diagnoseform_pdf_url ?? '') }}" target="_blank">Download van website</a> | <a href="{{ ($lead->diagnose_download_url ?? '') }}" target="_blank">Download interne</a>
+                            <span class="text-xs {{ $lead->diagnoseform_pdf_url ? 'text-green-600' : 'text-red-600' }}">
+                            <a href="{{ ($lead->diagnoseform_pdf_url ?? '') }}" target="_blank">Download van website</a> | <a
+                                    href="{{ ($lead->diagnose_download_url ?? '') }}"
+                                    target="_blank">Download interne</a>
                         </span>
+                        </div>
                     </div>
-                </div>
 
-                <div class="flex items-center gap-3 p-4 pt-0">
-                    <span class="icon-file text-2xl text-gray-400"></span>
+                    <div class="flex items-center gap-3 p-4 pt-0">
+                        <span class="icon-file text-2xl text-gray-400"></span>
 
-                    <div class="flex flex-col">
-                        <span class="font-semibold text-gray-800 dark:text-white">MRI scans</span>
+                        <div class="flex flex-col">
+                            <span class="font-semibold text-gray-800 dark:text-white">MRI scans</span>
 
-                        <span class="text-xs {{ ($lead->mri_status?->value ?? 'geen') !== 'geen' ? 'text-green-600' : 'text-red-600' }}">
+                            <span
+                                class="text-xs {{ ($lead->mri_status?->value ?? 'geen') !== 'geen' ? 'text-green-600' : 'text-red-600' }}">
                             {{ $lead->mri_status?->value ?? 'geen' }}
                         </span>
+                        </div>
                     </div>
                 </div>
-            </div>
             @endif
             <x-adminc::components.entity-navigation-menu :activitiesCount="$activitiesCount" show-sales="true"/>
 
@@ -324,7 +332,7 @@
                         data() {
                             return {
                                 leadDetailSection: 'algemeen',
-                                isRightColumnCollapsed: false,
+                                isRightColumnCollapsed: {{ $aiSummaryEnabled ? 'false' : 'true' }},
                             };
                         },
 

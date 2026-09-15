@@ -3,7 +3,9 @@
 ])
 @php
     use App\Enums\EmailTemplateType;use App\Enums\PipelineStage;
-    use Webkul\Admin\Http\Controllers\order\ActivityController;
+    use App\Services\Ai\AiSubjectRegistry;use Webkul\Admin\Http\Controllers\order\ActivityController;
+
+    $aiSummaryEnabled = app(AiSubjectRegistry::class)->isEnabled('orders');
 @endphp
 <x-admin::layouts>
     <x-slot:title>
@@ -451,7 +453,7 @@
                         data() {
                             return {
                                 leadDetailSection: 'algemeen',
-                                isRightColumnCollapsed: true,
+                                isRightColumnCollapsed: {{ $aiSummaryEnabled ? 'false' : 'true' }},
                             };
                         },
 

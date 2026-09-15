@@ -1,4 +1,8 @@
-@php use App\Enums\LostReason; @endphp
+@php
+    use App\Enums\LostReason;use App\Services\Ai\AiSubjectRegistry;
+
+    $aiSummaryEnabled = app(AiSubjectRegistry::class)->isEnabled('sales_leads');
+@endphp
 <x-admin::layouts>
     <x-slot:title>
         {{ $salesLead->name }}
@@ -23,7 +27,7 @@
                         />
                     </div>
 
-                    <x-adminc::sales_leads.card :sales="$salesLead" show_actions="false" />
+                    <x-adminc::sales_leads.card :sales="$salesLead" show_actions="false"/>
 
                     <div class="mb-2">
                         @if (($days = $salesLead->rotten_days) > 0)
@@ -95,11 +99,13 @@
                         @endif
 
                         @if ($salesLead->lead?->department?->isHernia())
-                            <form method="POST" action="{{ route('admin.sales-leads.create-preventie-sales', $salesLead->id) }}" class="inline">
+                            <form method="POST"
+                                  action="{{ route('admin.sales-leads.create-preventie-sales', $salesLead->id) }}"
+                                  class="inline">
                                 @csrf
                                 <button type="submit"
-                                    class="secondary-button flex items-center gap-1 border border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-400 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
-                                    onclick="return confirm('Nieuwe Preventie Sales aanmaken vanuit deze Herniapoli sales?')"
+                                        class="secondary-button flex items-center gap-1 border border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-400 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                                        onclick="return confirm('Nieuwe Preventie Sales aanmaken vanuit deze Herniapoli sales?')"
                                 >
                                     <span class="icon-plus text-base"></span>
                                     <span>Nieuwe Preventie Sales aanmaken</span>
@@ -300,7 +306,7 @@
                         data() {
                             return {
                                 leadDetailSection: 'algemeen',
-                                isRightColumnCollapsed: true,
+                                isRightColumnCollapsed: {{ $aiSummaryEnabled ? 'false' : 'true' }},
                             };
                         },
 

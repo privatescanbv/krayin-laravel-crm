@@ -104,7 +104,10 @@
       "Bash(git -C /Users/mark/workplace/privatescan/crm/krayin-laravel-crm status --short)",
       "Bash(composer show *)",
       "mcp__plugin_playwright_playwright__browser_evaluate",
-      "Bash(xargs -I{} sh -c 'echo {}; cat {}')"
+      "Bash(xargs -I{} sh -c 'echo {}; cat {}')",
+      "mcp__bugsink__get_issue",
+      "mcp__bugsink__get_event",
+      "Read(//private/tmp/**)"
     ]
   }
 }

@@ -6,6 +6,7 @@ use App\Enums\LostReason;
 use App\Enums\ActivityStatus;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineType;
+use App\Exceptions\CannotDeleteLeadWithSalesException;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Services\StageTransitionAttributes;
 use App\Http\Controllers\Concerns\HandlesReturnUrl;
@@ -746,7 +747,8 @@ class LeadController extends Controller
             'lead' => $lead,
             'activitiesCount' => $activitiesCount,
             'canEditLead'     => bouncer()->hasPermission('leads.edit'),
-            'canDeleteLead'   => bouncer()->hasPermission('leads.delete'),
+            'canDeleteLead'   => bouncer()->hasPermission('leads.delete')
+                && $this->leadRepository->leadIdsWithSalesLead([$lead->id])->isEmpty(),
             'persons'         => $lead->persons()->get(),
             'contactPerson'   => $lead->contactPerson,
         ]);
@@ -1184,6 +1186,10 @@ class LeadController extends Controller
             return response()->json([
                 'message' => trans('admin::app.leads.destroy-success'),
             ]);
+        } catch (CannotDeleteLeadWithSalesException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 400);
         } catch (Exception $exception) {
             return response()->json([
                 'message' => trans('admin::app.leads.destroy-failed'),
@@ -1224,9 +1230,12 @@ class LeadController extends Controller
      */
     public function massDestroy(MassDestroyRequest $massDestroyRequest): JsonResponse
     {
-        $leads = $this->leadRepository->findWhereIn('id', $massDestroyRequest->input('indices'));
+        $ids = $massDestroyRequest->input('indices');
+        $leads = $this->leadRepository->findWhereIn('id', $ids);
 
         try {
+            $this->leadRepository->guardAgainstDeletingSalesLeads($ids);
+
             foreach ($leads as $lead) {
                 Event::dispatch('lead.delete.before', $lead->id);
 
@@ -1238,10 +1247,14 @@ class LeadController extends Controller
             return response()->json([
                 'message' => trans('admin::app.leads.destroy-success'),
             ]);
+        } catch (CannotDeleteLeadWithSalesException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 400);
         } catch (Exception $exception) {
             return response()->json([
                 'message' => trans('admin::app.leads.destroy-failed'),
-            ]);
+            ], 400);
         }
     }
 

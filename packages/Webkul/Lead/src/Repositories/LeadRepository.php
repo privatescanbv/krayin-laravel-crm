@@ -6,6 +6,7 @@ use App\Enums\Departments;
 use App\Enums\DuplicateEntityType;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
+use App\Exceptions\CannotDeleteLeadWithSalesException;
 use App\Models\Department;
 use App\Repositories\AddressRepository;
 use App\Services\LeadDuplicateCacheService;
@@ -595,8 +596,8 @@ class LeadRepository extends Repository
     /**
      * Which of the given leads already have a sales lead (salesleads.lead_id). A duplicate with a
      * sales lead carries orders and invoicing with it, so it can never be the side that gets
-     * archived by a merge. Used both by the merge guard below and by the duplicates screen to keep
-     * such leads from being picked as a duplicate in the first place.
+     * archived by a merge or deleted. Used by the merge guard, the delete guard, and the duplicates
+     * screen to keep such leads from being picked as a duplicate in the first place.
      *
      * @param array<int, int|string> $leadIds
      * @return Collection<int, int>
@@ -606,7 +607,37 @@ class LeadRepository extends Repository
         return DB::table('salesleads')
             ->whereIn('lead_id', $leadIds)
             ->pluck('lead_id')
-            ->unique();
+            ->unique()
+            ->values();
+    }
+
+    /**
+     * A lead with a sales lead carries orders and invoicing, so it can never be deleted.
+     *
+     * @param  array<int, int|string>  $leadIds
+     *
+     * @throws CannotDeleteLeadWithSalesException
+     */
+    public function guardAgainstDeletingSalesLeads(array $leadIds): void
+    {
+        $blocked = $this->leadIdsWithSalesLead($leadIds);
+
+        if ($blocked->isNotEmpty()) {
+            throw CannotDeleteLeadWithSalesException::forLeadIds($blocked->all());
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @param  int  $id
+     * @return int
+     */
+    public function delete($id)
+    {
+        $this->guardAgainstDeletingSalesLeads([$id]);
+
+        return parent::delete($id);
     }
 
     /**

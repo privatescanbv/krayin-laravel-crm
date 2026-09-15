@@ -19,8 +19,9 @@ return [
     ],
 
     'lead' => [
-        'merge_success' => 'Leads succesvol samengevoegd.',
-        'merge_failed'  => 'Samenvoegen mislukt: :error',
+        'merge_success'          => 'Leads succesvol samengevoegd.',
+        'merge_failed'           => 'Samenvoegen mislukt: :error',
+        'delete_blocked_sales'   => 'Lead(s) :ids hebben een sales (verkooptraject) en kunnen niet worden verwijderd.',
     ],
 
     'activity' => [

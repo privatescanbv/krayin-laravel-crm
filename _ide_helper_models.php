@@ -768,9 +768,10 @@ namespace App\Models\Inkoop{
  * @property \App\Enums\Inkoop\InkoopInvoiceStatus $status
  * @property int|null $created_by
  * @property int|null $updated_by
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \App\Models\Clinic $clinic
+ * @property-read \Webkul\User\Models\User|null $creator
  * @property-read string|null $supplier_type
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Inkoop\InkoopInvoiceItem> $invoiceItems
  * @property-read int|null $invoice_items_count
@@ -778,6 +779,7 @@ namespace App\Models\Inkoop{
  * @property-read int|null $items_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Inkoop\InkoopPerson> $persons
  * @property-read int|null $persons_count
+ * @property-read \Webkul\User\Models\User|null $updater
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice query()

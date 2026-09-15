@@ -21,7 +21,8 @@ UNION ALL SELECT 'dim_user',             COUNT(*) FROM analytics.dim_user
 UNION ALL SELECT 'dim_pipeline_stage',   COUNT(*) FROM analytics.dim_pipeline_stage
 UNION ALL SELECT 'fact_orders',          COUNT(*) FROM analytics.fact_orders
 UNION ALL SELECT 'fact_order_items',     COUNT(*) FROM analytics.fact_order_items
-UNION ALL SELECT 'fact_planning',        COUNT(*) FROM analytics.fact_planning;
+UNION ALL SELECT 'fact_planning',        COUNT(*) FROM analytics.fact_planning
+UNION ALL SELECT 'fact_leads',           COUNT(*) FROM analytics.fact_leads;
 
 -- ---- fact_order_items mag geen wees-rijen bevatten ----
 SELECT COUNT(*) AS wees_orderregels

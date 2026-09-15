@@ -61,6 +61,7 @@ class InboundLeadPayloadMapper
     public function extractHerniaMarketingData(array $payload): array
     {
         return $this->extractMarketingData($payload, [
+            'campaign_id',
             'origin_form',
             'source',
             'medium',

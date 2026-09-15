@@ -10,6 +10,7 @@
 --   fact_orders        1 rij per order        — omzetrapporten (per maand / per medewerker)
 --   fact_order_items   1 rij per orderregel   — productanalyse
 --   fact_planning      1 rij per resource-slot — onderzoekdatum / capaciteit
+--   fact_leads         1 rij per salesleads   — leads per maand, won/lost, bron/campagne/landing_page/attribution_url, lost reason
 --
 -- Uitvoeren: docker compose exec -T mysql_crm mysql -uroot -p < database/analytics/001_schema.sql
 -- =========================================================
@@ -24,6 +25,7 @@ DROP TABLE IF EXISTS analytics.sync_watermark;
 DROP TABLE IF EXISTS analytics.fact_planning;
 DROP TABLE IF EXISTS analytics.fact_order_items;
 DROP TABLE IF EXISTS analytics.fact_orders;
+DROP TABLE IF EXISTS analytics.fact_leads;
 DROP TABLE IF EXISTS analytics.dim_pipeline_stage;
 DROP TABLE IF EXISTS analytics.dim_user;
 DROP TABLE IF EXISTS analytics.dim_product;
@@ -114,6 +116,40 @@ CREATE TABLE analytics.fact_orders (
     INDEX idx_onderzoekdatum (eerste_onderzoek_datum_sk),
     INDEX idx_verkoper       (verkoper_sk),
     INDEX idx_stage          (stage_sk)
+) ENGINE=InnoDB;
+
+-- ---- fact_leads: één rij per salesleads (lead-grain, hele funnel incl. leads die nooit order werden) ----
+-- bron       = leads.lead_source_id via lead_sources.name (CRM-dropdown bij leadcreatie)
+-- campagne   = marketing_campaigns.name via lead_marketing_data key='campaign_id' → external_id
+--              (Webkul\Marketing\Models\Campaign, structured relation — de echte campagnenaam).
+--              Fallback op key='campaign' (vrije tekst, hash-prefix/_COPY_NN gestript) als er
+--              geen campaign_id is doorgegeven (bv. oudere/andere inbound-bronnen).
+-- lost_reason = ruwe code (App\Enums\LostReason); label-vertaling hoort in het dashboard, niet hier.
+CREATE TABLE analytics.fact_leads (
+    lead_sk              BIGINT        NOT NULL COMMENT 'salesleads.id',
+    naam                 VARCHAR(255)  NULL,
+    lead_id              INT           NULL COMMENT 'salesleads.lead_id (Krayin leads.id)',
+    verkoper_sk          INT           NULL COMMENT 'salesleads.user_id',
+    stage_sk             INT           NULL,
+    afdeling             VARCHAR(20)   NULL,
+    status_categorie     VARCHAR(20)   NULL,
+    is_verloren          BOOLEAN       NOT NULL DEFAULT 0,
+    is_gewonnen          BOOLEAN       NOT NULL DEFAULT 0,
+    bron                 VARCHAR(255)  NULL COMMENT 'lead_sources.name',
+    lead_type            VARCHAR(255)  NULL COMMENT 'lead_types.name',
+    campagne             VARCHAR(255)  NULL COMMENT 'marketing_campaigns.name via campaign_id, fallback op vrije-tekst campaign-key',
+    landing_page         VARCHAR(500)  NULL COMMENT 'lead_marketing_data key=landing_page, querystring gestript — groepeerbaar pad',
+    attribution_url      VARCHAR(500)  NULL COMMENT 'lead_marketing_data key=attribution_url — volledige URL incl. tracking-params, voor drill-down',
+    lost_reason          VARCHAR(100)  NULL COMMENT 'salesleads.lost_reason (enum-code)',
+    beschrijving         TEXT          NULL COMMENT 'salesleads.description, voor drill-down',
+    aangemaakt_datum_sk  DATE          NOT NULL COMMENT 'DATE(salesleads.created_at)',
+    gesloten_datum_sk    DATE          NULL     COMMENT 'salesleads.closed_at',
+    geladen_op           TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (lead_sk),
+    INDEX idx_aangemaakt_datum (aangemaakt_datum_sk),
+    INDEX idx_gesloten_datum   (gesloten_datum_sk),
+    INDEX idx_stage            (stage_sk),
+    INDEX idx_verkoper         (verkoper_sk)
 ) ENGINE=InnoDB;
 
 -- ---- fact_order_items: één rij per orderregel (regel-grain, productanalyse) ----

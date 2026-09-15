@@ -116,7 +116,7 @@ Het `analytics`-schema is een aparte MySQL-database (star schema: `dim_*` / `fac
 
 [source,bash]
 ----
-docker-compose exec crm php artisan analytics:setup
+docker-compose exec crm php artisan analytics:setup --force
 ----
 
 Standaard herlaadt dit alleen de procedure, het event en de views (`003`/`004`/`005`). Bij aanpassingen aan een bestaand schema- of initieel-script (`001_schema.sql`, `006_initieel.sql`) is een volledige herbouw nodig:

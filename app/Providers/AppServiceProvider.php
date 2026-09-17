@@ -103,6 +103,21 @@ class AppServiceProvider extends ServiceProvider
         //        Blade::componentNamespace('App\\View\\Components\\Adminc', 'adminc');
         Blade::anonymousComponentPath(resource_path('views/adminc'), 'adminc');
 
+        // Override @json to also HTML-escape (json_encode alone leaves ' unescaped, which
+        // breaks views/leads/view/tab-general.blade.php:25/39-style :prop='@json(...)' bindings
+        // whenever the underlying value contains an apostrophe).
+        Blade::directive('json', function ($expression) {
+            // Strip only the single outer paren pair Blade wraps the directive args in
+            // (mirrors Illuminate\View\Compilers\Concerns\CompilesJson::stripParentheses).
+            // A blind trim('()') would also eat closing parens belonging to the
+            // expression itself, e.g. @json(__('foo.bar')).
+            if (str_starts_with($expression, '(')) {
+                $expression = substr($expression, 1, -1);
+            }
+
+            return "<?php echo json_encode({$expression}, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG); ?>";
+        });
+
         // Register adminc view namespace
         $this->loadViewsFrom(resource_path('views/adminc'), 'adminc');
     }

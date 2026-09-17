@@ -310,6 +310,8 @@ test('a fresh summary is not regenerated when the panel is opened', function () 
 });
 
 test('lead view renders the ai summary panel expanded by default', function () {
+    config(['ai_summaries.enabled' => true]);
+
     $this->get(route('admin.leads.view', $this->lead->id))
         ->assertOk()
         ->assertSee('AI-samenvatting')

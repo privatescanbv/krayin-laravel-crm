@@ -187,20 +187,26 @@ class LeadStatusTransitionValidator
 
         // Check if at least one person has 100% match score
         $maxScore = 0;
-        $hasPerfectMatch = false;
+        $matchedPerson = null;
 
         foreach ($allPersons as $person) {
             $personScore = self::calculateMatchScore($lead, $person);
             $maxScore = max($maxScore, $personScore);
 
             if ($personScore >= 100) {
-                $hasPerfectMatch = true;
+                $matchedPerson = $person;
                 break; // Found a perfect match, no need to continue
             }
         }
 
-        if (! $hasPerfectMatch) {
+        if (! $matchedPerson) {
             $errors[] = 'Een lead mag alleen naar status "gewonnen" of "verloren" als de contact person of een van de gekoppelde personen een match score van 100% heeft. Hoogste match score: '.round($maxScore, 1).'%';
+
+            return $errors;
+        }
+
+        if (empty($matchedPerson->date_of_birth)) {
+            $errors[] = 'Een lead mag alleen naar status "gewonnen" als de geboortedatum van de persoon (met 100% match score) is ingevuld.';
         }
 
         return $errors;

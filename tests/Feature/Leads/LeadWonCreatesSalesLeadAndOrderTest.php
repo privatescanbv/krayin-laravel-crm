@@ -37,10 +37,11 @@ test('lead won creates sales lead and order', function (): void {
 
     // Create a person first with specific data for 100% match score
     $person = Person::factory()->create([
-        'first_name' => 'John',
-        'last_name'  => 'Doe',
-        'emails'     => [['value' => 'john.doe@example.com', 'label' => 'work', 'is_default' => true]],
-        'phones'     => [['value' => '+31612345678', 'label' => 'mobile', 'is_default' => true]],
+        'first_name'    => 'John',
+        'last_name'     => 'Doe',
+        'emails'        => [['value' => 'john.doe@example.com', 'label' => 'work', 'is_default' => true]],
+        'phones'        => [['value' => '+31612345678', 'label' => 'mobile', 'is_default' => true]],
+        'date_of_birth' => '1990-01-01',
     ]);
 
     // Create lead manually to avoid factory stage creation issues
@@ -196,10 +197,11 @@ test('lead won creates sales lead when existing one is in won/lost stage', funct
 
     // Create a person first with specific data for 100% match score
     $person = Person::factory()->create([
-        'first_name' => 'John',
-        'last_name'  => 'Doe',
-        'emails'     => [['value' => 'john.doe@example.com', 'label' => 'work', 'is_default' => true]],
-        'phones'     => [['value' => '+31612345678', 'label' => 'mobile', 'is_default' => true]],
+        'first_name'    => 'John',
+        'last_name'     => 'Doe',
+        'emails'        => [['value' => 'john.doe@example.com', 'label' => 'work', 'is_default' => true]],
+        'phones'        => [['value' => '+31612345678', 'label' => 'mobile', 'is_default' => true]],
+        'date_of_birth' => '1990-01-01',
     ]);
 
     // Create lead manually to avoid factory stage creation issues
@@ -261,10 +263,11 @@ test('lead won with alternate order department creates order on chosen departmen
     $privatescanDepartment = Department::create(['name' => Departments::PRIVATESCAN->value]);
 
     $person = Person::factory()->create([
-        'first_name' => 'Jane',
-        'last_name'  => 'Smith',
-        'emails'     => [['value' => 'jane.smith@example.com', 'label' => 'work', 'is_default' => true]],
-        'phones'     => [['value' => '+31698765432', 'label' => 'mobile', 'is_default' => true]],
+        'first_name'    => 'Jane',
+        'last_name'     => 'Smith',
+        'emails'        => [['value' => 'jane.smith@example.com', 'label' => 'work', 'is_default' => true]],
+        'phones'        => [['value' => '+31698765432', 'label' => 'mobile', 'is_default' => true]],
+        'date_of_birth' => '1990-01-01',
     ]);
 
     $lead = new Lead([

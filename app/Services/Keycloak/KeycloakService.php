@@ -270,6 +270,36 @@ class KeycloakService
     }
 
     /**
+     * Get the number of active sessions for a client.
+     */
+    public function getClientSessionCount(string $clientId, string $realmName, ?string $accessToken = null): ?int
+    {
+        $client = $this->getClientById($clientId, $realmName, $accessToken);
+
+        if (! $client) {
+            return null;
+        }
+
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$realmName.'/clients/'.$client['id'].'/session-count');
+        $response = $this->makeRequest('GET', $url, $accessToken);
+
+        if (! $response?->successful()) {
+            if ($response) {
+                Log::warning('Failed to get Keycloak client session count', [
+                    'client_id' => $clientId,
+                    'realm'     => $realmName,
+                    'status'    => $response->status(),
+                    'body'      => $response->body(),
+                ]);
+            }
+
+            return null;
+        }
+
+        return (int) $response->json('count');
+    }
+
+    /**
      * Get realm events configuration.
      */
     public function getRealmEventsConfig(?string $accessToken = null): ?array

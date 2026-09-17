@@ -104,6 +104,9 @@
         {!! view_render_event('admin.dashboard.index.content.right.before') !!}
 
         <div class="flex w-[378px] max-w-full flex-col gap-4 max-sm:w-full">
+            <!-- Patient Portal Active Sessions -->
+            @include('admin::dashboard.index.patient-portal-sessions')
+
             <!-- Revenue by Types -->
             @include('admin::dashboard.index.open-leads-by-states')
 

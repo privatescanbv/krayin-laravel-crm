@@ -446,6 +446,17 @@ return [
             'invalid-json'  => 'Invalid JSON response from the server.',
             'upload-failed' => 'File upload failed. Please try again.',
         ],
+
+        'form' => [
+            'control-group' => [
+                'controls' => [
+                    'file-dropzone' => [
+                        'placeholder'          => 'Choose a file or drag it here',
+                        'placeholder-multiple' => 'Choose files or drag them here',
+                    ],
+                ],
+            ],
+        ],
     ],
 
     'contacts' => [

@@ -299,26 +299,5 @@ if (typeof window !== 'undefined') {
     }
 }
 
-(async () => {
-    const cfg = typeof window !== "undefined" ? window.__markerIo : null;
-
-    if (!cfg?.enabled || !cfg?.project) {
-        return;
-    }
-
-    try {
-        const { default: markerSDK } = await import("@marker.io/browser");
-
-        await markerSDK.loadWidget({
-            project: cfg.project,
-            useNativeScreenshot: true,
-        });
-    } catch (e) {
-        if (import.meta.env.DEV) {
-            console.warn("[Marker.io] widget not loaded:", e);
-        }
-    }
-})();
-
 export default app;
 

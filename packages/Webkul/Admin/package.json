@@ -21,7 +21,6 @@
     },
     "dependencies": {
         "@heroicons/vue": "^2.1",
-        "@marker.io/browser": "^0.20",
         "@vee-validate/i18n": "^4.9",
         "@vee-validate/rules": "^4.9",
         "@vitejs/plugin-vue": "^6.0.6",

@@ -34,13 +34,6 @@
 
     @stack('meta')
 
-    <script>
-        window.__markerIo = @json([
-            'enabled' => (bool) config('services.marker_io.enabled'),
-            'project' => config('services.marker_io.project_id'),
-        ]);
-    </script>
-
     {{
         vite()->set(['src/Resources/assets/css/app.css', 'src/Resources/assets/js/app.js'])
    }}

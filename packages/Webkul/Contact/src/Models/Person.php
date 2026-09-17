@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -379,7 +380,7 @@ class Person extends Model implements PersonContract
     /**
      * The tags that belong to the person.
      */
-    public function tags()
+    public function tags(): BelongsToMany
     {
         return $this->belongsToMany(TagProxy::modelClass(), 'person_tags');
     }

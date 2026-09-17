@@ -15,6 +15,13 @@ use Closure;
  * - Native ("native"): only the database id is translated. Table and column names
  *   embedded in the SQL text are left untouched — the caller surfaces a warning.
  *   Structured field references inside `template-tags[*].dimension` are translated.
+ *
+ * `getCard()` returns Metabase's MBQL5 "lib" shape (`lib/type: mbql/query`,
+ * everything nested under `stages[]`, field refs as `["field", <opts>, <id>]` —
+ * options before id, the reverse of legacy MBQL). translate() normalizes a
+ * single-stage MBQL5 query into the legacy `{type, native|query}` shape before
+ * walking it, and always returns that legacy shape — which is what create/update
+ * actually accept (never round-trip the "lib" shape back into the API).
  */
 class QueryTranslator
 {
@@ -39,8 +46,12 @@ class QueryTranslator
     {
         $this->warnings = [];
 
-        if (isset($datasetQuery['database']) && is_int($datasetQuery['database'])) {
-            $datasetQuery['database'] = $this->resolver->databaseId($datasetQuery['database']);
+        $database = isset($datasetQuery['database']) && is_int($datasetQuery['database'])
+            ? $this->resolver->databaseId($datasetQuery['database'])
+            : ($datasetQuery['database'] ?? null);
+
+        if (isset($datasetQuery['stages'])) {
+            $datasetQuery = $this->normalizeLibShape($datasetQuery);
         }
 
         $type = $datasetQuery['type'] ?? null;
@@ -53,10 +64,42 @@ class QueryTranslator
             $datasetQuery['native'] = $this->walkNative($datasetQuery['native']);
         }
 
+        $datasetQuery['database'] = $database;
+
         return $datasetQuery;
     }
 
     /* --------------------------------------------------------------------- */
+
+    /**
+     * Reduce Metabase's MBQL5 "lib" shape (`stages: [...]`) to the legacy
+     * `{type, native|query}` shape the rest of this class works with. Only a
+     * single stage is supported — every card in this system is plain native SQL
+     * (see class docblock); a multi-stage or structured (non-native) MBQL5 query
+     * would need real support added here rather than being silently mistranslated.
+     */
+    private function normalizeLibShape(array $datasetQuery): array
+    {
+        $stages = $datasetQuery['stages'];
+
+        if (count($stages) !== 1) {
+            throw new MetabaseSyncException('Multi-stage MBQL5 queries are not supported by the sync.');
+        }
+
+        $stage = $stages[0];
+
+        if (isset($stage['native'])) {
+            return [
+                'type'   => 'native',
+                'native' => [
+                    'query'         => $stage['native'],
+                    'template-tags' => $stage['template-tags'] ?? [],
+                ],
+            ];
+        }
+
+        throw new MetabaseSyncException('Structured (non-native) MBQL5 queries are not supported by the sync.');
+    }
 
     private function walkNative(array $native): array
     {
@@ -89,13 +132,25 @@ class QueryTranslator
     /** @param list<mixed> $node */
     private function walkList(array $node): array
     {
-        // a ["field", id|name, opts] reference
+        // a ["field", id|name, opts] reference (legacy MBQL) or
+        // a ["field", opts, id|name] reference (MBQL5 "lib" shape - opts before id).
+        // Normalize to the simple legacy ["field", id, null] shape either way: that's
+        // what create/update actually accept, and carrying over the source instance's
+        // opts (which can include its own internal lib/uuid) buys nothing.
         if (($node[0] ?? null) === 'field') {
-            if (isset($node[1]) && is_int($node[1])) {
-                $node[1] = $this->resolver->fieldId($node[1]);
+            foreach ([1, 2] as $i) {
+                if (isset($node[$i]) && is_int($node[$i])) {
+                    return ['field', $this->resolver->fieldId($node[$i]), null];
+                }
             }
-            if (isset($node[2]) && is_array($node[2])) {
-                $node[2] = $this->walkMap($node[2]);
+
+            // By-name field ref (native query column result, not a real field id) -
+            // nothing to translate on the ref itself, but its opts map can still
+            // nest a `source-field` / `fk-field-id` id that needs translating.
+            foreach ([1, 2] as $i) {
+                if (isset($node[$i]) && is_array($node[$i])) {
+                    $node[$i] = $this->walkMap($node[$i]);
+                }
             }
 
             return $node;

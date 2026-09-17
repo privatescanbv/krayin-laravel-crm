@@ -146,6 +146,9 @@ class DuplicateController extends Controller
             // The portal form id and the website PDF are merged as a single choice, so they are
             // shown - and compared - as one readable value.
             'diagnosis_form'                 => $this->describeDiagnosisForm($lead),
+            // Whole lead_marketing_data bundle (campaign_id + UTM/attribution) shown - and merged -
+            // as one choice, same display string as the lead's marketing tab.
+            'marketing_campaign'             => $lead->marketing_campaign_display,
         ];
     }
 

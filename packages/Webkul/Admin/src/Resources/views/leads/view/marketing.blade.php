@@ -1,6 +1,4 @@
 @php
-use Webkul\Marketing\Models\Campaign;
-
 // Marketing view - Lead & Campagne Details
 // Format date to Dutch format: "23 sept 2024"
 $createdDate = $lead->created_at;
@@ -16,35 +14,14 @@ $leadSource = $lead->source->name ?? 'Onbekend';
 $leadChannel = $lead->channel->name ?? 'Onbekend';
 $departementName = $lead->department->name ?? 'Onbekend';
 
-// Marketing campagne (CRM): `marketing_campaigns` via `external_id` — zelfde als API-veld `campaign_id`
-// (zie MarketingCampaignExternalIdExists). Niet verwarren met leadkanaal (`lead_channels`) of UTM `campaign`.
-$marketingDataByKey = $lead->marketingData->pluck('value', 'key');
-$campaignExternalId = $marketingDataByKey->get('campaign_id');
-$campaignExternalId = ($campaignExternalId !== null && $campaignExternalId !== '')
-    ? trim((string) $campaignExternalId)
-    : null;
-
-if ($campaignExternalId === null && filled($lead->description)) {
-    if (preg_match('/Campaign external_id:\s*(\S+)/i', (string) $lead->description, $m)) {
-        $campaignExternalId = $m[1];
-    }
-}
-
-$marketingCampaignModel = null;
-if ($campaignExternalId !== null) {
-    $marketingCampaignModel = Campaign::query()->where('external_id', $campaignExternalId)->first();
-}
-
-$marketingCampaignDisplay = match (true) {
-    $marketingCampaignModel !== null => $marketingCampaignModel->name,
-    $campaignExternalId !== null => 'Onbekende campagne · '.$campaignExternalId,
-    default => 'Geen',
-};
+// Marketing campagne (CRM): zie Lead::getMarketingCampaignDisplayAttribute() — enige bron van
+// waarheid, ook gebruikt door het duplicate-merge-scherm en de analytics-ETL (via campaign_id).
+$marketingCampaignDisplay = $lead->marketing_campaign_display;
 
 // Check if lead is qualified (has stage and not lost/won, or has certain status)
 $isQualified = $lead->stage && !$lead->closed_at;
 // Tag: er is een marketing campagne-id (CRM) bekend, niet “heeft een leadkanaal”
-$hasActiveCampaign = $marketingCampaignModel !== null || $campaignExternalId !== null;
+$hasActiveCampaign = $marketingCampaignDisplay !== 'Geen';
 @endphp
 
 {!! view_render_event('admin.leads.view.marketing.before', ['lead' => $lead]) !!}

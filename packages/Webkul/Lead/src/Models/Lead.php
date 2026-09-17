@@ -537,6 +537,28 @@ class Lead extends Model implements LeadContract
     }
 
     /**
+     * Marketing campagne (CRM): marketing_campaigns.name via lead_marketing_data key=campaign_id.
+     * Single source of truth for this display value - used by both the lead marketing tab and the
+     * duplicate-merge screen. No fallback on free text (UTM campaign key or description parsing):
+     * campaign_id is either set by the inbound API mapper or it isn't.
+     */
+    public function getMarketingCampaignDisplayAttribute(): string
+    {
+        $campaignExternalId = $this->marketing_data_map['campaign_id'] ?? null;
+        $campaignExternalId = ($campaignExternalId !== null && $campaignExternalId !== '')
+            ? trim((string) $campaignExternalId)
+            : null;
+
+        if ($campaignExternalId === null) {
+            return 'Geen';
+        }
+
+        $campaign = \Webkul\Marketing\Models\Campaign::query()->where('external_id', $campaignExternalId)->first();
+
+        return $campaign?->name ?? 'Onbekende campagne · '.$campaignExternalId;
+    }
+
+    /**
      * Get the contact person for this lead.
      */
     public function contactPerson(): BelongsTo

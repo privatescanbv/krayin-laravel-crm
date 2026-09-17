@@ -415,6 +415,10 @@
                             // 'diagnosis_form' is not a column: choosing it copies diagnosis_form_id and
                             // diagnoseform_pdf_url together (see LeadRepository::mergeLeads).
                             { field: 'diagnosis_form', label: 'Diagnoseformulier', type: 'simple' },
+                            // Whole lead_marketing_data bundle (campaign_id + UTM/attribution) as one
+                            // choice, see LeadRepository::replaceMarketingData(). Default selection
+                            // prefers whichever lead actually has a value (see defaultSourceLeadId).
+                            { field: 'marketing_campaign', label: 'Marketing campagne (CRM)', type: 'simple' },
                             { field: 'national_identification_number', label: 'BSN', type: 'simple' },
                             { field: 'organization_id', label: 'Organisatie', type: 'simple', displayField: 'organization_name' },
                             { field: 'contact_person_id', label: 'Contactpersoon', type: 'simple', displayField: 'contact_person_name' },
@@ -448,9 +452,28 @@
                     initializeFieldMappings() {
                         this.fieldConfigurations.forEach(config => {
                             if (config.type !== 'readonly') {
-                                this.fieldMappings[config.field] = this.primaryLead.id;
+                                this.fieldMappings[config.field] = this.defaultSourceLeadId(config);
                             }
                         });
+                    },
+
+                    // Default to the primary lead, except for fields where the primary has no
+                    // meaningful value but a duplicate does - there the choice is obvious, no need
+                    // to make the user pick "empty" over an actual value.
+                    defaultSourceLeadId(config) {
+                        if (config.field === 'marketing_campaign' && !this.hasMeaningfulValue(this.primaryLead.marketing_campaign)) {
+                            const withValue = this.duplicates.find(d => this.hasMeaningfulValue(d.marketing_campaign));
+
+                            if (withValue) {
+                                return withValue.id;
+                            }
+                        }
+
+                        return this.primaryLead.id;
+                    },
+
+                    hasMeaningfulValue(value) {
+                        return !!value && value !== 'Geen';
                     },
 
                     hasFieldDifferences(fieldConfig) {

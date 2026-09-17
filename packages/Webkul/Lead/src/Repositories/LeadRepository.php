@@ -499,6 +499,9 @@ class LeadRepository extends Repository
 
         try {
             // Apply field mappings to primary lead
+            $marketingCampaignExplicitlyChosen = array_key_exists('marketing_campaign', $fieldMappings);
+            $marketingCampaignSourceLeadId = $fieldMappings['marketing_campaign'] ?? null;
+
             if (!empty($fieldMappings)) {
                 $updateData = [];
                 $addressSourceLeadId = null;
@@ -516,6 +519,9 @@ class LeadRepository extends Repository
                             // user picked. The old values stay visible in the activity log.
                             $updateData['diagnosis_form_id'] = $sourceLead?->diagnosis_form_id;
                             $updateData['diagnoseform_pdf_url'] = $sourceLead?->diagnoseform_pdf_url;
+                        } elseif ($field === 'marketing_campaign') {
+                            // Handled below, after the loop (also needs to run when no explicit
+                            // field_mappings were given at all).
                         } elseif ($sourceLead && !empty($sourceLead->$field)) {
                             $updateData[$field] = in_array($field, ['emails', 'phones'], true)
                                 ? $this->unionContactValues($updateData[$field] ?? $primaryLead->$field, $sourceLead->$field)
@@ -534,6 +540,22 @@ class LeadRepository extends Repository
                 }
             }
 
+            // Resolve which lead's marketing data (campaign_id + UTM/attribution) the primary keeps.
+            // An explicit choice from the merge screen (field_mappings) always wins, even "keep the
+            // primary" while it is empty - that is a deliberate choice, not a gap to fill in for.
+            // Without an explicit choice - callers that never pass field_mappings at all, like the
+            // repair backfill - fall back to "don't lose data, don't duplicate it either": keep the
+            // primary's own data if it already has any, otherwise adopt the first duplicate that does.
+            if (! $marketingCampaignExplicitlyChosen) {
+                $marketingCampaignSourceLeadId = $this->hasMarketingData((int) $primaryLeadId)
+                    ? null
+                    : collect($duplicateLeadIds)->first(fn ($id) => $this->hasMarketingData((int) $id));
+            }
+
+            if ($marketingCampaignSourceLeadId !== null && (int) $marketingCampaignSourceLeadId !== (int) $primaryLeadId) {
+                $this->replaceMarketingData($primaryLead, $duplicateLeads->firstWhere('id', $marketingCampaignSourceLeadId));
+            }
+
             foreach ($duplicateLeads as $duplicateLead) {
                 // The audit activities are written first and without a try/catch: they are the only
                 // trail linking a duplicate to the lead it was merged into (see the
@@ -542,7 +564,10 @@ class LeadRepository extends Repository
                 $this->addSystemActivity($primaryLead, $duplicateLead);
                 $this->addMergeNote($primaryLead, $duplicateLead);
 
-                $this->transferLeadRelations((int) $primaryLead->id, (int) $duplicateLead->id);
+                // lead_marketing_data is excluded here: it was already resolved as one explicit
+                // choice above via replaceMarketingData(), so it must not also be blindly copied
+                // per-duplicate (that is what caused a lead to end up with two campaign_id rows).
+                $this->transferLeadRelations((int) $primaryLead->id, (int) $duplicateLead->id, includeMarketingData: false);
 
                 // Archive the duplicate lead (soft delete or mark as archived)
                 $duplicateLead->delete();
@@ -667,10 +692,18 @@ class LeadRepository extends Repository
      * The duplicate is only soft deleted, so none of the ON DELETE constraints fire and every related
      * row would silently stay behind on an invisible lead. Uses query builder throughout so soft
      * deletes are ignored - the repair command calls this for leads that are already deleted.
+     *
+     * $includeMarketingData defaults to true for leads:repair-merge-orphans, which has no field-
+     * mapping choice to work from and must just reattach whatever is still hanging off the duplicate.
+     * mergeLeads() passes false: it resolves lead_marketing_data as one explicit choice itself via
+     * replaceMarketingData(), so it must not also be blindly copied here (that duplicated campaign_id
+     * rows onto the primary - see the merge screen's "Marketing campagne (CRM)" field).
      */
-    public function transferLeadRelations(int $primaryLeadId, int $duplicateLeadId): void
+    public function transferLeadRelations(int $primaryLeadId, int $duplicateLeadId, bool $includeMarketingData = true): void
     {
-        foreach (['emails', 'lead_marketing_data'] as $table) {
+        $tables = $includeMarketingData ? ['emails', 'lead_marketing_data'] : ['emails'];
+
+        foreach ($tables as $table) {
             DB::table($table)->where('lead_id', $duplicateLeadId)->update(['lead_id' => $primaryLeadId]);
         }
 
@@ -867,6 +900,27 @@ class LeadRepository extends Repository
                 'city' => $sourceAddress->city,
             ]
         ]);
+    }
+
+    /**
+     * One choice covers the whole lead_marketing_data bundle (campaign_id + UTM/attribution),
+     * copied verbatim: mixing the primary's own tracking data with the duplicate's is never what
+     * the user picked on the merge screen, and leaving both would give the lead two campaign_id
+     * rows (whichever has the higher row id then "wins" by accident everywhere it's read).
+     */
+    private function replaceMarketingData($primaryLead, $sourceLead): void
+    {
+        if (!$sourceLead) {
+            return;
+        }
+
+        DB::table('lead_marketing_data')->where('lead_id', $primaryLead->id)->delete();
+        DB::table('lead_marketing_data')->where('lead_id', $sourceLead->id)->update(['lead_id' => $primaryLead->id]);
+    }
+
+    private function hasMarketingData(int $leadId): bool
+    {
+        return DB::table('lead_marketing_data')->where('lead_id', $leadId)->exists();
     }
 
     private

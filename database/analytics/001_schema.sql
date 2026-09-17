@@ -122,8 +122,8 @@ CREATE TABLE analytics.fact_orders (
 -- bron       = leads.lead_source_id via lead_sources.name (CRM-dropdown bij leadcreatie)
 -- campagne   = marketing_campaigns.name via lead_marketing_data key='campaign_id' → external_id
 --              (Webkul\Marketing\Models\Campaign, structured relation — de echte campagnenaam).
---              Fallback op key='campaign' (vrije tekst, hash-prefix/_COPY_NN gestript) als er
---              geen campaign_id is doorgegeven (bv. oudere/andere inbound-bronnen).
+--              Geen fallback op vrije tekst (key='campaign'/UTM) — zelfde bron als de CRM-leadview,
+--              zie leads:repair-campaign-links voor het herstellen van oude leads zonder campaign_id.
 -- lost_reason = ruwe code (App\Enums\LostReason); label-vertaling hoort in het dashboard, niet hier.
 CREATE TABLE analytics.fact_leads (
     lead_sk              BIGINT        NOT NULL COMMENT 'salesleads.id',
@@ -137,7 +137,7 @@ CREATE TABLE analytics.fact_leads (
     is_gewonnen          BOOLEAN       NOT NULL DEFAULT 0,
     bron                 VARCHAR(255)  NULL COMMENT 'lead_sources.name',
     lead_type            VARCHAR(255)  NULL COMMENT 'lead_types.name',
-    campagne             VARCHAR(255)  NULL COMMENT 'marketing_campaigns.name via campaign_id, fallback op vrije-tekst campaign-key',
+    campagne             VARCHAR(255)  NULL COMMENT 'marketing_campaigns.name via lead_marketing_data key=campaign_id, geen fallback',
     landing_page         VARCHAR(500)  NULL COMMENT 'lead_marketing_data key=landing_page, querystring gestript — groepeerbaar pad',
     attribution_url      VARCHAR(500)  NULL COMMENT 'lead_marketing_data key=attribution_url — volledige URL incl. tracking-params, voor drill-down',
     lost_reason          VARCHAR(100)  NULL COMMENT 'salesleads.lost_reason (enum-code)',

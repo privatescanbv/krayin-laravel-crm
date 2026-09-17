@@ -181,6 +181,10 @@ BEGIN
 
     -- fact_leads (lead-grain) — hele funnel, ook leads die nooit een order werden.
     -- Marketing-kolommen komen uit lead_marketing_data (EAV key/value, key = InboundLeadPayloadMapper::extractMarketingData()).
+    -- campagne: uitsluitend via key='campaign_id' → marketing_campaigns.name. Geen fallback op de
+    -- vrije-tekst key='campaign' (UTM) — oude leads zonder campaign_id zijn hersteld via
+    -- `php artisan leads:repair-campaign-links` (App\Console\Commands\RepairLeadCampaignLinks),
+    -- nieuwe leads horen campaign_id altijd gezet te hebben. Eén bron van waarheid, zelfde als de CRM-view.
     REPLACE INTO analytics.fact_leads
         (lead_sk, naam, lead_id, verkoper_sk, stage_sk, afdeling, status_categorie,
          is_verloren, is_gewonnen, bron, lead_type, campagne, landing_page, attribution_url,
@@ -197,17 +201,11 @@ BEGIN
         COALESCE(ds.is_gewonnen, 0),
         lsrc.name,
         lt.name,
-        COALESCE(
-            (SELECT mc.name
-             FROM   privatescan.lead_marketing_data lmd
-             JOIN   privatescan.marketing_campaigns mc ON mc.external_id = lmd.value
-             WHERE  lmd.lead_id = sl.lead_id AND lmd.key = 'campaign_id'
-             ORDER  BY lmd.id DESC LIMIT 1),
-            (SELECT REGEXP_REPLACE(REGEXP_REPLACE(lmd.value, '^[0-9a-f]{10}-', ''), '_COPY_[0-9]+$', '')
-             FROM   privatescan.lead_marketing_data lmd
-             WHERE  lmd.lead_id = sl.lead_id AND lmd.key = 'campaign'
-             ORDER  BY lmd.id DESC LIMIT 1)
-        ),
+        (SELECT mc.name
+         FROM   privatescan.lead_marketing_data lmd
+         JOIN   privatescan.marketing_campaigns mc ON mc.external_id = lmd.value
+         WHERE  lmd.lead_id = sl.lead_id AND lmd.key = 'campaign_id'
+         ORDER  BY lmd.id DESC LIMIT 1),
         (SELECT SUBSTRING_INDEX(lmd.value, '?', 1) FROM privatescan.lead_marketing_data lmd
          WHERE lmd.lead_id = sl.lead_id AND lmd.key = 'landing_page' ORDER BY lmd.id DESC LIMIT 1),
         (SELECT lmd.value FROM privatescan.lead_marketing_data lmd

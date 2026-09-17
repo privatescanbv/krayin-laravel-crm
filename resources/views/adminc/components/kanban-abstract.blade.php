@@ -2,14 +2,10 @@
     use App\Enums\Departments;
     use App\Enums\LostReason;
     use App\Models\Department;
-    use Webkul\User\Models\User;
 
-    $assignableUsers = User::where('status', 1)->orderBy('first_name')->orderBy('last_name')->get();
-    $departmentOptions = collect(Departments::cases())
-        ->mapWithKeys(fn ($case) => [
-            Department::query()->where('name', $case->value)->value('id') => $case->value,
-        ])
-        ->filter(fn ($name, $id) => $id !== null);
+    $departmentOptions = Department::query()
+        ->whereIn('name', Departments::allValues())
+        ->pluck('name', 'id');
 @endphp
 @props([
     'type',
@@ -54,7 +50,7 @@
     <script
         type="text/x-template"
         id="v-leads-kanban-template">
-        <template v-if="isLoading">
+        <template v-if="isLoading && !Object.keys(stageLeads).length">
             <div class="flex flex-col gap-4">
                 <x-admin::shimmer.leads.index.kanban/>
             </div>
@@ -163,8 +159,21 @@
                             >
                                 <template #header>
                                     <div
+                                        class="flex flex-col gap-2 p-2"
+                                        v-if="isLoading && ! stage.leads.data.length"
+                                    >
+                                        <div
+                                            v-for="n in 3"
+                                            :key="n"
+                                            class="flex w-full flex-col gap-2 rounded-md border border-gray-100 bg-white p-2 dark:border-gray-800"
+                                        >
+                                            <div class="shimmer h-4 w-28"></div>
+                                            <div class="shimmer h-3 w-16"></div>
+                                        </div>
+                                    </div>
+                                    <div
                                         class="flex flex-col items-center justify-center"
-                                        v-if="! stage.leads.data.length"
+                                        v-else-if="! stage.leads.data.length"
                                     >
                                         <img
                                             class="dark:mix-blend-exclusion dark:invert"
@@ -507,9 +516,13 @@
                                         required
                                     >
                                         <option value="">Selecteer medewerker...</option>
-                                        @foreach ($assignableUsers as $user)
-                                            <option value="{{ $user->id }}">{{ $user->name }}</option>
-                                        @endforeach
+                                        <option
+                                            v-for="user in assignableUsers"
+                                            :key="user.id"
+                                            :value="String(user.id)"
+                                        >
+                                            @{{ user.name }}
+                                        </option>
                                     </select>
                                 </x-admin::form.control-group>
 
@@ -524,9 +537,13 @@
                                         required
                                     >
                                         <option value="">Selecteer afdeling...</option>
-                                        @foreach ($departmentOptions as $id => $name)
-                                            <option value="{{ $id }}">{{ $name }}</option>
-                                        @endforeach
+                                        <option
+                                            v-for="(name, id) in departmentOptions"
+                                            :key="id"
+                                            :value="String(id)"
+                                        >
+                                            @{{ name }}
+                                        </option>
                                     </select>
                                 </x-admin::form.control-group>
 
@@ -639,6 +656,9 @@
                         currentStageUpdate: null,
                         scrollTimeouts: {},
                         stageSorts: {},
+                        assignableUsers: [],
+                        assignableUsersLoaded: false,
+                        departmentOptions: @json($departmentOptions),
                     };
                 },
 
@@ -767,7 +787,6 @@
                      * @returns {void}
                      */
                     boot() {
-                        // Initialize defaults for all stages
                         this.stages.forEach(stage => {
                             if (!this.stageSorts[stage.id]) {
                                 this.stageSorts[stage.id] = 'created_at|desc';
@@ -775,82 +794,128 @@
                         });
 
                         let kanbans = this.getKanbans();
+                        const currentKanban = kanbans?.find(({ src }) => src === this.src);
 
-                        if (kanbans?.length) {
-                            const currentKanban = kanbans.find(({
-                                                                    src
-                                                                }) => src === this.src);
+                        if (currentKanban) {
+                            this.applied.filters = currentKanban.applied.filters;
 
-                            if (currentKanban) {
-                                this.applied.filters = currentKanban.applied.filters;
+                            if (typeof currentKanban.hideWonLost === 'boolean') {
+                                this.hideWonLost = currentKanban.hideWonLost;
+                            }
 
-                                if (typeof currentKanban.hideWonLost === 'boolean') {
-                                    this.hideWonLost = currentKanban.hideWonLost;
-                                }
+                            if (typeof currentKanban.showDuplicates === 'boolean') {
+                                this.showDuplicates = currentKanban.showDuplicates;
+                            }
 
-                                if (typeof currentKanban.showDuplicates === 'boolean') {
-                                    this.showDuplicates = currentKanban.showDuplicates;
-                                }
-
-                                if (currentKanban.stageSorts) {
-                                    this.stageSorts = currentKanban.stageSorts;
-                                }
-
-                                this.setWonLostButtonText();
-
-                                this.get()
-                                    .then(response => {
-                                        if (response && response.data) {
-                                            for (let [sortOrder, data] of Object.entries(response
-                                                .data)) {
-                                                this.stageLeads[sortOrder] = data;
-                                            }
-
-                                            this.$nextTick(() => {
-                                                for (let sortOrder of Object.keys(response.data)) {
-                                                    this.checkAutoFill(sortOrder);
-                                                }
-                                            });
-                                        }
-                                    })
-                                    .catch(error => {
-                                        console.error('Error loading kanban data:', error);
-                                        this.isLoading = false;
-                                    });
-
-                                return;
+                            if (currentKanban.stageSorts) {
+                                this.stageSorts = currentKanban.stageSorts;
+                            }
+                        } else {
+                            const pipelineSpecificKey = `kanban_hideWonLost_pipeline_${this.currentPipelineId}`;
+                            const pipelineSpecificSetting = localStorage.getItem(pipelineSpecificKey);
+                            if (pipelineSpecificSetting !== null) {
+                                this.hideWonLost = JSON.parse(pipelineSpecificSetting);
+                            } else {
+                                this.hideWonLost = true;
                             }
                         }
 
-                        // Check for pipeline-specific won/lost setting
-                        const pipelineSpecificKey = `kanban_hideWonLost_pipeline_${this.currentPipelineId}`;
-                        const pipelineSpecificSetting = localStorage.getItem(pipelineSpecificKey);
-                        if (pipelineSpecificSetting !== null) {
-                            this.hideWonLost = JSON.parse(pipelineSpecificSetting);
-                        } else {
-                            // Default to hidden for performance (70k leads)
-                            this.hideWonLost = true;
-                        }
                         this.setWonLostButtonText();
+                        this.applyInitialStageColumns();
+                        this.loadStageLeads();
+                    },
 
+                    applyInitialStageColumns() {
+                        const columns = {};
+
+                        this.stages.forEach(stage => {
+                            if (this.hideWonLost && this.isWonOrLost(stage)) {
+                                return;
+                            }
+
+                            columns[stage.id] = {
+                                id: stage.id,
+                                code: stage.code,
+                                name: stage.name,
+                                description: stage.description,
+                                sort_order: stage.sort_order,
+                                lead_pipeline_id: stage.lead_pipeline_id,
+                                is_won: stage.is_won,
+                                is_lost: stage.is_lost,
+                                leads: {
+                                    data: [],
+                                    meta: {
+                                        total: 0,
+                                        current_page: 1,
+                                        per_page: 10,
+                                        last_page: 1,
+                                        from: null,
+                                        to: 0,
+                                    },
+                                },
+                            };
+                        });
+
+                        this.stageLeads = columns;
+                    },
+
+                    loadStageLeads() {
                         this.get()
                             .then(response => {
                                 if (response && response.data) {
-                                    for (let [sortOrder, data] of Object.entries(response.data)) {
-                                        this.stageLeads[sortOrder] = data;
+                                    const columns = {};
+
+                                    for (let [stageId, data] of Object.entries(response.data)) {
+                                        columns[stageId] = data;
                                     }
 
+                                    this.stageLeads = columns;
+                                    this.isLoading = false;
+
                                     this.$nextTick(() => {
-                                        for (let sortOrder of Object.keys(response.data)) {
-                                            this.checkAutoFill(sortOrder);
+                                        for (let stageId of Object.keys(response.data)) {
+                                            this.scheduleAutoFill(stageId);
                                         }
                                     });
                                 }
+
+                                this.isLoading = false;
                                 this.setWonLostButtonText();
                             })
                             .catch(error => {
                                 console.error('Error loading kanban data:', error);
                                 this.isLoading = false;
+                            });
+                    },
+
+                    scheduleAutoFill(stageId) {
+                        const run = () => this.checkAutoFill(stageId);
+
+                        if (typeof window.requestIdleCallback === 'function') {
+                            window.requestIdleCallback(run, { timeout: 400 });
+                        } else {
+                            setTimeout(run, 200);
+                        }
+                    },
+
+                    loadAssignableUsers() {
+                        if (this.assignableUsersLoaded) {
+                            return Promise.resolve();
+                        }
+
+                        return this.$axios
+                            .get("{{ route('admin.settings.users.search') }}", {
+                                params: {
+                                    search: 'status:1',
+                                    searchFields: 'status:=',
+                                },
+                            })
+                            .then(response => {
+                                this.assignableUsers = response.data.data || response.data || [];
+                                this.assignableUsersLoaded = true;
+                            })
+                            .catch(error => {
+                                console.error('Error loading assignable users:', error);
                             });
                     },
 
@@ -879,8 +944,6 @@
                                 }
                             })
                             .then(response => {
-                                this.isLoading = false;
-
                                 this.updateKanbans();
 
                                 return response;
@@ -989,7 +1052,7 @@
                                     // After DOM updates, check if columns still have no scrollbar
                                     this.$nextTick(() => {
                                         for (let [sortOrder] of Object.entries(response.data)) {
-                                            this.checkAutoFill(sortOrder);
+                                            this.scheduleAutoFill(sortOrder);
                                         }
                                     });
                                 }
@@ -1076,6 +1139,10 @@
                             user_id: String(lead.user_id || lead.user?.id || ''),
                             order_department_id_after_won: String(lead.department_id || ''),
                         };
+
+                        if (type === 'won') {
+                            this.loadAssignableUsers();
+                        }
 
                         this.$nextTick(() => {
                             this.$refs.stageDetailModal.open();
@@ -1390,25 +1457,9 @@
                         // Update button text
                         this.setWonLostButtonText();
 
-                        // Clear existing data and refetch with new exclude_won_lost parameter
-                        this.stageLeads = {};
-                        this.get()
-                            .then(response => {
-                                if (response && response.data) {
-                                    for (let [sortOrder, data] of Object.entries(response.data)) {
-                                        this.stageLeads[sortOrder] = data;
-                                    }
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error toggling won/lost stages:', error);
-                                // Revert the toggle if there's an error
-                                this.hideWonLost = !this.hideWonLost;
-                                this.updateKanbans();
-
-                                // Update button text back
-                                this.setWonLostButtonText();
-                            });
+                        this.isLoading = true;
+                        this.applyInitialStageColumns();
+                        this.loadStageLeads();
                     },
 
                     /**

@@ -15,9 +15,13 @@
  * 7. Optimized response structure
  */
 
+use App\Enums\ActivityStatus;
+use App\Enums\ActivityType;
 use Database\Seeders\TestSeeder;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Support\Facades\DB;
+use Webkul\Activity\Models\Activity;
+use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Models\Stage;
@@ -452,4 +456,110 @@ test('it excludes soft deleted leads from kanban stage totals', function () {
 
     expect($stageData['leads']['meta']['total'])->toBe(1)
         ->and($stageData['leads']['data'])->toHaveCount(1);
+});
+
+test('kanban counts only page leads and stays query-bounded when other tables are large', function () {
+    $this->adminUser->update(['view_permission' => 'global']);
+
+    $visibleLead = Lead::factory()->create([
+        'user_id' => $this->adminUser->id,
+    ]);
+    $visibleLead->forceFill([
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stages[0]->id,
+    ])->saveQuietly();
+
+    Activity::create([
+        'title'   => 'Open follow-up',
+        'type'    => ActivityType::TASK->value,
+        'is_done' => false,
+        'status'  => ActivityStatus::ACTIVE,
+        'lead_id' => $visibleLead->id,
+    ]);
+    Activity::create([
+        'title'   => 'Done follow-up',
+        'type'    => ActivityType::TASK->value,
+        'is_done' => true,
+        'status'  => ActivityStatus::DONE,
+        'lead_id' => $visibleLead->id,
+    ]);
+    Email::create([
+        'lead_id' => $visibleLead->id,
+        'subject' => 'Unread',
+        'is_read' => 0,
+        'from'    => ['noise@example.com'],
+        'reply'   => 'hello',
+    ]);
+    Email::create([
+        'lead_id' => $visibleLead->id,
+        'subject' => 'Read',
+        'is_read' => 1,
+        'from'    => ['noise@example.com'],
+        'reply'   => 'hello',
+    ]);
+
+    $noisePipeline = Pipeline::factory()->create();
+    $noiseStage = Stage::factory()->create([
+        'lead_pipeline_id' => $noisePipeline->id,
+        'is_won'           => false,
+        'is_lost'          => false,
+    ]);
+
+    Lead::factory()->count(20)->create([
+        'user_id' => $this->adminUser->id,
+    ])->each(function (Lead $noiseLead) use ($noisePipeline, $noiseStage) {
+        $noiseLead->forceFill([
+            'lead_pipeline_id'       => $noisePipeline->id,
+            'lead_pipeline_stage_id' => $noiseStage->id,
+        ])->saveQuietly();
+
+        Activity::create([
+            'title'   => 'Noise activity',
+            'type'    => ActivityType::TASK->value,
+            'is_done' => false,
+            'status'  => ActivityStatus::ACTIVE,
+            'lead_id' => $noiseLead->id,
+        ]);
+        Email::create([
+            'lead_id' => $noiseLead->id,
+            'subject' => 'Noise unread',
+            'is_read' => 0,
+            'from'    => ['noise@example.com'],
+            'reply'   => 'noise',
+        ]);
+    });
+
+    DB::enableQueryLog();
+
+    $response = $this->actingAs($this->adminUser, 'user')
+        ->getJson("/admin/leads/get?pipeline_id={$this->pipeline->id}");
+
+    $queries = collect(DB::getQueryLog());
+    DB::disableQueryLog();
+
+    $response->assertOk();
+
+    $stagePayload = $response->json()[$this->stages[0]->id] ?? null;
+    $card = collect($stagePayload['leads']['data'] ?? [])
+        ->firstWhere('id', $visibleLead->id);
+
+    expect($card)->not->toBeNull()
+        ->and($card['open_activities_count'])->toBe(1)
+        ->and($card['unread_emails_count'])->toBe(1);
+
+    $fullTableAggregations = $queries->filter(function (array $query) {
+        $sql = strtolower($query['query']);
+
+        $groupsActivities = str_contains($sql, 'from activities')
+            && str_contains($sql, 'group by')
+            && ! str_contains($sql, ' in (');
+        $groupsEmails = str_contains($sql, 'from emails')
+            && str_contains($sql, 'group by')
+            && ! str_contains($sql, ' in (');
+
+        return $groupsActivities || $groupsEmails;
+    });
+
+    expect($fullTableAggregations)->toBeEmpty()
+        ->and($queries->count())->toBeLessThan(40);
 });

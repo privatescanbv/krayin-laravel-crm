@@ -182,13 +182,14 @@ class LeadController extends Controller
         // Compute total leads per stage in one DB query to avoid running pagination on empty stages.
         // Must use LeadRepository (not DB::table) so soft-deleted leads and user scoping match the paginated query.
         $stageIds = $stages->pluck('id')->all();
+        $authorizedUserIds = bouncer()->getAuthorizedUserIds();
         $totalsQuery = app(LeadRepository::class)
             ->pushCriteria(app(RequestCriteria::class))
             ->where('lead_pipeline_id', $pipeline->id)
             ->whereIn('lead_pipeline_stage_id', $stageIds);
 
-        if ($userIds = bouncer()->getAuthorizedUserIds()) {
-            $totalsQuery->whereIn('leads.user_id', $userIds);
+        if ($authorizedUserIds) {
+            $totalsQuery->whereIn('leads.user_id', $authorizedUserIds);
         }
 
         $totalsByStage = $totalsQuery
@@ -201,7 +202,8 @@ class LeadController extends Controller
             'id' => $pipeline->id,
             'rotten_days' => $pipeline->rotten_days,
         ]);
-        $perPage = (int) request()->query('limit', 10);
+        $perPage = max(1, (int) request()->query('limit', 10));
+        $order = in_array(request('order'), ['asc', 'desc'], true) ? request('order') : 'desc';
 
         // Build response for each stage with per-stage pagination only when needed
         $data = [];
@@ -219,11 +221,12 @@ class LeadController extends Controller
                         'lead_pipeline_stage_id' => $stage->id,
                     ]);
 
-                if ($userIds = bouncer()->getAuthorizedUserIds()) {
-                    $query->whereIn('leads.user_id', $userIds);
+                if ($authorizedUserIds) {
+                    $query->whereIn('leads.user_id', $authorizedUserIds);
                 }
-                // Use simplePaginate to skip the redundant COUNT(*) query per stage.
-                // The total is already known from $totalsByStage above.
+
+                // simplePaginate skips COUNT(*); totals already come from $totalsByStage.
+                // withCount limits activity/email lookups to this page instead of grouping the whole tables.
                 $paginator = $query->select([
                     'leads.id',
                     'leads.first_name',
@@ -242,25 +245,13 @@ class LeadController extends Controller
                     'leads.mri_status',
                     'leads.lost_reason',
                     'leads.diagnosis_form_id',
-                    DB::raw('COALESCE(open_activities.open_activity_count, 0) AS open_activities_count_query'),
-                    DB::raw('COALESCE(open_emails.open_email_count, 0) AS open_email_count_query'),
-                ])->leftJoin(DB::raw('(
-                        SELECT lead_id, COUNT(*) AS open_activity_count
-                        FROM activities
-                        WHERE is_done = 0
-                        GROUP BY lead_id
-                    ) AS open_activities'), 'open_activities.lead_id', '=', 'leads.id')
-                ->leftJoin(DB::raw('(
-                        SELECT lead_id, COUNT(*) AS open_email_count
-                        FROM emails
-                        WHERE is_read = 0
-                        GROUP BY lead_id
-                    ) AS open_emails'), 'open_emails.lead_id', '=', 'leads.id')
-                ->orderBy(
-                    'leads.created_at',
-                    in_array(request('order'), ['asc', 'desc'], true) ? request('order') : 'desc'
-                )
-                ->paginate($perPage, ['*'], 'page');
+                ])
+                    ->withCount([
+                        'activities as open_activities_count_query' => fn ($q) => $q->where('is_done', 0),
+                        'emails as open_email_count_query'          => fn ($q) => $q->where('is_read', 0),
+                    ])
+                    ->orderBy('leads.created_at', $order)
+                    ->simplePaginate($perPage, ['*'], 'page');
 
                 // Set pipeline and stage relations manually to prevent N+1 queries
                 foreach ($paginator->items() as $lead) {
@@ -268,16 +259,18 @@ class LeadController extends Controller
                     $lead->setRelation('stage', $stage);
                 }
 
+                $lastPage = max(1, (int) ceil($totalForStage / $perPage));
+
                 $data[$stage->id]['leads'] = [
                     'data' => LeadKanbanResource::collection($paginator),
 
                     'meta' => [
                         'current_page' => $paginator->currentPage(),
-                        'from' => $paginator->firstItem(),
-                        'last_page' => $paginator->lastPage(),
-                        'per_page' => $paginator->perPage(),
-                        'to' => $paginator->lastItem(),
-                        'total' => $paginator->total(),
+                        'from'         => $paginator->firstItem(),
+                        'last_page'    => $lastPage,
+                        'per_page'     => $perPage,
+                        'to'           => $paginator->lastItem(),
+                        'total'        => $totalForStage,
                     ],
                 ];
             } else {

@@ -33,11 +33,20 @@
             },
 
             created() {
-                @foreach (['success', 'warning', 'error', 'info'] as $key)
-                    @if (session()->has($key))
-                        this.flashes.push({'type': '{{ $key }}', 'message': @json(session($key)), 'uid':  this.uid++});
-                    @endif
-                @endforeach
+                @php
+                    $initialFlashes = collect(['success', 'warning', 'error', 'info'])
+                        ->filter(fn ($key) => session()->has($key))
+                        ->map(fn ($key) => [
+                            'type' => $key,
+                            'message' => session($key),
+                        ])
+                        ->values();
+                @endphp
+                const initialFlashes = {!! json_encode($initialFlashes) !!};
+
+                initialFlashes.forEach((flash) => {
+                    this.flashes.push({ ...flash, uid: this.uid++ });
+                });
 
                 this.registerGlobalEvents();
             },

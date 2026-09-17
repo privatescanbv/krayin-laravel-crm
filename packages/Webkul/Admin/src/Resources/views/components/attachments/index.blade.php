@@ -22,8 +22,13 @@
     >
         <!-- File Attachment Input -->
         <div
-            class="relative items-center"
+            class="relative items-center rounded-md transition-all"
+            :class="[isDragging ? 'outline-dashed outline-2 outline-offset-4 outline-brandColor' : '']"
             v-show="! hideButton"
+            @dragenter.prevent.stop="onDragEnter"
+            @dragover.prevent.stop="onDragEnter"
+            @dragleave.prevent.stop="onDragLeave"
+            @drop.prevent.stop="onDrop"
         >
             <input
                 type="file"
@@ -123,6 +128,10 @@
             data() {
                 return {
                     attachments: [],
+
+                    isDragging: false,
+
+                    dragCounter: 0,
                 }
             },
 
@@ -138,13 +147,47 @@
                         return;
                     }
 
-                    attachmentInput.files.forEach((file, index) => {
+                    this.addFiles(attachmentInput.files);
+                },
+
+                addFiles(files) {
+                    Array.from(files).forEach((file) => {
                         this.attachments.push({
                             id: 'attachment_' + this.attachments.length,
                             name: file.name,
                             file: file
                         });
                     });
+                },
+
+                onDragEnter() {
+                    this.dragCounter++;
+
+                    this.isDragging = true;
+                },
+
+                onDragLeave() {
+                    this.dragCounter--;
+
+                    if (this.dragCounter <= 0) {
+                        this.dragCounter = 0;
+
+                        this.isDragging = false;
+                    }
+                },
+
+                onDrop(event) {
+                    this.dragCounter = 0;
+
+                    this.isDragging = false;
+
+                    const droppedFiles = event.dataTransfer?.files;
+
+                    if (! droppedFiles?.length) {
+                        return;
+                    }
+
+                    this.addFiles(this.allowMultiple ? droppedFiles : [droppedFiles[0]]);
                 },
 
                 remove(attachment) {

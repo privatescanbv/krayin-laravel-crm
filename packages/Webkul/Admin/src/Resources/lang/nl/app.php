@@ -430,6 +430,17 @@ return [
             'invalid-json'  => 'Ongeldige JSON-reactie van de server.',
             'upload-failed' => 'Bestand uploaden mislukt. Probeer het opnieuw.',
         ],
+
+        'form' => [
+            'control-group' => [
+                'controls' => [
+                    'file-dropzone' => [
+                        'placeholder'          => 'Kies een bestand of sleep het hierheen',
+                        'placeholder-multiple' => 'Kies bestanden of sleep ze hierheen',
+                    ],
+                ],
+            ],
+        ],
     ],
 
     'contacts' => [

@@ -175,6 +175,33 @@ class KeycloakHttpHelpers
     }
 
     /**
+     * Create HTTP fake for a client lookup + session-count call.
+     * Pass $count = null to simulate the client not being found in Keycloak.
+     */
+    public static function fakeClientSessionCount(string $clientId, string $realmName, ?int $count, string $keycloakClientUuid = 'client-uuid-123'): void
+    {
+        $internalBaseUrl = Config::get('services.keycloak.base_url_internal');
+        $internalUrlPattern = str_replace(['http://', 'https://'], '', $internalBaseUrl);
+
+        if ($count === null) {
+            Http::fake([
+                $internalUrlPattern.'/admin/realms/'.$realmName.'/clients*' => Http::response([], 404),
+            ]);
+
+            return;
+        }
+
+        Http::fake([
+            $internalUrlPattern.'/admin/realms/'.$realmName.'/clients?clientId='.$clientId => Http::response([
+                ['id' => $keycloakClientUuid, 'clientId' => $clientId],
+            ], 200),
+            $internalUrlPattern.'/admin/realms/'.$realmName.'/clients/'.$keycloakClientUuid.'/session-count' => Http::response([
+                'count' => $count,
+            ], 200),
+        ]);
+    }
+
+    /**
      * Setup Keycloak config for tests.
      * Uses non-existent test URLs to prevent accidental real HTTP requests if mocks fail.
      *

@@ -2,10 +2,23 @@
 
 namespace Webkul\Admin\Http\Controllers;
 
+use App\Actions\Keycloak\GetKeycloakActiveSessionCountAction;
+use App\Enums\KeyCloakClient;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Webkul\Admin\Helpers\Dashboard;
 
 class DashboardController extends Controller
 {
+    /**
+     * Seconds a live Keycloak session-count attempt (success or failure) is cached
+     * for, so concurrent dashboard viewers don't each trigger their own admin API call.
+     */
+    protected const PATIENT_PORTAL_SESSIONS_CACHE_TTL = 30;
+
+    protected const PATIENT_PORTAL_SESSIONS_ATTEMPT_KEY = 'dashboard.patient-portal-sessions.attempt';
+
+    protected const PATIENT_PORTAL_SESSIONS_LAST_GOOD_KEY = 'dashboard.patient-portal-sessions.last-good';
     /**
      * Request param functions
      *
@@ -53,6 +66,44 @@ class DashboardController extends Controller
         return response()->json([
             'statistics' => $stats,
             'date_range' => $this->dashboardHelper->getDateRange(),
+        ]);
+    }
+
+    /**
+     * JSON endpoint returning the number of active Keycloak sessions for the
+     * patient portal client, with graceful fallback when Keycloak is unreachable.
+     */
+    public function patientPortalSessions(GetKeycloakActiveSessionCountAction $action): JsonResponse
+    {
+        $attempt = Cache::remember(
+            self::PATIENT_PORTAL_SESSIONS_ATTEMPT_KEY,
+            self::PATIENT_PORTAL_SESSIONS_CACHE_TTL,
+            fn () => array_merge($action->execute(KeyCloakClient::PATIENT), [
+                'fetched_at' => now()->toIso8601String(),
+            ])
+        );
+
+        if ($attempt['success']) {
+            $lastGood = [
+                'count'      => $attempt['count'],
+                'fetched_at' => $attempt['fetched_at'],
+            ];
+
+            Cache::forever(self::PATIENT_PORTAL_SESSIONS_LAST_GOOD_KEY, $lastGood);
+
+            return response()->json([
+                'available'  => true,
+                'count'      => $lastGood['count'],
+                'fetched_at' => $lastGood['fetched_at'],
+            ]);
+        }
+
+        $lastGood = Cache::get(self::PATIENT_PORTAL_SESSIONS_LAST_GOOD_KEY);
+
+        return response()->json([
+            'available'  => false,
+            'count'      => null,
+            'fetched_at' => $lastGood['fetched_at'] ?? null,
         ]);
     }
 }

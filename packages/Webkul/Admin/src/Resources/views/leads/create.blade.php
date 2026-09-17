@@ -10,6 +10,8 @@ $salutationToGenderMapping = [
     PersonSalutation::Dhr->value => PersonGender::Man->value,
     PersonSalutation::Mevr->value => PersonGender::Female->value,
 ];
+
+$userDefaultsForJs = (object) ($userDefaults ?? []);
 @endphp
 <x-admin::layouts>
     <x-slot:title>
@@ -21,7 +23,7 @@ $salutationToGenderMapping = [
     <!-- Two-Step Lead Form -->
     <v-two-step-lead-form :initial-persons='@json($prefilledPersons ?? [])'
                           :initial-lead-person='@json($prefilledLeadPerson ?? null)'
-                          :user-defaults='@json((object) ($userDefaults ?? []))'
+                          :user-defaults='@json($userDefaultsForJs)'
                           :salutation-to-gender-mapping='@json($salutationToGenderMapping)'></v-two-step-lead-form>
 
     {!! view_render_event('admin.leads.create.form.after') !!}

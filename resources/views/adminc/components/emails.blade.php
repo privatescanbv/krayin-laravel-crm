@@ -9,7 +9,7 @@
         :errors='@json($errors->getMessages() ?? [])'
         :readonly='@json($readonly ?? false)'
         locked-email="{{ $lockedEmail ?? '' }}"
-        :lock-existing='@json((bool) ($lockExisting ?? false))'
+        :lock-existing='@json($lockExisting ?? false)'
     ></v-emails-component>
 </div>
 

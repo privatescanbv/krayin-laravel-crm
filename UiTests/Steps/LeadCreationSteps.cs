@@ -77,8 +77,10 @@ namespace UiTests.Steps
             await _driver.Page.CheckAsync("input[name=claustrophobia][value='0']");
             await _driver.Page.CheckAsync("input[name=allergies][value='0']");
 
-            // Minimal: ensure a description is set to avoid empty issues
-            await _driver.Page.FillAsync("textarea[name=description]", "Automated test lead");
+            // Minimal: ensure a description is set to avoid empty issues.
+            // Includes an apostrophe on purpose: json_encode() doesn't escape it,
+            // which used to break single-quoted `:prop='@json($var)'` bindings.
+            await _driver.Page.FillAsync("textarea[name=description]", "Automated test lead's description");
 
             // Required personal fields when no person selected in step 1
             // Ensure first and last name have values

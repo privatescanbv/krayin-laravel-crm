@@ -63,12 +63,17 @@
     </div>
 </script>
 
+@php
+    $selectedOrganizationForJs = ($selectedOrganization ?? null)
+        ? ['id' => ($selectedOrganization['id'] ?? $selectedOrganization->id ?? null), 'name' => ($selectedOrganization['name'] ?? $selectedOrganization->name ?? '')]
+        : null;
+@endphp
 <script type="module">
 app.component('v-organization', {
     template: '#v-organization-template',
     data() {
         return {
-            selectedOrganization: @json(($selectedOrganization ?? null) ? ['id' => ($selectedOrganization['id'] ?? $selectedOrganization->id ?? null), 'name' => ($selectedOrganization['name'] ?? $selectedOrganization->name ?? '')] : null),
+            selectedOrganization: @json($selectedOrganizationForJs),
             showOrgForm: false,
             orgConfirmed: false,
             newOrgName: '',

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
 
@@ -11,6 +12,11 @@ namespace UiTests.Support
         private IBrowserContext _context;
 
         public IPage Page { get; private set; }
+
+        // Collected browser console errors (e.g. Vue template compile failures).
+        // Checked in Hooks.AfterScenario so any tested page that logs a JS error
+        // fails the build, without needing a bespoke assertion per scenario.
+        public List<string> ConsoleErrors { get; } = new();
 
         public async Task StartAsync()
         {
@@ -34,6 +40,19 @@ namespace UiTests.Support
 
             Page = await _context.NewPageAsync();
             Page.SetDefaultTimeout(30000);
+
+            Page.Console += (_, msg) =>
+            {
+                if (msg.Type == "error")
+                {
+                    ConsoleErrors.Add($"[{Page.Url}] {msg.Text}");
+                }
+            };
+
+            Page.PageError += (_, error) =>
+            {
+                ConsoleErrors.Add($"[{Page.Url}] {error}");
+            };
         }
 
         public async ValueTask DisposeAsync()

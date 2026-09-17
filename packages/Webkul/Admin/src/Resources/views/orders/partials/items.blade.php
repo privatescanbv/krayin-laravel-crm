@@ -9,6 +9,8 @@
         'value' => $status->value,
         'label' => $status->label(),
     ])->values();
+
+    $orderItemsForJs = (isset($order) ? $order->orderItems : collect())->values();
 @endphp
 <div id="order-items" class="flex flex-col gap-4">
     <div class="flex flex-col gap-1">
@@ -18,7 +20,7 @@
 
     <v-order-item-list
         :errors="errors"
-        :data='@json((isset($order) ? $order->orderItems : collect())->values())'
+        :data='@json($orderItemsForJs)'
         :persons='@json($persons ?? [])'
         :status-options='@json($orderItemStatuses)'
         edit-base-url="{{ rtrim(route('admin.order_items.edit', ['id' => 0]), '0') }}"

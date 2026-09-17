@@ -1,4 +1,4 @@
-@php use App\Enums\EmailTemplateType; @endphp
+@php use App\Enums\EmailTemplateType;use App\Services\Mail\MailboxResolver; @endphp
 <x-admin::layouts>
     <x-slot:title>
         @if(isset($folder))
@@ -675,9 +675,12 @@
         </script>
 
         @php
-            $mailboxResolver = app(\App\Services\Mail\MailboxResolver::class);
+            $mailboxResolver = app(MailboxResolver::class);
             $mailboxList = $mailboxResolver->getMailboxList();
             $defaultMailboxAddress = $mailboxResolver->getDefaultAddress();
+
+            $signature = auth()->guard('user')->user()->signature ?? null;
+            $userSignatureHtml = $signature ? '<p><br></p>' . $signature : '';
         @endphp
 
         <script type="module">
@@ -704,7 +707,7 @@
 
                         // Pre-formatted (with a leading blank line) so every call site just
                         // checks/concatenates this instead of re-fetching+formatting the signature.
-                        userSignatureHtml: @json(($signature = auth()->guard('user')->user()->signature ?? null) ? '<p><br></p>' . $signature : ''),
+                        userSignatureHtml: @json($userSignatureHtml),
 
                         datagridSrc: @json($mailDatagridSrc),
 
@@ -800,7 +803,10 @@
                         }
 
                         if (retries > 0) {
-                            setTimeout(() => this.setReplyContentWithRetry(html, {onlyIfEmpty, retries: retries - 1}), 200);
+                            setTimeout(() => this.setReplyContentWithRetry(html, {
+                                onlyIfEmpty,
+                                retries: retries - 1
+                            }), 200);
                         } else if (!onlyIfEmpty) {
                             this.draft.reply = html;
                         }

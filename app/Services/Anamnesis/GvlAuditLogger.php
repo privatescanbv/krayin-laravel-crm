@@ -20,7 +20,7 @@ class GvlAuditLogger
     ) {}
 
     /**
-     * @param  'aangemaakt'|'verwijderd'|'afgerond'  $verb
+     * @param  'aangemaakt'|'verwijderd'|'afgerond'|'overgenomen'  $verb
      */
     public function log(AnamnesisGvlForm $form, string $verb): void
     {

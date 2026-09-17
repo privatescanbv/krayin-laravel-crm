@@ -11,6 +11,7 @@
 @php
     use App\Enums\FormType;
     use App\Services\Anamnesis\AnamnesisFormsOverviewBuilder;
+    use App\Services\Anamnesis\AnamnesisGvlFormReuseService;
 
     $builder = app(AnamnesisFormsOverviewBuilder::class);
     $overview = $builder->buildForPerson($entity, $person, $entityType);
@@ -38,6 +39,15 @@
     $canAttachGvl = $attachAnamnesisId && $personHasPortalAccount;
     $canAttachDiagnosis = $showDiagnosisAttach && $salesLead && $personHasPortalAccount && $missingDiagnosisTypes->isNotEmpty();
     $showAttachControls = $canAttachGvl || $canAttachDiagnosis;
+
+    $reuseTargetLabel = match ($entityType) {
+        'order' => 'deze order',
+        'sales' => 'deze sale',
+        default => 'deze lead',
+    };
+    $reuseCandidates = $effectiveAnamnesis
+        ? app(AnamnesisGvlFormReuseService::class)->candidatesForAnamnesis($effectiveAnamnesis)
+        : [];
 
     $diagnosisAttachConfig = [];
     foreach ($missingDiagnosisTypes as $formType) {
@@ -108,6 +118,31 @@
             Maak eerst een patiëntportaal account aan om formulieren te koppelen.
         </p>
     @endunless
+
+    @if ($reuseCandidates !== [] && $attachAnamnesisId)
+        <div class="space-y-1.5 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
+            @foreach ($reuseCandidates as $candidate)
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <p>
+                        Er is een voltooide {{ $candidate['long_label'] }} van {{ $candidate['completed_on'] }}
+                        ({{ $candidate['source_label'] }}). Overnemen naar {{ $reuseTargetLabel }}?
+                    </p>
+                    <button
+                        type="button"
+                        class="forms-overview-action inline-flex items-center rounded-md border border-blue-300 bg-white px-2 py-1 text-xs font-medium text-blue-700 shadow-sm hover:bg-blue-100 dark:border-blue-600 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-900/60"
+                        data-action="reuse"
+                        data-url="{{ route('admin.anamnesis.gvl-form.reuse', $attachAnamnesisId) }}"
+                        data-source-id="{{ $candidate['id'] }}"
+                        @if ($candidate['needs_age_warning'])
+                            data-confirm="{{ $candidate['age_warning'] }}"
+                        @endif
+                    >
+                        Overnemen
+                    </button>
+                </div>
+            @endforeach
+        </div>
+    @endif
 
     @if ($activeForms !== [] || $inactiveForms !== [])
         @if ($activeForms !== [])
@@ -329,6 +364,39 @@
                 if (! ok) {
                     resetButton();
                 }
+                return;
+            }
+
+            if (action === 'reuse') {
+                const confirmMsg = btn.dataset.confirm;
+                if (confirmMsg && ! window.confirm(confirmMsg)) {
+                    resetButton();
+                    return;
+                }
+
+                const res = await fetch(btn.dataset.url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrf(),
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({
+                        source_gvl_form_record_id: Number(btn.dataset.sourceId),
+                    }),
+                });
+
+                const data = await res.json().catch(() => ({}));
+
+                if (res.ok) {
+                    flash('success', data.message || 'Formulier overgenomen.');
+                    setTimeout(() => location.reload(), 400);
+                    return;
+                }
+
+                flash('error', data.message || 'Actie mislukt');
+                resetButton();
                 return;
             }
 

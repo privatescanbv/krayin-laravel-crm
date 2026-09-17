@@ -102,6 +102,7 @@ Route::prefix('anamnesis')->group(function () {
     Route::post('diagnosis-form', [AnamnesisController::class, 'attachDiagnosisFormForSales'])->name('admin.anamnesis.diagnosis-form.attach');
     Route::post('diagnosis-form/detach', [AnamnesisController::class, 'detachDiagnosisForm'])->name('admin.anamnesis.diagnosis-form.detach');
     Route::post('{id}/gvl-form', [AnamnesisController::class, 'attachGvlForm'])->name('admin.anamnesis.gvl-form.attach');
+    Route::post('{id}/gvl-form/reuse', [AnamnesisController::class, 'reuseGvlForm'])->name('admin.anamnesis.gvl-form.reuse');
     Route::delete('{id}/gvl-form/{gvlFormRecordId}', [AnamnesisController::class, 'detachGvlForm'])->name('admin.anamnesis.gvl-form.detach');
     Route::get('{id}/gvl-form/{gvlFormRecordId}/status', [AnamnesisController::class, 'getGvlFormStatus'])->name('admin.anamnesis.gvl-form.status');
 });

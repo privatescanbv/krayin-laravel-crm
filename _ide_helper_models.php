@@ -307,9 +307,9 @@ namespace App\Models{
 /**
  * @property string $id
  * @property string|null $name
- * @property string|null $description
  * @property \Carbon\CarbonImmutable $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property string|null $description
  * @property bool $deleted
  * @property string|null $team_id
  * @property string|null $team_set_id
@@ -331,6 +331,7 @@ namespace App\Models{
  * @property string|null $implant_notes
  * @property bool|null $surgeries
  * @property string|null $surgeries_notes
+ * @property string|null $remarks
  * @property bool|null $hereditary_heart
  * @property string|null $hereditary_heart_notes
  * @property bool|null $hereditary_vascular
@@ -361,7 +362,6 @@ namespace App\Models{
  * @property int|null $person_id
  * @property int|null $created_by
  * @property int|null $updated_by
- * @property string|null $remarks
  * @property-read \Webkul\User\Models\User|null $creator
  * @property-read string|null $gvl_form_link
  * @property-read \App\Enums\FormStatus|null $gvl_form_status

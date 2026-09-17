@@ -16,6 +16,7 @@ use App\Models\Order;
 use App\Models\PatientNotification;
 use App\Models\SalesLead;
 use App\Services\Anamnesis\AnamnesisFormsOverviewBuilder;
+use App\Services\Anamnesis\AnamnesisGvlFormReuseService;
 use App\Services\Anamnesis\AnamnesisOrderResolver;
 use App\Services\FormService;
 use Exception;
@@ -26,6 +27,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use InvalidArgumentException;
 use Webkul\Contact\Models\Person;
 
 class AnamnesisController extends Controller
@@ -41,6 +43,7 @@ class AnamnesisController extends Controller
         protected FormService $formService,
         protected AnamnesisOrderResolver $anamnesisOrderResolver,
         protected AnamnesisFormsOverviewBuilder $formsOverviewBuilder,
+        protected AnamnesisGvlFormReuseService $gvlFormReuseService,
     ) {}
 
     /**
@@ -173,6 +176,35 @@ class AnamnesisController extends Controller
 
             return response()->json([
                 'message' => 'GVL formulier koppelen is mislukt: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function reuseGvlForm(Request $request, string $id): JsonResponse
+    {
+        $anamnesis = Anamnesis::with('person')->findOrFail($id);
+
+        $data = $request->validate([
+            'source_gvl_form_record_id' => 'required|integer|exists:anamnesis_gvl_forms,id',
+        ]);
+
+        try {
+            $cloned = $this->gvlFormReuseService->reuseOnto($anamnesis, (int) $data['source_gvl_form_record_id']);
+
+            return response()->json([
+                'message'            => 'GVL formulier is overgenomen.',
+                'gvl_form_record_id' => $cloned->id,
+            ]);
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        } catch (Exception $e) {
+            Log::error('AnamnesisController@reuseGvlForm failed', [
+                'anamnesis_id' => $id,
+                'error'        => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'GVL formulier overnemen is mislukt: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -502,6 +534,10 @@ class AnamnesisController extends Controller
             return $this->redirectWithReturnUrl('admin.leads.view', [], 'warning', 'Geen overschrijving gevonden om terug te zetten.');
         }
 
+        $this->gvlFormReuseService->promoteCompletedGvlFormsToParent($anamnesis);
+
+        $anamnesis->unsetRelation('gvlForms');
+
         foreach ($anamnesis->gvlForms as $gvlForm) {
             $this->doDetachGvlFormRecord($gvlForm);
         }
@@ -654,8 +690,10 @@ class AnamnesisController extends Controller
         $anamnesisId = $gvlForm->anamnesis_id;
         $personId = $gvlForm->anamnesis?->person_id ?? Anamnesis::find($anamnesisId)?->person_id;
 
+        $isLastReference = ! $this->gvlFormReuseService->hasOtherCrmReferences($gvlForm);
+
         try {
-            if ($formId) {
+            if ($formId && $isLastReference) {
                 $result = $this->formService->deleteForm($formId);
                 $status = $result['status'];
                 $json = $result['response'];
@@ -674,7 +712,7 @@ class AnamnesisController extends Controller
                 }
             }
 
-            if ($personId && $formId) {
+            if ($personId && $formId && $isLastReference) {
                 PatientNotification::where('reference_id', $formId)
                     ->whereIn('reference_type', [
                         NotificationReferenceType::GVL_FORM,

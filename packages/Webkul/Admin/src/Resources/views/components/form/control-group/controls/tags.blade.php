@@ -1,7 +1,6 @@
 <v-control-tags
     :errors="errors"
     {{ $attributes }}
-    v-bind="$attrs"
 ></v-control-tags>
 
 @pushOnce('scripts')

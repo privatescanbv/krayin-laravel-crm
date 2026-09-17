@@ -1,6 +1,5 @@
 <v-file-dropzone
     {{ $attributes }}
-    v-bind="$attrs"
 ></v-file-dropzone>
 
 @pushOnce('scripts')

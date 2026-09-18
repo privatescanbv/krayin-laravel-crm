@@ -75,11 +75,12 @@
                 @{{ attachment.name }}
             </span>
 
-            <x-admin::form.control-group.control
+            {{-- Native input: the shared type=file control is now a Vue dropzone, so assigning $refs.files would not reach FormData. --}}
+            <input
                 type="file"
-                ::name="name + '[]'"
-                class="hidden" 
-                ::ref="$.uid + '_attachmentInput_' + index"
+                class="hidden"
+                :name="name + '[]'"
+                :ref="$.uid + '_attachmentInput_' + index"
             />
 
             <i 
@@ -219,7 +220,27 @@
 
                     dataTransfer.items.add(file);
 
-                    this.$refs[this.$.uid + '_attachmentInput_' + this.index].files = dataTransfer.files;
+                    const input = this.fileInput();
+
+                    if (! (input instanceof HTMLInputElement)) {
+                        return;
+                    }
+
+                    input.files = dataTransfer.files;
+                },
+
+                fileInput() {
+                    const ref = this.$refs[this.$.uid + '_attachmentInput_' + this.index];
+
+                    if (ref instanceof HTMLInputElement) {
+                        return ref;
+                    }
+
+                    if (ref?.$refs?.input instanceof HTMLInputElement) {
+                        return ref.$refs.input;
+                    }
+
+                    return null;
                 },
             }
         });

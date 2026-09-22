@@ -45,12 +45,12 @@
     </span>
 </a>
 <div class="tocify-wrapper">
-
+    
             <div class="lang-selector">
                                             <button type="button" class="lang-button" data-language-name="bash">bash</button>
                                             <button type="button" class="lang-button" data-language-name="javascript">javascript</button>
                     </div>
-
+    
     <div class="search">
         <input type="text" class="search" id="input-search" placeholder="Search">
     </div>
@@ -290,7 +290,7 @@ You can switch the language used with the tabs at the top right (or from the nav
 
         <h1 id="application-webhooks">Application webhooks</h1>
 
-
+    
 
                                 <h2 id="application-webhooks-PUTapi-webhooks-event">Handle an application webhook event.</h2>
 
@@ -544,7 +544,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="endpoints">Endpoints</h1>
 
-
+    
 
                                 <h2 id="endpoints-POSTapi-leads-hernia">Create a Hernia lead from the inbound (Gravity Forms) payload schema.</h2>
 
@@ -1962,7 +1962,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 7eb16349-57c2-4f11-91aa-92908ae00271
+x-request-id: d59857f8-4552-4a0f-b424-38114aa81fb5
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 59
  </code></pre></details>         <pre>
@@ -2989,7 +2989,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 3cff0c08-24cb-49a0-b8df-80cd7e786739
+x-request-id: 40656c56-c521-4cff-b092-03b781555ed4
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 58
  </code></pre></details>         <pre>
@@ -3147,7 +3147,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 379e1757-9334-4bce-9ed0-9d79d8d5585b
+x-request-id: c6c5c040-ada1-469c-87b4-92f52d03ae05
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 57
  </code></pre></details>         <pre>
@@ -3516,7 +3516,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: eddda4a2-1ee3-4b80-b15c-c89e4a11cd5a
+x-request-id: 8f79ac4c-ab1b-426e-9b13-65084b5a1cd9
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 56
  </code></pre></details>         <pre>
@@ -3644,11 +3644,11 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"type\": \"file\",
+    \"type\": \"note\",
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_to\": \"2026-09-22 12:14:53\"
+    \"schedule_to\": \"2026-09-22 15:32:42\"
 }"
 </code></pre></div>
 
@@ -3665,11 +3665,11 @@ const headers = {
 };
 
 let body = {
-    "type": "file",
+    "type": "note",
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_to": "2026-09-22 12:14:53"
+    "schedule_to": "2026-09-22 15:32:42"
 };
 
 fetch(url, {
@@ -3786,10 +3786,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="type"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="file"
+               value="note"
                data-component="body">
     <br>
-<p>Example: <code>file</code></p>
+<p>Example: <code>note</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>task</code></li> <li><code>meeting</code></li> <li><code>call</code></li> <li><code>note</code></li> <li><code>file</code></li></ul>
         </div>
@@ -3848,10 +3848,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-09-22 12:14:53"
+               value="2026-09-22 15:32:42"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-09-22 12:14:53</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-09-22 15:32:42</code></p>
         </div>
         </form>
 
@@ -4292,7 +4292,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="keycloak">Keycloak</h1>
 
-
+    
 
                                 <h2 id="keycloak-GETapi-keycloak-persons--keycloakUserId-">Haal person id op op basis van Keycloak user id.</h2>
 
@@ -4688,7 +4688,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-naw">Patient NAW</h1>
 
-
+    
 
                                 <h2 id="patient-naw-GETapi-patient--id--naw">Get NAW data for a patient.</h2>
 
@@ -5454,7 +5454,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-password">Patient Password</h1>
 
-
+    
 
                                 <h2 id="patient-password-PUTapi-patient--id--password">Update the password for a patient.</h2>
 
@@ -5902,7 +5902,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-appointments">Patient appointments</h1>
 
-
+    
 
                                 <h2 id="patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders and published Activities).</h2>
 
@@ -6142,7 +6142,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-counters">Patient counters</h1>
 
-
+    
 
                                 <h2 id="patient-counters-GETapi-patient--id--counters">Get notification counters for the patient portal menu badges.</h2>
 
@@ -6316,7 +6316,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-documents">Patient documents</h1>
 
-
+    
 
                                 <h2 id="patient-documents-GETapi-patient--id--documents">Get all documents for a patient (FILE activities published to their portal via pivot).</h2>
 
@@ -6585,7 +6585,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --form "name=Bloeduitslag"\
     --form "description=Resultaten van het bloedonderzoek."\
-    --form "file=@/tmp/phpsbn95r9hjktc0WZsD3T" </code></pre></div>
+    --form "file=@/tmp/phpu96aaco4ri1t21Bznf0" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -6774,7 +6774,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The file to upload (max 20 MB). Example: <code>/tmp/phpsbn95r9hjktc0WZsD3T</code></p>
+<p>The file to upload (max 20 MB). Example: <code>/tmp/phpu96aaco4ri1t21Bznf0</code></p>
         </div>
         </form>
 
@@ -6827,7 +6827,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 0c300a8d-742c-4329-9267-4a6a4fd68110
+x-request-id: aa481276-62f2-4dee-95fb-c2bc58b15b80
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 55
  </code></pre></details>         <pre>
@@ -6959,7 +6959,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-messages">Patient messages</h1>
 
-
+    
 
                                 <h2 id="patient-messages-GETapi-patient--id--messages">Get all patient messages for a person, grouped by thread.</h2>
 
@@ -7344,7 +7344,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-notifications">Patient notifications</h1>
 
-
+    
 
                                 <h2 id="patient-notifications-GETapi-patient--id--notifications">Get notifications for a patient.</h2>
 
@@ -7402,7 +7402,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: ee3ed1d4-5bbf-4dc5-9158-e26596aed8ea
+x-request-id: 7159b789-e4e1-41dc-9f33-e91fec18d88c
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 54
  </code></pre></details>         <pre>
@@ -7839,7 +7839,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-preferences">Patient preferences</h1>
 
-
+    
 
                                 <h2 id="patient-preferences-GETapi-patient--id--preferences">Get preferences for a patient.</h2>
 
@@ -7890,7 +7890,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 68493c8d-e7d8-4c30-85d1-e7d6b218f9a2
+x-request-id: fb055afe-6b7b-4c23-91d5-7fbe365092f3
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 53
  </code></pre></details>         <pre>
@@ -8071,7 +8071,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"preferences\": {
         \"email_notifications_enabled\": true,
         \"language\": \"architecto\",
-        \"onboarding_completed_at\": \"2026-09-22T12:14:54\"
+        \"onboarding_completed_at\": \"2026-09-22T15:32:42\"
     }
 }"
 </code></pre></div>
@@ -8092,7 +8092,7 @@ let body = {
     "preferences": {
         "email_notifications_enabled": true,
         "language": "architecto",
-        "onboarding_completed_at": "2026-09-22T12:14:54"
+        "onboarding_completed_at": "2026-09-22T15:32:42"
     }
 };
 
@@ -8264,10 +8264,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="preferences.onboarding_completed_at"                data-endpoint="PUTapi-patient--id--preferences"
-               value="2026-09-22T12:14:54"
+               value="2026-09-22T15:32:42"
                data-component="body">
     <br>
-<p>Het veld value is geen geldige datum. Example: <code>2026-09-22T12:14:54</code></p>
+<p>Het veld value is geen geldige datum. Example: <code>2026-09-22T15:32:42</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>email_notifications_enabled</code></b>&nbsp;&nbsp;
@@ -8295,9 +8295,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </div>
         </form>
 
+            
 
-
-
+        
     </div>
     <div class="dark-box">
                     <div class="lang-selector">

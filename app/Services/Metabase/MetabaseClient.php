@@ -98,6 +98,17 @@ class MetabaseClient
     }
 
     /**
+     * POST /api/database/{id}/sync_schema — queues an async rescan of the
+     * database's schema. Metabase caches table/field metadata separately from
+     * the live database, so a structural change (e.g. a new column) is
+     * invisible to it until this runs, even though the column already exists.
+     */
+    public function syncDatabaseSchema(int $id): void
+    {
+        $this->post("/database/{$id}/sync_schema", []);
+    }
+
+    /**
      * PUT /api/setting/{key} — body is a JSON value (boolean, string, object, …).
      */
     public function putSetting(string $key, mixed $value): mixed

@@ -234,3 +234,19 @@ test('revenue by employee index page hides verloren column via filter condition'
         ->assertSee("selectedGroups.includes('lost')", false)
         ->assertSee('Omzet bruto minus verloren');
 });
+
+test('a custom role without the reports.legacy permission is denied', function () {
+    $role = Role::factory()->create([
+        'permission_type' => 'custom',
+        'permissions'     => ['dashboard'],
+    ]);
+
+    $user = User::factory()->create([
+        'status'  => 1,
+        'role_id' => $role->id,
+    ]);
+
+    $this->actingAs($user, 'user')
+        ->get(route('admin.reports.revenue-by-employee.index'))
+        ->assertForbidden();
+});

@@ -128,6 +128,24 @@ docker-compose exec crm php artisan analytics:setup --force
 
 `--force` doet DROP + CREATE van alle tabellen en draait `CALL analytics.sync_all()` opnieuw. `sync_all()` is een full reload, dus opnieuw draaien is altijd veilig.
 
+==== Metabase-dashboards synchroniseren na een reset
+
+Na een `analytics:setup --force` op een omgeving (bv. prod) kan `metabase:sync-dashboard` falen met:
+
+[source]
+----
+Field 'bron' (source id 1307) does not exist in the matching target table.
+----
+
+Oorzaak: `analytics:setup --force` verandert het schema in MySQL, maar Metabase houdt zijn eigen (gecachte) kopie van tabel-/kolomstructuur bij. Die cache wordt pas bijgewerkt als Metabase zelf een schema-rescan draait — een nieuwe of gewijzigde kolom bestaat dus al in MySQL, maar Metabase weet dat nog niet.
+
+Los dit op door de sync met `--sync-schema` te draaien: dit triggert een schema-rescan op alle databases van de doelomgeving en herprobeert de sync automatisch terwijl Metabase bijwerkt.
+
+[source,bash]
+----
+docker exec crm php artisan metabase:sync-dashboard --source dev --target prod --dashboard 5 --sync-schema --force
+----
+
 === Migratie script opschonen
 
 Na verloop van tijd zal het aantal migratie files groeien. Dit kan ervoor zorgen dat het opzetten van een nieuwe omgeving lang duurt. Laravel biedt de mogelijkheid om de huidige database structuur te dumpen naar een sql file en alle migratie files te verwijderen.

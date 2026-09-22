@@ -2,12 +2,14 @@
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Sleep;
 
 const MB_SOURCE = 'https://mb-dev.test';
 const MB_TARGET = 'https://mb-prod.test';
 
 beforeEach(function () {
     Storage::fake('local');
+    Sleep::fake();
 
     config()->set('services.metabase.environments', [
         'dev'  => ['url' => MB_SOURCE, 'api_key' => 'src-key'],
@@ -70,6 +72,7 @@ function fakeMetabase(array $overrides = []): void
         'GET '.MB_SOURCE.'/api/field/100'  => ['table_id' => 10, 'name' => 'status'],
 
         'GET '.MB_TARGET.'/api/database'                  => [['id' => 5, 'name' => 'Analytics']],
+        'POST '.MB_TARGET.'/api/database/5/sync_schema'   => ['status' => 'ok'],
         'GET '.MB_TARGET.'/api/database/5/metadata'       => ['tables' => [['id' => 77, 'name' => 'orders', 'schema' => 'public']]],
         'GET '.MB_TARGET.'/api/table/77/query_metadata'   => ['fields' => [['id' => 900, 'name' => 'status']]],
 
@@ -92,6 +95,7 @@ function fakeMetabase(array $overrides = []): void
         }
 
         $value = $routes[$key];
+        $value = $value instanceof Closure ? $value() : $value;
 
         return is_array($value) ? Http::response($value, 200) : $value;
     });
@@ -216,6 +220,46 @@ it('aborts on a major version mismatch unless --force is given', function () {
         ->expectsOutputToContain('version mismatch');
 
     Http::assertNotSent(fn ($r) => in_array($r->method(), ['POST', 'PUT'], true));
+});
+
+it('triggers a schema rescan on every target database when --sync-schema is passed', function () {
+    fakeMetabase();
+
+    $this->artisan('metabase:sync-dashboard --source=dev --target=prod --dashboard=12 --force --sync-schema')
+        ->assertSuccessful();
+
+    Http::assertSent(fn ($r) => $r->method() === 'POST' && str_ends_with(strtok($r->url(), '?'), '/api/database/5/sync_schema'));
+});
+
+it('retries after a missing field until the target schema rescan catches up', function () {
+    $attempts = 0;
+
+    fakeMetabase([
+        'GET '.MB_TARGET.'/api/table/77/query_metadata' => function () use (&$attempts) {
+            $attempts++;
+
+            // First lookup: Metabase hasn't rescanned yet, "status" is missing.
+            // Second lookup (after the retry's schema-sync wait): it's there.
+            return ['fields' => $attempts === 1 ? [] : [['id' => 900, 'name' => 'status']]];
+        },
+    ]);
+
+    $this->artisan('metabase:sync-dashboard --source=dev --target=prod --dashboard=12 --force --sync-schema')
+        ->assertSuccessful()
+        ->expectsOutputToContain('Target schema not caught up yet');
+
+    expect($attempts)->toBe(2);
+    Sleep::assertSlept(fn ($duration) => $duration->totalSeconds === 3.0, times: 1);
+});
+
+it('does not retry a data-source failure without --sync-schema', function () {
+    fakeMetabase(['GET '.MB_TARGET.'/api/table/77/query_metadata' => ['fields' => []]]);
+
+    $this->artisan('metabase:sync-dashboard --source=dev --target=prod --dashboard=12 --force')
+        ->assertFailed()
+        ->expectsOutputToContain("Field 'status'");
+
+    Sleep::assertNeverSlept();
 });
 
 it('does not leak the api key in output', function () {

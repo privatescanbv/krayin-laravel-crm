@@ -4,11 +4,13 @@ namespace App\Console\Commands;
 
 use App\Services\Metabase\DashboardSyncService;
 use App\Services\Metabase\MetabaseApiException;
+use App\Services\Metabase\MetabaseClient;
 use App\Services\Metabase\MetabaseEnvironments;
 use App\Services\Metabase\MetabaseSyncException;
 use App\Services\Metabase\SyncMapping;
 use App\Services\Metabase\SyncReport;
 use Illuminate\Console\Command;
+use Illuminate\Support\Sleep;
 
 class SyncMetabaseDashboard extends Command
 {
@@ -17,7 +19,8 @@ class SyncMetabaseDashboard extends Command
         {--target= : Target environment name (or full URL matching a configured environment)}
         {--dashboard= : Numeric id of the dashboard in the source instance}
         {--dry-run : Show what would change without writing to the target}
-        {--force : Skip the confirmation prompt and continue on a version mismatch (for CI/CD)}';
+        {--force : Skip the confirmation prompt and continue on a version mismatch (for CI/CD)}
+        {--sync-schema : Trigger a Metabase schema rescan on the target databases first, and retry while it catches up on new/changed columns (use after an analytics DB reset)}';
 
     protected $description = 'Synchroniseer een Metabase-dashboard (incl. gekoppelde vragen) van de ene omgeving naar de andere via de HTTP API.';
 
@@ -71,10 +74,15 @@ class SyncMetabaseDashboard extends Command
                 return self::SUCCESS;
             }
 
+            $syncSchema = (bool) $this->option('sync-schema');
+
+            if ($syncSchema) {
+                $this->triggerTargetSchemaSync($targetClient);
+            }
+
             $mapping = new SyncMapping($sourceClient->label, $targetClient->label, readOnly: $dryRun);
 
-            $report = (new DashboardSyncService($sourceClient, $targetClient, $mapping, $dryRun, ignoreVersionMismatch: $force))
-                ->sync($dashboardId);
+            $report = $this->syncWithRetry($sourceClient, $targetClient, $mapping, $dryRun, $force, $dashboardId, $syncSchema);
         } catch (MetabaseSyncException|MetabaseApiException $e) {
             $this->line('');
             $this->error($e->getMessage());
@@ -85,6 +93,59 @@ class SyncMetabaseDashboard extends Command
         $this->renderReport($report);
 
         return self::SUCCESS;
+    }
+
+    private function triggerTargetSchemaSync(MetabaseClient $target): void
+    {
+        $this->comment('Triggering Metabase schema rescan on target databases...');
+
+        foreach ($target->listDatabases() as $db) {
+            $id = (int) ($db['id'] ?? 0);
+
+            if ($id > 0) {
+                $target->syncDatabaseSchema($id);
+            }
+        }
+    }
+
+    /**
+     * Retries the sync while Metabase's schema rescan (queued above) catches
+     * up. Safe to retry: the sync service resolves every data-source
+     * reference before writing anything, so a failed attempt never leaves
+     * partial writes behind.
+     */
+    private function syncWithRetry(
+        MetabaseClient $source,
+        MetabaseClient $target,
+        SyncMapping $mapping,
+        bool $dryRun,
+        bool $force,
+        int $dashboardId,
+        bool $waitForSchema,
+    ): SyncReport {
+        $delaysInSeconds = [3, 6, 12, 24];
+        $attempt = 0;
+
+        while (true) {
+            try {
+                return (new DashboardSyncService($source, $target, $mapping, $dryRun, ignoreVersionMismatch: $force))
+                    ->sync($dashboardId);
+            } catch (MetabaseSyncException $e) {
+                if (! $waitForSchema || ! $this->isMissingDataSource($e) || ! isset($delaysInSeconds[$attempt])) {
+                    throw $e;
+                }
+
+                $delay = $delaysInSeconds[$attempt++];
+                $this->comment("Target schema not caught up yet ({$e->getMessage()}) — waiting {$delay}s and retrying...");
+                Sleep::for($delay)->seconds();
+            }
+        }
+    }
+
+    private function isMissingDataSource(MetabaseSyncException $e): bool
+    {
+        return str_contains($e->getMessage(), 'does not exist in target')
+            || str_contains($e->getMessage(), 'does not exist in the matching target table');
     }
 
     private function renderReport(SyncReport $report): void

@@ -364,6 +364,14 @@
                             params.order_department_id_after_won = this.nextStage.order_department_id_after_won;
                         }
                     } else if (this.isLostStage(this.nextStage)) {
+                        if (! String(this.nextStage.lost_reason || '').trim()) {
+                            this.$emitter.emit('add-flash', {
+                                type: 'error',
+                                message: 'Reden van verlies is verplicht bij status "Verloren"'
+                            });
+                            return;
+                        }
+
                         params.lost_reason = this.nextStage.lost_reason;
                         params.closed_at = this.nextStage.closed_at;
                     }

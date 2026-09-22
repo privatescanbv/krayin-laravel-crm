@@ -48,33 +48,35 @@
                     </a>
                 </li>
             @endforeach
-            <li>
-                <a
-                    href="{{ route('admin.reports.revenue-by-employee.index') }}"
-                    class="flex items-center gap-2 text-sm text-brandColor hover:underline"
-                >
-                    <span class="icon-stats-up text-xs"></span>
-                    Omzet per medewerker (wordt verwijderd)
-                </a>
-            </li>
-            <li>
-                <a
-                    href="{{ route('admin.reports.revenue-by-month.index') }}"
-                    class="flex items-center gap-2 text-sm text-brandColor hover:underline"
-                >
-                    <span class="icon-stats-up text-xs"></span>
-                    Omzet per maand (wordt verwijderd)
-                </a>
-            </li>
-            <li>
-                <a
-                    href="{{ route('admin.reports.orders-by-investigation-date.index') }}"
-                    class="flex items-center gap-2 text-sm text-brandColor hover:underline"
-                >
-                    <span class="icon-stats-up text-xs"></span>
-                    Verkooporders op onderzoeksdatum (wordt verwijderd)
-                </a>
-            </li>
+            @if (auth()->guard('user')->user()?->hasPermission('reports.legacy'))
+                <li>
+                    <a
+                        href="{{ route('admin.reports.revenue-by-employee.index') }}"
+                        class="flex items-center gap-2 text-sm text-brandColor hover:underline"
+                    >
+                        <span class="icon-stats-up text-xs"></span>
+                        Omzet per medewerker (wordt verwijderd)
+                    </a>
+                </li>
+                <li>
+                    <a
+                        href="{{ route('admin.reports.revenue-by-month.index') }}"
+                        class="flex items-center gap-2 text-sm text-brandColor hover:underline"
+                    >
+                        <span class="icon-stats-up text-xs"></span>
+                        Omzet per maand (wordt verwijderd)
+                    </a>
+                </li>
+                <li>
+                    <a
+                        href="{{ route('admin.reports.orders-by-investigation-date.index') }}"
+                        class="flex items-center gap-2 text-sm text-brandColor hover:underline"
+                    >
+                        <span class="icon-stats-up text-xs"></span>
+                        Verkooporders op onderzoeksdatum (wordt verwijderd)
+                    </a>
+                </li>
+            @endif
         </ul>
     </div>
 

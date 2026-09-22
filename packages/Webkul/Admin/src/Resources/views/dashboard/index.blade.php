@@ -75,6 +75,17 @@
                 <p class="mb-3 text-base font-semibold dark:text-gray-300">Rapportages</p>
 
                 <ul class="flex flex-col gap-2">
+                    @foreach ($metabasePages ?? [] as $page)
+                        <li>
+                            <a
+                                href="{{ route($page['route']) }}"
+                                class="flex items-center gap-2 text-sm text-brandColor hover:underline"
+                            >
+                                <span class="icon-stats-up text-xs"></span>
+                                {{ trans($page['name']) }}
+                            </a>
+                        </li>
+                    @endforeach
                     <li>
                         <a
                             href="{{ route('admin.reports.revenue-by-employee.index') }}"

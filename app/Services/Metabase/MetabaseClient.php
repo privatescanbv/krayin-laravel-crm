@@ -35,6 +35,24 @@ class MetabaseClient
         return $this->get("/dashboard/{$id}");
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function listDashboards(): array
+    {
+        $response = $this->get('/dashboard');
+        $items = $response['data'] ?? $response;
+
+        if (! is_array($items)) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            $items,
+            fn (mixed $item): bool => is_array($item) && isset($item['id'])
+        ));
+    }
+
     public function createDashboard(array $payload): array
     {
         return $this->post('/dashboard', $payload);
@@ -97,6 +115,28 @@ class MetabaseClient
         return $this->get("/field/{$id}");
     }
 
+    /**
+     * PUT /api/setting/{key} — body is a JSON value (boolean, string, object, …).
+     */
+    public function putSetting(string $key, mixed $value): mixed
+    {
+        return $this->sendJsonValue('put', '/setting/'.$key, $value);
+    }
+
+    /**
+     * GET /api/setting/{key} — value may be a string, boolean, object, …
+     */
+    public function getSetting(string $key): mixed
+    {
+        return $this->sendJsonValue('get', '/setting/'.$key, null);
+    }
+
+    /** Session properties including embedding-secret-key when the API key is an admin key. */
+    public function sessionProperties(): array
+    {
+        return $this->get('/session/properties');
+    }
+
     /** Metabase version string, e.g. "v0.49.6" (empty when unavailable). */
     public function version(): string
     {
@@ -135,6 +175,30 @@ class MetabaseClient
         }
 
         return $response->json() ?? [];
+    }
+
+    /**
+     * Send a JSON-encoded value (not necessarily an object/array) as the body.
+     */
+    private function sendJsonValue(string $method, string $path, mixed $payload): mixed
+    {
+        try {
+            $request = $this->request();
+
+            if ($payload !== null && strtolower($method) !== 'get') {
+                $request = $request->withBody(json_encode($payload, JSON_THROW_ON_ERROR), 'application/json');
+            }
+
+            $response = $request->send(strtoupper($method), $path);
+        } catch (ConnectionException $e) {
+            throw MetabaseApiException::connection($this->label, $method, $path, $e);
+        }
+
+        if ($response->failed()) {
+            throw MetabaseApiException::fromResponse($this->label, $method, $path, $response->status(), $response->body());
+        }
+
+        return $response->json();
     }
 
     private function request(): PendingRequest

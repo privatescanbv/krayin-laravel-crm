@@ -58,6 +58,19 @@ return [
             ->all(),
 
         'timeout' => (int) env('METABASE_SYNC_TIMEOUT', 30),
+
+        /*
+         * Signed guest embeds shown in the CRM admin. site_url is the
+         * browser-facing Metabase host (not the Docker-internal API URL).
+         * secret is the hex embedding secret from Metabase's embed wizard
+         * (METABASE_SECRET_KEY). Do not put an API key mb_... here.
+         */
+        'embed' => [
+            'site_url'     => env('METABASE_EMBED_URL', 'https://reports.local.privatescan.nl'),
+            'secret'       => env('METABASE_EMBEDDING_SECRET_KEY'),
+            'environment'  => env('METABASE_EMBED_ENVIRONMENT', 'dev'),
+            'ttl'          => (int) env('METABASE_EMBED_TTL', 600),
+        ],
     ],
 
     'keycloak' => [

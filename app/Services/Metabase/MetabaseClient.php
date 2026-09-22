@@ -97,6 +97,14 @@ class MetabaseClient
         return $this->get("/field/{$id}");
     }
 
+    /**
+     * PUT /api/setting/{key} — body is a JSON value (boolean, string, object, …).
+     */
+    public function putSetting(string $key, mixed $value): mixed
+    {
+        return $this->sendJsonValue('put', '/setting/'.$key, $value);
+    }
+
     /** Metabase version string, e.g. "v0.49.6" (empty when unavailable). */
     public function version(): string
     {
@@ -135,6 +143,26 @@ class MetabaseClient
         }
 
         return $response->json() ?? [];
+    }
+
+    /**
+     * Send a JSON-encoded value (not necessarily an object/array) as the body.
+     */
+    private function sendJsonValue(string $method, string $path, mixed $payload): mixed
+    {
+        try {
+            $response = $this->request()
+                ->withBody(json_encode($payload, JSON_THROW_ON_ERROR), 'application/json')
+                ->send(strtoupper($method), $path);
+        } catch (ConnectionException $e) {
+            throw MetabaseApiException::connection($this->label, $method, $path, $e);
+        }
+
+        if ($response->failed()) {
+            throw MetabaseApiException::fromResponse($this->label, $method, $path, $response->status(), $response->body());
+        }
+
+        return $response->json();
     }
 
     private function request(): PendingRequest

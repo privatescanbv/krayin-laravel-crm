@@ -31,19 +31,6 @@ class DashboardController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\View\View
-     */
-    public function index()
-    {
-        return view('admin::dashboard.index')->with([
-            'startDate' => $this->dashboardHelper->getStartDate(),
-            'endDate'   => $this->dashboardHelper->getEndDate(),
-        ]);
-    }
-
-    /**
-     * Display a listing of the resource.
-     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function stats()

@@ -100,6 +100,33 @@
                     </div>
                 @endif
 
+                <!-- Contactgegevens (clickable phone/e-mail of the linked entity) -->
+                @if($relatedEntity)
+                    <div class="p-4 border-b border-gray-200 dark:border-gray-800">
+                        @switch($relatedEntityType)
+                            @case(\App\Enums\EntityType::LEAD)
+                                <x-adminc::leads.card :lead="$relatedEntity" show_actions="false"/>
+                                @break
+
+                            @case(\App\Enums\EntityType::SALES)
+                                <x-adminc::sales_leads.card :sales="$relatedEntity" show_actions="false"/>
+                                @break
+
+                            @case(\App\Enums\EntityType::ORDER)
+                                <x-adminc::orders.card :order="$relatedEntity" show_actions="false"/>
+                                @break
+
+                            @case(\App\Enums\EntityType::CLINIC)
+                                <x-adminc::clinics.card :clinic="$relatedEntity" show_actions="false"/>
+                                @break
+
+                            @case(\App\Enums\EntityType::PERSON)
+                                <x-adminc::persons.card :person="$relatedEntity" show_actions="false"/>
+                                @break
+                        @endswitch
+                    </div>
+                @endif
+
                 <!-- Form Fields -->
                 <div class="p-4 flex flex-col gap-0">
                     <fieldset class="contents" @if($isReadOnly) disabled @endif>

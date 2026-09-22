@@ -4,6 +4,12 @@
     </x-slot>
 
     <div class="mb-4">
+        <a
+            href="{{ route('admin.dashboard.index') }}"
+            class="mb-1 inline-flex items-center gap-1 text-sm text-brandColor hover:underline"
+        >
+            ← @lang('admin::app.dashboard.index.title')
+        </a>
         <p class="text-2xl font-semibold dark:text-white">
             {{ $title }}
         </p>

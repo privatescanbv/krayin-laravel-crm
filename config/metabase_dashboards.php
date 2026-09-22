@@ -3,6 +3,9 @@
 /**
  * Metabase dashboards shown as CRM admin pages (guest embed via embed.js).
  *
+ * The native CRM dashboard stays at /admin/dashboard. Each entry below becomes
+ * its own page plus a click-through link on that dashboard (Rapportages).
+ *
  * You do NOT paste Metabase's HTML snippet (embed.js / JWT) per dashboard.
  * One hex signing secret signs JWTs for every page.
  *
@@ -12,18 +15,17 @@
  *
  * Add a page: copy an extra entry, set key / path / dashboard_id, run
  * `php artisan metabase:enable-embeds`, then tick the new permission in
- * Instellingen → Rollen.
+ * Instellingen → Rollen. Do not use key/path `dashboard` — that URL is
+ * reserved for the native CRM dashboard.
  *
- * `key` is the ACL + menu permission. `dashboard` reuses the existing Dashboard
- * permission and /admin/dashboard URL. Extra keys (e.g. metabase.verloren-leads)
- * appear automatically as nested items under Rapportages.
+ * Extra keys (e.g. metabase.verloren-leads) also appear as nested menu items
+ * under Rapportages.
  */
 return [
     [
-        'key'          => 'dashboard',
-        'name'         => 'admin::app.layouts.dashboard',
-        'route'        => 'admin.dashboard.index',
-        'path'         => 'dashboard',
+        'key'          => 'metabase.leads-per-maand',
+        'name'         => 'Leads per maand',
+        'path'         => 'dashboards/leads-per-maand',
         'dashboard_id' => 3,
         'params'       => [
             'periode' => 'past6months',

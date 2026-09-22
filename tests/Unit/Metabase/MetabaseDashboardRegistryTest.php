@@ -2,13 +2,13 @@
 
 use App\Services\Metabase\MetabaseDashboardRegistry;
 
-it('normalizes the built-in dashboard page from config', function () {
-    $page = (new MetabaseDashboardRegistry)->findByKey('dashboard');
+it('normalizes the leads-per-maand embed page from config', function () {
+    $page = (new MetabaseDashboardRegistry)->findByKey('metabase.leads-per-maand');
 
     expect($page)->not->toBeNull()
         ->and($page['dashboard_id'])->toBe(3)
-        ->and($page['route'])->toBe('admin.dashboard.index')
-        ->and($page['path'])->toBe('dashboard')
+        ->and($page['route'])->toBe('admin.dashboards.leads-per-maand')
+        ->and($page['path'])->toBe('dashboards/leads-per-maand')
         ->and($page['params'])->toBe(['periode' => 'past6months'])
         ->and($page['jwt_params'])->toBe([])
         ->and($page['initial_params'])->toBe(['periode' => 'past6months'])
@@ -21,18 +21,24 @@ it('normalizes the built-in dashboard page from config', function () {
         ]);
 });
 
-it('does not emit acl or menu items for the existing dashboard key', function () {
-    $registry = new MetabaseDashboardRegistry;
+it('ignores reserved dashboard key and path used by the native CRM dashboard', function () {
+    config(['metabase_dashboards' => [
+        [
+            'key'          => 'dashboard',
+            'name'         => 'Dashboard',
+            'path'         => 'dashboard',
+            'dashboard_id' => 3,
+        ],
+    ]]);
 
-    expect($registry->aclItems())->toBe([])
-        ->and($registry->menuItems())->toBe([]);
+    expect((new MetabaseDashboardRegistry)->pages())->toBe([]);
 });
 
 it('puts locked config params in the jwt and enabled params as initial values', function () {
     config(['metabase_dashboards' => [[
-        'key'          => 'dashboard',
-        'name'         => 'Dashboard',
-        'path'         => 'dashboard',
+        'key'          => 'metabase.leads-per-maand',
+        'name'         => 'Leads per maand',
+        'path'         => 'dashboards/leads-per-maand',
         'dashboard_id' => 3,
         'params'       => [
             'periode'  => 'past6months',
@@ -44,7 +50,7 @@ it('puts locked config params in the jwt and enabled params as initial values', 
         ],
     ]]]);
 
-    $page = (new MetabaseDashboardRegistry)->findByKey('dashboard');
+    $page = (new MetabaseDashboardRegistry)->findByKey('metabase.leads-per-maand');
 
     expect($page['jwt_params'])->toBe(['afdeling' => 'sales'])
         ->and($page['initial_params'])->toBe(['periode' => 'past6months']);
@@ -53,10 +59,12 @@ it('puts locked config params in the jwt and enabled params as initial values', 
 it('builds nested acl and menu items for extra dashboards', function () {
     config(['metabase_dashboards' => [
         [
-            'key'          => 'dashboard',
-            'name'         => 'Dashboard',
-            'path'         => 'dashboard',
+            'key'          => 'metabase.leads-per-maand',
+            'name'         => 'Leads per maand',
+            'path'         => 'dashboards/leads-per-maand',
             'dashboard_id' => 3,
+            'sort'         => 1,
+            'icon-class'   => 'icon-dashboard',
         ],
         [
             'key'          => 'metabase.verloren-leads',
@@ -74,8 +82,14 @@ it('builds nested acl and menu items for extra dashboards', function () {
         [
             'key'   => 'metabase',
             'name'  => 'Rapportages',
-            'route' => 'admin.dashboards.verloren-leads',
-            'sort'  => 2,
+            'route' => 'admin.dashboards.leads-per-maand',
+            'sort'  => 1,
+        ],
+        [
+            'key'   => 'metabase.leads-per-maand',
+            'name'  => 'Leads per maand',
+            'route' => 'admin.dashboards.leads-per-maand',
+            'sort'  => 1,
         ],
         [
             'key'   => 'metabase.verloren-leads',
@@ -89,8 +103,15 @@ it('builds nested acl and menu items for extra dashboards', function () {
         [
             'key'        => 'metabase',
             'name'       => 'Rapportages',
-            'route'      => 'admin.dashboards.verloren-leads',
-            'sort'       => 2,
+            'route'      => 'admin.dashboards.leads-per-maand',
+            'sort'       => 1,
+            'icon-class' => 'icon-dashboard',
+        ],
+        [
+            'key'        => 'metabase.leads-per-maand',
+            'name'       => 'Leads per maand',
+            'route'      => 'admin.dashboards.leads-per-maand',
+            'sort'       => 1,
             'icon-class' => 'icon-dashboard',
         ],
         [
@@ -118,11 +139,6 @@ it('finds an extra page by slug', function () {
 
 it('merges extra acl keys without duplicating dashboard', function () {
     config(['metabase_dashboards' => [
-        [
-            'key'          => 'dashboard',
-            'path'         => 'dashboard',
-            'dashboard_id' => 3,
-        ],
         [
             'key'          => 'metabase.omzet',
             'name'         => 'Omzet',

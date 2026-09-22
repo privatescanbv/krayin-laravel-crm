@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Webkul\Admin\Http\Controllers\Dashboard\MetabaseDashboardController;
 use Webkul\Admin\Http\Controllers\DashboardController;
 use Webkul\Admin\Http\Controllers\DataGrid\SavedFilterController;
 use Webkul\Admin\Http\Controllers\DataGridController;
@@ -11,12 +10,10 @@ use Webkul\Admin\Http\Controllers\User\AccountController;
 /**
  * Dashboard routes.
  */
-Route::prefix('dashboard')->group(function () {
-    Route::get('', [MetabaseDashboardController::class, 'show'])
-        ->defaults('key', 'dashboard')
-        ->name('admin.dashboard.index');
+Route::controller(DashboardController::class)->prefix('dashboard')->group(function () {
+    Route::get('', 'index')->name('admin.dashboard.index');
 
-    Route::get('stats', [DashboardController::class, 'stats'])->name('admin.dashboard.stats');
+    Route::get('stats', 'stats')->name('admin.dashboard.stats');
 });
 
 /**

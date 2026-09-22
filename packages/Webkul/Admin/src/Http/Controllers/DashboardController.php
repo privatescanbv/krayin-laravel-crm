@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers;
 
+use App\Services\Metabase\MetabaseDashboardRegistry;
 use Webkul\Admin\Helpers\Dashboard;
 
 class DashboardController extends Controller
@@ -26,7 +27,24 @@ class DashboardController extends Controller
      *
      * @return void
      */
-    public function __construct(protected Dashboard $dashboardHelper) {}
+    public function __construct(
+        protected Dashboard $dashboardHelper,
+        protected MetabaseDashboardRegistry $metabaseDashboards,
+    ) {}
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function index()
+    {
+        return view('admin::dashboard.index')->with([
+            'startDate'      => $this->dashboardHelper->getStartDate(),
+            'endDate'        => $this->dashboardHelper->getEndDate(),
+            'metabasePages'  => $this->metabaseDashboards->visiblePages(),
+        ]);
+    }
 
     /**
      * Display a listing of the resource.

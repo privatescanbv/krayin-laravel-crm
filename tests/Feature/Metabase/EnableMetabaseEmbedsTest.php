@@ -127,9 +127,9 @@ it('skips republishing a dashboard that already has matching guest embed setting
 
 it('publishes configured locked filters instead of enabling every slug', function () {
     config(['metabase_dashboards' => [[
-        'key'              => 'dashboard',
+        'key'              => 'metabase.leads-per-maand',
         'name'             => 'Dashboard',
-        'path'             => 'dashboard',
+        'path'             => 'dashboards/leads-per-maand',
         'dashboard_id'     => 3,
         'params'           => ['periode' => 'past6months'],
         'embedding_params' => [

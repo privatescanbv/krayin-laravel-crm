@@ -130,15 +130,26 @@ class MetabaseDashboardRegistry
     }
 
     /**
-     * Extra dashboards (everything except the built-in /admin/dashboard page).
+     * Embedded Metabase pages. The native CRM dashboard (`dashboard`) is not one
+     * of these — it only shows click-through links.
      *
      * @return list<array<string, mixed>>
      */
     public function extraPages(): array
     {
+        return $this->pages();
+    }
+
+    /**
+     * Pages the current user may open (used as links on /admin/dashboard).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function visiblePages(): array
+    {
         return array_values(array_filter(
             $this->pages(),
-            fn (array $page): bool => $page['key'] !== 'dashboard'
+            fn (array $page): bool => bouncer()->hasPermission($page['key'])
         ));
     }
 
@@ -213,7 +224,7 @@ class MetabaseDashboardRegistry
         $dashboardId = isset($page['dashboard_id']) ? (int) $page['dashboard_id'] : 0;
         $path = isset($page['path']) ? trim((string) $page['path'], '/') : '';
 
-        if ($key === '' || $dashboardId < 1 || $path === '') {
+        if ($key === '' || $key === 'dashboard' || $dashboardId < 1 || $path === '' || $path === 'dashboard') {
             return null;
         }
 
@@ -228,7 +239,7 @@ class MetabaseDashboardRegistry
         return [
             'key'               => $key,
             'name'              => (string) ($page['name'] ?? $key),
-            'route'             => (string) ($page['route'] ?? $this->defaultRouteName($key, $path)),
+            'route'             => (string) ($page['route'] ?? $this->defaultRouteName($path)),
             'path'              => $path,
             'dashboard_id'      => $dashboardId,
             'params'            => $params,
@@ -241,7 +252,6 @@ class MetabaseDashboardRegistry
     }
 
     /**
-     * @param  mixed  $configured
      * @param  array<string, mixed>  $params
      * @return array<string, string>
      */
@@ -293,12 +303,8 @@ class MetabaseDashboardRegistry
         return $filtered;
     }
 
-    private function defaultRouteName(string $key, string $path): string
+    private function defaultRouteName(string $path): string
     {
-        if ($key === 'dashboard') {
-            return 'admin.dashboard.index';
-        }
-
         return 'admin.'.str_replace('/', '.', $path);
     }
 }

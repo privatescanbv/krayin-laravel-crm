@@ -7,10 +7,6 @@ use Webkul\Admin\Http\Controllers\Dashboard\MetabaseDashboardController;
 $registry = app(MetabaseDashboardRegistry::class);
 
 foreach ($registry->pages() as $page) {
-    if ($page['route'] === 'admin.dashboard.index') {
-        continue;
-    }
-
     Route::get($page['path'], [MetabaseDashboardController::class, 'show'])
         ->defaults('key', $page['key'])
         ->name($page['route']);

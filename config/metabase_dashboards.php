@@ -52,4 +52,24 @@ return [
         'sort'         => 6,
         'icon-class'   => 'icon-dashboard',
     ],
+    [
+        'key'          => 'metabase.omzet-per-maand',
+        'name'         => 'Omzet per maand',
+        'path'         => 'dashboards/omzet-per-maand',
+        'dashboard_id' => 7,
+        'params'       => [],
+        'sort'         => 7,
+        'icon-class'   => 'icon-dashboard',
+    ],
+    [
+        'key'          => 'metabase.verkooporder-op-onderzoeksdatum',
+        'name'         => 'Verkooporder op onderzoeksdatum',
+        'path'         => 'dashboards/verkooporder-op-onderzoeksdatum',
+        'dashboard_id' => 8,
+        'params'       => [
+            'onderzoeksdatum' => 'thisweek',
+        ],
+        'sort'         => 8,
+        'icon-class'   => 'icon-dashboard',
+    ],
 ];

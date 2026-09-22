@@ -303,7 +303,10 @@ services:
 #      - backend
 
   keycloak:
-    image: quay.io/keycloak/keycloak:26.6
+    build:
+      context: .
+      dockerfile: .docker/keycloak/Dockerfile
+    image: crm/keycloak:local
     container_name: keycloak
     restart: unless-stopped
     env_file:

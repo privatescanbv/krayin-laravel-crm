@@ -14,7 +14,7 @@ class EnableMetabaseEmbeds extends Command
     protected $signature = 'metabase:enable-embeds
         {--environment=dev : Metabase environment name from config/services.php}';
 
-    protected $description = 'Zet guest embedding aan in Metabase voor de CRM-dashboardpagina\'s uit config/metabase_dashboards.php.';
+    protected $description = 'Publiceer elk CRM-dashboard in Metabase als guest embed (per dashboard verplicht; HTML-snippet niet plakken).';
 
     public function handle(MetabaseEnvironments $environments, MetabaseEmbeddingService $embedding): int
     {
@@ -45,9 +45,9 @@ class EnableMetabaseEmbeds extends Command
         $secret = $embedding->embeddingSecret($client);
 
         if ($secret === '') {
-            $this->warn('Metabase did not return an embedding-secret-key. Static embeds will fail until that setting exists.');
+            $this->warn('Metabase did not return an embedding-secret-key. Guest embeds will fail until that setting exists.');
         } else {
-            $this->info('Metabase embedding secret is set ('.strlen($secret).' chars). The CRM fetches it via the API — do not put a Metabase API key (mb_...) in METABASE_EMBEDDING_SECRET_KEY.');
+            $this->info('Metabase embedding secret is set ('.strlen($secret).' chars). Put that hex key in METABASE_EMBEDDING_SECRET_KEY — not an API key (mb_...).');
         }
 
         return self::SUCCESS;

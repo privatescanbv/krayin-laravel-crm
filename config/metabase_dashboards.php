@@ -3,12 +3,16 @@
 /**
  * Metabase dashboards shown as CRM admin pages (guest embed via embed.js).
  *
- * You do NOT paste Metabase's HTML snippet per dashboard. One signing secret
- * (the hex METABASE_SECRET_KEY from Metabase's "Server code" — not an API key
- * mb_...) signs JWTs for every page. Per dashboard you only add dashboard_id.
+ * You do NOT paste Metabase's HTML snippet (embed.js / JWT) per dashboard.
+ * One hex signing secret signs JWTs for every page.
  *
- * Add a page: copy an extra entry, set key / path / dashboard_id, then tick
- * the new permission in Instellingen → Rollen.
+ * You DO have to publish each dashboard as a guest embed in Metabase
+ * (Share → Embed → Guest → Publish). `php artisan metabase:enable-embeds`
+ * does that via the API for every entry below.
+ *
+ * Add a page: copy an extra entry, set key / path / dashboard_id, run
+ * `php artisan metabase:enable-embeds`, then tick the new permission in
+ * Instellingen → Rollen.
  *
  * `key` is the ACL + menu permission. `dashboard` reuses the existing Dashboard
  * permission and /admin/dashboard URL. Extra keys (e.g. metabase.verloren-leads)

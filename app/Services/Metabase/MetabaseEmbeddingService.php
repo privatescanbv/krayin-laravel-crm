@@ -5,7 +5,10 @@ namespace App\Services\Metabase;
 use stdClass;
 
 /**
- * Turns static embedding on in a Metabase instance for the CRM dashboard pages.
+ * Publishes CRM dashboard pages as Metabase guest embeds.
+ *
+ * Metabase requires enable_embedding per dashboard (Share → Embed → Publish).
+ * The CRM HTML snippet is shared; only this publish step is per dashboard.
  */
 class MetabaseEmbeddingService
 {
@@ -14,7 +17,7 @@ class MetabaseEmbeddingService
     ) {}
 
     /**
-     * Enable global static embedding and per-dashboard embedding.
+     * Enable guest embedding globally and publish each configured dashboard.
      *
      * @return list<string> Human-readable status lines.
      */
@@ -24,6 +27,15 @@ class MetabaseEmbeddingService
 
         foreach ($this->registry->pages() as $page) {
             $lines[] = $this->enableDashboardEmbedding($client, $page);
+        }
+
+        foreach ($this->otherDashboards($client) as $dashboard) {
+            $lines[] = sprintf(
+                'Metabase dashboard %d (%s) is not a CRM page yet — add dashboard_id => %d to config/metabase_dashboards.php and re-run this command to publish it.',
+                (int) $dashboard['id'],
+                (string) ($dashboard['name'] ?? 'untitled'),
+                (int) $dashboard['id'],
+            );
         }
 
         return $lines;
@@ -54,7 +66,7 @@ class MetabaseEmbeddingService
 
         if (! $enabled) {
             throw new MetabaseApiException(
-                'Metabase ['.$client->label.'] could not enable static embedding (tried: '.implode(', ', $settings).').'
+                'Metabase ['.$client->label.'] could not enable guest embedding (tried: '.implode(', ', $settings).').'
             );
         }
 
@@ -68,15 +80,15 @@ class MetabaseEmbeddingService
     {
         $id = (int) $page['dashboard_id'];
         $dashboard = $client->getDashboard($id);
+        $embeddingParams = $this->embeddingParamsFor($page, $dashboard);
 
-        $embeddingParams = [];
-
-        foreach ($dashboard['parameters'] ?? [] as $parameter) {
-            $slug = $parameter['slug'] ?? null;
-
-            if (is_string($slug) && $slug !== '') {
-                $embeddingParams[$slug] = 'enabled';
-            }
+        if ($this->alreadyPublished($dashboard, $embeddingParams)) {
+            return sprintf(
+                'Dashboard %d (%s) is already published as a guest embed%s.',
+                $id,
+                $page['name'],
+                $embeddingParams === [] ? '' : ' with filters: '.implode(', ', array_keys($embeddingParams))
+            );
         }
 
         $client->updateDashboard($id, [
@@ -85,7 +97,7 @@ class MetabaseEmbeddingService
         ]);
 
         return sprintf(
-            'Enabled embedding for dashboard %d (%s)%s.',
+            'Published guest embed for dashboard %d (%s)%s.',
             $id,
             $page['name'],
             $embeddingParams === [] ? '' : ' with filters: '.implode(', ', array_keys($embeddingParams))
@@ -108,5 +120,89 @@ class MetabaseEmbeddingService
         }
 
         return is_string($fromSetting) ? $fromSetting : '';
+    }
+
+    /**
+     * Dashboards that exist in Metabase but are not registered as CRM pages.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function otherDashboards(MetabaseClient $client): array
+    {
+        $knownIds = array_map(
+            fn (array $page): int => (int) $page['dashboard_id'],
+            $this->registry->pages()
+        );
+
+        try {
+            $listed = $client->listDashboards();
+        } catch (MetabaseApiException) {
+            return [];
+        }
+
+        $others = [];
+
+        foreach ($listed as $dashboard) {
+            $id = (int) ($dashboard['id'] ?? 0);
+
+            if ($id > 0 && ! in_array($id, $knownIds, true)) {
+                $others[] = $dashboard;
+            }
+        }
+
+        return $others;
+    }
+
+    /**
+     * Config embedding_params win per slug; any extra Metabase filter is enabled.
+     *
+     * @param  array<string, mixed>  $page
+     * @param  array<string, mixed>  $dashboard
+     * @return array<string, string>
+     */
+    private function embeddingParamsFor(array $page, array $dashboard): array
+    {
+        $params = [];
+
+        foreach ($dashboard['parameters'] ?? [] as $parameter) {
+            if (! is_array($parameter)) {
+                continue;
+            }
+
+            $slug = $parameter['slug'] ?? null;
+
+            if (is_string($slug) && $slug !== '') {
+                $params[$slug] = 'enabled';
+            }
+        }
+
+        foreach ($page['embedding_params'] ?? [] as $slug => $state) {
+            $params[(string) $slug] = (string) $state;
+        }
+
+        return $params;
+    }
+
+    /**
+     * @param  array<string, mixed>  $dashboard
+     * @param  array<string, string>  $embeddingParams
+     */
+    private function alreadyPublished(array $dashboard, array $embeddingParams): bool
+    {
+        if (($dashboard['enable_embedding'] ?? false) !== true) {
+            return false;
+        }
+
+        $current = $dashboard['embedding_params'] ?? [];
+
+        if (! is_array($current)) {
+            return $embeddingParams === [];
+        }
+
+        ksort($current);
+        $expected = $embeddingParams;
+        ksort($expected);
+
+        return $current === $expected;
     }
 }

@@ -35,6 +35,24 @@ class MetabaseClient
         return $this->get("/dashboard/{$id}");
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function listDashboards(): array
+    {
+        $response = $this->get('/dashboard');
+        $items = $response['data'] ?? $response;
+
+        if (! is_array($items)) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            $items,
+            fn (mixed $item): bool => is_array($item) && isset($item['id'])
+        ));
+    }
+
     public function createDashboard(array $payload): array
     {
         return $this->post('/dashboard', $payload);

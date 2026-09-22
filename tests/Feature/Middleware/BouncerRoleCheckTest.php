@@ -7,6 +7,8 @@ use Webkul\User\Models\Role;
 use Webkul\User\Models\User;
 
 beforeEach(function () {
+    $this->withoutVite();
+
     // Create a role for users
     $this->role = Role::factory()->create([
         'name'            => 'Admin',

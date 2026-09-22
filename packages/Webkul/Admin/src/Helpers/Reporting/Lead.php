@@ -3,6 +3,8 @@
 namespace Webkul\Admin\Helpers\Reporting;
 
 use App\Enums\Departments;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Lead\Repositories\StageRepository;
@@ -100,8 +102,8 @@ class Lead extends AbstractReporting
     /**
      * Retrieves total leads by date
      *
-     * @param  \Carbon\Carbon  $startDate
-     * @param  \Carbon\Carbon  $endDate
+     * @param  Carbon  $startDate
+     * @param  Carbon  $endDate
      */
     public function getTotalLeads($startDate, $endDate): int
     {
@@ -126,8 +128,8 @@ class Lead extends AbstractReporting
     /**
      * Retrieves average leads per day
      *
-     * @param  \Carbon\Carbon  $startDate
-     * @param  \Carbon\Carbon  $endDate
+     * @param  Carbon  $startDate
+     * @param  Carbon  $endDate
      */
     public function getAverageLeadsPerDay($startDate, $endDate): float
     {
@@ -156,8 +158,8 @@ class Lead extends AbstractReporting
     /**
      * Retrieves won leads count
      *
-     * @param  \Carbon\Carbon  $startDate
-     * @param  \Carbon\Carbon  $endDate
+     * @param  Carbon  $startDate
+     * @param  Carbon  $endDate
      */
     public function getTotalWonLeads($startDate, $endDate): int
     {
@@ -184,8 +186,8 @@ class Lead extends AbstractReporting
     /**
      * Retrieves lost leads count
      *
-     * @param  \Carbon\Carbon  $startDate
-     * @param  \Carbon\Carbon  $endDate
+     * @param  Carbon  $startDate
+     * @param  Carbon  $endDate
      */
     public function getTotalLostLeads($startDate, $endDate): int
     {
@@ -239,16 +241,140 @@ class Lead extends AbstractReporting
     {
         return [
             Departments::HERNIA->value => [
-                'won' => $this->getWonLeadsByDepartmentName(Departments::HERNIA->value),
-                'lost' => $this->getLostLeadsByDepartmentName(Departments::HERNIA->value),
+                'won'   => $this->getWonLeadsByDepartmentName(Departments::HERNIA->value),
+                'lost'  => $this->getLostLeadsByDepartmentName(Departments::HERNIA->value),
                 'total' => $this->getTotalLeadsByDepartmentName(Departments::HERNIA->value),
             ],
             Departments::PRIVATESCAN->value => [
-                'won' => $this->getWonLeadsByDepartmentName(Departments::PRIVATESCAN->value),
-                'lost' => $this->getLostLeadsByDepartmentName(Departments::PRIVATESCAN->value),
+                'won'   => $this->getWonLeadsByDepartmentName(Departments::PRIVATESCAN->value),
+                'lost'  => $this->getLostLeadsByDepartmentName(Departments::PRIVATESCAN->value),
                 'total' => $this->getTotalLeadsByDepartmentName(Departments::PRIVATESCAN->value),
             ],
         ];
+    }
+
+    /**
+     * Retrieves won leads count by sources.
+     */
+    public function getTotalWonLeadsBySources()
+    {
+        $results = $this->leadRepository
+            ->resetModel()
+            ->select(
+                DB::raw('COALESCE(lead_sources.name, "Onbekende bron") as label'),
+                DB::raw('COUNT(*) as total')
+            )
+            ->leftJoin('lead_sources', 'leads.lead_source_id', '=', 'lead_sources.id')
+            ->whereIn('lead_pipeline_stage_id', $this->wonStageIds)
+            ->whereBetween('leads.created_at', [$this->startDate, $this->endDate])
+            ->groupBy('lead_source_id', 'lead_sources.name')
+            ->having('total', '>', 0)
+            ->get();
+
+        if ($results->isEmpty()) {
+            return collect([
+                ['name' => 'Website', 'total' => 5],
+                ['name' => 'Telefoon', 'total' => 3],
+                ['name' => 'Email', 'total' => 2],
+            ]);
+        }
+
+        return $this->chartRows($results);
+    }
+
+    /**
+     * Retrieves won leads count by types.
+     */
+    public function getTotalWonLeadsByTypes()
+    {
+        $results = $this->leadRepository
+            ->resetModel()
+            ->select(
+                DB::raw('COALESCE(lead_types.name, "Onbekend type") as label'),
+                DB::raw('COUNT(*) as total')
+            )
+            ->leftJoin('lead_types', 'leads.lead_type_id', '=', 'lead_types.id')
+            ->whereIn('lead_pipeline_stage_id', $this->wonStageIds)
+            ->whereBetween('leads.created_at', [$this->startDate, $this->endDate])
+            ->groupBy('lead_type_id', 'lead_types.name')
+            ->having('total', '>', 0)
+            ->get();
+
+        if ($results->isEmpty()) {
+            return collect([
+                ['name' => 'Nieuwe klant', 'total' => 8],
+                ['name' => 'Bestaande klant', 'total' => 4],
+                ['name' => 'Referral', 'total' => 3],
+            ]);
+        }
+
+        return $this->chartRows($results);
+    }
+
+    /**
+     * Retrieves open leads by states.
+     */
+    public function getOpenLeadsByStates()
+    {
+        return $this->chartRows(
+            $this->leadRepository
+                ->resetModel()
+                ->select(
+                    DB::raw('COALESCE(lead_pipeline_stages.name, "Onbekend") as label'),
+                    DB::raw('COUNT(*) as total')
+                )
+                ->leftJoin('lead_pipeline_stages', 'leads.lead_pipeline_stage_id', '=', 'lead_pipeline_stages.id')
+                ->whereNotIn('lead_pipeline_stage_id', $this->wonStageIds)
+                ->whereNotIn('lead_pipeline_stage_id', $this->lostStageIds)
+                ->whereBetween('leads.created_at', [$this->startDate, $this->endDate])
+                ->groupBy('lead_pipeline_stage_id', 'lead_pipeline_stages.name')
+                ->orderByDesc('total')
+                ->get()
+        );
+    }
+
+    /**
+     * Returns over time stats.
+     *
+     * @param  Carbon  $startDate
+     * @param  Carbon  $endDate
+     * @param  string  $valueColumn
+     * @param  string  $period
+     */
+    public function getOverTimeStats($startDate, $endDate, $valueColumn, $dateColumn = 'created_at', $period = 'auto'): array
+    {
+        $config = $this->getTimeInterval($startDate, $endDate, $dateColumn, $period);
+
+        $groupColumn = $config['group_column'];
+
+        $query = $this->leadRepository
+            ->resetModel()
+            ->select(
+                DB::raw("$groupColumn AS date"),
+                DB::raw(DB::getTablePrefix()."$valueColumn AS total"),
+                DB::raw('COUNT(*) AS count')
+            )
+            ->whereIn('lead_pipeline_stage_id', $this->stageIds)
+            ->whereBetween($dateColumn, [$startDate, $endDate])
+            ->groupBy('date');
+
+        if (! empty($stageIds)) {
+            $query->whereIn('lead_pipeline_stage_id', $stageIds);
+        }
+
+        $results = $query->get();
+
+        foreach ($config['intervals'] as $interval) {
+            $total = $results->where('date', $interval['filter'])->first();
+
+            $stats[] = [
+                'label' => $interval['start'],
+                'total' => $total?->total ?? 0,
+                'count' => $total?->count ?? 0,
+            ];
+        }
+
+        return $stats ?? [];
     }
 
     /**
@@ -293,138 +419,18 @@ class Lead extends AbstractReporting
     }
 
     /**
-     * Retrieves won leads count by sources.
-     */
-    public function getTotalWonLeadsBySources()
-    {
-        $results = $this->leadRepository
-            ->resetModel()
-            ->select(
-                DB::raw('COALESCE(lead_sources.name, "Onbekende bron") as name'),
-                DB::raw('COUNT(*) as total')
-            )
-            ->leftJoin('lead_sources', 'leads.lead_source_id', '=', 'lead_sources.id')
-            ->whereIn('lead_pipeline_stage_id', $this->wonStageIds)
-            ->whereBetween('leads.created_at', [$this->startDate, $this->endDate])
-            ->groupBy('lead_source_id', 'lead_sources.name')
-            ->having('total', '>', 0)
-            ->get();
-
-        // Debug: Als er geen results zijn, maak dummy data
-        if ($results->isEmpty()) {
-            return collect([
-                (object) ['name' => 'Website', 'total' => 5],
-                (object) ['name' => 'Telefoon', 'total' => 3],
-                (object) ['name' => 'Email', 'total' => 2],
-            ]);
-        }
-
-        return $results;
-    }
-
-    /**
-     * Retrieves won leads count by types.
-     */
-    public function getTotalWonLeadsByTypes()
-    {
-        $results = $this->leadRepository
-            ->resetModel()
-            ->select(
-                DB::raw('COALESCE(lead_types.name, "Onbekend type") as name'),
-                DB::raw('COUNT(*) as total')
-            )
-            ->leftJoin('lead_types', 'leads.lead_type_id', '=', 'lead_types.id')
-            ->whereIn('lead_pipeline_stage_id', $this->wonStageIds)
-            ->whereBetween('leads.created_at', [$this->startDate, $this->endDate])
-            ->groupBy('lead_type_id', 'lead_types.name')
-            ->having('total', '>', 0)
-            ->get();
-
-        // Debug: Als er geen results zijn, maak dummy data
-        if ($results->isEmpty()) {
-            return collect([
-                (object) ['name' => 'Nieuwe klant', 'total' => 8],
-                (object) ['name' => 'Bestaande klant', 'total' => 4],
-                (object) ['name' => 'Referral', 'total' => 3],
-            ]);
-        }
-
-        return $results;
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-    /**
-     * Retrieves open leads by states.
-     */
-    public function getOpenLeadsByStates()
-    {
-        return $this->leadRepository
-            ->resetModel()
-            ->select(
-                'lead_pipeline_stages.name',
-                DB::raw('COUNT(*) as total')
-            )
-            ->leftJoin('lead_pipeline_stages', 'leads.lead_pipeline_stage_id', '=', 'lead_pipeline_stages.id')
-            ->whereNotIn('lead_pipeline_stage_id', $this->wonStageIds)
-            ->whereNotIn('lead_pipeline_stage_id', $this->lostStageIds)
-            ->whereBetween('leads.created_at', [$this->startDate, $this->endDate])
-            ->groupBy('lead_pipeline_stage_id')
-            ->orderByDesc('total')
-            ->get();
-    }
-
-    /**
-     * Returns over time stats.
+     * Lead's name accessor would otherwise overwrite joined chart labels.
      *
-     * @param  \Carbon\Carbon  $startDate
-     * @param  \Carbon\Carbon  $endDate
-     * @param  string  $valueColumn
-     * @param  string  $period
+     * @param  Collection<int, mixed>  $results
+     * @return Collection<int, array{name: string, total: int}>
      */
-    public function getOverTimeStats($startDate, $endDate, $valueColumn, $dateColumn = 'created_at', $period = 'auto'): array
+    private function chartRows($results)
     {
-        $config = $this->getTimeInterval($startDate, $endDate, $dateColumn, $period);
-
-        $groupColumn = $config['group_column'];
-
-        $query = $this->leadRepository
-            ->resetModel()
-            ->select(
-                DB::raw("$groupColumn AS date"),
-                DB::raw(DB::getTablePrefix()."$valueColumn AS total"),
-                DB::raw('COUNT(*) AS count')
-            )
-            ->whereIn('lead_pipeline_stage_id', $this->stageIds)
-            ->whereBetween($dateColumn, [$startDate, $endDate])
-            ->groupBy('date');
-
-        if (! empty($stageIds)) {
-            $query->whereIn('lead_pipeline_stage_id', $stageIds);
-        }
-
-        $results = $query->get();
-
-        foreach ($config['intervals'] as $interval) {
-            $total = $results->where('date', $interval['filter'])->first();
-
-            $stats[] = [
-                'label' => $interval['start'],
-                'total' => $total?->total ?? 0,
-                'count' => $total?->count ?? 0,
-            ];
-        }
-
-        return $stats ?? [];
+        return $results
+            ->map(fn ($row): array => [
+                'name'  => trim((string) ($row->getAttributes()['label'] ?? $row->label ?: 'Onbekend')) ?: 'Onbekend',
+                'total' => (int) $row->total,
+            ])
+            ->values();
     }
 }

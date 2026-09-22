@@ -1,3 +1,7 @@
+@props([
+    'compact' => false,
+])
+
 <!DOCTYPE html>
 
 <html
@@ -117,16 +121,22 @@
 
             <div class="flex min-h-[calc(100vh-62px)] max-w-full flex-1 flex-col bg-neutral-bg transition-all duration-300 dark:bg-gray-950">
                 <!-- Page Content Blade Component -->
-                <div class="px-4 pb-6 ltr:lg:pl-[85px] rtl:lg:pr-[85px]">
+                <div @class([
+                    'ltr:lg:pl-[85px] rtl:lg:pr-[85px]',
+                    'flex min-h-0 flex-1 flex-col' => $compact,
+                    'px-4 pb-6' => ! $compact,
+                ])>
                     {{ $slot }}
                 </div>
 
-                <!-- Powered By -->
-                <div class="mt-auto pt-6">
-                    <div class="border-t bg-white py-5 text-center text-sm font-normal dark:border-gray-800 dark:bg-gray-900 dark:text-white max-md:py-3">
-                        <p>© {{ now()->year }} Privatescan</p>
+                @unless ($compact)
+                    <!-- Powered By -->
+                    <div class="mt-auto pt-6">
+                        <div class="border-t bg-white py-5 text-center text-sm font-normal dark:border-gray-800 dark:bg-gray-900 dark:text-white max-md:py-3">
+                            <p>© {{ now()->year }} Privatescan</p>
+                        </div>
                     </div>
-                </div>
+                @endunless
             </div>
         </div>
 

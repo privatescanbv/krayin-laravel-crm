@@ -29,29 +29,35 @@
 
                 <!-- Doughnut Chart -->
                 <div
-                    class="flex w-full max-w-full flex-col gap-4 px-8 pt-8"
+                    class="flex w-full flex-col gap-4"
                     v-if="report.statistics.length"
                 >
-                    <x-admin::charts.doughnut
-                        ::labels="chartLabels"
-                        ::datasets="chartDatasets"
-                    />
+                    <div class="mx-auto h-52 w-full max-w-[220px]">
+                        <x-admin::charts.doughnut
+                            ::labels="chartLabels"
+                            ::datasets="chartDatasets"
+                        />
+                    </div>
 
-                    <div class="flex flex-wrap justify-center gap-5">
-                        <div
-                            class="flex items-center gap-2 whitespace-nowrap"
+                    <ul class="flex flex-col gap-2">
+                        <li
+                            class="flex items-start justify-between gap-3 text-sm text-gray-800 dark:text-gray-200"
                             v-for="(stat, index) in report.statistics"
                         >
-                            <span
-                                class="h-3.5 w-3.5 rounded-sm"
-                                :style="{ backgroundColor: colors[index] }"
-                            ></span>
-
-                            <p class="text-xs dark:text-gray-300">
-                                @{{ stat.name }}
-                            </p>
-                        </div>
-                    </div>
+                            <span class="flex min-w-0 items-start gap-2">
+                                <span
+                                    class="mt-1 h-3 w-3 shrink-0 rounded-sm"
+                                    :style="{ backgroundColor: colors[index] }"
+                                ></span>
+                                <span class="min-w-0 flex-1 leading-5">
+                                    @{{ stat.name || 'Onbekend' }}
+                                </span>
+                            </span>
+                            <span class="shrink-0 font-semibold tabular-nums">
+                                @{{ stat.total }}
+                            </span>
+                        </li>
+                    </ul>
                 </div>
 
                 <!-- Empty Product Design -->
@@ -94,6 +100,15 @@
                         '#8979FF',
                         '#FF928A',
                         '#3CC3DF',
+                        '#FFAE4C',
+                        '#54C392',
+                        '#F4B942',
+                        '#5B8DEF',
+                        '#E879F9',
+                        '#FB7185',
+                        '#34D399',
+                        '#A78BFA',
+                        '#F97316',
                     ],
 
                     isLoading: true,
@@ -102,7 +117,7 @@
 
             computed: {
                 chartLabels() {
-                    return this.report.statistics.map(({ name }) => name);
+                    return this.report.statistics.map(({ name }) => name || 'Onbekend');
                 },
 
                 chartDatasets() {

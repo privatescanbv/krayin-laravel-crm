@@ -8,7 +8,7 @@
     >
         <canvas
             :id="$.uid + '_chart'"
-            class="flex w-full max-w-full items-end"
+            class="h-full w-full max-w-full"
         ></canvas>
     </script>
 
@@ -54,6 +54,7 @@
                         },
                 
                         options: {
+                            maintainAspectRatio: false,
                             plugins: {
                                 legend: {
                                     display: false

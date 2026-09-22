@@ -88,3 +88,8 @@ require 'inkoop-routes.php';
  * Reports routes.
  */
 require 'reports-routes.php';
+
+/**
+ * Embedded Metabase dashboard pages (extra pages from config/metabase_dashboards.php).
+ */
+require 'metabase-dashboard-routes.php';

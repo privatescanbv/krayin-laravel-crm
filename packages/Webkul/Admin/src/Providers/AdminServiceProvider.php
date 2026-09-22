@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PartnerProduct;
 use App\Models\SalesLead;
+use App\Services\Metabase\MetabaseDashboardRegistry;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\AliasLoader;
@@ -99,6 +100,8 @@ class AdminServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(dirname(__DIR__).'/Config/acl.php', 'acl');
 
         $this->mergeConfigFrom(dirname(__DIR__).'/Config/menu.php', 'menu.admin');
+
+        (new MetabaseDashboardRegistry)->mergeAclAndMenu();
 
         $this->mergeConfigFrom(dirname(__DIR__).'/Config/core_config.php', 'core_config');
 

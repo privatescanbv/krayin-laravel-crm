@@ -4,6 +4,7 @@ use Webkul\User\Models\Role;
 use Webkul\User\Models\User;
 
 beforeEach(function () {
+    $this->withoutVite();
 
     $this->adminUserEmail = 'admin_authtest@example.com';
     if (! User::query()->where('email', $this->adminUserEmail)->exists()) {

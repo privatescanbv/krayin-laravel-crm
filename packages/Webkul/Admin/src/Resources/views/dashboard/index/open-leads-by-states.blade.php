@@ -27,28 +27,28 @@
                     </p>
                 </div>
 
-                <!-- Doughnut Chart -->
+                <!-- Funnel Chart -->
                 <div
-                    class="relative flex w-full max-w-full flex-col gap-4"
+                    class="flex w-full flex-col gap-4"
                     v-if="report.statistics.length"
                 >
-                    <canvas
-                        :id="$.uid + '_chart'"
-                        class="w-full max-w-full items-end px-12"
-                        :style="{ height: report.statistics.length * 60 + 'px' }"
-                    ></canvas>
+                    <div class="h-48 w-full">
+                        <canvas
+                            :id="$.uid + '_chart'"
+                            class="h-full w-full"
+                        ></canvas>
+                    </div>
 
-                    <ul class="absolute flex w-full flex-col">
+                    <ul class="flex flex-col gap-2">
                         <li
-                            class="flex w-full flex-col border-b border-gray-200 pb-[9px] pt-2.5 last:border-none dark:border-gray-800"
-                            v-for="(stat, index) in report.statistics"
+                            class="flex items-start justify-between gap-3 text-sm text-gray-800 dark:text-gray-200"
+                            v-for="stat in report.statistics"
                         >
-                            <span class="text-sm font-semibold dark:text-gray-100">
-                                @{{ stat.total }}
+                            <span class="min-w-0 flex-1 leading-5">
+                                @{{ stat.name || 'Onbekend' }}
                             </span>
-
-                            <span class="text-sm font-semibold dark:text-gray-100">
-                                @{{ stat.name }}
+                            <span class="shrink-0 font-semibold tabular-nums">
+                                @{{ stat.total }}
                             </span>
                         </li>
                     </ul>
@@ -146,7 +146,7 @@
                         type: 'funnel',
 
                         data: {
-                            labels: this.report.statistics.map(stat => stat.name),
+                            labels: this.report.statistics.map(stat => stat.name || 'Onbekend'),
                             datasets: [
                                 {
                                     data: this.report.statistics.map(stat => stat.total),
@@ -159,6 +159,20 @@
 
                         options: {
                             indexAxis: 'y',
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false,
+                                },
+                            },
+                            scales: {
+                                x: {
+                                    display: false,
+                                },
+                                y: {
+                                    display: false,
+                                },
+                            },
                         },
                     });
                 }

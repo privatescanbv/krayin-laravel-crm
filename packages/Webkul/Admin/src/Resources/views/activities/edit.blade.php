@@ -345,6 +345,7 @@
             entity-control-name="{{ $mailEntityControlName }}"
             :show-button="false"
             :activity-id="$activity->id"
+            :emails="method_exists($mailEntity, 'resolveDefaultEmails') ? $mailEntity->resolveDefaultEmails() : []"
         />
     @endif
 

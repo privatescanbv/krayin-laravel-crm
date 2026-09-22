@@ -325,6 +325,7 @@
             entity-control-name="lead_id"
             :show-button="false"
             :activity-id="$activity->id"
+            :emails="$activity->lead->resolveDefaultEmails()"
         />
     @endif
 

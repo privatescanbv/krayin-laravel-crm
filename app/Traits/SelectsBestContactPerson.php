@@ -41,5 +41,16 @@ trait SelectsBestContactPerson
             ->first()['person'];
     }
 
+    /**
+     * Emails to pre-fill when composing a mail for this entity: the best contact
+     * person's emails, or none when no person is linked.
+     *
+     * @return array<int, mixed>
+     */
+    public function resolveDefaultEmails(): array
+    {
+        return $this->getContactPersonOrFirstPerson()?->emails ?? [];
+    }
+
     abstract protected function getLeadForScoring(): ?Lead;
 }

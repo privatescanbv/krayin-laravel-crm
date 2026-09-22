@@ -303,7 +303,10 @@ services:
 #      - backend
 
   keycloak:
-    image: quay.io/keycloak/keycloak:26.6
+    build:
+      context: .
+      dockerfile: .docker/keycloak/Dockerfile
+    image: crm/keycloak:local
     container_name: keycloak
     restart: unless-stopped
     env_file:
@@ -332,10 +335,6 @@ services:
     networks:
       public:
       backend:
-    volumes:
-      - ./.docker/keycloak/providers:/opt/keycloak/providers
-      - ./.docker/keycloak/themes:/opt/keycloak/themes-src:ro
-      - ./.docker/keycloak/docker-entrypoint.sh:/opt/keycloak/docker-entrypoint.sh:ro
     depends_on:
       - keycloak-db
     labels:

@@ -8,5 +8,5 @@ fi
 sed -i "s|\${env.FORMS_FRONTEND_URL}|${FORMS_FRONTEND_URL:-}|g" \
     /opt/keycloak/themes/privatescan/login/theme.properties
 
-/opt/keycloak/bin/kc.sh build --features=token-exchange
+/opt/keycloak/bin/kc.sh build --features-disabled=token-exchange
 exec /opt/keycloak/bin/kc.sh start --optimized

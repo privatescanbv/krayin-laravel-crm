@@ -9,10 +9,32 @@
         </p>
     </div>
 
-    <iframe
-        src="{{ $embedUrl }}"
-        class="h-[calc(100vh-9.5rem)] w-full rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
-        title="{{ $title }}"
-        allow="fullscreen"
-    ></iframe>
+    <div class="h-[calc(100vh-9.5rem)] w-full overflow-auto rounded-lg border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
+        <metabase-dashboard
+            token="{{ $token }}"
+            with-title="true"
+            with-downloads="true"
+            @if ($initialParams !== [])
+                initial-parameters='@json($initialParams)'
+            @endif
+        ></metabase-dashboard>
+    </div>
+
+    @pushOnce('scripts')
+        <script>
+            function defineMetabaseConfig(config) {
+                window.metabaseConfig = config;
+            }
+
+            defineMetabaseConfig({
+                theme: { preset: 'light' },
+                isGuest: true,
+                instanceUrl: @json($instanceUrl),
+            });
+        </script>
+        <script
+            defer
+            src="{{ $instanceUrl }}/app/embed.js"
+        ></script>
+    @endPushOnce
 </x-admin::layouts>

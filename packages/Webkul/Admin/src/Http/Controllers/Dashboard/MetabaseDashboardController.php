@@ -32,17 +32,21 @@ class MetabaseDashboardController extends Controller
         }
 
         try {
-            $embedUrl = $this->embedUrls->forDashboard(
+            $token = $this->embedUrls->token(
                 $page['dashboard_id'],
-                $page['params'],
+                $page['jwt_params'],
+                $page['embedding_params'],
             );
+            $instanceUrl = $this->embedUrls->instanceUrl();
         } catch (MetabaseEmbedException $e) {
             abort(503, $e->getMessage());
         }
 
         return view('admin::dashboard.metabase', [
-            'title'    => trans($page['name']),
-            'embedUrl' => $embedUrl,
+            'title'          => trans($page['name']),
+            'token'          => $token,
+            'instanceUrl'    => $instanceUrl,
+            'initialParams'  => $page['initial_params'],
         ]);
     }
 

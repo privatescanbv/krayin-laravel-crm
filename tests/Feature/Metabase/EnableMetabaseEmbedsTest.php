@@ -10,8 +10,9 @@ beforeEach(function () {
     ]);
 });
 
-it('enables static embedding globally and per configured dashboard', function () {
+it('enables guest embedding globally and per configured dashboard', function () {
     Http::fake([
+        MB_DEV.'/api/setting/enable-embedding-simple' => Http::response('true', 200),
         MB_DEV.'/api/setting/enable-embedding-static' => Http::response('true', 200),
         MB_DEV.'/api/setting/enable-embedding'        => Http::response('true', 200),
         MB_DEV.'/api/dashboard/3'                     => Http::response([
@@ -25,12 +26,17 @@ it('enables static embedding globally and per configured dashboard', function ()
                 ['slug' => 'periode'],
             ],
         ], 200),
+        MB_DEV.'/api/session/properties'              => Http::response([
+            'embedding-secret-key' => 'real-embed-secret',
+            'version'              => ['tag' => 'v0.62.0'],
+        ], 200),
     ]);
 
     $this->artisan('metabase:enable-embeds --environment=dev')
         ->assertSuccessful()
-        ->expectsOutputToContain('enable-embedding-static')
-        ->expectsOutputToContain('dashboard 3');
+        ->expectsOutputToContain('enable-embedding-simple')
+        ->expectsOutputToContain('dashboard 3')
+        ->expectsOutputToContain('embedding secret is set');
 
     Http::assertSent(function ($request) {
         return $request->method() === 'PUT'
@@ -53,12 +59,16 @@ it('enables static embedding globally and per configured dashboard', function ()
 
 it('falls back to enable-embedding when the static setting is unknown', function () {
     Http::fake([
+        MB_DEV.'/api/setting/enable-embedding-simple'  => Http::response(['message' => 'not found'], 404),
         MB_DEV.'/api/setting/enable-embedding-static' => Http::response(['message' => 'not found'], 404),
         MB_DEV.'/api/setting/enable-embedding'        => Http::response('true', 200),
         MB_DEV.'/api/dashboard/3'                     => Http::response([
             'id'         => 3,
             'name'       => 'Leads per maand',
             'parameters' => [],
+        ], 200),
+        MB_DEV.'/api/session/properties'              => Http::response([
+            'embedding-secret-key' => 'real-embed-secret',
         ], 200),
     ]);
 

@@ -105,6 +105,20 @@ class MetabaseClient
         return $this->sendJsonValue('put', '/setting/'.$key, $value);
     }
 
+    /**
+     * GET /api/setting/{key} — value may be a string, boolean, object, …
+     */
+    public function getSetting(string $key): mixed
+    {
+        return $this->sendJsonValue('get', '/setting/'.$key, null);
+    }
+
+    /** Session properties including embedding-secret-key when the API key is an admin key. */
+    public function sessionProperties(): array
+    {
+        return $this->get('/session/properties');
+    }
+
     /** Metabase version string, e.g. "v0.49.6" (empty when unavailable). */
     public function version(): string
     {
@@ -151,9 +165,13 @@ class MetabaseClient
     private function sendJsonValue(string $method, string $path, mixed $payload): mixed
     {
         try {
-            $response = $this->request()
-                ->withBody(json_encode($payload, JSON_THROW_ON_ERROR), 'application/json')
-                ->send(strtoupper($method), $path);
+            $request = $this->request();
+
+            if ($payload !== null && strtolower($method) !== 'get') {
+                $request = $request->withBody(json_encode($payload, JSON_THROW_ON_ERROR), 'application/json');
+            }
+
+            $response = $request->send(strtoupper($method), $path);
         } catch (ConnectionException $e) {
             throw MetabaseApiException::connection($this->label, $method, $path, $e);
         }

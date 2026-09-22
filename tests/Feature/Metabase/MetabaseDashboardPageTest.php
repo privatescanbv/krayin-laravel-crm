@@ -22,17 +22,19 @@ beforeEach(function () {
     $this->withoutVite();
 });
 
-it('renders the metabase iframe on the admin dashboard', function () {
+it('renders the metabase guest embed on the admin dashboard', function () {
     $user = makeCustomUser(['dashboard']);
 
     $this->actingAs($user, 'user')
         ->get(route('admin.dashboard.index'))
         ->assertOk()
-        ->assertSee('iframe', false)
-        ->assertSee('/embed/dashboard/', false)
-        ->assertSee('#bordered=false&amp;titled=true', false)
-        ->assertDontSee('v-dashboard-overall-stats', false)
-        ->assertDontSee('Rapportages', false);
+        ->assertSee('metabase-dashboard', false)
+        ->assertSee('/app/embed.js', false)
+        ->assertSee('isGuest', false)
+        ->assertSee('initial-parameters', false)
+        ->assertSee('past6months', false)
+        ->assertDontSee('<iframe', false)
+        ->assertDontSee('v-dashboard-overall-stats', false);
 });
 
 it('denies the dashboard without the dashboard permission', function () {
@@ -78,7 +80,8 @@ it('renders an extra metabase page for a role that may view it', function () {
         ->get(route('admin.metabase-dashboards.show', ['slug' => 'secret']))
         ->assertOk()
         ->assertSee('Secret dashboard', false)
-        ->assertSee('/embed/dashboard/', false);
+        ->assertSee('metabase-dashboard', false)
+        ->assertSee('initial-parameters', false);
 });
 
 it('returns 404 for an unknown extra dashboard slug', function () {

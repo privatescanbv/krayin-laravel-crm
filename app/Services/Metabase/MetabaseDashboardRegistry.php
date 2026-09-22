@@ -19,6 +19,9 @@ class MetabaseDashboardRegistry
      *     path: string,
      *     dashboard_id: int,
      *     params: array<string, mixed>,
+     *     embedding_params: array<string, string>,
+     *     jwt_params: array<string, mixed>,
+     *     initial_params: array<string, mixed>,
      *     sort: int,
      *     icon-class: string
      * }>
@@ -220,16 +223,74 @@ class MetabaseDashboardRegistry
             $params = [];
         }
 
+        $embeddingParams = $this->normalizeEmbeddingParams($page['embedding_params'] ?? null, $params);
+
         return [
-            'key'          => $key,
-            'name'         => (string) ($page['name'] ?? $key),
-            'route'        => (string) ($page['route'] ?? $this->defaultRouteName($key, $path)),
-            'path'         => $path,
-            'dashboard_id' => $dashboardId,
-            'params'       => $params,
-            'sort'         => (int) ($page['sort'] ?? 50),
-            'icon-class'   => (string) ($page['icon-class'] ?? 'icon-dashboard'),
+            'key'               => $key,
+            'name'              => (string) ($page['name'] ?? $key),
+            'route'             => (string) ($page['route'] ?? $this->defaultRouteName($key, $path)),
+            'path'              => $path,
+            'dashboard_id'      => $dashboardId,
+            'params'            => $params,
+            'embedding_params'  => $embeddingParams,
+            'jwt_params'        => $this->paramsForState($params, $embeddingParams, 'locked'),
+            'initial_params'    => $this->paramsForState($params, $embeddingParams, 'enabled'),
+            'sort'              => (int) ($page['sort'] ?? 50),
+            'icon-class'        => (string) ($page['icon-class'] ?? 'icon-dashboard'),
         ];
+    }
+
+    /**
+     * @param  mixed  $configured
+     * @param  array<string, mixed>  $params
+     * @return array<string, string>
+     */
+    private function normalizeEmbeddingParams(mixed $configured, array $params): array
+    {
+        if (is_array($configured) && $configured !== []) {
+            $normalized = [];
+
+            foreach ($configured as $slug => $state) {
+                $normalized[(string) $slug] = (string) $state;
+            }
+
+            return $normalized;
+        }
+
+        $normalized = [];
+
+        foreach (array_keys($params) as $slug) {
+            $normalized[(string) $slug] = 'enabled';
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Guest embeds: locked filter values go in the JWT `params`; editable
+     * defaults go on the web component as `initial-parameters`.
+     *
+     * @param  array<string, mixed>  $params
+     * @param  array<string, string>  $embeddingParams
+     * @return array<string, mixed>
+     */
+    private function paramsForState(array $params, array $embeddingParams, string $state): array
+    {
+        $filtered = [];
+
+        foreach ($params as $slug => $value) {
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            $paramState = $embeddingParams[(string) $slug] ?? 'enabled';
+
+            if ($paramState === $state) {
+                $filtered[(string) $slug] = $value;
+            }
+        }
+
+        return $filtered;
     }
 
     private function defaultRouteName(string $key, string $path): string

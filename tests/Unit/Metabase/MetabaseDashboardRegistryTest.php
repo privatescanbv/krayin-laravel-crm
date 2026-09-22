@@ -9,7 +9,16 @@ it('normalizes the built-in dashboard page from config', function () {
         ->and($page['dashboard_id'])->toBe(3)
         ->and($page['route'])->toBe('admin.dashboard.index')
         ->and($page['path'])->toBe('dashboard')
-        ->and($page['params'])->toBe(['periode' => 'past6months']);
+        ->and($page['params'])->toBe(['periode' => 'past6months'])
+        ->and($page['jwt_params'])->toBe([])
+        ->and($page['initial_params'])->toBe(['periode' => 'past6months'])
+        ->and($page['embedding_params'])->toBe([
+            'periode'  => 'enabled',
+            'afdeling' => 'enabled',
+            'campagne' => 'enabled',
+            'leadbron' => 'enabled',
+            'maand'    => 'enabled',
+        ]);
 });
 
 it('does not emit acl or menu items for the existing dashboard key', function () {
@@ -17,6 +26,28 @@ it('does not emit acl or menu items for the existing dashboard key', function ()
 
     expect($registry->aclItems())->toBe([])
         ->and($registry->menuItems())->toBe([]);
+});
+
+it('puts locked config params in the jwt and enabled params as initial values', function () {
+    config(['metabase_dashboards' => [[
+        'key'          => 'dashboard',
+        'name'         => 'Dashboard',
+        'path'         => 'dashboard',
+        'dashboard_id' => 3,
+        'params'       => [
+            'periode'  => 'past6months',
+            'afdeling' => 'sales',
+        ],
+        'embedding_params' => [
+            'periode'  => 'enabled',
+            'afdeling' => 'locked',
+        ],
+    ]]]);
+
+    $page = (new MetabaseDashboardRegistry)->findByKey('dashboard');
+
+    expect($page['jwt_params'])->toBe(['afdeling' => 'sales'])
+        ->and($page['initial_params'])->toBe(['periode' => 'past6months']);
 });
 
 it('builds nested acl and menu items for extra dashboards', function () {

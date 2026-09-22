@@ -1,11 +1,14 @@
 <?php
 
 /**
- * Metabase dashboards shown as CRM admin pages.
+ * Metabase dashboards shown as CRM admin pages (guest embed via embed.js).
  *
- * Add a page: copy an extra entry, set key / path / dashboard_id, then:
- *  1. php artisan metabase:enable-embeds  (once per environment, if embedding is off)
- *  2. Instellingen → Rollen: tick the new permission
+ * You do NOT paste Metabase's HTML snippet per dashboard. One signing secret
+ * (the hex METABASE_SECRET_KEY from Metabase's "Server code" — not an API key
+ * mb_...) signs JWTs for every page. Per dashboard you only add dashboard_id.
+ *
+ * Add a page: copy an extra entry, set key / path / dashboard_id, then tick
+ * the new permission in Instellingen → Rollen.
  *
  * `key` is the ACL + menu permission. `dashboard` reuses the existing Dashboard
  * permission and /admin/dashboard URL. Extra keys (e.g. metabase.verloren-leads)
@@ -21,6 +24,13 @@ return [
         'params'       => [
             'periode' => 'past6months',
         ],
+        'embedding_params' => [
+            'periode'  => 'enabled',
+            'afdeling' => 'enabled',
+            'campagne' => 'enabled',
+            'leadbron' => 'enabled',
+            'maand'    => 'enabled',
+        ],
         'sort'         => 1,
         'icon-class'   => 'icon-dashboard',
     ],
@@ -30,8 +40,15 @@ return [
     //     'key'          => 'metabase.verloren-leads',
     //     'name'         => 'Verloren leads',
     //     'path'         => 'dashboards/verloren-leads',
-    //     'dashboard_id' => 4,
+    //     'dashboard_id' => 5,
     //     'params'       => [],
+    //     'embedding_params' => [
+    //         'periode'  => 'enabled',
+    //         'afdeling' => 'enabled',
+    //         'campagne' => 'enabled',
+    //         'bron'     => 'enabled',
+    //         'maand'    => 'enabled',
+    //     ],
     //     'sort'         => 2,
     //     'icon-class'   => 'icon-dashboard',
     // ],

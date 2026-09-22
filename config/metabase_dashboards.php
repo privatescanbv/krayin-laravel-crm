@@ -22,7 +22,7 @@ return [
         'params'       => [
             'periode' => 'past6months',
         ],
-        'sort'         => 1,
+        'sort'         => 3,
         'icon-class'   => 'icon-dashboard',
     ],
     [
@@ -31,7 +31,16 @@ return [
         'path'         => 'dashboards/verloren-leads',
         'dashboard_id' => 4,
         'params'       => [],
-        'sort'         => 2,
+        'sort'         => 4,
+        'icon-class'   => 'icon-dashboard',
+    ],
+    [
+        'key'          => 'metabase.orders-per-maand',
+        'name'         => 'Orders per maand',
+        'path'         => 'dashboards/orders-per-maand',
+        'dashboard_id' => 5,
+        'params'       => [],
+        'sort'         => 5,
         'icon-class'   => 'icon-dashboard',
     ],
     [
@@ -40,7 +49,7 @@ return [
         'path'         => 'dashboards/omzet-per-medewerker',
         'dashboard_id' => 6,
         'params'       => [],
-        'sort'         => 3,
+        'sort'         => 6,
         'icon-class'   => 'icon-dashboard',
     ],
 ];

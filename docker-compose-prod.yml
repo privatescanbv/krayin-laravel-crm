@@ -5,7 +5,6 @@ services:
     container_name: traefik
     restart: unless-stopped
     command:
-      - --api.dashboard=true
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
       - --providers.docker.network=public
@@ -224,8 +223,6 @@ services:
     image: grafana/loki:latest
     container_name: loki
     restart: unless-stopped
-    ports:
-      - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - loki-data:/loki

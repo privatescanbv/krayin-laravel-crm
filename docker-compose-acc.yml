@@ -215,8 +215,6 @@ services:
     image: grafana/loki:latest
     container_name: loki
     restart: unless-stopped
-    ports:
-      - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - loki-data:/loki
@@ -553,6 +551,43 @@ services:
       - public
       - backend
 
+  orthanc:
+    image: orthancteam/orthanc:latest
+    container_name: orthanc
+    restart: unless-stopped
+    environment:
+      ORTHANC__NAME: "MRI PACS"
+      # Beveiliging
+      ORTHANC__REMOTE_ACCESS_ALLOWED: "true"
+      ORTHANC__AUTHENTICATION_ENABLED: "true"
+      ORTHANC__REGISTERED_USERS: >-
+        {"admin":"${ORTHANC_ADMIN_PASSWORD}"}
+      # DICOM
+      ORTHANC__DICOM_AET: "ORTHANC"
+      ORTHANC__DICOM_PORT: "4242"
+      # DICOMweb
+      DICOM_WEB_PLUGIN_ENABLED: "true"
+      ORTHANC__DICOM_WEB__ROOT: "/dicom-web/"
+      # OHIF-webviewer
+      OHIF_PLUGIN_ENABLED: "true"
+      ORTHANC__OHIF__DATA_SOURCE: "dicom-web"
+      # Opslag
+      ORTHANC__STORAGE_COMPRESSION: "true"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.orthanc.rule=Host("pacs.${PRIVATESCAN_BASE_DOMAIN}")
+      - traefik.http.routers.orthanc.entrypoints=https
+      - traefik.http.routers.orthanc.tls=true
+      - traefik.http.routers.orthanc.tls.certresolver=myresolver
+      - traefik.http.routers.orthanc.service=orthanc-svc
+      - traefik.http.services.orthanc-svc.loadbalancer.server.port=8042
+      - traefik.docker.network=public
+      - logging=promtail
+    volumes:
+      - orthanc-data:/var/lib/orthanc/db
+    networks:
+      - public
+
 networks:
   backend:
     driver: bridge
@@ -565,4 +600,6 @@ volumes:
   grafana-data:
     driver: local
   keycloak-db-data:
+    driver: local
+  orthanc-data:
     driver: local

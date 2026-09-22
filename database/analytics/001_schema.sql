@@ -90,6 +90,12 @@ CREATE TABLE analytics.dim_pipeline_stage (
 -- inkoopprijs  = som hoofd-inkoopprijs van de niet-verloren regels (Order::totalPurchasePrice)
 -- eerste_onderzoek_* = firstExaminationCarbon(): first_examination_at, of anders het
 --                      vroegste niet-verloren resource-slot.
+-- lost_reason/bron/campagne/landing_page/attribution_url = zelfde route/subqueries als
+--                      fact_leads, via orders.sales_lead_id -> salesleads.lead_id.
+-- verloren_at = exact moment van overgang naar order-verloren (stage 38/47), uit de
+--                      activities-audittrail (OrderObserver). NULL voor orders van vóór
+--                      deze logging bestond -- gesloten_datum_sk blijft de datum-only fallback.
+-- betaalstatus = afgeleid uit order_payments, zie Order::paymentStatus()/OrderPaymentStatus::forOrder().
 CREATE TABLE analytics.fact_orders (
     order_sk                  BIGINT        NOT NULL,
     ordernummer               VARCHAR(9)    NULL,
@@ -101,13 +107,22 @@ CREATE TABLE analytics.fact_orders (
     status_categorie          VARCHAR(20)   NULL,
     is_verloren               BOOLEAN       NOT NULL DEFAULT 0 COMMENT 'fase = lost',
     is_gewonnen               BOOLEAN       NOT NULL DEFAULT 0 COMMENT 'fase = won',
+    lost_reason                VARCHAR(100)  NULL COMMENT 'orders.lost_reason (enum-code, App\\Enums\\LostReason)',
+    bron                       VARCHAR(255)  NULL COMMENT 'lead_sources.name via salesleads.lead_id, zelfde route als fact_leads.bron',
+    campagne                   VARCHAR(255)  NULL COMMENT 'marketing_campaigns.name via lead_marketing_data key=campaign_id, zelfde route als fact_leads.campagne',
+    landing_page                VARCHAR(500)  NULL COMMENT 'lead_marketing_data key=landing_page, querystring gestript',
+    attribution_url             VARCHAR(500)  NULL COMMENT 'lead_marketing_data key=attribution_url',
+    is_zakelijk                 BOOLEAN       NOT NULL DEFAULT 0 COMMENT 'orders.is_business',
+    organisatie                 VARCHAR(255)  NULL COMMENT 'organizations.name via orders.organization_id',
     verkoopdatum_sk           DATE          NOT NULL COMMENT 'DATE(orders.created_at)',
     gesloten_datum_sk         DATE          NULL,
+    verloren_at                 DATETIME      NULL COMMENT 'Exact moment van overgang naar order-verloren (stage 38/47), uit activities-log (OrderObserver). NULL = legacy order zonder logging.',
     eerste_onderzoek_datum_sk DATE          NULL,
     eerste_onderzoek_at       DATETIME      NULL,
     verkoopprijs              DECIMAL(12,2) NOT NULL DEFAULT 0.00,
     inkoopprijs               DECIMAL(12,2) NOT NULL DEFAULT 0.00,
     marge                     DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    betaalstatus                 VARCHAR(30)   NULL COMMENT 'Afgeleid uit order_payments, zie Order::paymentStatus() / OrderPaymentStatus::forOrder()',
     aantal_regels             INT           NOT NULL DEFAULT 0,
     aantal_regels_actief      INT           NOT NULL DEFAULT 0,
     geladen_op                TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

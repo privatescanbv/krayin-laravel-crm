@@ -111,6 +111,40 @@ BEGIN
     JOIN   privatescan.order_items oi ON oi.id = roi.orderitem_id AND oi.status <> 'LOST'
     GROUP  BY oi.order_id;
 
+    -- Betaalstatus-aggregaat: netto ontvangen bedrag per order.
+    -- Spiegelt Order::netReceivedAmount(): refunds met paid_at zijn definitief (aftrekken),
+    -- refunds zonder paid_at zijn nog niet uitbetaald (negeren). Zie app/Models/Order.php.
+    DROP TEMPORARY TABLE IF EXISTS tmp_order_payments;
+    CREATE TEMPORARY TABLE tmp_order_payments (order_id BIGINT PRIMARY KEY, ontvangen DECIMAL(12,2)) ENGINE=MEMORY
+    SELECT
+        order_id,
+        SUM(CASE
+                WHEN type = 'refund' AND paid_at IS NOT NULL THEN -amount
+                WHEN type = 'refund' AND paid_at IS NULL     THEN 0
+                ELSE amount
+            END) AS ontvangen
+    FROM privatescan.order_payments
+    GROUP BY order_id;
+
+    -- Exact moment waarop een order de order-verloren-fase inging (stage 38 Privatescan /
+    -- 47 Hernia, PipelineStage::getLostOrderStageIds()), uit de activities-audittrail.
+    -- OrderObserver::logFieldChanges() schrijft bij elke pipeline_stage_id-wijziging een
+    -- system-activity met additional->>'$.attribute' = 'Status' en additional->>'$.new.value'
+    -- = nieuwe stage-id. MIN(created_at) = eerste keer dat de order verloren ging (kan
+    -- meermaals heen-en-weer zijn gewisseld). Orders zonder matchende activity (verloren
+    -- vóór deze logging bestond) krijgen NULL -- dat is verwacht, geen bug.
+    DROP TEMPORARY TABLE IF EXISTS tmp_lost_stage_at;
+    CREATE TEMPORARY TABLE tmp_lost_stage_at (order_id BIGINT PRIMARY KEY, verloren_op DATETIME) ENGINE=MEMORY
+    SELECT
+        order_id,
+        MIN(created_at) AS verloren_op
+    FROM privatescan.activities
+    WHERE type = 'system'
+        AND order_id IS NOT NULL
+        AND additional->>'$.attribute' = 'Status'
+        AND CAST(additional->>'$.new.value' AS UNSIGNED) IN (38, 47)
+    GROUP BY order_id;
+
     -- Inkoop + regelaantallen per order.
     DROP TEMPORARY TABLE IF EXISTS tmp_order_regels;
     CREATE TEMPORARY TABLE tmp_order_regels (
@@ -138,9 +172,10 @@ BEGIN
     -- fact_orders (order-grain) — ook orders zonder orderregels.
     REPLACE INTO analytics.fact_orders
         (order_sk, ordernummer, order_titel, naam, verkoper_sk, stage_sk,
-         afdeling, status_categorie, is_verloren, is_gewonnen,
-         verkoopdatum_sk, gesloten_datum_sk, eerste_onderzoek_datum_sk, eerste_onderzoek_at,
-         verkoopprijs, inkoopprijs, marge, aantal_regels, aantal_regels_actief, geladen_op)
+         afdeling, status_categorie, is_verloren, is_gewonnen, lost_reason,
+         bron, campagne, landing_page, attribution_url, is_zakelijk, organisatie,
+         verkoopdatum_sk, gesloten_datum_sk, verloren_at, eerste_onderzoek_datum_sk, eerste_onderzoek_at,
+         verkoopprijs, inkoopprijs, marge, betaalstatus, aantal_regels, aantal_regels_actief, geladen_op)
     SELECT
         o.id,
         o.order_number,
@@ -152,8 +187,22 @@ BEGIN
         ds.status_categorie,
         COALESCE(ds.is_verloren, 0),
         COALESCE(ds.is_gewonnen, 0),
+        o.lost_reason,
+        lsrc.name,
+        (SELECT mc.name
+         FROM   privatescan.lead_marketing_data lmd
+         JOIN   privatescan.marketing_campaigns mc ON mc.external_id = lmd.value
+         WHERE  lmd.lead_id = sl.lead_id AND lmd.key = 'campaign_id'
+         ORDER  BY lmd.id DESC LIMIT 1),
+        (SELECT SUBSTRING_INDEX(lmd.value, '?', 1) FROM privatescan.lead_marketing_data lmd
+         WHERE lmd.lead_id = sl.lead_id AND lmd.key = 'landing_page' ORDER BY lmd.id DESC LIMIT 1),
+        (SELECT lmd.value FROM privatescan.lead_marketing_data lmd
+         WHERE lmd.lead_id = sl.lead_id AND lmd.key = 'attribution_url' ORDER BY lmd.id DESC LIMIT 1),
+        COALESCE(o.is_business, 0),
+        org.name,
         DATE(o.created_at),
         o.closed_at,
+        lsa.verloren_op,
         COALESCE(o.first_examination_at, DATE(sl_slot.vroegste)),
         CASE
             WHEN o.first_examination_at IS NOT NULL OR sl_slot.vroegste IS NOT NULL
@@ -166,14 +215,26 @@ BEGIN
         COALESCE(o.total_price, 0),
         COALESCE(r.inkoop, 0),
         COALESCE(o.total_price, 0) - COALESCE(r.inkoop, 0),
+        CASE
+            WHEN COALESCE(o.total_price, 0) <= 0           THEN 'niet_van_toepassing'
+            WHEN COALESCE(op.ontvangen, 0) <= 0             THEN 'niet_betaald'
+            WHEN op.ontvangen > COALESCE(o.total_price, 0)  THEN 'credit'
+            WHEN op.ontvangen >= COALESCE(o.total_price, 0) THEN 'volledig_betaald'
+            ELSE 'gedeeltelijk_betaald'
+        END,
         COALESCE(r.n_totaal, 0),
         COALESCE(r.n_actief, 0),
         NOW()
     FROM privatescan.orders o
     LEFT JOIN privatescan.salesleads       sl      ON sl.id      = o.sales_lead_id
+    LEFT JOIN privatescan.leads            l       ON l.id       = sl.lead_id
+    LEFT JOIN privatescan.lead_sources     lsrc     ON lsrc.id   = l.lead_source_id
+    LEFT JOIN privatescan.organizations    org      ON org.id    = o.organization_id
     LEFT JOIN analytics.dim_pipeline_stage ds      ON ds.stage_sk = o.pipeline_stage_id
     LEFT JOIN tmp_slot                     sl_slot ON sl_slot.order_id = o.id
-    LEFT JOIN tmp_order_regels             r       ON r.order_id  = o.id;
+    LEFT JOIN tmp_order_regels             r       ON r.order_id  = o.id
+    LEFT JOIN tmp_order_payments            op      ON op.order_id = o.id
+    LEFT JOIN tmp_lost_stage_at             lsa     ON lsa.order_id = o.id;
 
     DELETE f FROM analytics.fact_orders f
     LEFT JOIN privatescan.orders o ON o.id = f.order_sk

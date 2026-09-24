@@ -48,7 +48,7 @@ enum PipelineStage: string
     case SALES_WAIT_HEALTH_INSURER_HERNIA = 'sales-wachten-op-zorgverzekeraar-hernia';
     case SALES_CONFIRM_TREATMENT_HERNIA = 'sales-wachten-op-planning-hernia';
     case SALES_TREATMENT_PLANNED_HERNIA = 'sales-pre-operatief-hernia';
-    case SALES_AFTER_TREATMENT_HERNIA = 'sales-opname-hernia';
+    // id 24 (sales-opname-hernia, 'Na-behandeling') removed: soft-deleted in DB, id is reserved.
     case SALES_AFTERCARE1_HERNIA = 'sales-operatie-hernia';
     case SALES_AFTERCARE2_HERNIA = 'sales-herstel-hernia';
     case SALES_PHYSICAL_CONSULTATION_HERNIA = 'sales-nacontrole-hernia';
@@ -312,15 +312,6 @@ enum PipelineStage: string
             'id'              => 23,
             'pipeline'        => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
             'label'           => 'Behandeling gepland',
-            'entity'          => EntityType::SALES->value,
-            'status'          => null,
-            'status_category' => null,
-            'is_default'      => false,
-        ],
-        self::SALES_AFTER_TREATMENT_HERNIA->value => [
-            'id'              => 24,
-            'pipeline'        => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value,
-            'label'           => 'Na-behandeling',
             'entity'          => EntityType::SALES->value,
             'status'          => null,
             'status_category' => null,

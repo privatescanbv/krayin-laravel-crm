@@ -66,7 +66,6 @@ class WorkflowSeeder extends Seeder
                 ['Reactie zorgverzekeraar?', $defaultDescription, ActivityType::TASK, 8],
             ],
             PipelineStage::SALES_TREATMENT_PLANNED_HERNIA                => [],
-            PipelineStage::SALES_AFTER_TREATMENT_HERNIA                  => [],
             PipelineStage::SALES_AFTERCARE1_HERNIA                       => [],
             PipelineStage::SALES_AFTERCARE2_HERNIA                       => [],
             PipelineStage::SALES_PHYSICAL_CONSULTATION_HERNIA            => [['Hoe ging nacontrole afspraak?', $defaultDescription, ActivityType::TASK, 7]],

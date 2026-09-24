@@ -86,7 +86,7 @@ class SalesLead extends Model
      */
     public function stage(): BelongsTo
     {
-        return $this->belongsTo(StageProxy::modelClass(), 'pipeline_stage_id');
+        return $this->belongsTo(StageProxy::modelClass(), 'pipeline_stage_id')->withTrashed();
     }
 
     /**

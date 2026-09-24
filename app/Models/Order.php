@@ -335,7 +335,7 @@ class Order extends Model
 
     public function stage(): BelongsTo
     {
-        return $this->belongsTo(Stage::class, 'pipeline_stage_id');
+        return $this->belongsTo(Stage::class, 'pipeline_stage_id')->withTrashed();
     }
 
     public function orderChecks(): HasMany

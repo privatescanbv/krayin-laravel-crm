@@ -2,15 +2,17 @@
 
 namespace Webkul\Lead\Models;
 
+use Database\Factories\StageFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Webkul\Lead\Contracts\Stage as StageContract;
 
 class Stage extends Model implements StageContract
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     public const IS_WON = 'is_won';
 
@@ -76,6 +78,6 @@ class Stage extends Model implements StageContract
 
     public static function newFactory()
     {
-        return \Database\Factories\StageFactory::new();
+        return StageFactory::new();
     }
 }

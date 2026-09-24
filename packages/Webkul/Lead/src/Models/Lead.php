@@ -9,8 +9,8 @@ use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
 use App\Models\Address;
 use App\Models\Anamnesis;
-use App\Models\Department;
 use App\Models\Concerns\HasAiSummary;
+use App\Models\Department;
 use App\Models\LeadMarketingData;
 use App\Models\LeadPerson;
 use App\Services\LeadStatusTransitionValidator;
@@ -42,6 +42,7 @@ use Webkul\Contact\Traits\HasPersonName;
 use Webkul\Email\Models\EmailProxy;
 use Webkul\Lead\Contracts\Lead as LeadContract;
 use Webkul\Lead\Repositories\LeadRepository;
+use Webkul\Marketing\Models\Campaign;
 use Webkul\Tag\Models\TagProxy;
 use Webkul\User\Models\UserProxy;
 
@@ -389,7 +390,7 @@ class Lead extends Model implements LeadContract
      */
     public function stage(): BelongsTo
     {
-        return $this->belongsTo(StageProxy::modelClass(), 'lead_pipeline_stage_id');
+        return $this->belongsTo(StageProxy::modelClass(), 'lead_pipeline_stage_id')->withTrashed();
     }
 
     /**
@@ -553,7 +554,7 @@ class Lead extends Model implements LeadContract
             return 'Geen';
         }
 
-        $campaign = \Webkul\Marketing\Models\Campaign::query()->where('external_id', $campaignExternalId)->first();
+        $campaign = Campaign::query()->where('external_id', $campaignExternalId)->first();
 
         return $campaign?->name ?? 'Onbekende campagne · '.$campaignExternalId;
     }

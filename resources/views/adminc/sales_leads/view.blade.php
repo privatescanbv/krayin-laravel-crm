@@ -98,7 +98,7 @@
                             />
                         @endif
 
-                        @if ($salesLead->lead?->department?->isHernia())
+                        @if ($salesLead->lead?->department?->isHernia() && ! $salesLead->hasLinkedSales())
                             <form method="POST"
                                   action="{{ route('admin.sales-leads.create-preventie-sales', $salesLead->id) }}"
                                   class="inline">
@@ -113,7 +113,7 @@
                             </form>
                         @endif
 
-                        @if ($salesLead->lead?->department?->isPrivatescan())
+                        @if ($salesLead->lead?->department?->isPrivatescan() && ! $salesLead->hasLinkedSales())
                             <form method="POST"
                                   action="{{ route('admin.sales-leads.create-hernia-sales', $salesLead->id) }}"
                                   class="inline">

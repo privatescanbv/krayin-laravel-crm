@@ -133,6 +133,56 @@ test('createPreventieSales returns error for non-hernia sales', function (): voi
     ]);
 });
 
+test('createPreventieSales returns error when the hernia sales already has a linked sales', function (): void {
+    $user = User::factory()->create();
+    $source = Source::firstOrCreate(['name' => 'Website']);
+    $type = Type::firstOrCreate(['name' => 'New Lead']);
+    $herniaDept = Department::firstOrCreate(['name' => 'Herniapoli']);
+
+    $herniaLead = new Lead([
+        'lead_pipeline_id'       => PipelineDefaultKeys::PIPELINE_HERNIA_ID->value,
+        'lead_pipeline_stage_id' => PipelineStage::WON_HERNIA->id(),
+        'status'                 => 1,
+        'first_name'             => 'Klaas',
+        'last_name'              => 'Meijer',
+        'emails'                 => [['value' => 'klaas@example.com', 'label' => 'work', 'is_default' => true]],
+        'phones'                 => [],
+        'user_id'                => $user->id,
+        'lead_source_id'         => $source->id,
+        'lead_type_id'           => $type->id,
+        'department_id'          => $herniaDept->id,
+    ]);
+    $herniaLead->save();
+
+    $herniaSales = SalesLead::create([
+        'name'              => 'Herniapoli Sales Klaas Meijer',
+        'lead_id'           => $herniaLead->id,
+        'pipeline_stage_id' => PipelineStage::SALES_ORDER_PREVENTIE_HERNIA->id(),
+        'user_id'           => $user->id,
+    ]);
+
+    $otherSales = SalesLead::create([
+        'name'              => 'Some other sales',
+        'lead_id'           => $herniaLead->id,
+        'pipeline_stage_id' => PipelineStage::SALES_ORDER_PREVENTIE_HERNIA->id(),
+        'user_id'           => $user->id,
+    ]);
+
+    // Hernia sales already has a link (as source) to some other sales — only 1 relation supported for now.
+    SalesLeadRelation::create([
+        'source_saleslead_id' => $herniaSales->id,
+        'target_saleslead_id' => $otherSales->id,
+        'relation_type'       => 'preventie_referral',
+    ]);
+
+    $response = $this->post(route('admin.sales-leads.create-preventie-sales', $herniaSales->id));
+
+    $response->assertRedirect();
+    $this->assertEquals(1, SalesLeadRelation::where('source_saleslead_id', $herniaSales->id)
+        ->orWhere('target_saleslead_id', $herniaSales->id)
+        ->count());
+});
+
 test('changing department_id on a sales lead resets pipeline_stage_id to default of new pipeline', function (): void {
     $user = User::factory()->create();
     $source = Source::firstOrCreate(['name' => 'Website']);

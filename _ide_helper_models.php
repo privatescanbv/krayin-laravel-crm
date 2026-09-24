@@ -1639,6 +1639,10 @@ namespace App\Models{
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SalesLeadRelation> $outgoingRelations
  * @property-read int|null $outgoing_relations_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Webkul\Contact\Models\Person> $persons
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, SalesLead> $referredFromPreventieSales
+ * @property-read int|null $referred_from_preventie_sales_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, SalesLead> $referredHerniaSales
+ * @property-read int|null $referred_hernia_sales_count
  * @property-read \Webkul\Lead\Models\Stage|null $stage
  * @property-read \Webkul\User\Models\User|null $updater
  * @property-read \App\Models\User|null $user

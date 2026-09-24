@@ -371,6 +371,16 @@ class SalesLead extends Model
     }
 
     /**
+     * Whether this sales lead is already linked to another sales lead, in either direction
+     * and regardless of relation type. We only support a single sales-to-sales relation per
+     * sales lead for now, so this gates both "create linked sales" actions.
+     */
+    public function hasLinkedSales(): bool
+    {
+        return $this->outgoingRelations()->exists() || $this->incomingRelations()->exists();
+    }
+
+    /**
      * Preventie SalesLeads created from this Herniapoli sales lead.
      */
     public function linkedPreventieSales(): BelongsToMany

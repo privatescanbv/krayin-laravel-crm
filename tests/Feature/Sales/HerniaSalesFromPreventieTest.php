@@ -6,6 +6,7 @@ use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStage;
 use App\Models\Department;
 use App\Models\SalesLead;
+use App\Models\SalesLeadRelation;
 use Database\Seeders\TestSeeder;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -123,4 +124,54 @@ test('createHerniaSales returns error for non-privatescan sales', function (): v
     $this->assertDatabaseMissing('saleslead_relations', [
         'source_saleslead_id' => $herniaSales->id,
     ]);
+});
+
+test('createHerniaSales returns error when the privatescan sales already has a linked sales', function (): void {
+    $user = User::factory()->create();
+    $source = Source::firstOrCreate(['name' => 'Website']);
+    $type = Type::firstOrCreate(['name' => 'New Lead']);
+    $privatescanDept = Department::firstOrCreate(['name' => 'Privatescan']);
+
+    $privatescanLead = new Lead([
+        'lead_pipeline_id'       => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value,
+        'lead_pipeline_stage_id' => PipelineStage::WON->id(),
+        'status'                 => 1,
+        'first_name'             => 'Wouter',
+        'last_name'              => 'Post',
+        'emails'                 => [['value' => 'wouter@example.com', 'label' => 'work', 'is_default' => true]],
+        'phones'                 => [],
+        'user_id'                => $user->id,
+        'lead_source_id'         => $source->id,
+        'lead_type_id'           => $type->id,
+        'department_id'          => $privatescanDept->id,
+    ]);
+    $privatescanLead->save();
+
+    $privatescanSales = SalesLead::create([
+        'name'              => 'Privatescan Sales Wouter Post',
+        'lead_id'           => $privatescanLead->id,
+        'pipeline_stage_id' => PipelineStage::SALES_IN_BEHANDELING->id(),
+        'user_id'           => $user->id,
+    ]);
+
+    $otherSales = SalesLead::create([
+        'name'              => 'Some other sales',
+        'lead_id'           => $privatescanLead->id,
+        'pipeline_stage_id' => PipelineStage::SALES_IN_BEHANDELING->id(),
+        'user_id'           => $user->id,
+    ]);
+
+    // Privatescan sales already has a link (as target) from some other sales — only 1 relation supported for now.
+    SalesLeadRelation::create([
+        'source_saleslead_id' => $otherSales->id,
+        'target_saleslead_id' => $privatescanSales->id,
+        'relation_type'       => 'preventie_referral',
+    ]);
+
+    $response = $this->post(route('admin.sales-leads.create-hernia-sales', $privatescanSales->id));
+
+    $response->assertRedirect();
+    $this->assertEquals(1, SalesLeadRelation::where('source_saleslead_id', $privatescanSales->id)
+        ->orWhere('target_saleslead_id', $privatescanSales->id)
+        ->count());
 });

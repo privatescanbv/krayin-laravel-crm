@@ -740,6 +740,11 @@ class SalesLeadController extends Controller
             return redirect()->back()->with('error', $wrongDepartmentMessage);
         }
 
+        // We only support a single sales-to-sales relation per sales lead for now.
+        if ($sourceSales->hasLinkedSales()) {
+            return redirect()->back()->with('error', 'Deze sales heeft al een gekoppelde sales.');
+        }
+
         try {
             DB::beginTransaction();
 

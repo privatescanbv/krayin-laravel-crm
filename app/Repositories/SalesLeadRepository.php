@@ -46,8 +46,10 @@ class SalesLeadRepository extends Repository
      *
      * @param  array<string, mixed>  $attributeOverrides  Merged over defaults (e.g. pipeline_stage_id).
      * @param  bool  $forceCreate  Skip the duplicate SalesLead check (e.g. for Preventie sales from Herniapoli).
+     * @param  bool  $createOrder  Whether to auto-create the initial Order (e.g. false for Hernia sales
+     *                             created from a Privatescan sales, where the existing order stays leading).
      */
-    public function createFromWonLead(Lead $lead, bool $forceCreate = false, array $attributeOverrides = []): ?SalesLead
+    public function createFromWonLead(Lead $lead, bool $forceCreate = false, array $attributeOverrides = [], bool $createOrder = true): ?SalesLead
     {
         try {
             if (! $forceCreate) {
@@ -70,12 +72,14 @@ class SalesLeadRepository extends Repository
 
             $salesLead = $this->createSalesLeadFromLead($lead, $attributeOverrides, []);
 
-            // Create initial order (uses order_department_id_after_won when set on lead, else sales lead department)
-            $this->orderRepository->createFromSalesLead(
-                $salesLead->id,
-                $salesLead->name,
-                $this->resolveOrderDepartmentForWonLead($lead, $salesLead)
-            );
+            if ($createOrder) {
+                // Create initial order (uses order_department_id_after_won when set on lead, else sales lead department)
+                $this->orderRepository->createFromSalesLead(
+                    $salesLead->id,
+                    $salesLead->name,
+                    $this->resolveOrderDepartmentForWonLead($lead, $salesLead)
+                );
+            }
 
             // Add a system activity on the lead linking to this new sales lead view
             $this->activityRepository->createSystemActivitiesForSalesLeadCreation($lead, $salesLead);

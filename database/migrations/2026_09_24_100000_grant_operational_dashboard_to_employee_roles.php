@@ -5,10 +5,6 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    /**
-     * Re-grant Werkbakken: the role editor dropped 'operational-dashboard' on save while it was
-     * missing from acl.php. Matched by name because role ids differ per environment.
-     */
     public function up(): void
     {
         $roles = DB::table('roles')

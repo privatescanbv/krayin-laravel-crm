@@ -660,7 +660,8 @@ class SalesLeadController extends Controller
 
     /**
      * Create a new Herniapoli sales from a Privatescan sales lead (reverse of createPreventieSales).
-     * Creates a SalesLead linked to the same Lead and links them via SalesLeadRelation.
+     * Creates a SalesLead linked to the same Lead and links them via SalesLeadRelation. Unlike
+     * createPreventieSales(), this does NOT auto-create an Order — the Privatescan order stays leading.
      */
     public function createHerniaSales(int $id): JsonResponse|RedirectResponse
     {
@@ -674,6 +675,7 @@ class SalesLeadController extends Controller
             successMessage: 'Herniapoli sales aangemaakt en gekoppeld aan Privatescan.',
             failureLogLabel: 'Failed to create Hernia sales from Privatescan',
             genericErrorMessage: 'Er is een fout opgetreden bij het aanmaken van de Herniapoli sales.',
+            createOrder: false,
         );
     }
 
@@ -723,6 +725,7 @@ class SalesLeadController extends Controller
         string $successMessage,
         string $failureLogLabel,
         string $genericErrorMessage,
+        bool $createOrder = true,
     ): JsonResponse|RedirectResponse {
         $sourceSales = SalesLead::with(['lead.department', 'persons'])->find($sourceId);
 
@@ -749,7 +752,8 @@ class SalesLeadController extends Controller
                     'pipeline_stage_id' => $targetPipelineStageId,
                     'contact_person_id' => $sourceSales->contact_person_id ?? $sourceLead->contact_person_id,
                     'department_id'     => $targetDepartmentId,
-                ]
+                ],
+                createOrder: $createOrder,
             );
 
             if (! $targetSales) {

@@ -69,7 +69,7 @@ class AnalyticsSetupCommand extends Command
     private function analyticsSchemaExists(): bool
     {
         try {
-            DB::connection('analytics')->select('SELECT 1 FROM analytics.sync_watermark LIMIT 1');
+            DB::connection('analytics')->select('SELECT 1 FROM analytics.fact_orders LIMIT 1');
 
             return true;
         } catch (Throwable) {

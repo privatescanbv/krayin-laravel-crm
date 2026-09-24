@@ -177,6 +177,89 @@ it('sends empty visualization_settings as a JSON object, not a list', function (
         && str_contains($r->body(), '"visualization_settings":{}'));
 });
 
+it('prints the .env line the target CRM needs for this dashboard', function () {
+    config()->set('metabase_dashboards', [
+        ['key' => 'metabase.omzet-per-maand', 'name' => 'Omzet per maand', 'path' => 'dashboards/omzet-per-maand', 'dashboard_id' => 12],
+    ]);
+    fakeMetabase();
+
+    $this->artisan('metabase:sync-dashboard --source=dev --target=prod --dashboard=12 --force')
+        ->assertSuccessful()
+        ->expectsOutputToContain('METABASE_DASHBOARD_OMZET_PER_MAAND=8');
+});
+
+it('rewrites CRM links in card settings to the target CRM url', function () {
+    config()->set('services.metabase.environments.dev.crm_url', 'https://crm.local.test');
+    config()->set('services.metabase.environments.prod.crm_url', 'https://crm.prod.test/');
+
+    $link = ['view_as' => 'link', 'link_template' => 'https://crm.local.test/admin/orders/view/{{order_sk}}'];
+
+    fakeMetabase([
+        'GET '.MB_SOURCE.'/api/card/34' => [
+            'id'                     => 34,
+            'name'                   => 'Omzet per status',
+            'display'                => 'table',
+            'visualization_settings' => ['column_settings' => ['["name","ordernummer"]' => $link]],
+            'dataset_query'          => ['database' => 2, 'type' => 'query', 'query' => ['source-table' => 10]],
+        ],
+    ]);
+
+    $this->artisan('metabase:sync-dashboard --source=dev --target=prod --dashboard=12 --force')
+        ->assertSuccessful();
+
+    Http::assertSent(fn ($r) => $r->method() === 'POST'
+        && str_ends_with(strtok($r->url(), '?'), '/api/card')
+        && $r->data()['visualization_settings']['column_settings']['["name","ordernummer"]']['link_template']
+            === 'https://crm.prod.test/admin/orders/view/{{order_sk}}');
+});
+
+it('rewrites CRM links built inside native SQL', function () {
+    config()->set('services.metabase.environments.dev.crm_url', 'https://crm.local.test');
+    config()->set('services.metabase.environments.prod.crm_url', 'https://crm.prod.test');
+
+    fakeMetabase([
+        'GET '.MB_SOURCE.'/api/dashboard/12' => [
+            'id'        => 12, 'name' => 'Omzet', 'parameters' => [], 'tabs' => [],
+            'dashcards' => [['id' => 1, 'card_id' => 34, 'row' => 0, 'col' => 0, 'size_x' => 12, 'size_y' => 8,
+                'series'          => [], 'parameter_mappings' => [], 'visualization_settings' => []]],
+        ],
+        'GET '.MB_SOURCE.'/api/card/34' => [
+            'id'                     => 34,
+            'name'                   => 'Omzet per maand',
+            'display'                => 'table',
+            'visualization_settings' => [],
+            'dataset_query'          => ['database' => 2, 'type' => 'native', 'native' => [
+                'query' => "SELECT CONCAT('https://crm.local.test/admin/orders/view/', order_sk) AS link FROM analytics.fact_orders",
+            ]],
+        ],
+    ]);
+
+    $this->artisan('metabase:sync-dashboard --source=dev --target=prod --dashboard=12 --force')
+        ->assertSuccessful();
+
+    Http::assertSent(fn ($r) => $r->method() === 'POST'
+        && str_ends_with(strtok($r->url(), '?'), '/api/card')
+        && str_contains($r->data()['dataset_query']['native']['query'], "'https://crm.prod.test/admin/orders/view/'"));
+});
+
+it('warns when CRM links cannot be rewritten because the target has no CRM url', function () {
+    config()->set('services.metabase.environments.dev.crm_url', 'https://crm.local.test');
+
+    fakeMetabase([
+        'GET '.MB_SOURCE.'/api/card/34' => [
+            'id'                     => 34,
+            'name'                   => 'Omzet per status',
+            'display'                => 'table',
+            'visualization_settings' => ['column_settings' => ['x' => ['link_template' => 'https://crm.local.test/admin/leads/view/{{id}}']]],
+            'dataset_query'          => ['database' => 2, 'type' => 'query', 'query' => ['source-table' => 10]],
+        ],
+    ]);
+
+    $this->artisan('metabase:sync-dashboard --source=dev --target=prod --dashboard=12 --force')
+        ->assertSuccessful()
+        ->expectsOutputToContain('METABASE_PROD_CRM_URL');
+});
+
 it('updates existing objects on a second run without creating duplicates', function () {
     fakeMetabase();
     seedMapping();

@@ -19,6 +19,7 @@ class MetabaseClient
         private readonly string $apiKey,
         public readonly string $label,
         private readonly int $timeout = 30,
+        public readonly ?string $crmUrl = null,
     ) {
         $this->baseUrl = rtrim($baseUrl, '/');
     }
@@ -109,11 +110,11 @@ class MetabaseClient
     }
 
     /**
-     * PUT /api/setting/{key} — body is a JSON value (boolean, string, object, …).
+     * PUT /api/setting/{key} — body is {"value": <boolean, string, object, …>}.
      */
     public function putSetting(string $key, mixed $value): mixed
     {
-        return $this->sendJsonValue('put', '/setting/'.$key, $value);
+        return $this->sendJsonValue('put', '/setting/'.$key, ['value' => $value]);
     }
 
     /** Metabase version string, e.g. "v0.49.6" (empty when unavailable). */

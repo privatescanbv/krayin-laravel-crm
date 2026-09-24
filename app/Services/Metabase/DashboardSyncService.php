@@ -223,7 +223,7 @@ class DashboardSyncService
         $name = (string) ($card['name'] ?? "card {$sourceId}");
 
         $translator = new QueryTranslator($this->resolver, fn (int $id): int => $this->resolveCardId($id));
-        $translatedQuery = $translator->translate($card['dataset_query'] ?? []);
+        $translatedQuery = $this->rewriteCrmUrls($translator->translate($card['dataset_query'] ?? []), $report);
 
         foreach ($translator->warnings() as $warning) {
             $report->warn("card '{$name}': {$warning}");
@@ -233,7 +233,7 @@ class DashboardSyncService
             'name'                   => $name,
             'description'            => $card['description'] ?? null,
             'display'                => $card['display'] ?? 'table',
-            'visualization_settings' => $this->asMap($card['visualization_settings'] ?? []),
+            'visualization_settings' => $this->asMap($this->rewriteCrmUrls($card['visualization_settings'] ?? [], $report)),
             'dataset_query'          => $translatedQuery,
             'collection_id'          => null,
         ];
@@ -454,6 +454,8 @@ class DashboardSyncService
     /** @return array<string, mixed> */
     private function translateVisualizationSettings(array $settings, SyncReport $report): array
     {
+        $settings = $this->rewriteCrmUrls($settings, $report);
+
         if (isset($settings['click_behavior']) && is_array($settings['click_behavior'])) {
             $settings['click_behavior'] = $this->translateClickBehavior($settings['click_behavior']);
         }
@@ -466,6 +468,36 @@ class DashboardSyncService
         }
 
         return $settings;
+    }
+
+    /**
+     * Links to the CRM (click behaviour, column link templates, URLs built in
+     * native SQL) are absolute; point them at the target environment's CRM.
+     *
+     * @return array<string, mixed>
+     */
+    private function rewriteCrmUrls(array $settings, SyncReport $report): array
+    {
+        $from = rtrim((string) $this->source->crmUrl, '/');
+        $to = rtrim((string) $this->target->crmUrl, '/');
+
+        if ($from === '' || $from === $to) {
+            return $settings;
+        }
+
+        $json = json_encode($settings, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+
+        if (! str_contains($json, $from)) {
+            return $settings;
+        }
+
+        if ($to === '') {
+            $report->warn("links to {$from} were copied verbatim; set METABASE_".strtoupper($this->target->label).'_CRM_URL to rewrite them');
+
+            return $settings;
+        }
+
+        return json_decode(str_replace($from, $to, $json), true, flags: JSON_THROW_ON_ERROR);
     }
 
     /** @param array<string, mixed> $behavior @return array<string, mixed> */

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Services\Metabase\DashboardSyncService;
 use App\Services\Metabase\MetabaseApiException;
 use App\Services\Metabase\MetabaseClient;
+use App\Services\Metabase\MetabaseDashboardRegistry;
 use App\Services\Metabase\MetabaseEnvironments;
 use App\Services\Metabase\MetabaseSyncException;
 use App\Services\Metabase\SyncMapping;
@@ -24,7 +25,7 @@ class SyncMetabaseDashboard extends Command
 
     protected $description = 'Synchroniseer een Metabase-dashboard (incl. gekoppelde vragen) van de ene omgeving naar de andere via de HTTP API.';
 
-    public function handle(MetabaseEnvironments $environments): int
+    public function handle(MetabaseEnvironments $environments, MetabaseDashboardRegistry $registry): int
     {
         $source = (string) $this->option('source');
         $target = (string) $this->option('target');
@@ -91,8 +92,28 @@ class SyncMetabaseDashboard extends Command
         }
 
         $this->renderReport($report);
+        $this->renderEnvHint($registry, $mapping->get('dashboard', $dashboardId), $dashboardId, $targetClient->label);
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Metabase assigns its own ids on the target, so the CRM page for this
+     * dashboard needs the target id in that environment's .env.
+     */
+    private function renderEnvHint(MetabaseDashboardRegistry $registry, ?int $targetId, int $sourceId, string $target): void
+    {
+        $page = collect($registry->pages())->firstWhere('dashboard_id', $sourceId);
+
+        if ($page === null || $targetId === null) {
+            return;
+        }
+
+        $var = 'METABASE_DASHBOARD_'.strtoupper(str_replace('-', '_', basename($page['path'])));
+
+        $this->line('');
+        $this->info("CRM page '{$page['name']}' on {$target} needs in its .env:");
+        $this->line("  {$var}={$targetId}");
     }
 
     private function triggerTargetSchemaSync(MetabaseClient $target): void

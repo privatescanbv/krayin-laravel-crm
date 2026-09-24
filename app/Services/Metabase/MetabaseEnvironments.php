@@ -39,17 +39,18 @@ class MetabaseEnvironments
             apiKey: $config['api_key'],
             label: $name,
             timeout: (int) config('services.metabase.timeout', 30),
+            crmUrl: $config['crm_url'] ?? null,
         );
     }
 
-    /** @return array<string, array{url: string, api_key: string|null}> */
+    /** @return array<string, array{url: string, api_key: string|null, crm_url?: string|null}> */
     private function configured(): array
     {
         return config('services.metabase.environments', []);
     }
 
     /**
-     * @return array{0: string, 1: array{url: string, api_key: string|null}|null}
+     * @return array{0: string, 1: array{url: string, api_key: string|null, crm_url?: string|null}|null}
      */
     private function lookup(string $reference): array
     {

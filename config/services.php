@@ -53,6 +53,8 @@ return [
             ->mapWithKeys(fn (string $name): array => [$name => [
                 'url'     => env('METABASE_'.strtoupper($name).'_URL'),
                 'api_key' => env('METABASE_'.strtoupper($name).'_API_KEY'),
+                // CRM base URL that dashboard links point to; the sync rewrites source → target.
+                'crm_url' => env('METABASE_'.strtoupper($name).'_CRM_URL'),
             ]])
             ->filter(fn (array $env): bool => ! empty($env['url']))
             ->all(),

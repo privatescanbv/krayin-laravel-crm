@@ -42,7 +42,7 @@ it('enables static embedding globally and per configured dashboard', function ()
     Http::assertSent(function ($request) {
         return $request->method() === 'PUT'
             && str_ends_with($request->url(), '/api/setting/enable-embedding-static')
-            && $request->body() === 'true';
+            && $request->body() === '{"value":true}';
     });
 
     Http::assertSent(function ($request) {

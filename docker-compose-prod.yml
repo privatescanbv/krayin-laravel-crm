@@ -274,7 +274,7 @@ services:
       - loki
 
   metabase:
-    image: metabase/metabase:v0.62.x
+    image: metabase/metabase:v0.63.x
     container_name: metabase
     restart: unless-stopped
     extra_hosts:

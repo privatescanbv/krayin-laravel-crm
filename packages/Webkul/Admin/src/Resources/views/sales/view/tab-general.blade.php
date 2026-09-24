@@ -46,7 +46,8 @@
     <x-adminc::leads.compact-overview :lead="$sales->lead" showViewLink="true" />
 
     @php
-        $linkedPreventieSales = $sales->linkedPreventieSales()->with('stage')->get();
+        $linkedPreventieSales = $sales->linkedPreventieSales()->with('stage')->get()
+            ->merge($sales->referredFromPreventieSales()->with('stage')->get());
     @endphp
 
     @if ($linkedPreventieSales->isNotEmpty())
@@ -72,7 +73,8 @@
     @endif
 
     @php
-        $linkedHerniaSales = $sales->linkedHerniaSales()->with('stage')->get();
+        $linkedHerniaSales = $sales->linkedHerniaSales()->with('stage')->get()
+            ->merge($sales->referredHerniaSales()->with('stage')->get());
     @endphp
 
     @if ($linkedHerniaSales->isNotEmpty())

@@ -645,62 +645,36 @@ class SalesLeadController extends Controller
      */
     public function createPreventieSales(int $id): JsonResponse|RedirectResponse
     {
-        $herniaSales = SalesLead::with(['lead.department', 'persons'])->find($id);
+        return $this->createReferralSales(
+            sourceId: $id,
+            requireHernia: true,
+            targetDepartmentId: Department::findPrivateScanId(),
+            targetPipelineStageId: PipelineStage::SALES_IN_BEHANDELING->id(),
+            relationType: 'preventie_referral',
+            wrongDepartmentMessage: 'Deze actie is alleen beschikbaar voor Herniapoli sales.',
+            successMessage: 'Preventie sales aangemaakt en gekoppeld aan Herniapoli.',
+            failureLogLabel: 'Failed to create Preventie sales from Herniapoli',
+            genericErrorMessage: 'Er is een fout opgetreden bij het aanmaken van de Preventie sales.',
+        );
+    }
 
-        if (! $herniaSales) {
-            return redirect()->back()->with('error', 'Sales niet gevonden.');
-        }
-
-        if (! $herniaSales->lead?->department?->isHernia()) {
-            return redirect()->back()->with('error', 'Deze actie is alleen beschikbaar voor Herniapoli sales.');
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $sourceLead = $herniaSales->lead;
-
-            $preventieSales = $this->salesLeadRepository->createFromWonLead(
-                $sourceLead,
-                forceCreate: true,
-                attributeOverrides: [
-                    'pipeline_stage_id' => PipelineStage::SALES_IN_BEHANDELING->id(),
-                    'contact_person_id' => $herniaSales->contact_person_id ?? $sourceLead->contact_person_id,
-                    'department_id'     => Department::findPrivateScanId(),
-                ]
-            );
-
-            if (! $preventieSales) {
-                throw new RuntimeException('Preventie SalesLead kon niet worden aangemaakt.');
-            }
-
-            // Sync persons from the Herniapoli sales (overrides the persons copied from lead)
-            $personIds = $herniaSales->persons->pluck('id')->toArray();
-            if (! empty($personIds)) {
-                $preventieSales->syncPersons($personIds);
-            }
-
-            SalesLeadRelation::firstOrCreate([
-                'source_saleslead_id' => $herniaSales->id,
-                'target_saleslead_id' => $preventieSales->id,
-                'relation_type'       => 'preventie_referral',
-            ]);
-
-            DB::commit();
-
-            session()->flash('success', 'Preventie sales aangemaakt en gekoppeld aan Herniapoli.');
-
-            return redirect()->route('admin.sales-leads.view', $preventieSales->id);
-
-        } catch (Throwable $e) {
-            DB::rollBack();
-            Log::error('Failed to create Preventie sales from Herniapoli', [
-                'hernia_sales_id' => $id,
-                'error'           => $e->getMessage(),
-            ]);
-
-            return redirect()->back()->with('error', 'Er is een fout opgetreden bij het aanmaken van de Preventie sales.');
-        }
+    /**
+     * Create a new Herniapoli sales from a Privatescan sales lead (reverse of createPreventieSales).
+     * Creates a SalesLead linked to the same Lead and links them via SalesLeadRelation.
+     */
+    public function createHerniaSales(int $id): JsonResponse|RedirectResponse
+    {
+        return $this->createReferralSales(
+            sourceId: $id,
+            requireHernia: false,
+            targetDepartmentId: Department::findHerniaId(),
+            targetPipelineStageId: PipelineStage::SALES_DOCTOR_ASSESSMENT_HERNIA->id(),
+            relationType: 'hernia_referral',
+            wrongDepartmentMessage: 'Deze actie is alleen beschikbaar voor Privatescan sales.',
+            successMessage: 'Herniapoli sales aangemaakt en gekoppeld aan Privatescan.',
+            failureLogLabel: 'Failed to create Hernia sales from Privatescan',
+            genericErrorMessage: 'Er is een fout opgetreden bij het aanmaken van de Herniapoli sales.',
+        );
     }
 
     /**
@@ -733,6 +707,82 @@ class SalesLeadController extends Controller
             'created_at',
             'closed_at',
         ];
+    }
+
+    /**
+     * Shared logic behind createPreventieSales()/createHerniaSales(): create a SalesLead for
+     * the other department from the same Lead, and link the two via SalesLeadRelation.
+     */
+    private function createReferralSales(
+        int $sourceId,
+        bool $requireHernia,
+        int $targetDepartmentId,
+        int $targetPipelineStageId,
+        string $relationType,
+        string $wrongDepartmentMessage,
+        string $successMessage,
+        string $failureLogLabel,
+        string $genericErrorMessage,
+    ): JsonResponse|RedirectResponse {
+        $sourceSales = SalesLead::with(['lead.department', 'persons'])->find($sourceId);
+
+        if (! $sourceSales) {
+            return redirect()->back()->with('error', 'Sales niet gevonden.');
+        }
+
+        $department = $sourceSales->lead?->department;
+        $departmentOk = $requireHernia ? $department?->isHernia() : $department?->isPrivatescan();
+
+        if (! $departmentOk) {
+            return redirect()->back()->with('error', $wrongDepartmentMessage);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $sourceLead = $sourceSales->lead;
+
+            $targetSales = $this->salesLeadRepository->createFromWonLead(
+                $sourceLead,
+                forceCreate: true,
+                attributeOverrides: [
+                    'pipeline_stage_id' => $targetPipelineStageId,
+                    'contact_person_id' => $sourceSales->contact_person_id ?? $sourceLead->contact_person_id,
+                    'department_id'     => $targetDepartmentId,
+                ]
+            );
+
+            if (! $targetSales) {
+                throw new RuntimeException('SalesLead kon niet worden aangemaakt.');
+            }
+
+            // Sync persons from the source sales (overrides the persons copied from the lead)
+            $personIds = $sourceSales->persons->pluck('id')->toArray();
+            if (! empty($personIds)) {
+                $targetSales->syncPersons($personIds);
+            }
+
+            SalesLeadRelation::firstOrCreate([
+                'source_saleslead_id' => $sourceSales->id,
+                'target_saleslead_id' => $targetSales->id,
+                'relation_type'       => $relationType,
+            ]);
+
+            DB::commit();
+
+            session()->flash('success', $successMessage);
+
+            return redirect()->route('admin.sales-leads.view', $targetSales->id);
+
+        } catch (Throwable $e) {
+            DB::rollBack();
+            Log::error($failureLogLabel, [
+                'source_sales_id' => $sourceId,
+                'error'           => $e->getMessage(),
+            ]);
+
+            return redirect()->back()->with('error', $genericErrorMessage);
+        }
     }
 
     /**

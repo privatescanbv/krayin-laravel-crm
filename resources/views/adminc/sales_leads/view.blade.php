@@ -113,6 +113,21 @@
                             </form>
                         @endif
 
+                        @if ($salesLead->lead?->department?->isPrivatescan())
+                            <form method="POST"
+                                  action="{{ route('admin.sales-leads.create-hernia-sales', $salesLead->id) }}"
+                                  class="inline">
+                                @csrf
+                                <button type="submit"
+                                        class="secondary-button flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-700 hover:border-orange-400 hover:bg-orange-100 dark:border-orange-700 dark:bg-orange-900/20 dark:text-orange-300"
+                                        onclick="return confirm('Nieuwe Herniapoli Sales aanmaken vanuit deze Privatescan sales?')"
+                                >
+                                    <span class="icon-plus text-base"></span>
+                                    <span>Nieuwe Herniapoli Sales aanmaken</span>
+                                </button>
+                            </form>
+                        @endif
+
                         {!! view_render_event('admin.sales.view.actions.after', ['sales' => $salesLead]) !!}
                     </div>
                 </div>

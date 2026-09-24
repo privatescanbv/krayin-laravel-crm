@@ -119,4 +119,9 @@ class Department extends Model
     {
         return $this->name === Departments::HERNIA->value;
     }
+
+    public function isPrivatescan(): bool
+    {
+        return $this->name === Departments::PRIVATESCAN->value;
+    }
 }

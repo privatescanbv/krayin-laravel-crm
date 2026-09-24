@@ -34,6 +34,9 @@ Route::group(['middleware' => ['user']], function () {
     // Create Preventie sales from a Herniapoli sales lead
     Route::post('sales-leads/{id}/create-preventie-sales', [SalesLeadController::class, 'createPreventieSales'])->name('admin.sales-leads.create-preventie-sales');
 
+    // Create Hernia sales from a Privatescan sales lead (reverse of the above)
+    Route::post('sales-leads/{id}/create-hernia-sales', [SalesLeadController::class, 'createHerniaSales'])->name('admin.sales-leads.create-hernia-sales');
+
     // Temporary debug route
     Route::get('sales-leads/debug/{id}', [SalesLeadController::class, 'debug'])->name('admin.sales-leads.debug');
 });

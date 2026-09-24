@@ -397,6 +397,32 @@ class SalesLead extends Model
     }
 
     /**
+     * Hernia SalesLeads created from this Preventie sales lead (reverse referral).
+     */
+    public function referredHerniaSales(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            SalesLead::class,
+            'saleslead_relations',
+            'source_saleslead_id',
+            'target_saleslead_id'
+        )->wherePivot('relation_type', 'hernia_referral');
+    }
+
+    /**
+     * Preventie SalesLeads that created this Hernia sales lead (reverse referral).
+     */
+    public function referredFromPreventieSales(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            SalesLead::class,
+            'saleslead_relations',
+            'target_saleslead_id',
+            'source_saleslead_id'
+        )->wherePivot('relation_type', 'hernia_referral');
+    }
+
+    /**
      * Copy persons and contact person from a lead to this sales lead.
      */
     public function copyFromLead(Lead $lead): void

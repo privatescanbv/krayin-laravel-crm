@@ -116,7 +116,7 @@ Het `analytics`-schema is een aparte MySQL-database (star schema: `dim_*` / `fac
 
 [source,bash]
 ----
-docker-compose exec crm php artisan analytics:setup --force
+docker-compose exec crm php artisan analytics:setup
 ----
 
 Standaard herlaadt dit alleen de procedure, het event en de views (`003`/`004`/`005`). Bij aanpassingen aan een bestaand schema- of initieel-script (`001_schema.sql`, `006_initieel.sql`) is een volledige herbouw nodig:
@@ -127,6 +127,41 @@ docker-compose exec crm php artisan analytics:setup --force
 ----
 
 `--force` doet DROP + CREATE van alle tabellen en draait `CALL analytics.sync_all()` opnieuw. `sync_all()` is een full reload, dus opnieuw draaien is altijd veilig.
+
+Bij elke containerstart draait supervisord `analytics:setup --force` (`.docker/supervisord.conf`), zodat schemawijzigingen na een deploy altijd doorkomen. Tot die herbouw klaar is, tonen de dashboards lege of onvolledige data.
+
+==== Wanneer synchroniseert de analytics-database?
+
+Automatisch elk uur, via het MySQL-event `analytics.evt_sync_analytics` (`database/analytics/004_event.sql`), dat `CALL analytics.sync_all()` uitvoert.
+
+* Het uur telt vanaf het moment dat `analytics:setup` het event aanmaakt (`STARTS CURRENT_TIMESTAMP`). Na elke deploy/containerstart begint die telling dus opnieuw.
+* Het event draait alleen als de MySQL-event-scheduler aanstaat (`event_scheduler=ON`). Lokaal regelt docker-compose dat; op acc/prod hangt het af van de MySQL-configuratie daar.
+
+Met de hand synchroniseren, in MySQL:
+
+[source,sql]
+----
+CALL analytics.sync_all();
+----
+
+Of vanuit de crm-container:
+
+[source,bash]
+----
+php artisan tinker --execute='DB::connection("analytics")->statement("CALL analytics.sync_all()");'
+----
+
+Controleren of de automatische sync draait:
+
+[source,sql]
+----
+SHOW VARIABLES LIKE 'event_scheduler';          -- moet ON zijn
+SELECT event_name, status, last_executed, interval_value, interval_field
+FROM information_schema.events
+WHERE event_schema = 'analytics';                -- ENABLED, last_executed < 1 uur geleden
+----
+
+Staat `event_scheduler` op `OFF`, dan draait er nooit een automatische sync en blijft de data staan op de laatste `analytics:setup`. Zet dan `--event-scheduler=ON` in de MySQL-configuratie van die server.
 
 ==== Metabase-dashboards synchroniseren na een reset
 
@@ -145,6 +180,41 @@ Los dit op door de sync met `--sync-schema` te draaien: dit triggert een schema-
 ----
 docker exec crm php artisan metabase:sync-dashboard --source dev --target prod --dashboard 5 --sync-schema --force
 ----
+
+Blijft de fout, ook met `--sync-schema`? Controleer dan of Metabase op de doelomgeving wel bij de analytics-database kan (Admin → Databases → `crm_analytics` → Save test de verbinding). Bij `Access denied for user 'privatescan-analytics'` kan Metabase niet rescannen en houdt het de oude kolommen. Het wachtwoord moet gelijk zijn aan `DB_ANALYTICS_PASSWORD`; `.docker/mysql/init-forms.sh` zet het bij elke MySQL-init opnieuw naar die waarde.
+
+==== Metabase-dashboards in het CRM (embeds)
+
+Per omgeving nodig in `.env`:
+
+[source]
+----
+METABASE_EMBED_URL=https://reports.<omgeving>.privatescan.nl   # de Metabase van díe omgeving
+METABASE_EMBEDDING_SECRET_KEY=...                              # uit Metabase → Admin → Embedding → Static embedding
+----
+
+* *Dashboard-id's verschillen per omgeving.* De sync maakt op het doel nieuwe id's aan. Zet ze per omgeving als `METABASE_DASHBOARD_<PAGINA>` (zie `config/metabase_dashboards.php`, standaard de dev-id's). `metabase:sync-dashboard` toont na afloop de regel die nodig is.
+* *Embedding aanzetten:* `php artisan metabase:enable-embeds --environment <naam>`. Doe dit ná het zetten van de dashboard-id's, anders wordt embedding op de verkeerde dashboards aangezet. Het commando heeft `METABASE_<NAAM>_URL` en `METABASE_<NAAM>_API_KEY` nodig.
+* *CRM-links in dashboards* (bv. naar een order) zijn absolute URL's. De sync zet ze om van `METABASE_<BRON>_CRM_URL` naar `METABASE_<DOEL>_CRM_URL`, ook in native SQL. Na een wijziging van die URL's opnieuw syncen.
+
+Foutmeldingen in de embed:
+
+[cols="1,2"]
+|===
+|Melding |Oorzaak / oplossing
+
+|503 op de CRM-pagina
+|`METABASE_EMBED_URL` of `METABASE_EMBEDDING_SECRET_KEY` ontbreekt. De reden staat in de Laravel-log.
+
+|`The embedding secret key has not been set.`
+|Static embedding staat uit of heeft geen sleutel in die Metabase. Zet het aan (Admin → Embedding) of draai `metabase:enable-embeds`.
+
+|`Message seems corrupt or manipulated`
+|De sleutel in `.env` hoort niet bij de Metabase uit `METABASE_EMBED_URL` (bv. de prod-sleutel op acc, of de sleutel is opnieuw gegenereerd). Kopieer de huidige sleutel en draai `php artisan config:clear`.
+
+|Verkeerd dashboard zichtbaar
+|`METABASE_DASHBOARD_*` klopt niet voor die omgeving, of `METABASE_EMBED_URL` wijst naar de Metabase van een andere omgeving.
+|===
 
 === Migratie script opschonen
 

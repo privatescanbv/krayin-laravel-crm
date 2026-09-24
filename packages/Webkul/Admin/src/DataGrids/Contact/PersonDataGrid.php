@@ -11,6 +11,17 @@ use Webkul\DataGrid\DataGrid;
 class PersonDataGrid extends DataGrid
 {
     /**
+     * Filter-only name columns (not shown in the grid). Labels match leads/common/personal-fields.
+     */
+    private const NAME_FILTERS = [
+        'first_name'          => 'Voornaam',
+        'lastname_prefix'     => 'Tussenvoegsel',
+        'last_name'           => 'Achternaam',
+        'married_name_prefix' => 'Tussenvoegsel (aangetrouwd)',
+        'married_name'        => 'Aangetrouwde achternaam',
+    ];
+
+    /**
      * Create a new class instance.
      *
      * @return void
@@ -112,6 +123,10 @@ class PersonDataGrid extends DataGrid
         $this->addFilter('has_duplicates', 'persons.has_duplicates');
         $this->addFilter('date_of_birth', 'persons.date_of_birth');
 
+        foreach (array_keys(self::NAME_FILTERS) as $field) {
+            $this->addFilter($field, "persons.$field");
+        }
+
         return $queryBuilder;
     }
 
@@ -137,6 +152,18 @@ class PersonDataGrid extends DataGrid
             'filterable' => true,
             'searchable' => true,
         ]);
+
+        foreach (self::NAME_FILTERS as $field => $label) {
+            $this->addColumn([
+                'index'      => $field,
+                'label'      => $label,
+                'type'       => 'string',
+                'searchable' => false,
+                'sortable'   => false,
+                'filterable' => true,
+                'visibility' => false, // filter-only
+            ]);
+        }
 
         $this->addColumn([
             'index'              => 'trashed',

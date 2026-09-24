@@ -2,6 +2,11 @@
 
 return [
     [
+        'key'   => 'operational-dashboard',
+        'name'  => 'Werkbakken',
+        'route' => 'admin.operational-dashboard.index',
+        'sort'  => 0,
+    ], [
         'key'   => 'dashboard',
         'name'  => 'admin::app.layouts.dashboard',
         'route' => 'admin.dashboard.index',

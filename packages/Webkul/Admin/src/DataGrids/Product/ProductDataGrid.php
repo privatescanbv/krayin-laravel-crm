@@ -234,7 +234,7 @@ class ProductDataGrid extends DataGrid
             ]);
         }
 
-        if (bouncer()->hasPermission('products.add')) {
+        if (bouncer()->hasPermission('products.create')) {
             $this->addAction([
                 'index'  => 'add',
                 'icon'   => 'icon-add',

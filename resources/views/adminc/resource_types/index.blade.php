@@ -14,7 +14,7 @@
             </div>
 
             <div class="flex items-center gap-x-2.5">
-                @if (bouncer()->hasPermission('settings.resource_types.create'))
+                @if (bouncer()->hasPermission('settings.resources.create'))
                     <a href="{{ route('admin.settings.resource_types.create') }}" class="primary-button">
                         @lang('admin::app.settings.resource_types.index.create-btn')
                     </a>

@@ -324,7 +324,7 @@ class ActivityDataGrid extends DataGrid
             ],
             'closure'    => function ($row) {
                 $route = urldecode(route('admin.settings.users.index', ['id[eq]' => $row->assigned_user_id]));
-                if (bouncer()->hasPermission('usettings.user.users.view')) {
+                if (bouncer()->hasPermission('settings.user.users.view')) {
                     return "<a class='text-brandColor hover:underline' href='".$route."'>".$row->assigned_user_name.'</a>';
                 } else {
                     return $row->assigned_user_name;

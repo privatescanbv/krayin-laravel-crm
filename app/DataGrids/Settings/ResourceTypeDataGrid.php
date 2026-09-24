@@ -45,7 +45,7 @@ class ResourceTypeDataGrid extends DataGrid
 
     public function prepareActions(): void
     {
-        if (bouncer()->hasPermission('settings.resource_types.edit')) {
+        if (bouncer()->hasPermission('settings.resources.edit')) {
             $this->addAction([
                 'index'  => 'edit',
                 'icon'   => 'icon-edit',
@@ -55,7 +55,7 @@ class ResourceTypeDataGrid extends DataGrid
             ]);
         }
 
-        if (bouncer()->hasPermission('settings.resource_types.delete')) {
+        if (bouncer()->hasPermission('settings.resources.delete')) {
             $this->addAction([
                 'index'  => 'delete',
                 'icon'   => 'icon-delete',

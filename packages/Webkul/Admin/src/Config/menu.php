@@ -278,6 +278,7 @@ return [
         'icon-class' => 'icon-settings-mail',
     ], [
         'key'        => 'settings.automation.folders',
+        'acl'        => 'settings.folders',
         'name'       => 'admin::app.layouts.folders',
         'info'       => 'admin::app.layouts.folders-info',
         'route'      => 'admin.settings.folders.index',
@@ -314,6 +315,7 @@ return [
     ],
     [
         'key'        => 'settings.automation.data_transfer',
+        'acl'        => 'settings.data_transfer',
         'name'       => 'admin::app.layouts.data_transfer',
         'info'       => 'admin::app.layouts.data_transfer_info',
         'route'      => 'admin.settings.data_transfer.imports.index',
@@ -332,14 +334,6 @@ return [
         'info'       => 'admin::app.layouts.tags-info',
         'route'      => 'admin.settings.tags.index',
         'sort'       => 1,
-        'icon-class' => 'icon-settings-tag',
-    ],
-    [
-        'key'        => 'settings.other_settings.components',
-        'name'       => 'demo entity selector',
-        'info'       => 'Selectie van componenten om het gedrag te testen',
-        'route'      => 'admin.demo.entity-selector',
-        'sort'       => 2,
         'icon-class' => 'icon-settings-tag',
     ],
 

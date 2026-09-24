@@ -8,7 +8,7 @@
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Algemene informatie Persoon</h3>
 
             <div class="direction-row flex items-center gap-4">
-                @if (bouncer()->hasPermission('persons.edit'))
+                @if (bouncer()->hasPermission('contacts.persons.edit'))
                     <a href="{{ route('admin.contacts.persons.edit', $person->id) }}"
                        class="secondary-button flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text">
                         <span class="icon-edit text-base"></span>
@@ -16,7 +16,7 @@
                     </a>
                 @endif
 
-                @if (bouncer()->hasPermission('persons.delete'))
+                @if (bouncer()->hasPermission('contacts.persons.delete'))
                     @if ($person->hasPortalAccount())
                         <span
                             class="secondary-button flex items-center gap-1 border border-red-100 text-status-expired-text opacity-50"

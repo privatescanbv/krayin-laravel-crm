@@ -627,6 +627,43 @@ return [
         'sort'  => 4,
     ],
     [
+        'key'   => 'settings.folders',
+        'name'  => 'admin::app.layouts.folders',
+        'route' => 'admin.settings.folders.index',
+        'sort'  => 11,
+    ], [
+        'key'   => 'settings.folders.create',
+        'name'  => 'admin::app.acl.create',
+        'route' => ['admin.settings.folders.create', 'admin.settings.folders.store'],
+        'sort'  => 1,
+    ], [
+        'key'   => 'settings.folders.edit',
+        'name'  => 'admin::app.acl.edit',
+        'route' => ['admin.settings.folders.edit', 'admin.settings.folders.update'],
+        'sort'  => 2,
+    ], [
+        'key'   => 'settings.folders.delete',
+        'name'  => 'admin::app.acl.delete',
+        'route' => ['admin.settings.folders.delete', 'admin.settings.folders.mass_delete'],
+        'sort'  => 3,
+    ],
+    [
+        'key'   => 'settings.order_items',
+        'name'  => 'Orderregels',
+        'route' => 'admin.order_items.index',
+        'sort'  => 12,
+    ], [
+        'key'   => 'settings.order_items.edit',
+        'name'  => 'admin::app.acl.edit',
+        'route' => ['admin.order_items.edit', 'admin.order_items.update'],
+        'sort'  => 1,
+    ], [
+        'key'   => 'settings.order_items.delete',
+        'name'  => 'admin::app.acl.delete',
+        'route' => ['admin.order_items.delete', 'admin.order_items.bulk_delete'],
+        'sort'  => 2,
+    ],
+    [
         'key'   => 'configuration',
         'name'  => 'admin::app.acl.configuration',
         'route' => 'admin.configuration.index',
@@ -715,6 +752,12 @@ return [
         'name'  => 'Documentation',
         'route' => 'admin.docs.index',
         'sort'  => 100,
+    ],
+    [
+        'key'   => 'patient_portal',
+        'name'  => 'Patient Portaal',
+        'route' => [],
+        'sort'  => 102,
     ],
     [
         'key'   => 'resource_planning',

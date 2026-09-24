@@ -66,9 +66,9 @@ return [
         'name'         => 'Verkooporder op onderzoeksdatum',
         'path'         => 'dashboards/verkooporder-op-onderzoeksdatum',
         'dashboard_id' => 8,
-//        'params'       => [
-//            'onderzoeksdatum' => 'thisweek',
-//        ],
+        //        'params'       => [
+        //            'onderzoeksdatum' => 'thisweek',
+        //        ],
         'sort'         => 8,
         'icon-class'   => 'icon-dashboard',
     ],

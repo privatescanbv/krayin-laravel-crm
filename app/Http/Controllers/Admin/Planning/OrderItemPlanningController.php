@@ -88,9 +88,36 @@ class OrderItemPlanningController extends Controller
                 ], 422);
             }
 
-            $booking = DB::transaction(function () use ($request, $orderItem, $replace) {
+            // Prevent double-booking: reject if this resource already has a booking (for a
+            // different order item) whose time range overlaps the requested slot.
+            $hasConflict = ResourceOrderItem::where('resource_id', $resource->id)
+                ->where('orderitem_id', '!=', $orderItem->id)
+                ->where('from', '<', $to)
+                ->where('to', '>', $from)
+                ->exists();
+
+            if ($hasConflict) {
+                return response()->json([
+                    'message' => 'Deze resource is in het gekozen tijdvak al ingepland voor een andere afspraak.',
+                ], 409);
+            }
+
+            $booking = DB::transaction(function () use ($request, $orderItem, $resource, $from, $to, $replace) {
                 if ($replace) {
                     ResourceOrderItem::where('orderitem_id', $orderItem->id)->delete();
+                }
+
+                // Re-check for conflicts under a row lock inside the transaction to close the
+                // race window between the pre-check above and this insert.
+                $stillConflicts = ResourceOrderItem::where('resource_id', $resource->id)
+                    ->where('orderitem_id', '!=', $orderItem->id)
+                    ->where('from', '<', $to)
+                    ->where('to', '>', $from)
+                    ->lockForUpdate()
+                    ->exists();
+
+                if ($stillConflicts) {
+                    throw new Exception('Deze resource is in het gekozen tijdvak al ingepland voor een andere afspraak.');
                 }
 
                 return ResourceOrderItem::create([

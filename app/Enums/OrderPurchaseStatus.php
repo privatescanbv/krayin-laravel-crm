@@ -50,7 +50,10 @@ enum OrderPurchaseStatus: string
     private static function resolveNonEmpty(float $p, float $i): self
     {
         if ($i > 0 && $p > 0) {
-            return $i === $p ? self::FULLY_RECEIVED : self::PARTIALLY_RECEIVED;
+            // Compare with a small epsilon rather than strict float equality: both values are
+            // already rounded to cents, but binary floating-point representation can still make
+            // two mathematically-equal amounts compare unequal with `===`.
+            return abs($i - $p) < 0.005 ? self::FULLY_RECEIVED : self::PARTIALLY_RECEIVED;
         }
         if ($i <= 0 && $p > 0) {
             return self::NOT_RECEIVED;

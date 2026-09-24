@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Actions\Activities\CreateActivityForSalesLeadAction;
+use App\Enums\PipelineDefaultKeys;
 use App\Http\Controllers\Controller;
 use App\Models\SalesLead;
 use Illuminate\Http\Request;
@@ -36,8 +37,11 @@ class SalesLeadController extends Controller
             $validated['name'] = $lead->name;
             $validated['user_id'] = $lead->user_id;
         }
-        // TODO choose hernia or privatescan
-        $validated['pipeline_id'] = 3;
+        // Route the sales lead to the sales pipeline matching the source lead's department
+        // (Hernia vs Privatescan). Defaults to Privatescan when the lead has no department set.
+        $validated['pipeline_id'] = $lead?->department?->isHernia()
+            ? PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value
+            : PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value;
         $validated['pipeline_stage_id'] = Pipeline::find($validated['pipeline_id'])
             ->stages()
             ->orderByDesc('sort_order')

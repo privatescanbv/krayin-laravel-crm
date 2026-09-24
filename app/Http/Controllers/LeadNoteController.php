@@ -23,7 +23,7 @@ class LeadNoteController extends Controller
     public function store(int $leadId): JsonResponse
     {
         Log::info('Store note lead: '.$leadId);
-        request()->validate(request(), [
+        request()->validate([
             'comment' => 'required|string',
         ]);
 
@@ -33,7 +33,7 @@ class LeadNoteController extends Controller
             'type'    => 'note',
             'comment' => request('comment'),
             'is_done' => 1,
-            'user_id' => 1, // TODO: Replace with actual user ID when auth is implemented
+            'user_id' => auth()->id() ?? 1, // fallback for service-to-service (X-API-KEY) calls without a session
             'lead_id' => $leadId,
         ]);
 

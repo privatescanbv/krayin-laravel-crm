@@ -23,7 +23,7 @@
         :data='@json($orderItemsForJs)'
         :persons='@json($persons ?? [])'
         :status-options='@json($orderItemStatuses)'
-        edit-base-url="{{ rtrim(route('admin.order_items.edit', ['id' => 0]), '0') }}"
+        edit-base-url="{{ bouncer()->hasPermission('orders.order_items.edit') ? rtrim(route('admin.order_items.edit', ['id' => 0]), '0') : '' }}"
     ></v-order-item-list>
 </div>
 
@@ -150,7 +150,7 @@
             </x-admin::table.td>
             <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
                 <div class="flex items-center justify-end gap-2">
-                    <a v-if="item.id" :href="editBaseUrl + item.id" title="Bewerken">
+                    <a v-if="item.id && editBaseUrl" :href="editBaseUrl + item.id" title="Bewerken">
                         <i class="icon-edit cursor-pointer text-2xl"></i>
                     </a>
                 </div>

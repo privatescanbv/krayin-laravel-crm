@@ -38,7 +38,7 @@ class OrderItemController extends SimpleEntityController
         $this->createView = 'admin::order_items.create';
         $this->editView = 'admin::order_items.edit';
         $this->indexRoute = 'admin.order_items.index';
-        $this->permissionPrefix = 'settings.order_items';
+        $this->permissionPrefix = 'orders.order_items';
     }
 
     public function update(Request $request, int $id): RedirectResponse|JsonResponse

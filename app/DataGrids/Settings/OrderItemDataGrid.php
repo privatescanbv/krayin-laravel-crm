@@ -103,7 +103,7 @@ class OrderItemDataGrid extends DataGrid
 
     public function prepareActions(): void
     {
-        if (bouncer()->hasPermission('settings.order_items.edit')) {
+        if (bouncer()->hasPermission('orders.order_items.edit')) {
             $this->addAction([
                 'index'  => 'edit',
                 'icon'   => 'icon-edit',
@@ -113,7 +113,7 @@ class OrderItemDataGrid extends DataGrid
             ]);
         }
 
-        if (bouncer()->hasPermission('settings.order_items.delete')) {
+        if (bouncer()->hasPermission('orders.order_items.delete')) {
             $this->addAction([
                 'index'  => 'delete',
                 'icon'   => 'icon-delete',

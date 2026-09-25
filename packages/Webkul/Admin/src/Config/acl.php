@@ -648,22 +648,6 @@ return [
         'sort'  => 3,
     ],
     [
-        'key'   => 'settings.order_items',
-        'name'  => 'Orderregels',
-        'route' => 'admin.order_items.index',
-        'sort'  => 12,
-    ], [
-        'key'   => 'settings.order_items.edit',
-        'name'  => 'admin::app.acl.edit',
-        'route' => ['admin.order_items.edit', 'admin.order_items.update'],
-        'sort'  => 1,
-    ], [
-        'key'   => 'settings.order_items.delete',
-        'name'  => 'admin::app.acl.delete',
-        'route' => ['admin.order_items.delete', 'admin.order_items.bulk_delete'],
-        'sort'  => 2,
-    ],
-    [
         'key'   => 'configuration',
         'name'  => 'admin::app.acl.configuration',
         'route' => 'admin.configuration.index',
@@ -694,6 +678,22 @@ return [
         'name'  => 'admin::app.acl.delete',
         'route' => 'admin.orders.delete',
         'sort'  => 4,
+    ],
+    [
+        'key'   => 'orders.order_items',
+        'name'  => 'Orderregels',
+        'route' => 'admin.order_items.index',
+        'sort'  => 5,
+    ], [
+        'key'   => 'orders.order_items.edit',
+        'name'  => 'admin::app.acl.edit',
+        'route' => ['admin.order_items.edit', 'admin.order_items.update'],
+        'sort'  => 1,
+    ], [
+        'key'   => 'orders.order_items.delete',
+        'name'  => 'admin::app.acl.delete',
+        'route' => ['admin.order_items.delete', 'admin.order_items.bulk_delete'],
+        'sort'  => 2,
     ],
     [
         'key'   => 'clinic-guide',

@@ -8,11 +8,9 @@ use Webkul\Admin\Http\Controllers\Reports\RevenueByMonthController;
 /**
  * These three reports are being replaced by the embedded Metabase dashboards
  * (see metabase-dashboard-routes.php) and are marked "(wordt verwijderd)" in
- * the dashboard menu. `reports.legacy` is not exposed anywhere in the ACL
- * tree, so a custom role can never be granted it — only a "beheerder" role
- * (permission_type "all", see User::hasPermission()) can reach these.
+ * the dashboard menu. Access via the `metabase.crm-reports` ACL permission.
  */
-Route::middleware('bouncer.permission:reports.legacy')->group(function () {
+Route::middleware('bouncer.permission:metabase.crm-reports')->group(function () {
     Route::controller(RevenueByEmployeeController::class)
         ->prefix('reports/revenue-by-employee')
         ->group(function () {

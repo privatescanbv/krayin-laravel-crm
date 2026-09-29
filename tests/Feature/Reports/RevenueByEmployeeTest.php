@@ -235,7 +235,7 @@ test('revenue by employee index page hides verloren column via filter condition'
         ->assertSee('Omzet bruto minus verloren');
 });
 
-test('a custom role without the reports.legacy permission is denied', function () {
+test('a custom role without the metabase.crm-reports permission is denied', function () {
     $role = Role::factory()->create([
         'permission_type' => 'custom',
         'permissions'     => ['dashboard'],
@@ -248,5 +248,45 @@ test('a custom role without the reports.legacy permission is denied', function (
 
     $this->actingAs($user, 'user')
         ->get(route('admin.reports.revenue-by-employee.index'))
-        ->assertForbidden();
+        ->assertUnauthorized();
+});
+
+test('a custom role with the metabase.crm-reports permission can open the legacy reports and sees the links', function () {
+    $role = Role::factory()->create([
+        'permission_type' => 'custom',
+        'permissions'     => ['dashboard', 'metabase.crm-reports'],
+    ]);
+
+    $user = User::factory()->create(['status' => 1, 'role_id' => $role->id]);
+
+    $this->actingAs($user, 'user');
+
+    $this->get(route('admin.reports.revenue-by-employee.index'))->assertOk();
+    $this->get(route('admin.reports.orders-by-investigation-date.index'))->assertOk();
+    $this->get(route('admin.dashboard.index'))->assertSee(route('admin.reports.orders-by-investigation-date.index'));
+});
+
+test('the legacy report links are hidden without the metabase.crm-reports permission', function () {
+    $role = Role::factory()->create(['permission_type' => 'custom', 'permissions' => ['dashboard']]);
+
+    $user = User::factory()->create(['status' => 1, 'role_id' => $role->id]);
+
+    $this->actingAs($user, 'user')
+        ->get(route('admin.dashboard.index'))
+        ->assertOk()
+        ->assertDontSee(route('admin.reports.orders-by-investigation-date.index'));
+});
+
+test('metabase.crm-reports is selectable in the role editor', function () {
+    expect(collect(config('acl'))->pluck('key'))->toContain('metabase.crm-reports');
+});
+
+test('migration grants metabase.crm-reports to all custom roles', function () {
+    $medewerker = Role::factory()->create(['permission_type' => 'custom', 'permissions' => ['dashboard']]);
+    $alreadyHas = Role::factory()->create(['permission_type' => 'custom', 'permissions' => ['metabase.crm-reports']]);
+
+    (require database_path('migrations/2026_09_29_100000_grant_legacy_reports_to_all_roles.php'))->up();
+
+    expect($medewerker->fresh()->permissions)->toBe(['dashboard', 'metabase.crm-reports'])
+        ->and($alreadyHas->fresh()->permissions)->toBe(['metabase.crm-reports']);
 });

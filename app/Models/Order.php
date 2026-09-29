@@ -147,7 +147,7 @@ class Order extends Model
         return match ((int) $pipelineId) {
             PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value      => true,
             PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value => false,
-            default                                                   => null,
+            default                                                    => null,
         };
     }
 

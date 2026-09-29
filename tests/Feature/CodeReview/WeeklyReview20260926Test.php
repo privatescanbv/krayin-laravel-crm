@@ -16,6 +16,7 @@ use Database\Seeders\TestSeeder;
 use Webkul\Admin\DataGrids\Lead\LeadDataGrid;
 use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\Stage;
 use Webkul\User\Models\Role;
 use Webkul\User\Models\User;
 
@@ -74,10 +75,10 @@ test('sales mutating routes require sales-leads permissions', function (string $
         ])
         ->assertStatus(401);
 })->with([
-    'stage update'          => ['admin.sales-leads.stage.update', 'PUT'],
-    'lost'                  => ['admin.sales-leads.lost', 'PUT'],
+    'stage update'           => ['admin.sales-leads.stage.update', 'PUT'],
+    'lost'                   => ['admin.sales-leads.lost', 'PUT'],
     'create preventie sales' => ['admin.sales-leads.create-preventie-sales', 'POST'],
-    'create hernia sales'   => ['admin.sales-leads.create-hernia-sales', 'POST'],
+    'create hernia sales'    => ['admin.sales-leads.create-hernia-sales', 'POST'],
 ]);
 
 // 3. Referral orders were moved into the lead department's order pipeline
@@ -127,7 +128,7 @@ test('sales stage update rejects a stage from another pipeline', function (): vo
 test('sales stage update within the same pipeline still works', function (): void {
     $this->actingAs(getDefaultAdmin(), 'user');
     $sales = reviewSales(reviewLead('Privatescan'), PipelineStage::SALES_IN_BEHANDELING->id());
-    $target = Webkul\Lead\Models\Stage::where('lead_pipeline_id', PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value)
+    $target = Stage::where('lead_pipeline_id', PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value)
         ->where('id', '!=', $sales->pipeline_stage_id)
         ->where('is_lost', false)
         ->where('is_won', false)

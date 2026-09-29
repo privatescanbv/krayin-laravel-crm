@@ -48,6 +48,7 @@
                     </a>
                 </li>
             @endforeach
+            @if (bouncer()->hasPermission('metabase.crm-reports'))
             <li>
                 <a
                     href="{{ route('admin.reports.revenue-by-employee.index') }}"
@@ -75,6 +76,7 @@
                     Verkooporders op onderzoeksdatum *
                 </a>
             </li>
+            @endif
         </ul>
     </div>
 

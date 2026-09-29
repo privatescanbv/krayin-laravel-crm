@@ -5,10 +5,6 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    /**
-     * The order-line permissions moved from settings.order_items.* to orders.order_items.* so the role
-     * editor shows them under Orders. Rename them in existing roles, otherwise the grant is lost.
-     */
     public function up(): void
     {
         $this->rename('settings.order_items', 'orders.order_items');

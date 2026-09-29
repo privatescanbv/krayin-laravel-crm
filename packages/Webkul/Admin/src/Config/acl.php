@@ -12,6 +12,19 @@ return [
         'route' => 'admin.dashboard.index',
         'sort'  => 1,
     ], [
+        'key'   => 'metabase.crm-reports',
+        'name'  => 'CRM rapportage (verouderd)',
+        'route' => [
+            'admin.reports.revenue-by-employee.index',
+            'admin.reports.revenue-by-employee.data',
+            'admin.reports.revenue-by-employee.filter-options',
+            'admin.reports.revenue-by-month.index',
+            'admin.reports.revenue-by-month.data',
+            'admin.reports.orders-by-investigation-date.index',
+            'admin.reports.orders-by-investigation-date.data',
+        ],
+        'sort'  => 99,
+    ], [
         'key'   => 'leads',
         'name'  => 'admin::app.acl.leads',
         'route' => 'admin.leads.index',

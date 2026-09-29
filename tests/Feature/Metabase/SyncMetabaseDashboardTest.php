@@ -352,3 +352,34 @@ it('does not leak the api key in output', function () {
         ->assertFailed()
         ->doesntExpectOutputToContain('src-key');
 });
+
+it('sends MBQL5 native template tags keyed by name', function () {
+    fakeMetabase([
+        'GET '.MB_SOURCE.'/api/dashboard/12' => [
+            'id'        => 12, 'name' => 'Onderzoeken', 'parameters' => [], 'tabs' => [],
+            'dashcards' => [['id' => 1, 'card_id' => 34, 'row' => 0, 'col' => 0, 'size_x' => 12, 'size_y' => 8,
+                'series'          => [], 'parameter_mappings' => [], 'visualization_settings' => []]],
+        ],
+        'GET '.MB_SOURCE.'/api/card/34' => [
+            'id'                     => 34,
+            'name'                   => 'Onderzoeken per dag',
+            'display'                => 'bar',
+            'visualization_settings' => [],
+            'dataset_query'          => ['database' => 2, 'lib/type' => 'mbql/query', 'stages' => [[
+                'lib/type'      => 'mbql.stage/native',
+                'native'        => 'SELECT * FROM orders WHERE {{status}}',
+                'template-tags' => [[
+                    'name'        => 'status', 'id' => 'tag-1', 'type' => 'dimension', 'widget-type' => 'string/=',
+                    'dimension'   => ['field', ['base-type' => 'type/Text'], 100],
+                ]],
+            ]]],
+        ],
+    ]);
+
+    $this->artisan('metabase:sync-dashboard --source=dev --target=prod --dashboard=12 --force')
+        ->assertSuccessful();
+
+    Http::assertSent(fn ($r) => $r->method() === 'POST'
+        && str_ends_with(strtok($r->url(), '?'), '/api/card')
+        && ($r->data()['dataset_query']['native']['template-tags']['status']['dimension'] ?? null) === ['field', 900, null]);
+});

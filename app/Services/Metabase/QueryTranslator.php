@@ -89,11 +89,15 @@ class QueryTranslator
         $stage = $stages[0];
 
         if (isset($stage['native'])) {
+            // MBQL5 lists template tags; the legacy shape needs them keyed by name,
+            // otherwise Metabase silently drops them and {{tags}} break the SQL.
+            $tags = $stage['template-tags'] ?? [];
+
             return [
                 'type'   => 'native',
                 'native' => [
                     'query'         => $stage['native'],
-                    'template-tags' => $stage['template-tags'] ?? [],
+                    'template-tags' => array_is_list($tags) ? array_column($tags, null, 'name') : $tags,
                 ],
             ];
         }

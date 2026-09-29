@@ -30,7 +30,7 @@ beforeEach(function () {
     $email = [['value' => 'undo.fp@example.com', 'label' => ContactLabel::Eigen->value]];
 
     $this->person = Person::factory()->create(['emails' => $email]);
-    $this->other = Person::factory()->create(['emails' => $email]);
+    $this->other = Person::factory()->create(['emails' => $email, 'last_name' => "O'Connell"]);
 
     app(DuplicateFalsePositiveService::class)->storeForEntities(
         DuplicateEntityType::PERSON,
@@ -42,7 +42,7 @@ test('person view lists persons marked as not a duplicate', function () {
     get(route('admin.contacts.persons.view', $this->person->id))
         ->assertOk()
         ->assertSee('Gemarkeerd als "geen duplicaat"', false)
-        ->assertSee($this->other->name, false);
+        ->assertSee($this->other->name);
 });
 
 test('undoing a false positive makes the pair a duplicate again', function () {

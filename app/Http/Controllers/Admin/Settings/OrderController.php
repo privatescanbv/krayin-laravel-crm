@@ -183,6 +183,7 @@ class OrderController extends SimpleEntityController
                     'salesLead.persons',
                     'salesLead.lead',
                     'payments',
+                    'orderItems.resourceOrderItems',
                 ])
                 ->withCount([
                     'activities as open_activities_count' => function ($q) {

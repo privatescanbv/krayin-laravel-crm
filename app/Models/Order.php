@@ -133,6 +133,48 @@ class Order extends Model
         return PipelineStage::ORDER_VERLOREN->id();
     }
 
+    /**
+     * Whether this order lives in the Hernia order pipeline, based on its own current stage.
+     * Returns null when the pipeline can't be determined (no stage) so callers can fall back.
+     *
+     * Use this instead of the lead's department: with cross-department referral sales
+     * (Preventie from Hernia, Hernia from Privatescan) the lead department differs from the order's.
+     */
+    public function isInHerniaOrderPipeline(): ?bool
+    {
+        $pipelineId = $this->stage?->lead_pipeline_id;
+
+        return match ((int) $pipelineId) {
+            PipelineDefaultKeys::PIPELINE_HERNIA_ORDERS_ID->value      => true,
+            PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value => false,
+            default                                                   => null,
+        };
+    }
+
+    /**
+     * "Verloren" stage in this order's own pipeline; falls back to the given department.
+     */
+    public function lostStageIdForOwnPipeline(?Department $fallbackDepartment = null): int
+    {
+        return match ($this->isInHerniaOrderPipeline()) {
+            true    => PipelineStage::ORDER_VERLOREN_HERNIA->id(),
+            false   => PipelineStage::ORDER_VERLOREN->id(),
+            default => self::lostOrderStageId($fallbackDepartment),
+        };
+    }
+
+    /**
+     * "Bevestigd" stage in this order's own pipeline; falls back to the given department.
+     */
+    public function sentStageIdForOwnPipeline(?Department $fallbackDepartment = null): int
+    {
+        return match ($this->isInHerniaOrderPipeline()) {
+            true    => PipelineStage::ORDER_BEVESTIGD_HERNIA->id(),
+            false   => PipelineStage::ORDER_BEVESTIGD->id(),
+            default => self::orderSendByDepartmentStageId($fallbackDepartment),
+        };
+    }
+
     public function setFirstExaminationAtAttribute(mixed $value): void
     {
         if ($value === null || $value === '') {

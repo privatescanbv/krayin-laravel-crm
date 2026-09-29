@@ -369,6 +369,15 @@ class SalesLeadController extends Controller
         $salesLead = SalesLead::findOrFail($id);
         $targetStage = StageProxy::findOrFail((int) request('lead_pipeline_stage_id'));
 
+        // The target must be in the sales' current pipeline; otherwise a Privatescan sales could be put
+        // in a Hernia/lead/order stage. Pipeline switches go via a department change in update().
+        $currentPipelineId = $salesLead->stage?->lead_pipeline_id;
+        if ($currentPipelineId !== null && (int) $targetStage->lead_pipeline_id !== (int) $currentPipelineId) {
+            return response()->json([
+                'message' => 'Deze status hoort niet bij de pipeline van deze sales.',
+            ], 422);
+        }
+
         // Optionally close open activities for this Sales when requested (parity with lead stage update)
         if (request()->boolean('close_open_activities')) {
             Activity::where('sales_lead_id', $salesLead->id)

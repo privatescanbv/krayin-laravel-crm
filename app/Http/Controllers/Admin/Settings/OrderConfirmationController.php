@@ -384,7 +384,7 @@ class OrderConfirmationController extends Controller
 
         if ($allDone) {
             $order->update([
-                'pipeline_stage_id' => Order::orderSendByDepartmentStageId($order->salesLead?->lead?->department),
+                'pipeline_stage_id' => $order->sentStageIdForOwnPipeline($order->salesLead?->getDepartment()),
             ]);
 
             OrderMarkedAsSent::dispatch($order, auth()->id());

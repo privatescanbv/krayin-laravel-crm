@@ -94,16 +94,19 @@ class OrderRepository extends Repository
             return;
         }
 
-        $lostOrderStageId = Order::lostOrderStageId($sales->lead?->department);
+        // Fallback only: the lead's department is wrong for cross-department referral sales,
+        // so each order is moved to the "Verloren" stage of its own pipeline.
+        $fallbackDepartment = $sales->getDepartment();
         $closedAt = $sales->closed_at ?? now();
 
         Order::query()
+            ->with('stage')
             ->where('sales_lead_id', $salesId)
             ->whereDoesntHave('stage', fn ($q) => $q->where('is_won', true))
             ->get()
-            ->each(function (Order $order) use ($lostOrderStageId, $sales, $closedAt) {
+            ->each(function (Order $order) use ($fallbackDepartment, $sales, $closedAt) {
                 $order->update([
-                    'pipeline_stage_id' => $lostOrderStageId,
+                    'pipeline_stage_id' => $order->lostStageIdForOwnPipeline($fallbackDepartment),
                     'lost_reason'       => $sales->lost_reason,
                     'closed_at'         => $closedAt,
                 ]);

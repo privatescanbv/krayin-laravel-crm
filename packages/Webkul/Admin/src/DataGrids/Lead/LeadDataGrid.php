@@ -82,8 +82,11 @@ class LeadDataGrid extends DataGrid
             $queryBuilder->whereIn('leads.user_id', $userIds);
         }
 
-        if (! is_null(request()->input('rotten_lead.in'))) {
-            $queryBuilder->havingRaw($tablePrefix.'rotten_lead = '.request()->input('rotten_lead.in'));
+        $rottenLead = request()->input('rotten_lead.in');
+
+        if (! is_null($rottenLead) && is_scalar($rottenLead)) {
+            // Bound parameter: this value comes straight from the query string.
+            $queryBuilder->havingRaw($tablePrefix.'rotten_lead = ?', [(int) (bool) $rottenLead]);
         }
 
         $this->addFilter('id', 'leads.id');

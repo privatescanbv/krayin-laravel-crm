@@ -13,7 +13,8 @@ enum OrderPaymentStatus: string
     public static function forOrder(float $total, float $paid): self
     {
         if ($total <= 0) {
-            return self::NOT_APPLICABLE;
+            // Money received on a €0 order (e.g. all lines lost) must be refunded → Credit, not N.v.t.
+            return $paid > 0 ? self::CREDIT : self::NOT_APPLICABLE;
         }
         if ($paid <= 0) {
             return self::NOT_PAID;

@@ -730,17 +730,30 @@ return [
     ], [
         'key'   => 'sales-leads.view',
         'name'  => 'admin::app.acl.view',
-        'route' => ['admin.sales-leads.view', 'admin.sales-leads.view'],
+        'route' => ['admin.sales-leads.view', 'admin.sales-leads.debug'],
         'sort'  => 1,
     ], [
         'key'   => 'sales-leads.create',
         'name'  => 'admin::app.acl.create',
-        'route' => ['admin.sales-leads.create', 'admin.sales-leads.store'],
+        'route' => [
+            'admin.sales-leads.create',
+            'admin.sales-leads.store',
+            'admin.sales-leads.create-preventie-sales',
+            'admin.sales-leads.create-hernia-sales',
+        ],
         'sort'  => 1,
     ], [
         'key'   => 'sales-leads.edit',
         'name'  => 'admin::app.acl.edit',
-        'route' => ['admin.sales-leads.edit', 'admin.sales-leads.update'],
+        // Stage changes and "lost" cascade to orders (set LOST) and GVL forms, so they need edit rights.
+        'route' => [
+            'admin.sales-leads.edit',
+            'admin.sales-leads.update',
+            'admin.sales-leads.stage.update',
+            'admin.sales-leads.lost',
+            'admin.sales-leads.attach_person',
+            'admin.sales-leads.attach_person.store',
+        ],
         'sort'  => 2,
     ], [
         'key'   => 'sales-leads.delete',

@@ -47,7 +47,7 @@ class OrderObserver
         $order->loadMissing(['salesLead.department', 'salesLead.lead.department']);
 
         $department = $order->salesLead?->getDepartment();
-        $lostStageId = Order::lostOrderStageId($department);
+        $lostStageId = $order->lostStageIdForOwnPipeline($department);
 
         $order->update([
             'pipeline_stage_id' => $lostStageId,

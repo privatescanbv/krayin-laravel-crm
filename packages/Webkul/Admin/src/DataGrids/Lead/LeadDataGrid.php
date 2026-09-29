@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\DataGrids\Lead;
 
+use App\Enums\PipelineType;
 use App\Helpers\DatabaseHelper;
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -38,7 +39,7 @@ class LeadDataGrid extends DataGrid
         if (request('pipeline_id')) {
             $this->pipeline = $this->pipelineRepository->find(request('pipeline_id'));
         } else {
-            $this->pipeline = $this->pipelineRepository->getDefaultPipeline();
+            $this->pipeline = $this->pipelineRepository->getDefaultPipeline(PipelineType::LEAD);
         }
     }
 

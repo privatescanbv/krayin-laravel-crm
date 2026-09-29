@@ -25,22 +25,23 @@ class DateValidator implements Rule
         $isHtmlFormat = preg_match('/^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$/', $value) === 1;
         $isHtmlWithTime = preg_match('/^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])\s+\d{2}:\d{2}:\d{2}$/', $value) === 1;
 
+        // Years like 0072 come from a two-digit year typed into a four-digit field.
         if ($isDutchFormat) {
             $date = DateTime::createFromFormat('d-m-Y', $value);
 
-            return $date && $date->format('d-m-Y') === $value;
+            return $date && $date->format('d-m-Y') === $value && (int) $date->format('Y') >= 1900;
         }
 
         if ($isHtmlFormat) {
             $date = DateTime::createFromFormat('Y-m-d', $value);
 
-            return $date && $date->format('Y-m-d') === $value;
+            return $date && $date->format('Y-m-d') === $value && (int) $date->format('Y') >= 1900;
         }
 
         if ($isHtmlWithTime) {
             $date = DateTime::createFromFormat('Y-m-d H:i:s', $value);
 
-            return $date && $date->format('Y-m-d H:i:s') === $value;
+            return $date && $date->format('Y-m-d H:i:s') === $value && (int) $date->format('Y') >= 1900;
         }
 
         return false;

@@ -57,6 +57,13 @@ read "N.v.t.", and the payment overview filters N.v.t. out, so the credit owed t
 did not show up anywhere.
 **Fix:** a €0 total with more than €0 received now returns `CREDIT`.
 
+**Follow-up (2026-09-29):** the fix above was not enough for the payment overview. It still
+filtered out orders in a "Verloren" stage, and orders without an examination date (planning is
+cleared on LOST). `paymentOverview()` now always shows orders with a credit, in any stage.
+In those rows the type defaults to "Terugbetaling". Saving a refund there settles the open,
+auto-created refund instead of adding a second one. "Totaal nog open" no longer subtracts credits.
+Tests: `tests/Feature/Orders/PaymentOverviewTest.php`.
+
 ## 5. Sales stage update accepted a stage from any pipeline (data integrity, medium)
 `SalesLeadController::updateStage()` only validated `exists:lead_pipeline_stages,id`. That let a
 Privatescan sales be put into a Hernia, lead or order stage, which breaks the kanban,

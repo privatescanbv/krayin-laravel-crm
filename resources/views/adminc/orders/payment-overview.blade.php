@@ -54,7 +54,8 @@
         <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Totaal nog open</div>
             <div class="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-500">
-                {{ Currency::formatMoney($defaultCurrencyCode, $orders->sum(fn ($o) => round((float) ($o->total_price ?? 0) - $o->netReceivedAmount(), 2))) }}
+                {{-- Credits (to refund) are not "open", so they don't lower this total. --}}
+                {{ Currency::formatMoney($defaultCurrencyCode, $orders->sum(fn ($o) => max(0, round((float) ($o->total_price ?? 0) - $o->netReceivedAmount(), 2)))) }}
             </div>
         </div>
 
@@ -178,7 +179,7 @@
                                     <input
                                         type="number"
                                         name="rows[{{ $index }}][amount]"
-                                        placeholder="0.00"
+                                        placeholder="{{ $isCredit ? number_format(abs($openAmount), 2, '.', '') : '0.00' }}"
                                         step="0.01"
                                         min="0"
                                         value=""
@@ -199,7 +200,7 @@
                                         @foreach ($paymentTypeOptions as $option)
                                             <option
                                                 value="{{ $option['value'] }}"
-                                                @selected($option['value'] === 'advance')
+                                                @selected($option['value'] === ($isCredit ? 'refund' : 'advance'))
                                             >{{ $option['label'] }}</option>
                                         @endforeach
                                     </select>

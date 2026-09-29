@@ -939,22 +939,40 @@ class OrderController extends SimpleEntityController
 
         $stageIds = $currentPipeline->stages->pluck('id');
 
+        // Two kinds of rows:
+        // - open orders (not lost, with an examination date) that are not fully paid yet;
+        // - orders with a credit (customer paid more than the total, e.g. order or lines set to LOST
+        //   after a deposit). Those must be refunded, so they are shown even when the order is lost
+        //   or has no examination date (planning is cleared when an order is lost).
         $orders = Order::query()
-            ->with(['payments', 'orderItems.resourceOrderItems'])
+            ->with(['payments', 'orderItems.resourceOrderItems', 'stage'])
             ->whereIn('pipeline_stage_id', $stageIds)
-            ->whereHas('stage', fn ($q) => $q->where('is_lost', false))
             ->where(function ($q) {
-                $q->whereNotNull('first_examination_at')
-                    ->orWhereHas('orderItems', function ($orderItems) {
-                        $orderItems
-                            ->where('status', '!=', OrderItemStatus::LOST->value)
-                            ->whereHas('resourceOrderItems', fn ($roi) => $roi->whereNotNull('from'));
-                    });
+                $q->where(function ($open) {
+                    $open->whereHas('stage', fn ($s) => $s->where('is_lost', false))
+                        ->where(function ($exam) {
+                            $exam->whereNotNull('first_examination_at')
+                                ->orWhereHas('orderItems', function ($orderItems) {
+                                    $orderItems
+                                        ->where('status', '!=', OrderItemStatus::LOST->value)
+                                        ->whereHas('resourceOrderItems', fn ($roi) => $roi->whereNotNull('from'));
+                                });
+                        });
+                })->orWhereHas('payments');
             })
             ->get()
-            ->filter(fn (Order $o) => $o->firstExaminationCarbon() !== null)
+            ->filter(function (Order $o) {
+                $status = $o->paymentStatus();
+
+                if ($status === OrderPaymentStatus::CREDIT) {
+                    return true;
+                }
+
+                return ! $o->stage?->is_lost
+                    && $o->firstExaminationCarbon() !== null
+                    && ! in_array($status, [OrderPaymentStatus::FULLY_PAID, OrderPaymentStatus::NOT_APPLICABLE], true);
+            })
             ->sortBy(fn (Order $o) => $o->firstExaminationCarbon()?->getTimestamp() ?? PHP_INT_MAX)
-            ->filter(fn (Order $o) => ! in_array($o->paymentStatus(), [OrderPaymentStatus::FULLY_PAID, OrderPaymentStatus::NOT_APPLICABLE], true))
             ->values();
 
         return view('adminc.orders.payment-overview', [
@@ -986,8 +1004,18 @@ class OrderController extends SimpleEntityController
                     'currency' => $row['currency'] ?? 'EUR',
                 ];
 
-                if (! empty($row['payment_id'])) {
-                    OrderPayment::where('id', $row['payment_id'])->where('order_id', $row['order_id'])->update($data);
+                // A refund entered for an order that already has an open (auto-created) refund settles
+                // that refund instead of adding a second one.
+                $openRefundId = empty($row['payment_id']) && $row['type'] === PaymentType::REFUND->value
+                    ? OrderPayment::where('order_id', $row['order_id'])
+                        ->where('type', PaymentType::REFUND->value)
+                        ->whereNull('paid_at')
+                        ->oldest('id')
+                        ->value('id')
+                    : null;
+
+                if (! empty($row['payment_id']) || $openRefundId) {
+                    OrderPayment::where('id', ($row['payment_id'] ?? null) ?: $openRefundId)->where('order_id', $row['order_id'])->update($data);
                 } else {
                     OrderPayment::create(array_merge($data, ['order_id' => $row['order_id']]));
                 }

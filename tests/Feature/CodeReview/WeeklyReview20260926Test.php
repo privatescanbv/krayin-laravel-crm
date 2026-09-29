@@ -6,7 +6,6 @@
 
 use App\Enums\LostReason;
 use App\Enums\OrderPaymentStatus;
-use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStage;
 use App\Models\Department;
 use App\Models\Order;
@@ -16,7 +15,6 @@ use Database\Seeders\TestSeeder;
 use Webkul\Admin\DataGrids\Lead\LeadDataGrid;
 use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\Lead\Models\Lead;
-use Webkul\Lead\Models\Stage;
 use Webkul\User\Models\Role;
 use Webkul\User\Models\User;
 
@@ -128,13 +126,10 @@ test('sales stage update rejects a stage from another pipeline', function (): vo
 test('sales stage update within the same pipeline still works', function (): void {
     $this->actingAs(getDefaultAdmin(), 'user');
     $sales = reviewSales(reviewLead('Privatescan'), PipelineStage::SALES_IN_BEHANDELING->id());
-    $target = Stage::where('lead_pipeline_id', PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID->value)
-        ->where('id', '!=', $sales->pipeline_stage_id)
-        ->where('is_lost', false)
-        ->where('is_won', false)
-        ->firstOrFail();
 
     $this->putJson(route('admin.sales-leads.stage.update', $sales->id), [
-        'lead_pipeline_stage_id' => $target->id,
+        'lead_pipeline_stage_id' => PipelineStage::SALES_MET_SUCCES_AFGEROND->id(),
     ])->assertOk();
+
+    expect($sales->fresh()->pipeline_stage_id)->toBe(PipelineStage::SALES_MET_SUCCES_AFGEROND->id());
 });

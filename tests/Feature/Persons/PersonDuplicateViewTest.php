@@ -4,6 +4,7 @@ use App\Enums\PreferredLanguage;
 use App\Models\Address;
 use Database\Seeders\TestSeeder;
 use Illuminate\Auth\Middleware\Authenticate;
+use Illuminate\Support\Facades\Cache;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 
@@ -28,6 +29,36 @@ test('viewing the duplicates page clears a stale has_duplicates flag left over f
 
     expect($response->viewData('duplicates'))->toBeEmpty()
         ->and($person->fresh()->has_duplicates)->toBeFalse();
+});
+
+test('viewing the duplicates page without duplicates invalidates the stale duplicate cache', function () {
+    $person = Person::factory()->create(['has_duplicates' => true]);
+    $other = Person::factory()->create();
+
+    Cache::put('person_duplicates:'.$person->id, collect([$other->id]), 3600);
+    Cache::put('person_duplicates:'.$other->id, collect([$person->id]), 3600);
+
+    $this->get(route('admin.contacts.persons.duplicates.index', $person->id))
+        ->assertOk();
+
+    expect(Cache::has('person_duplicates:'.$person->id))->toBeFalse()
+        ->and(Cache::has('person_duplicates:'.$other->id))->toBeTrue()
+        ->and($person->fresh()->has_duplicates)->toBeFalse();
+});
+
+test('viewing the duplicates page with duplicates keeps the cache', function () {
+    $person = Person::factory()->create();
+    Person::factory()->create([
+        'first_name' => $person->first_name,
+        'last_name'  => $person->last_name,
+    ]);
+
+    Cache::put('person_duplicates:'.$person->id, collect([123]), 3600);
+
+    $this->get(route('admin.contacts.persons.duplicates.index', $person->id))
+        ->assertOk();
+
+    expect(Cache::has('person_duplicates:'.$person->id))->toBeTrue();
 });
 
 test('person duplicates merge view loads when primary person has phone numbers', function () {

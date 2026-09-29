@@ -42,6 +42,11 @@ class DuplicateController extends Controller
         // rebuild even though this page just proved the real answer. Self-heal it here.
         $this->personDuplicateCacheService->persistHasDuplicatesFlag($person->id, $duplicates->pluck('id'));
 
+        // A stale cache entry would re-flag the person on the next cached lookup, so drop it too.
+        if ($duplicates->isEmpty()) {
+            $this->personDuplicateCacheService->invalidatePersonCache($person->id);
+        }
+
         // findPotentialDuplicates returns a Support Collection, so load per model.
         $duplicates->each(fn (Person $dup) => $dup->loadMissing(['organization', 'address']));
 

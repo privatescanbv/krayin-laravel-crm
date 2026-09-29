@@ -4,6 +4,14 @@ namespace App\Enums;
 
 use LogicException;
 
+/**
+ * Stage ids are fixed: never renumber or reuse an id (a removed stage keeps its id reserved, see id 24).
+ * The analytics sync (database/analytics/003_sync_procedure.sql) and the activities audit trail
+ * (additional.old/new.value) reference stages by id.
+ *
+ * Adding a stage? Also update 003_sync_procedure.sql — dim_pipeline_stage (won/lost/status
+ * category) and, for the Hernia sales pipeline, the stage lists in fact_hernia_traject.
+ */
 enum PipelineStage: string
 {
     // ============================================================

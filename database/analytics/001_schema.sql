@@ -11,6 +11,7 @@
 --   fact_order_items   1 rij per orderregel   — productanalyse
 --   fact_planning      1 rij per resource-slot — onderzoekdatum / capaciteit
 --   fact_leads         1 rij per salesleads   — leads per maand, won/lost, bron/campagne/landing_page/attribution_url, lost reason
+--   fact_hernia_traject 1 rij per Herniapoli-sale die ter beoordeling is aangeboden — beoordeling → planning funnel
 --
 -- Uitvoeren: docker compose exec -T mysql_crm mysql -uroot -p < database/analytics/001_schema.sql
 -- =========================================================
@@ -22,6 +23,7 @@ CREATE DATABASE IF NOT EXISTS analytics
 -- Legacy: incrementele sync met watermark is vervangen door full-reload.
 DROP TABLE IF EXISTS analytics.sync_watermark;
 
+DROP TABLE IF EXISTS analytics.fact_hernia_traject;
 DROP TABLE IF EXISTS analytics.fact_planning;
 DROP TABLE IF EXISTS analytics.fact_order_items;
 DROP TABLE IF EXISTS analytics.fact_orders;
@@ -211,4 +213,31 @@ CREATE TABLE analytics.fact_planning (
     INDEX idx_van_datum (van_datum_sk),
     INDEX idx_order     (order_id),
     INDEX idx_resource  (resource_id)
+) ENGINE=InnoDB;
+
+-- ---- fact_hernia_traject: één rij per Herniapoli-sale (pipeline 4) die ter beoordeling is aangeboden ----
+-- Cohort = ter_beoordeling_at. Afgeleid uit de fase-historie in activities (SalesLeadObserver:
+-- additional->>'$.attribute' = 'Status', niet op activity-titel) + de aanmaakfase van de sale.
+-- Zie 003_sync_procedure.sql voor de exacte regels (ook: overgeslagen fases, heen-en-weer, 17 → 16).
+-- operatieadvies ontbreekt bewust: er is (nog) geen veld "uitkomst beoordeling" in het CRM.
+CREATE TABLE analytics.fact_hernia_traject (
+    lead_sk               BIGINT       NOT NULL COMMENT 'salesleads.id',
+    naam                  VARCHAR(255) NULL,
+    verkoper_sk           INT          NULL,
+    stage_sk              INT          NULL     COMMENT 'huidige fase',
+    ter_beoordeling_at    DATETIME     NOT NULL COMMENT 'eerste echte binnenkomst in 17 Casus bij arts (of direct 18-23)',
+    ter_beoordeling_maand CHAR(7)      NOT NULL COMMENT 'YYYY-MM, cohort',
+    beoordeeld_at         DATETIME     NULL     COMMENT 'eerste fase 18-28 na ter_beoordeling_at',
+    ingepland_at          DATETIME     NULL     COMMENT 'eerste fase 23/25/26/27 (Behandeling gepland / nazorg) na ter_beoordeling_at',
+    is_beoordeeld         BOOLEAN      NOT NULL,
+    is_ingepland          BOOLEAN      NOT NULL,
+    mri_herkomst          VARCHAR(10)  NOT NULL COMMENT 'Intern = MRI-orderregel op de sale of ooit fase 16; anders Extern',
+    behandeling_type      VARCHAR(100) NULL     COMMENT 'productgroep (PTED/Micro/ACDF/TLIF/PRT/...) van eerste niet-verloren behandelregel',
+    behandeling_soort     VARCHAR(100) NULL     COMMENT 'Operatief / Conservatief',
+    uitkomst              VARCHAR(50)  NOT NULL COMMENT 'Ingepland / Verloren / Afgerond zonder behandeling / Open / Wacht op beoordeling / Afgehaakt voor beoordeling',
+    reden_niet_ingepland  VARCHAR(100) NULL     COMMENT 'LostReason-label bij Verloren, anders huidige fase',
+    lost_reason           VARCHAR(100) NULL     COMMENT 'ruwe enum-code',
+    geladen_op            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (lead_sk),
+    INDEX idx_maand (ter_beoordeling_maand)
 ) ENGINE=InnoDB;

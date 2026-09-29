@@ -36,7 +36,7 @@ BEGIN
             WHEN '1137' THEN 'PTED operatie'
             ELSE COALESCE(pg1.name, 'Overig')
         END                                                   AS categorie,
-        p.external_id IN ('1065','1066','1134','1136','1137') AS is_speciaal,
+        COALESCE(p.external_id IN ('1065','1066','1134','1136','1137'), 0) AS is_speciaal,
         pt.name                                               AS product_type,
         pg1.name                                              AS product_groep,
         COALESCE(pg3.name, pg2.name, pg1.name)               AS hoofd_groep,
@@ -142,6 +142,7 @@ BEGIN
     WHERE type = 'system'
         AND order_id IS NOT NULL
         AND additional->>'$.attribute' = 'Status'
+        AND additional->>'$.new.value' REGEXP '^[0-9]+$'   -- OrderItemObserver logt ook 'Status' met new/won/lost
         AND CAST(additional->>'$.new.value' AS UNSIGNED) IN (38, 47)
     GROUP BY order_id;
 
@@ -346,6 +347,141 @@ BEGIN
     DELETE f FROM analytics.fact_planning f
     LEFT JOIN privatescan.resource_orderitem roi ON roi.id = f.planning_sk
     WHERE roi.id IS NULL;
+
+    -- fact_hernia_traject (Herniapoli-sale-grain, cohort = ter beoordeling aangeboden)
+    -- Fase-historie = aanmaakfase + elke Status-wijziging uit activities (SalesLeadObserver).
+    -- Gematcht op additional->>'$.attribute' = 'Status', niet op de titel "Status gewijzigd".
+    --   aanmaakfase    = old.value van de eerste Status-wijziging, anders huidige fase; tijdstip =
+    --                    created_at. De aanmaak zelf wordt (net als bij leads/orders) niet gelogd.
+    --   ter beoordeling = eerste verblijf in 17 dat NIET direct naar 16 (MRI via Privatescan)
+    --                    gaat, of binnenkomst in 18-23 zonder via 17 te komen (overgeslagen).
+    --                    MIN() → heen-en-weer (18 → 17) telt één keer.
+    --   beoordeeld     = eerste fase 18-28 daarna; ingepland = eerste fase 23/25/26/27 daarna.
+    -- Fase-ids hard (pipeline 4): ids zijn vast, zie docblock App\Enums\PipelineStage. Nieuwe Hernia-salesfase → hier indelen.
+    DELETE FROM analytics.fact_hernia_traject;
+
+    INSERT INTO analytics.fact_hernia_traject
+        (lead_sk, naam, verkoper_sk, stage_sk, ter_beoordeling_at, ter_beoordeling_maand,
+         beoordeeld_at, ingepland_at, is_beoordeeld, is_ingepland, mri_herkomst,
+         behandeling_type, behandeling_soort, uitkomst, reden_niet_ingepland, lost_reason, geladen_op)
+    WITH hs AS (
+        SELECT s.* FROM privatescan.salesleads s
+        JOIN privatescan.lead_pipeline_stages st ON st.id = s.pipeline_stage_id AND st.lead_pipeline_id = 4
+    ),
+    ev AS (
+        SELECT a.sales_lead_id AS sl_id, a.id AS seq, CAST(a.created_at AS DATETIME) AS at,  -- TIMESTAMP → NULL-MIN() wordt anders 0000-00-00
+               IF(a.additional->>'$.old.value' REGEXP '^[0-9]+$', CAST(a.additional->>'$.old.value' AS UNSIGNED), NULL) AS old_stage,
+               IF(a.additional->>'$.new.value' REGEXP '^[0-9]+$', CAST(a.additional->>'$.new.value' AS UNSIGNED), NULL) AS new_stage
+        FROM privatescan.activities a
+        JOIN hs ON hs.id = a.sales_lead_id
+        WHERE a.type = 'system' AND a.additional->>'$.attribute' = 'Status'
+          AND a.additional->>'$.new.value' REGEXP '^[0-9]+$'   -- strict mode: geen CAST op rommel
+    ),
+    stays AS (
+        SELECT hs.id AS sl_id, 0 AS seq, CAST(hs.created_at AS DATETIME) AS at,
+               COALESCE((SELECT e.old_stage FROM ev e WHERE e.sl_id = hs.id ORDER BY e.at, e.seq LIMIT 1),
+                        hs.pipeline_stage_id) AS stage
+        FROM hs
+        UNION ALL
+        SELECT sl_id, seq, at, new_stage FROM ev
+    ),
+    fases AS (
+        SELECT sl_id, at, stage,
+               LAG(stage)  OVER w AS prev_stage,
+               LEAD(stage) OVER w AS next_stage
+        FROM stays WINDOW w AS (PARTITION BY sl_id ORDER BY at, seq)
+    ),
+    tb AS (
+        SELECT sl_id, MIN(at) AS ter_beoordeling_at
+        FROM fases
+        WHERE (stage = 17 AND COALESCE(next_stage, 0) <> 16)
+           OR (stage BETWEEN 18 AND 23 AND COALESCE(prev_stage, 0) NOT BETWEEN 17 AND 28)
+        GROUP BY sl_id
+    ),
+    mijlpaal AS (
+        SELECT tb.sl_id, tb.ter_beoordeling_at,
+               MIN(CASE WHEN f.stage BETWEEN 18 AND 28 AND f.at >= tb.ter_beoordeling_at THEN f.at END) AS beoordeeld_at,
+               MIN(CASE WHEN f.stage IN (23, 25, 26, 27) AND f.at >= tb.ter_beoordeling_at THEN f.at END) AS ingepland_at,
+               MAX(f.stage = 16) AS ooit_16
+        FROM tb JOIN fases f ON f.sl_id = tb.sl_id
+        GROUP BY tb.sl_id, tb.ter_beoordeling_at
+    ),
+    regels AS (
+        SELECT o.sales_lead_id AS sl_id,
+               MAX(dp.hoofd_groep = 'Onderzoeken' AND dp.naam LIKE 'MRI%') AS heeft_mri,
+               SUBSTRING_INDEX(GROUP_CONCAT(CASE WHEN dp.hoofd_groep = 'Behandelingen' THEN dp.product_groep END ORDER BY oi.id SEPARATOR '|'), '|', 1) AS behandeling_type,
+               SUBSTRING_INDEX(GROUP_CONCAT(CASE WHEN dp.hoofd_groep = 'Behandelingen' THEN pg2.name END ORDER BY oi.id SEPARATOR '|'), '|', 1) AS behandeling_soort
+        FROM privatescan.orders o
+        JOIN privatescan.order_items oi ON oi.order_id = o.id AND oi.status <> 'LOST'
+        JOIN analytics.dim_product dp ON dp.product_sk = oi.product_id
+        JOIN privatescan.products p ON p.id = oi.product_id
+        LEFT JOIN privatescan.product_groups pg1 ON pg1.id = p.product_group_id
+        LEFT JOIN privatescan.product_groups pg2 ON pg2.id = pg1.parent_id
+        WHERE o.sales_lead_id IN (SELECT id FROM hs)
+        GROUP BY o.sales_lead_id
+    )
+    SELECT
+        hs.id,
+        hs.name,
+        hs.user_id,
+        hs.pipeline_stage_id,
+        m.ter_beoordeling_at,
+        DATE_FORMAT(m.ter_beoordeling_at, '%Y-%m'),
+        m.beoordeeld_at,
+        m.ingepland_at,
+        m.beoordeeld_at IS NOT NULL,
+        m.ingepland_at IS NOT NULL,
+        IF(COALESCE(r.heeft_mri, 0) OR m.ooit_16, 'Intern', 'Extern'),
+        r.behandeling_type,
+        r.behandeling_soort,
+        CASE
+            WHEN m.ingepland_at IS NOT NULL     THEN 'Ingepland'
+            WHEN m.beoordeeld_at IS NULL        THEN IF(hs.pipeline_stage_id = 29, 'Afgehaakt voor beoordeling', 'Wacht op beoordeling')
+            WHEN hs.pipeline_stage_id = 29      THEN 'Verloren'
+            WHEN hs.pipeline_stage_id = 28      THEN 'Afgerond zonder behandeling'
+            ELSE 'Open'
+        END,
+        CASE
+            WHEN m.ingepland_at IS NOT NULL THEN NULL
+            WHEN hs.pipeline_stage_id = 29 THEN CASE hs.lost_reason
+                WHEN 'geenMRI' THEN '(nog) geen MRI'
+                WHEN 'afval' THEN 'Afval'
+                WHEN 'prijs' THEN 'Prijs'
+                WHEN 'geen_vergoeding_zorgv' THEN 'Geen vergoeding verzekeraar'
+                WHEN 'afstand' THEN 'Afstand'
+                WHEN 'informatief' THEN 'Puur informatief'
+                WHEN 'prescan' THEN 'Naar Prescan'
+                WHEN 'ziek' THEN 'Ziek'
+                WHEN 'concurrent' THEN 'Naar Concurrent'
+                WHEN 'niet_planbaar' THEN 'Niet planbaar'
+                WHEN 'geen_vervoer' THEN 'Geen vervoer'
+                WHEN 'partner_niet' THEN 'Partner niet akkoord'
+                WHEN 'niet_uitvoerbaar' THEN 'Niet uitvoerbaar'
+                WHEN 'negatief_advies' THEN 'Negatief advies Privatescan'
+                WHEN 'geen_reactie' THEN 'Geen reactie meer'
+                WHEN 'betaalt_niet' THEN 'Betaalt niet'
+                WHEN 'verslapen' THEN 'Verslapen'
+                WHEN 'te_laat' THEN 'Te laat'
+                WHEN 'angst' THEN 'Angst'
+                WHEN 'ontevreden' THEN 'Ontevreden'
+                WHEN 'elders_nl_standaard' THEN 'Kan in NL zorg terecht'
+                WHEN 'uitstel_omstandigheden' THEN 'Uitstel door omstandigheden'
+                WHEN 'nieuwsbrief' THEN 'Alleen nieuwsbriefinschrijving'
+                WHEN 'foutief' THEN 'Foutief'
+                WHEN 'datainvoer' THEN 'Data invoer achteraf'
+                WHEN 'geen_reden' THEN 'Geen reden'
+                WHEN 'Spoort_niet' THEN 'Spoort niet'
+                WHEN 'Onjuiste actie interne medewerker' THEN 'Onjuiste actie interne medewerker'
+                ELSE 'Geen reden opgegeven'
+            END
+            ELSE st.name
+        END,
+        hs.lost_reason,
+        NOW()
+    FROM hs
+    JOIN mijlpaal m ON m.sl_id = hs.id
+    JOIN privatescan.lead_pipeline_stages st ON st.id = hs.pipeline_stage_id
+    LEFT JOIN regels r ON r.sl_id = hs.id;
 
     DROP TEMPORARY TABLE IF EXISTS tmp_slot;
     DROP TEMPORARY TABLE IF EXISTS tmp_order_regels;

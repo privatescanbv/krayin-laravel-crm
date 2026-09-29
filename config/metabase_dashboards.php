@@ -72,4 +72,13 @@ return [
         'sort'         => 8,
         'icon-class'   => 'icon-dashboard',
     ],
+    [
+        'key'          => 'metabase.hernia-beoordeling-operatie',
+        'name'         => 'Herniapoli: beoordeling → operatie',
+        'path'         => 'dashboards/hernia-beoordeling-operatie',
+        'dashboard_id' => (int) env('METABASE_DASHBOARD_HERNIA_BEOORDELING_OPERATIE', 9),
+        'params'       => [],
+        'sort'         => 9,
+        'icon-class'   => 'icon-dashboard',
+    ],
 ];

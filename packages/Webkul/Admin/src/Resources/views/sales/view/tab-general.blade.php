@@ -32,6 +32,13 @@
         'salesLead' => $salesLead,
     ])
 
+    @if ($sales->getDepartment()?->isHernia())
+        <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Uitkomst beoordeling</span>
+            <span class="text-sm font-semibold dark:text-white">{{ $sales->assessment_outcome?->label() ?? 'Nog niet ingevuld' }}</span>
+        </div>
+    @endif
+
     <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div class="flex items-center justify-between">
             <div class="direction-row flex items-center break-all">

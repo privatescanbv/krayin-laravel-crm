@@ -15,6 +15,10 @@
         </div>
 
         <div class="flex items-center gap-x-2.5">
+            <a href="{{ route('admin.sales-leads.view', $salesLead->id) }}" class="secondary-button">
+                Annuleren
+            </a>
+
             <button type="submit" form="sales-edit-form" class="primary-button">
                 Opslaan
             </button>
@@ -149,6 +153,26 @@
                         @endforeach
                     </x-adminc::components.field>
                 </div>
+
+                @if ($salesLead->getDepartment()?->isHernia())
+                    <!-- Uitkomst beoordeling (Herniapoli) -->
+                    <div class="flex-1">
+                        @php($currentOutcome = old('assessment_outcome', $salesLead->assessment_outcome?->value))
+                        <x-adminc::components.field
+                            type="select"
+                            name="assessment_outcome"
+                            value="{{ $currentOutcome }}"
+                            label="Uitkomst beoordeling"
+                        >
+                            <option value="">-- Nog niet beoordeeld --</option>
+                            @foreach (\App\Enums\AssessmentOutcome::cases() as $outcome)
+                                <option value="{{ $outcome->value }}" {{ $currentOutcome === $outcome->value ? 'selected' : '' }}>
+                                    {{ $outcome->label() }}
+                                </option>
+                            @endforeach
+                        </x-adminc::components.field>
+                    </div>
+                @endif
 
             </form>
         </div>

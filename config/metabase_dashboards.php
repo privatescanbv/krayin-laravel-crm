@@ -15,6 +15,15 @@
  */
 return [
     [
+        'key'          => 'metabase.productverkopen',
+        'name'         => 'Productverkopen',
+        'path'         => 'dashboards/productverkopen',
+        'dashboard_id' => (int) env('METABASE_DASHBOARD_PRODUCTVERKOPEN', 2),
+        'params'       => [],
+        'sort'         => 2,
+        'icon-class'   => 'icon-dashboard',
+    ],
+    [
         'key'          => 'metabase.leads-per-maand',
         'name'         => 'Leads per maand',
         'path'         => 'dashboards/leads-per-maand',

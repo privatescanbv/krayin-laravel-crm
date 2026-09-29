@@ -1,4 +1,5 @@
 @php
+    use App\Enums\AssessmentOutcome;
     use App\Enums\Departments;
     use App\Enums\LostReason;
     use App\Models\Department;
@@ -488,7 +489,7 @@
                 </div>
             </div>
 
-            <!-- Stage Detail Modal (won + lost) -->
+            <!-- Stage Detail Modal (won + lost + uitkomst beoordeling) -->
             <x-admin::modal ref="stageDetailModal">
                 <x-slot:header>
                     <h3 class="text-base font-semibold dark:text-white">
@@ -500,7 +501,7 @@
                         <div v-if="currentStageUpdate">
                             <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
                                 Lead "<strong>@{{ getLeadName(currentStageUpdate.lead) }}</strong>" wordt verplaatst
-                                naar status "@{{ currentStageUpdate.type === 'won' ? 'Gewonnen' : 'Verloren' }}"
+                                naar status "@{{ currentStageUpdate.type === 'won' ? 'Gewonnen' : (currentStageUpdate.type === 'lost' ? 'Verloren' : currentStageUpdate.stage.name) }}"
                             </p>
 
                             <!-- Won stage fields -->
@@ -557,6 +558,26 @@
                                         v-model="currentStageUpdate.closed_at"
                                         placeholder="dd-mm-yyyy"
                                     />
+                                </x-admin::form.control-group>
+                            </template>
+
+                            <!-- Herniapoli: uitkomst beoordeling -->
+                            <template v-else-if="currentStageUpdate.type === 'outcome'">
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label class="required">
+                                        Uitkomst beoordeling
+                                    </x-admin::form.control-group.label>
+                                    <select
+                                        name="assessment_outcome"
+                                        class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
+                                        v-model="currentStageUpdate.assessment_outcome"
+                                        required
+                                    >
+                                        <option value="">Selecteer uitkomst...</option>
+                                        @foreach (AssessmentOutcome::cases() as $outcome)
+                                            <option value="{{ $outcome->value }}">{{ $outcome->label() }}</option>
+                                        @endforeach
+                                    </select>
                                 </x-admin::form.control-group>
                             </template>
 
@@ -659,6 +680,8 @@
                         assignableUsers: [],
                         assignableUsersLoaded: false,
                         departmentOptions: @json($departmentOptions),
+
+                        outcomeRequiredCodes: @json($type === 'sales' ? AssessmentOutcome::requiredForStageCodes() : []),
                     };
                 },
 
@@ -732,6 +755,10 @@
                         }
 
                         return !!(stage?.code && String(stage.code).toLowerCase().startsWith('lost'));
+                    },
+
+                    needsAssessmentOutcome(stage, lead) {
+                        return this.outcomeRequiredCodes.includes(stage?.code) && ! lead?.assessment_outcome;
                     },
 
                     isWonOrLost(stage) {
@@ -1119,6 +1146,11 @@
                             return;
                         }
 
+                        if (this.needsAssessmentOutcome(stage, event.added.element)) {
+                            this.showStageDetailModal('outcome', stage, event.added.element);
+                            return;
+                        }
+
                         // Update stage counters for regular stages
                         this.stageLeads[stage.id].leads.meta.total = this.stageLeads[stage
                             .id].leads.meta.total + 1;
@@ -1135,6 +1167,7 @@
                             stage: stage,
                             lead: lead,
                             lost_reason: '',
+                            assessment_outcome: '',
                             closed_at: new Date().toISOString().slice(0, 10),
                             user_id: String(lead.user_id || lead.user?.id || ''),
                             order_department_id_after_won: String(lead.department_id || ''),
@@ -1163,9 +1196,20 @@
                             return;
                         }
 
+                        if (update.type === 'outcome' && ! update.assessment_outcome) {
+                            this.$emitter.emit('add-flash', {
+                                type: 'error',
+                                message: 'Uitkomst beoordeling is verplicht'
+                            });
+                            return;
+                        }
+
                         let extraData = {};
 
-                        if (update.type === 'won') {
+                        if (update.type === 'outcome') {
+                            extraData.assessment_outcome = update.assessment_outcome;
+                            update.lead.assessment_outcome = update.assessment_outcome;
+                        } else if (update.type === 'won') {
                             if (this.entityType === 'leads' && ! String(update.order_department_id_after_won || '').trim()) {
                                 this.$emitter.emit('add-flash', {
                                     type: 'error',

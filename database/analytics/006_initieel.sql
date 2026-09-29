@@ -54,8 +54,10 @@ FROM analytics.v_onderzoeksdagen
 WHERE onderzoeksdatum BETWEEN CURDATE() - INTERVAL 7 DAY AND CURDATE() + INTERVAL 14 DAY
 ORDER BY tijdstip;
 
--- ---- Speciale producten ----
-SELECT categorie, COUNT(*) AS verkopen, SUM(verkoopprijs) AS omzet
-FROM analytics.v_speciale_producten
-GROUP BY categorie
-ORDER BY categorie;
+-- ---- Verkopen per productgroep (niet-verloren regels) ----
+SELECT product_groep, COUNT(*) AS verkopen, SUM(verkoopprijs) AS omzet
+FROM analytics.v_verkoopdetail
+WHERE regel_verloren = 0
+GROUP BY product_groep
+ORDER BY omzet DESC
+LIMIT 20;

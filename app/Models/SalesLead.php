@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AssessmentOutcome;
 use App\Enums\LostReason;
 use App\Models\Concerns\HasAiSummary;
 use App\Traits\HasAuditTrail;
@@ -49,6 +50,7 @@ class SalesLead extends Model
         'name',
         'description',
         'lost_reason',
+        'assessment_outcome',
         'closed_at',
         'pipeline_stage_id',
         'lead_id',
@@ -65,10 +67,11 @@ class SalesLead extends Model
      * @var array
      */
     protected $casts = [
-        'created_by'    => 'integer',
-        'updated_by'    => 'integer',
-        'closed_at'     => 'date',
-        'lost_reason'   => LostReason::class,
+        'created_by'         => 'integer',
+        'updated_by'         => 'integer',
+        'closed_at'          => 'date',
+        'lost_reason'        => LostReason::class,
+        'assessment_outcome' => AssessmentOutcome::class,
     ];
 
     /**

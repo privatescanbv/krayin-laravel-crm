@@ -48,13 +48,12 @@ CREATE TABLE analytics.dim_date (
     PRIMARY KEY (date_sk)
 ) ENGINE=InnoDB;
 
--- ---- dim_product: productattributen + gecentraliseerde categorie-indeling ----
+-- ---- dim_product: productattributen + productgroepen ----
+-- Geen rapport-specifieke selecties hier (zoals "speciale producten"): dat is een dashboardfilter.
 CREATE TABLE analytics.dim_product (
     product_sk    INT          NOT NULL,
     naam          VARCHAR(255) NOT NULL,
     external_id   VARCHAR(255) NULL,
-    categorie     VARCHAR(100) NOT NULL COMMENT 'MRI LWS / PTED operatie / Neurochirurg beoordeling / bladgroepnaam',
-    is_speciaal   BOOLEAN      NOT NULL COMMENT '1 voor de 5 geselecteerde producten',
     product_type  VARCHAR(100) NULL,
     product_groep VARCHAR(100) NULL COMMENT 'Bladgroep (bijv. Lendenwervelkolom (LWS))',
     hoofd_groep   VARCHAR(100) NULL COMMENT 'Onderzoeken / Diensten / Behandelingen',
@@ -219,7 +218,8 @@ CREATE TABLE analytics.fact_planning (
 -- Cohort = ter_beoordeling_at. Afgeleid uit de fase-historie in activities (SalesLeadObserver:
 -- additional->>'$.attribute' = 'Status', niet op activity-titel) + de aanmaakfase van de sale.
 -- Zie 003_sync_procedure.sql voor de exacte regels (ook: overgeslagen fases, heen-en-weer, 17 → 16).
--- operatieadvies ontbreekt bewust: er is (nog) geen veld "uitkomst beoordeling" in het CRM.
+-- uitkomst_beoordeling/operatieadvies komen uit salesleads.assessment_outcome (App\Enums\AssessmentOutcome);
+-- NULL = niet ingevuld (sales van vóór het veld, of nog niet beoordeeld).
 CREATE TABLE analytics.fact_hernia_traject (
     lead_sk               BIGINT       NOT NULL COMMENT 'salesleads.id',
     naam                  VARCHAR(255) NULL,
@@ -231,9 +231,11 @@ CREATE TABLE analytics.fact_hernia_traject (
     ingepland_at          DATETIME     NULL     COMMENT 'eerste fase 23/25/26/27 (Behandeling gepland / nazorg) na ter_beoordeling_at',
     is_beoordeeld         BOOLEAN      NOT NULL,
     is_ingepland          BOOLEAN      NOT NULL,
-    mri_herkomst          VARCHAR(10)  NOT NULL COMMENT 'Intern = MRI-orderregel op de sale of ooit fase 16; anders Extern',
+    mri_herkomst          VARCHAR(10)  NOT NULL COMMENT 'Intern = MRI-orderregel op de sale of ooit in fase 16 "Onderzoek via Privatescan"; anders Extern',
     behandeling_type      VARCHAR(100) NULL     COMMENT 'productgroep (PTED/Micro/ACDF/TLIF/PRT/...) van eerste niet-verloren behandelregel',
     behandeling_soort     VARCHAR(100) NULL     COMMENT 'Operatief / Conservatief',
+    uitkomst_beoordeling  VARCHAR(50)  NULL     COMMENT 'label van AssessmentOutcome (PTED 1 niv. / Kein OP indikation / ...)',
+    operatieadvies        BOOLEAN      NULL     COMMENT '1 = operatie geadviseerd, 0 = geen OP / injecties, NULL = niet ingevuld',
     uitkomst              VARCHAR(50)  NOT NULL COMMENT 'Ingepland / Verloren / Afgerond zonder behandeling / Open / Wacht op beoordeling / Afgehaakt voor beoordeling',
     reden_niet_ingepland  VARCHAR(100) NULL     COMMENT 'LostReason-label bij Verloren, anders huidige fase',
     lost_reason           VARCHAR(100) NULL     COMMENT 'ruwe enum-code',

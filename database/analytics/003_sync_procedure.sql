@@ -19,24 +19,14 @@ BEGIN
     -- DIMENSIES
     -- ========================================================
 
-    -- dim_product — categorielogica staat hier gecentraliseerd, niet in dashboards.
+    -- dim_product
     -- product_groups: pg1 = bladgroep, pg2 = middengroep, pg3 = hoofdgroep
     REPLACE INTO analytics.dim_product
-        (product_sk, naam, external_id, categorie, is_speciaal,
-         product_type, product_groep, hoofd_groep, actief, geladen_op)
+        (product_sk, naam, external_id, product_type, product_groep, hoofd_groep, actief, geladen_op)
     SELECT
         p.id,
         COALESCE(p.name, 'Onbekend'),
         p.external_id,
-        CASE p.external_id
-            WHEN '1065' THEN 'MRI LWS'
-            WHEN '1066' THEN 'MRI LWS'
-            WHEN '1134' THEN 'Neurochirurg beoordeling'
-            WHEN '1136' THEN 'PTED operatie'
-            WHEN '1137' THEN 'PTED operatie'
-            ELSE COALESCE(pg1.name, 'Overig')
-        END                                                   AS categorie,
-        COALESCE(p.external_id IN ('1065','1066','1134','1136','1137'), 0) AS is_speciaal,
         pt.name                                               AS product_type,
         pg1.name                                              AS product_groep,
         COALESCE(pg3.name, pg2.name, pg1.name)               AS hoofd_groep,
@@ -360,10 +350,11 @@ BEGIN
     -- Fase-ids hard (pipeline 4): ids zijn vast, zie docblock App\Enums\PipelineStage. Nieuwe Hernia-salesfase → hier indelen.
     DELETE FROM analytics.fact_hernia_traject;
 
-    INSERT INTO analytics.fact_hernia_traject
+    REPLACE INTO analytics.fact_hernia_traject  -- REPLACE: tolerant voor een gelijktijdige sync (event + handmatige CALL)
         (lead_sk, naam, verkoper_sk, stage_sk, ter_beoordeling_at, ter_beoordeling_maand,
          beoordeeld_at, ingepland_at, is_beoordeeld, is_ingepland, mri_herkomst,
-         behandeling_type, behandeling_soort, uitkomst, reden_niet_ingepland, lost_reason, geladen_op)
+         behandeling_type, behandeling_soort, uitkomst_beoordeling, operatieadvies,
+         uitkomst, reden_niet_ingepland, lost_reason, geladen_op)
     WITH hs AS (
         SELECT s.* FROM privatescan.salesleads s
         JOIN privatescan.lead_pipeline_stages st ON st.id = s.pipeline_stage_id AND st.lead_pipeline_id = 4
@@ -402,7 +393,7 @@ BEGIN
         SELECT tb.sl_id, tb.ter_beoordeling_at,
                MIN(CASE WHEN f.stage BETWEEN 18 AND 28 AND f.at >= tb.ter_beoordeling_at THEN f.at END) AS beoordeeld_at,
                MIN(CASE WHEN f.stage IN (23, 25, 26, 27) AND f.at >= tb.ter_beoordeling_at THEN f.at END) AS ingepland_at,
-               MAX(f.stage = 16) AS ooit_16
+               MAX(f.stage = 16) AS ooit_16  -- 16 = Onderzoek via Privatescan (MRI intern)
         FROM tb JOIN fases f ON f.sl_id = tb.sl_id
         GROUP BY tb.sl_id, tb.ter_beoordeling_at
     ),
@@ -434,6 +425,24 @@ BEGIN
         IF(COALESCE(r.heeft_mri, 0) OR m.ooit_16, 'Intern', 'Extern'),
         r.behandeling_type,
         r.behandeling_soort,
+        CASE hs.assessment_outcome  -- labels = App\Enums\AssessmentOutcome::label()
+            WHEN 'pted_1' THEN 'PTED 1 niv.'
+            WHEN 'pted_2' THEN 'PTED 2 niv.'
+            WHEN 'micro_1' THEN 'Mikro 1 niv.'
+            WHEN 'micro_2' THEN 'Mikro 2 niv.'
+            WHEN 'micro_3' THEN 'Mikro 3 niv.'
+            WHEN 'micro_4' THEN 'Mikro 4 niv.'
+            WHEN 'acdf_1' THEN 'ACDF 1 niv.'
+            WHEN 'acdf_2' THEN 'ACDF 2 niv.'
+            WHEN 'tlif_1' THEN 'TLIF 1 niv.'
+            WHEN 'tlif_2' THEN 'TLIF 2 niv.'
+            WHEN 'geen_op_indicatie' THEN 'Kein OP indikation'
+            WHEN 'injecties_infiltraties' THEN 'Injecties/Infiltraties'
+        END,
+        CASE
+            WHEN hs.assessment_outcome IS NULL THEN NULL
+            ELSE hs.assessment_outcome NOT IN ('geen_op_indicatie', 'injecties_infiltraties')  -- AssessmentOutcome::isSurgeryAdvice()
+        END,
         CASE
             WHEN m.ingepland_at IS NOT NULL     THEN 'Ingepland'
             WHEN m.beoordeeld_at IS NULL        THEN IF(hs.pipeline_stage_id = 29, 'Afgehaakt voor beoordeling', 'Wacht op beoordeling')

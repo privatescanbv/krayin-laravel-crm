@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Actions\Sales\SalesToLostAction;
+use App\Enums\AssessmentOutcome;
 use App\Enums\Departments;
 use App\Enums\LostReason;
 use App\Enums\PipelineDefaultKeys;
@@ -100,13 +101,14 @@ class SalesLeadObserver
     private function logFieldChanges(SalesLead $salesLead): void
     {
         $fields = [
-            'name'              => 'Naam',
-            'description'       => 'Omschrijving',
-            'pipeline_stage_id' => 'Status',
-            'user_id'           => 'Toegewezen aan',
-            'department_id'     => 'Afdeling',
-            'lost_reason'       => 'Reden verlies',
-            'contact_person_id' => 'Contactpersoon',
+            'name'               => 'Naam',
+            'description'        => 'Omschrijving',
+            'pipeline_stage_id'  => 'Status',
+            'user_id'            => 'Toegewezen aan',
+            'department_id'      => 'Afdeling',
+            'lost_reason'        => 'Reden verlies',
+            'assessment_outcome' => 'Uitkomst beoordeling',
+            'contact_person_id'  => 'Contactpersoon',
         ];
 
         foreach ($fields as $field => $label) {
@@ -165,6 +167,10 @@ class SalesLeadObserver
                 $newRaw instanceof LostReason
                     ? $newRaw->label()
                     : ($newRaw !== null ? (LostReason::tryFrom((string) $newRaw)?->label() ?? (string) $newRaw) : null),
+            ],
+            'assessment_outcome' => [
+                $oldRaw !== null ? (AssessmentOutcome::tryFrom($oldRaw instanceof BackedEnum ? $oldRaw->value : (string) $oldRaw)?->label()) : null,
+                $newRaw !== null ? (AssessmentOutcome::tryFrom($newRaw instanceof BackedEnum ? $newRaw->value : (string) $newRaw)?->label()) : null,
             ],
             default => [(string) ($oldRaw ?? ''), (string) ($newRaw ?? '')],
         };

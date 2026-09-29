@@ -3,7 +3,6 @@
 -- Alle bedrijfslogica zit in de dimensies + deze views, niet in Metabase-queries.
 --
 --   v_verkoopdetail        regel-grain, plat — productanalyse
---   v_speciale_producten   MRI LWS / PTED / Neurochirurg, niet verloren
 --   v_orders               order-grain, plat — basis voor de omzetrapporten
 --   v_omzet_per_maand(_rapport)  = /admin/reports/revenue-by-month
 --   v_omzet_per_medewerker       = /admin/reports/revenue-by-employee
@@ -32,8 +31,6 @@ SELECT
     du.naam          AS verkoper,
 
     dp.naam          AS product,
-    dp.categorie,
-    dp.is_speciaal,
     dp.product_groep,
     dp.hoofd_groep,
     dp.product_type,
@@ -58,11 +55,8 @@ LEFT JOIN analytics.dim_user           du ON du.user_sk    = f.user_sk
 LEFT JOIN analytics.dim_pipeline_stage ds ON ds.stage_sk   = f.stage_sk;
 
 
-CREATE OR REPLACE VIEW analytics.v_speciale_producten AS
-SELECT *
-FROM analytics.v_verkoopdetail
-WHERE is_speciaal    = 1
-  AND regel_verloren = 0;
+-- Vervallen: productselectie is een dashboardfilter (dashboard "A look at Orders").
+DROP VIEW IF EXISTS analytics.v_speciale_producten;
 
 
 -- ---- order-grain: fact_orders + verkopernaam + datumdimensie ----

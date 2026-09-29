@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\DataGrids\SalesLeadDataGrid;
 use App\Enums\ActivityStatus;
 use App\Enums\ActivityType;
+use App\Enums\AssessmentOutcome;
 use App\Enums\LostReason;
 use App\Enums\PipelineStage;
 use App\Enums\PipelineType;
@@ -25,6 +26,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
 use RuntimeException;
@@ -190,6 +192,7 @@ class SalesLeadController extends Controller
                         'mri_status_label'      => null,
                         'has_diagnosis_form'    => false,
                         'lost_reason_label'     => $salesLead->lost_reason_label,
+                        'assessment_outcome'    => $salesLead->assessment_outcome?->value,
                         'has_multiple_persons'  => $salesLead->persons->count() > 1,
                         'persons_count'         => $salesLead->persons->count(),
                         'orders'                => $salesLead->orders->map(function ($order) {
@@ -267,6 +270,11 @@ class SalesLeadController extends Controller
         $request->validate($this->getValidationRules());
 
         $salesLead = SalesLead::findOrFail($id);
+        $this->ensureAssessmentOutcome(
+            $salesLead,
+            $request->filled('pipeline_stage_id') ? StageProxy::find((int) $request->input('pipeline_stage_id')) : null,
+            $request->exists('assessment_outcome') ? $request->input('assessment_outcome') : $salesLead->assessment_outcome,
+        );
         $salesLead->update($this->prepareSalesLeadData($request->all()));
 
         // Handle person relationships - always sync if person_ids is in request, even if empty array
@@ -363,6 +371,7 @@ class SalesLeadController extends Controller
         request()->validate([
             'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
             'lost_reason'            => ['nullable', new Enum(LostReason::class)],
+            'assessment_outcome'     => ['nullable', new Enum(AssessmentOutcome::class)],
             'closed_at'              => 'nullable',
         ]);
 
@@ -377,6 +386,9 @@ class SalesLeadController extends Controller
                 'message' => 'Deze status hoort niet bij de pipeline van deze sales.',
             ], 422);
         }
+
+        $outcome = request('assessment_outcome') ?: $salesLead->assessment_outcome;
+        $this->ensureAssessmentOutcome($salesLead, $targetStage, $outcome);
 
         // Optionally close open activities for this Sales when requested (parity with lead stage update)
         if (request()->boolean('close_open_activities')) {
@@ -397,6 +409,10 @@ class SalesLeadController extends Controller
         }
 
         $attributes['lost_reason'] = StageTransitionAttributes::resolveLostReason($targetStage, request('lost_reason'));
+
+        if (request()->filled('assessment_outcome')) {
+            $attributes['assessment_outcome'] = request('assessment_outcome');
+        }
 
         $salesLead->update($attributes);
 
@@ -831,6 +847,27 @@ class SalesLeadController extends Controller
      * 2. Convert empty strings or '0' to null for database consistency
      * 3. Remove the display field to prevent database errors
      */
+    /**
+     * Herniapoli: from "Beoordeling gereed" onwards the assessment outcome is required
+     * (AssessmentOutcome::requiredForStageCodes). Only checked on an actual stage change, so
+     * existing sales without an outcome can still be edited.
+     *
+     * @throws ValidationException
+     */
+    private function ensureAssessmentOutcome(SalesLead $salesLead, mixed $targetStage, mixed $outcome): void
+    {
+        if (! $targetStage
+            || (int) $targetStage->id === (int) $salesLead->pipeline_stage_id
+            || ! in_array($targetStage->code, AssessmentOutcome::requiredForStageCodes(), true)
+            || ! blank($outcome)) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'assessment_outcome' => "Vul eerst de uitkomst beoordeling in voordat de sales naar \"{$targetStage->name}\" gaat.",
+        ]);
+    }
+
     private function prepareSalesLeadData(array $data): array
     {
         // Handle contact_person_id_display -> contact_person_id mapping
@@ -862,6 +899,7 @@ class SalesLeadController extends Controller
             'lead_id'                   => $leadRule,
             'user_id'                   => 'nullable|exists:users,id',
             'department_id'             => 'nullable|exists:departments,id',
+            'assessment_outcome'        => ['nullable', new Enum(AssessmentOutcome::class)],
             'contact_person_id'         => 'nullable|exists:persons,id',
             'contact_person_id_display' => 'nullable|string',
             'person_ids'                => $personIdsRule,

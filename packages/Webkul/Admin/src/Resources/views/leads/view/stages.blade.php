@@ -1,4 +1,5 @@
 @php
+    use App\Enums\AssessmentOutcome;
     use App\Enums\Departments;
     use App\Enums\LostReason;
     use App\Models\Department;
@@ -29,6 +30,9 @@
             Department::query()->where('name', $case->value)->value('id') => $case->value,
         ])
         ->filter(fn ($name, $id) => $id !== null);
+
+    // Herniapoli sales: "Beoordeling gereed" and later require an assessment outcome.
+    $outcomeRequiredCodes = $isSalesLead ? AssessmentOutcome::requiredForStageCodes() : [];
 @endphp
 
     <!-- Stages Navigation -->
@@ -195,6 +199,24 @@
                                             </x-admin::form.control-group.label>
                                         </x-admin::form.control-group>
                                     </template>
+                                    <!-- Herniapoli: uitkomst beoordeling -->
+                                    <template v-else-if="needsAssessmentOutcome(nextStage)">
+                                        <x-admin::form.control-group>
+                                            <x-admin::form.control-group.label class="required">
+                                                Uitkomst beoordeling
+                                            </x-admin::form.control-group.label>
+                                            <select
+                                                name="assessment_outcome"
+                                                class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
+                                                v-model="nextStage.assessment_outcome"
+                                            >
+                                                <option value="">Selecteer uitkomst...</option>
+                                                @foreach (AssessmentOutcome::cases() as $outcome)
+                                                    <option value="{{ $outcome->value }}">{{ $outcome->label() }}</option>
+                                                @endforeach
+                                            </select>
+                                        </x-admin::form.control-group>
+                                    </template>
                                     <template v-else>
                                         <!-- No extra fields required for regular stage transitions -->
                                     </template>
@@ -241,6 +263,10 @@
                     stageToggler: '',
 
                     currentUserId: {{ $currentUserId ? $currentUserId : 'null' }},
+
+                    outcomeRequiredCodes: @json($outcomeRequiredCodes),
+
+                    currentAssessmentOutcome: @json($salesLead?->assessment_outcome?->value),
                 }
             },
 
@@ -284,6 +310,10 @@
                     }
 
                     return !!(stage?.code && String(stage.code).toLowerCase().startsWith('lost'));
+                },
+
+                needsAssessmentOutcome(stage) {
+                    return this.outcomeRequiredCodes.includes(stage?.code) && ! this.currentAssessmentOutcome;
                 },
 
                 isWonOrLost(stage) {
@@ -363,6 +393,16 @@
                         if (this.isLeadContext) {
                             params.order_department_id_after_won = this.nextStage.order_department_id_after_won;
                         }
+                    } else if (this.needsAssessmentOutcome(this.nextStage)) {
+                        if (! this.nextStage.assessment_outcome) {
+                            this.$emitter.emit('add-flash', {
+                                type: 'error',
+                                message: 'Uitkomst beoordeling is verplicht'
+                            });
+                            return;
+                        }
+
+                        params.assessment_outcome = this.nextStage.assessment_outcome;
                     } else if (this.isLostStage(this.nextStage)) {
                         if (! String(this.nextStage.lost_reason || '').trim()) {
                             this.$emitter.emit('add-flash', {
@@ -384,6 +424,13 @@
                         return;
                     }
 
+                    if (! params && this.needsAssessmentOutcome(stage)) {
+                        this.nextStage = { ...stage, assessment_outcome: '' };
+                        this.$refs.stageUpdateModal.open();
+
+                        return;
+                    }
+
                     this.$refs.stageUpdateModal.close();
 
                     this.isUpdating = true;
@@ -396,6 +443,9 @@
                             });
                             this.isUpdating = false;
                             this.currentStage = stage;
+                            if (params?.assessment_outcome) {
+                                this.currentAssessmentOutcome = params.assessment_outcome;
+                            }
                             if (this.$parent.$refs.activities) {
                                 this.$parent.$refs.activities.get();
                             }

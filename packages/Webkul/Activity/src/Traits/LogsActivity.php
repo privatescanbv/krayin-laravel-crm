@@ -6,6 +6,7 @@ use App\Models\Department;
 use Exception;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Attribute\Contracts\AttributeValue;
+use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 
 trait LogsActivity
@@ -99,6 +100,8 @@ trait LogsActivity
                 continue;
             }
 
+            $rawAttributeCode = $attributeCode;
+
             $attributeCode = $model->attribute?->name ?: static::resolveColumnLabel($attributeCode);
 
             // Check if this is a Lead model and use the new direct relationship
@@ -108,11 +111,11 @@ trait LogsActivity
                     'attribute' => $attributeCode,
                     'new'       => [
                         'value' => $attributeData['new'],
-                        'label' => static::getAttributeLabel($attributeData['new'], $model->attribute),
+                        'label' => static::getColumnValueLabel($rawAttributeCode, $attributeData['new'], $model->attribute),
                     ],
                     'old'       => [
                         'value' => $attributeData['old'],
-                        'label' => static::getAttributeLabel($attributeData['old'], $model->attribute),
+                        'label' => static::getColumnValueLabel($rawAttributeCode, $attributeData['old'], $model->attribute),
                     ],
                 ],
                 'user_id'    => auth()->id(),
@@ -188,6 +191,51 @@ trait LogsActivity
         $map   = array_merge($defaults, $extra);
 
         return $map[$code] ?? $code;
+    }
+
+    /**
+     * Map known foreign key columns to their attribute_lookups.php key, so
+     * plain Eloquent column changes (no custom Attribute model involved)
+     * can still resolve the id to a name instead of showing the raw id.
+     * Models may define a static $activityColumnLookups array to provide additional mappings.
+     */
+    protected static function resolveColumnLookupType(string $code): ?string
+    {
+        $defaults = [
+            'user_id'                => 'users',
+            'organization_id'        => 'organizations',
+            'lead_pipeline_stage_id' => 'lead_pipeline_stages',
+            'lead_pipeline_id'       => 'lead_pipelines',
+            'lead_source_id'         => 'lead_sources',
+            'lead_type_id'           => 'lead_types',
+        ];
+
+        $extra = property_exists(static::class, 'activityColumnLookups') ? (static::$activityColumnLookups ?? []) : [];
+        $map   = array_merge($defaults, $extra);
+
+        return $map[$code] ?? null;
+    }
+
+    /**
+     * Get the label for a changed value. Resolves foreign key ids to their
+     * name via attribute_lookups.php when there is no custom Attribute
+     * model to fall back on.
+     */
+    protected static function getColumnValueLabel(string $rawColumnCode, $value, $attribute)
+    {
+        if (
+            ! $attribute
+            && $value
+            && ($lookupKey = static::resolveColumnLookupType($rawColumnCode))
+        ) {
+            $entity = app(AttributeRepository::class)->getLookUpEntity($lookupKey, $value);
+
+            if ($entity?->name) {
+                return $entity->name;
+            }
+        }
+
+        return static::getAttributeLabel($value, $attribute);
     }
 
     /**

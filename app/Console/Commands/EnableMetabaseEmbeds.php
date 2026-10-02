@@ -40,6 +40,7 @@ class EnableMetabaseEmbeds extends Command
 
         try {
             $this->enableGlobalEmbedding($client);
+            $this->applyDutchLocale($client);
         } catch (MetabaseApiException $e) {
             $this->error($e->getMessage());
 
@@ -87,6 +88,20 @@ class EnableMetabaseEmbeds extends Command
                 'Metabase ['.$client->label.'] could not enable static embedding (tried: '.implode(', ', $settings).').'
             );
         }
+    }
+
+    /**
+     * Embeds have no logged-in user, so they follow the instance language and formatting:
+     * Dutch UI terms, "1 oktober, 2026" dates and "1.234,5" numbers.
+     */
+    private function applyDutchLocale(MetabaseClient $client): void
+    {
+        $client->putSetting('site-locale', 'nl');
+        $client->putSetting('custom-formatting', [
+            'type/Temporal' => ['date_style' => 'D MMMM, YYYY'],
+            'type/Number'   => ['number_separators' => ',.'],
+        ]);
+        $this->info('Set Dutch locale and formatting.');
     }
 
     /**

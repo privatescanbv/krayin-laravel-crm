@@ -9,7 +9,9 @@ it('normalizes the leads-per-maand embed page from config', function () {
         ->and($page['dashboard_id'])->toBe(3)
         ->and($page['route'])->toBe('admin.dashboards.leads-per-maand')
         ->and($page['path'])->toBe('dashboards/leads-per-maand')
-        ->and($page['params'])->toBe(['periode' => 'past6months']);
+        // No locked params: a param in the embed token hides the filter, and the
+        // dashboard's own Periode default (this year) must stay editable.
+        ->and($page['params'])->toBe([]);
 });
 
 it('ignores reserved dashboard key and path used by the native CRM dashboard', function () {
@@ -117,4 +119,24 @@ it('merges extra acl keys without adding menu items', function () {
         ->and($aclKeys)->toContain('metabase', 'metabase.omzet')
         ->and($menuKeys)->not->toContain('metabase')
         ->and($menuKeys)->not->toContain('metabase.omzet');
+});
+
+it('groups report links into dashboard tiles in GROUPS order and drops empty groups', function () {
+    $groups = (new MetabaseDashboardRegistry)->groupLinks([
+        ['group' => 'Omzet', 'name' => 'Omzet per maand', 'url' => '/omzet'],
+        ['group' => 'Onbekend', 'name' => 'Los rapport', 'url' => '/los'],
+        ['group' => 'Leads', 'name' => 'Leads per maand', 'url' => '/leads'],
+        ['group' => 'Omzet', 'name' => 'Omzet per medewerker', 'url' => '/medewerker'],
+    ]);
+
+    expect(array_column($groups, 'name'))->toBe(['Leads', 'Omzet', 'Overig'])
+        ->and($groups[0]['icon'])->toBe('icon-leads')
+        ->and(array_column($groups[1]['reports'], 'name'))->toBe(['Omzet per maand', 'Omzet per medewerker'])
+        ->and($groups[2]['reports'])->toBe([['name' => 'Los rapport', 'url' => '/los']]);
+});
+
+it('puts every configured dashboard in a known group', function () {
+    $groups = array_column((new MetabaseDashboardRegistry)->pages(), 'group');
+
+    expect(array_diff($groups, array_keys(MetabaseDashboardRegistry::GROUPS)))->toBe([]);
 });

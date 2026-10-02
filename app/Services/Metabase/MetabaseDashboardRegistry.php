@@ -13,8 +13,21 @@ class MetabaseDashboardRegistry
     public const PARENT_NAME = 'Rapportages';
 
     /**
+     * Tiles on the dashboard Rapportages widget, in display order, with their icon.
+     */
+    public const GROUPS = [
+        'Leads'      => 'icon-leads',
+        'Orders'     => 'icon-order',
+        'Omzet'      => 'icon-dollar',
+        'Herniapoli' => 'icon-anamnesis',
+    ];
+
+    public const FALLBACK_GROUP = 'Overig';
+
+    /**
      * @return list<array{
      *     key: string,
+     *     group: string,
      *     name: string,
      *     route: string,
      *     path: string,
@@ -142,6 +155,48 @@ class MetabaseDashboardRegistry
     }
 
     /**
+     * Visible pages plus extra (non-Metabase) report links, grouped into dashboard tiles.
+     *
+     * @param  list<array{group: string, name: string, url: string}>  $extraLinks
+     * @return list<array{name: string, icon: string, reports: list<array{name: string, url: string}>}>
+     */
+    public function visibleGroups(array $extraLinks = []): array
+    {
+        $links = array_map(fn (array $page): array => [
+            'group' => $page['group'],
+            'name'  => $page['name'],
+            'url'   => route($page['route']),
+        ], $this->visiblePages());
+
+        return $this->groupLinks([...$links, ...$extraLinks]);
+    }
+
+    /**
+     * Group report links in GROUPS order (unknown groups last, under FALLBACK_GROUP); empty groups are left out.
+     *
+     * @param  list<array{group: string, name: string, url: string}>  $links
+     * @return list<array{name: string, icon: string, reports: list<array{name: string, url: string}>}>
+     */
+    public function groupLinks(array $links): array
+    {
+        $icons = self::GROUPS + [self::FALLBACK_GROUP => 'icon-dashboard'];
+        $reports = array_fill_keys(array_keys($icons), []);
+
+        foreach ($links as $link) {
+            $group = isset(self::GROUPS[$link['group']]) ? $link['group'] : self::FALLBACK_GROUP;
+            $reports[$group][] = ['name' => $link['name'], 'url' => $link['url']];
+        }
+
+        $groups = [];
+
+        foreach (array_filter($reports) as $name => $groupReports) {
+            $groups[] = ['name' => $name, 'icon' => $icons[$name], 'reports' => $groupReports];
+        }
+
+        return $groups;
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     private function itemsFor(): array
@@ -212,6 +267,7 @@ class MetabaseDashboardRegistry
 
         return [
             'key'          => $key,
+            'group'        => (string) ($page['group'] ?? self::FALLBACK_GROUP),
             'name'         => (string) ($page['name'] ?? $key),
             'route'        => (string) ($page['route'] ?? $this->defaultRouteName($path)),
             'path'         => $path,

@@ -36,48 +36,14 @@
     <div class="rounded-lg border bg-white px-4 py-5 dark:border-gray-800 dark:bg-gray-900">
         <p class="mb-3 text-base font-semibold dark:text-gray-300">Rapportages</p>
 
-        <ul class="flex flex-wrap gap-x-6 gap-y-2">
-            @foreach ($metabasePages ?? [] as $page)
-                <li>
-                    <a
-                        href="{{ route($page['route']) }}"
-                        class="flex items-center gap-2 text-sm text-brandColor hover:underline"
-                    >
-                        <span class="icon-stats-up text-xs"></span>
-                        {{ trans($page['name']) }}
-                    </a>
-                </li>
-            @endforeach
-            @if (bouncer()->hasPermission('metabase.crm-reports'))
-            <li>
-                <a
-                    href="{{ route('admin.reports.revenue-by-employee.index') }}"
-                    class="flex items-center gap-2 text-sm text-brandColor hover:underline"
-                >
-                    <span class="icon-stats-up text-xs"></span>
-                    Omzet per medewerker *
-                </a>
-            </li>
-            <li>
-                <a
-                    href="{{ route('admin.reports.revenue-by-month.index') }}"
-                    class="flex items-center gap-2 text-sm text-brandColor hover:underline"
-                >
-                    <span class="icon-stats-up text-xs"></span>
-                    Omzet per maand *
-                </a>
-            </li>
-            <li>
-                <a
-                    href="{{ route('admin.reports.orders-by-investigation-date.index') }}"
-                    class="flex items-center gap-2 text-sm text-brandColor hover:underline"
-                >
-                    <span class="icon-stats-up text-xs"></span>
-                    Verkooporders op onderzoeksdatum *
-                </a>
-            </li>
-            @endif
-        </ul>
+        <!-- Report groups: only the tiles at first; picking one slides its reports open -->
+        <v-report-groups :groups="{{ json_encode($reportGroups ?? [], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) }}">
+            <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+                @foreach ($reportGroups ?? [] as $group)
+                    <div class="light-shimmer-bg dark:shimmer h-[76px] rounded-lg"></div>
+                @endforeach
+            </div>
+        </v-report-groups>
     </div>
 
     <!-- Body Component -->
@@ -171,6 +137,112 @@
             </div>
 
             {!! view_render_event('admin.dashboard.index.date_filters.after') !!}
+        </script>
+
+        <script
+            type="text/x-template"
+            id="v-report-groups-template"
+        >
+            <div>
+                <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <button
+                        v-for="group in groups"
+                        :key="group.name"
+                        type="button"
+                        class="group flex items-center gap-3 rounded-lg border p-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-gray-800"
+                        :class="active === group.name
+                            ? 'border-brandColor bg-brandColor/5 shadow-md dark:border-gray-400 dark:bg-gray-800'
+                            : 'border-gray-200 bg-white hover:border-gray-300 dark:bg-gray-900 dark:hover:border-gray-600'"
+                        :aria-expanded="active === group.name"
+                        aria-controls="report-group-panel"
+                        @click="toggle(group.name)"
+                    >
+                        <span
+                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl transition-colors duration-200"
+                            :class="[group.icon, active === group.name
+                                ? 'bg-brandColor text-white'
+                                : 'bg-gray-100 text-brandColor group-hover:bg-brandColor/10 dark:bg-gray-800 dark:text-gray-300']"
+                        ></span>
+
+                        <span class="flex min-w-0 flex-1 flex-col">
+                            <span class="truncate font-semibold text-gray-800 dark:text-white">@{{ group.name }}</span>
+
+                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                @{{ group.reports.length }} @{{ group.reports.length === 1 ? 'rapport' : 'rapporten' }}
+                            </span>
+                        </span>
+
+                        <span
+                            class="icon-down-arrow text-xs text-gray-400 transition-transform duration-300"
+                            :class="{ 'rotate-180 text-brandColor dark:text-gray-200': active === group.name }"
+                        ></span>
+                    </button>
+                </div>
+
+                <!-- Panel: grid-rows 0fr -> 1fr animates to the content height without measuring it -->
+                <div
+                    id="report-group-panel"
+                    class="grid transition-all duration-300 ease-out"
+                    :class="activeGroup ? 'mt-3 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'"
+                >
+                    <div class="overflow-hidden">
+                        <transition
+                            mode="out-in"
+                            enter-active-class="transition duration-200 ease-out"
+                            enter-from-class="translate-y-1 opacity-0"
+                            leave-active-class="transition duration-150 ease-in"
+                            leave-to-class="opacity-0"
+                        >
+                            <ul
+                                v-if="activeGroup"
+                                :key="activeGroup.name"
+                                class="grid gap-2 rounded-lg bg-gray-50 p-3 sm:grid-cols-2 lg:grid-cols-3 dark:bg-gray-800/50"
+                            >
+                                <li v-for="report in activeGroup.reports" :key="report.url">
+                                    <a
+                                        :href="report.url"
+                                        class="group/report flex items-center gap-2 rounded-md border border-transparent bg-white px-3 py-2.5 text-sm text-gray-700 transition-all duration-150 hover:border-brandColor/30 hover:text-brandColor hover:shadow-sm dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-600 dark:hover:text-white"
+                                    >
+                                        <span class="icon-stats text-base text-brandColor dark:text-gray-400"></span>
+
+                                        <span class="flex-1">@{{ report.name }}</span>
+
+                                        <span class="icon-right-arrow text-xs opacity-0 transition-all duration-150 group-hover/report:translate-x-0.5 group-hover/report:opacity-100"></span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </transition>
+                    </div>
+                </div>
+            </div>
+        </script>
+
+        <script type="module">
+            app.component('v-report-groups', {
+                template: '#v-report-groups-template',
+
+                props: {
+                    groups: { type: Array, default: () => [] },
+                },
+
+                data() {
+                    return {
+                        active: null,
+                    };
+                },
+
+                computed: {
+                    activeGroup() {
+                        return this.groups.find(group => group.name === this.active) ?? null;
+                    },
+                },
+
+                methods: {
+                    toggle(name) {
+                        this.active = this.active === name ? null : name;
+                    },
+                },
+            });
         </script>
 
         <script type="module">

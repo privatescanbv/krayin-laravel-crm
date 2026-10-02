@@ -21,6 +21,7 @@ it('enables static embedding globally and per configured dashboard', function ()
     Http::fake([
         MB_DEV.'/api/setting/enable-embedding-static' => Http::response('true', 200),
         MB_DEV.'/api/setting/enable-embedding'        => Http::response('true', 200),
+        MB_DEV.'/api/setting/*'                       => Http::response('', 204),
         MB_DEV.'/api/dashboard/3'                     => Http::response([
             'id'         => 3,
             'name'       => 'Leads per maand',
@@ -37,7 +38,8 @@ it('enables static embedding globally and per configured dashboard', function ()
     $this->artisan('metabase:enable-embeds --environment=dev')
         ->assertSuccessful()
         ->expectsOutputToContain('enable-embedding-static')
-        ->expectsOutputToContain('dashboard 3');
+        ->expectsOutputToContain('dashboard 3')
+        ->expectsOutputToContain('Dutch locale');
 
     Http::assertSent(function ($request) {
         return $request->method() === 'PUT'
@@ -59,10 +61,40 @@ it('enables static embedding globally and per configured dashboard', function ()
     });
 });
 
+it('sets the Dutch locale and number/date formatting embeds render with', function () {
+    Http::fake([
+        MB_DEV.'/api/setting/*'   => Http::response('', 204),
+        MB_DEV.'/api/dashboard/3' => Http::response(['id' => 3, 'name' => 'Leads per maand', 'parameters' => []], 200),
+    ]);
+
+    $this->artisan('metabase:enable-embeds --environment=dev')->assertSuccessful();
+
+    Http::assertSent(fn ($request) => $request->method() === 'PUT'
+        && str_ends_with($request->url(), '/api/setting/site-locale')
+        && $request->data() === ['value' => 'nl']);
+
+    Http::assertSent(fn ($request) => $request->method() === 'PUT'
+        && str_ends_with($request->url(), '/api/setting/custom-formatting')
+        && $request->data()['value']['type/Number']['number_separators'] === ',.'
+        && $request->data()['value']['type/Temporal']['date_style'] === 'D MMMM, YYYY');
+});
+
+it('fails when Metabase rejects the locale setting', function () {
+    Http::fake([
+        MB_DEV.'/api/setting/site-locale' => Http::response(['message' => 'boom'], 500),
+        MB_DEV.'/api/setting/*'           => Http::response('', 204),
+    ]);
+
+    $this->artisan('metabase:enable-embeds --environment=dev')->assertFailed();
+
+    Http::assertNotSent(fn ($request) => str_contains($request->url(), '/api/dashboard/'));
+});
+
 it('falls back to enable-embedding when the static setting is unknown', function () {
     Http::fake([
         MB_DEV.'/api/setting/enable-embedding-static' => Http::response(['message' => 'not found'], 404),
         MB_DEV.'/api/setting/enable-embedding'        => Http::response('true', 200),
+        MB_DEV.'/api/setting/*'                       => Http::response('', 204),
         MB_DEV.'/api/dashboard/3'                     => Http::response([
             'id'         => 3,
             'name'       => 'Leads per maand',

@@ -46,7 +46,7 @@ class MetabaseEmbedUrlFactory
 
         $token = $this->encode($payload, $secret);
 
-        return $siteUrl.'/embed/dashboard/'.$token.'#bordered=false&titled=true&background=false';
+        return $siteUrl.'/embed/dashboard/'.$token.'#bordered=false&titled=false&background=false';
     }
 
     /**

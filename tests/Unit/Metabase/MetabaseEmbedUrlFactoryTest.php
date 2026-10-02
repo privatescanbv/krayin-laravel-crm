@@ -36,7 +36,7 @@ it('signs an embed url for dashboard 3 with the default periode', function () {
 
     expect($url)
         ->toStartWith('https://reports.example.test/embed/dashboard/')
-        ->toEndWith('#bordered=false&titled=true&background=false');
+        ->toEndWith('#bordered=false&titled=false&background=false');
 
     $payload = decodeMetabaseJwt($url);
 

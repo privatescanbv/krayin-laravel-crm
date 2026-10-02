@@ -208,3 +208,11 @@ To simulate a dashboard filter being set, pass a real parameter in that array, e
    tabs and dashcards get negative ids (`tabs: [{id:-1,…}]`, dashcard `dashboard_tab_id: -1`);
    send `visualization_settings` as `(object)`, since an empty PHP array encodes as `[]` → HTTP 400.
    A new filter also needs `embedding_params[slug] = 'enabled'`, otherwise the CRM embed ignores it.
+   On a dashboard that already has tabs, every `dashcards` PUT must also resend `tabs`
+   (real ids + names), otherwise it fails with a `dashboard_tab_id` foreign-key error.
+
+10. **Native SQL that needs the start/end of a "Periode" filter** (e.g. "this period vs the
+    previous ones"): bind a required `date/all-options` field-filter tag (default `thismonth`)
+    to `analytics.dim_date.date_sk` and read the bounds with
+    `SELECT MIN(date_sk), MAX(date_sk) FROM analytics.dim_date WHERE {{periode}}`.
+    No hard-coded month list is needed; dashboard 9 (Herniapoli) uses this.

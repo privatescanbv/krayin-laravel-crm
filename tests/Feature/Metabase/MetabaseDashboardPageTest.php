@@ -55,6 +55,29 @@ it('hides metabase links the role may not view', function () {
         ->assertDontSee('Secret dashboard', false);
 });
 
+it('shows only the report groups the role has reports in', function () {
+    $user = makeCustomUser(['dashboard', 'metabase.leads-per-maand']);
+
+    $this->actingAs($user, 'user')
+        ->get(route('admin.dashboard.index'))
+        ->assertOk()
+        ->assertSee('v-report-groups', false)
+        ->assertSee('"name":"Leads"')
+        ->assertDontSee('"name":"Herniapoli"')
+        ->assertDontSee('Omzet per maand *', false);
+});
+
+it('lists the native crm reports under their group with the crm-reports permission', function () {
+    $user = makeCustomUser(['dashboard', 'metabase.crm-reports']);
+
+    $this->actingAs($user, 'user')
+        ->get(route('admin.dashboard.index'))
+        ->assertOk()
+        ->assertSee('"name":"Omzet"')
+        ->assertSee('Omzet per maand *', false)
+        ->assertSee('Verkooporders op onderzoeksdatum *', false);
+});
+
 it('does not show rapportages in the admin menu', function () {
     $user = makeCustomUser(['dashboard', 'metabase', 'metabase.leads-per-maand']);
 

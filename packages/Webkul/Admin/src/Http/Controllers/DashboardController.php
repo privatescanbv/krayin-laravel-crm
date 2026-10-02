@@ -55,8 +55,26 @@ class DashboardController extends Controller
         return view('admin::dashboard.index')->with([
             'startDate'     => $this->dashboardHelper->getStartDate(),
             'endDate'       => $this->dashboardHelper->getEndDate(),
-            'metabasePages' => $this->metabaseDashboards->visiblePages(),
+            'reportGroups'  => $this->metabaseDashboards->visibleGroups($this->legacyReportLinks()),
         ]);
+    }
+
+    /**
+     * Native CRM reports (marked *) shown next to the Metabase dashboards in the Rapportages widget.
+     *
+     * @return list<array{group: string, name: string, url: string}>
+     */
+    protected function legacyReportLinks(): array
+    {
+        if (! bouncer()->hasPermission('metabase.crm-reports')) {
+            return [];
+        }
+
+        return [
+            ['group' => 'Omzet', 'name' => 'Omzet per medewerker *', 'url' => route('admin.reports.revenue-by-employee.index')],
+            ['group' => 'Omzet', 'name' => 'Omzet per maand *', 'url' => route('admin.reports.revenue-by-month.index')],
+            ['group' => 'Orders', 'name' => 'Verkooporders op onderzoeksdatum *', 'url' => route('admin.reports.orders-by-investigation-date.index')],
+        ];
     }
 
     /**

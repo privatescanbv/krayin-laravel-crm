@@ -16,18 +16,6 @@ use Webkul\Contact\Repositories\PersonRepository;
 class ReportPersonMergeOrphans extends Command
 {
     /**
-     * Where the merge audit activities came from. Includes the legacy "Person Merge" title so
-     * merges done before the title change remain discoverable.
-     *
-     * @var list<array{type: string, title: string, pattern: string}>
-     */
-    private const MERGE_MARKERS = [
-        ['type' => 'system', 'title' => 'System: Duplicate Person Removed', 'pattern' => '/\(ID: (\d+)\)/'],
-        ['type' => 'note', 'title' => 'Person Merge', 'pattern' => '/\(ID: (\d+)\)/'],
-        ['type' => 'note', 'title' => 'Person Merged', 'pattern' => '/^Person #(\d+) /'],
-    ];
-
-    /**
      * Tables counted per merge pair, as table => column holding the person id.
      *
      * @var array<string, string>
@@ -114,7 +102,7 @@ class ReportPersonMergeOrphans extends Command
 
         $merges = collect();
 
-        foreach (self::MERGE_MARKERS as $marker) {
+        foreach (PersonRepository::MERGE_MARKERS as $marker) {
             $query = DB::table('activities')
                 ->select('person_id', 'comment', 'created_at')
                 ->where('type', $marker['type'])

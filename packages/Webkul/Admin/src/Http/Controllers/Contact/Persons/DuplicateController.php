@@ -10,7 +10,9 @@ use App\Services\PersonDuplicateCacheService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Resources\PersonResource;
 use Webkul\Contact\Models\Person;
@@ -162,6 +164,9 @@ class DuplicateController extends Controller
         try {
             $mergedPerson = $this->personRepository->mergePersons($primaryPersonId, $duplicatePersonIds, $fieldMappings);
 
+            // Shown on the page the client redirects to (no JS alert).
+            session()->flash('success', __('messages.person.merge_success'));
+
             return response()->json([
                 'success'       => true,
                 'message'       => __('messages.person.merge_success'),
@@ -214,6 +219,8 @@ class DuplicateController extends Controller
                 $this->personDuplicateCacheService->getCachedDuplicates($id);
             }
 
+            session()->flash('success', 'Geselecteerde personen gemarkeerd als geen duplicaat.');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Geselecteerde personen gemarkeerd als geen duplicaat.',
@@ -247,6 +254,78 @@ class DuplicateController extends Controller
         session()->flash('success', 'Markering "geen duplicaat" is ongedaan gemaakt.');
 
         return back();
+    }
+
+    /**
+     * Confirmation screen before undoing a merge (no JS confirm(): browsers can suppress those).
+     */
+    public function unmergeConfirm(int $personId): View
+    {
+        $this->validate(request(), [
+            'entity_id' => 'required|integer',
+        ]);
+
+        return view('admin::contacts.persons.duplicates.unmerge', [
+            'person'       => $this->personRepository->findOrFail($personId),
+            'mergedPerson' => $this->findMergedPerson($personId, (int) request('entity_id')),
+        ]);
+    }
+
+    /**
+     * Undo a wrong merge: restore the soft-deleted person and mark the pair "not a duplicate".
+     *
+     * Relations moved during the merge are not tracked, so they are not moved back; staff
+     * redistribute those by hand (the steps are logged on both persons).
+     */
+    public function unmerge(int $personId): RedirectResponse
+    {
+        $this->validate(request(), [
+            'entity_id' => 'required|integer',
+        ]);
+
+        $primary = $this->personRepository->findOrFail($personId);
+        $restored = $this->findMergedPerson($personId, (int) request('entity_id'));
+
+        $steps = "Controleer bij {$primary->name} (#{$primary->id}) wat van {$restored->name} (#{$restored->id}) is en zet dat met de hand terug: "
+            .'contactpersoon op leads/sales, anamneses, orderregels, activiteiten en e-mails. '
+            ."Verwijder ook e-mailadres, telefoonnummer en eventueel adres van {$restored->name} bij {$primary->name}.";
+
+        DB::transaction(function () use ($primary, $restored, $steps) {
+            $restored->restore();
+
+            $this->falsePositiveService->storeForEntities(DuplicateEntityType::PERSON, [$primary->id, $restored->id]);
+
+            foreach ([$primary, $restored] as $person) {
+                app(ActivityRepository::class)->create([
+                    'type'      => 'system',
+                    'title'     => 'System: Samenvoegen ongedaan gemaakt',
+                    'comment'   => "Samenvoegen van {$restored->name} (#{$restored->id}) met {$primary->name} (#{$primary->id}) ongedaan gemaakt. {$steps}",
+                    'is_done'   => true,
+                    'person_id' => $person->id,
+                    'user_id'   => auth()->id(),
+                ]);
+            }
+        });
+
+        foreach ([$primary->id, $restored->id] as $id) {
+            $this->personDuplicateCacheService->refreshPersonCache($id);
+        }
+
+        session()->flash('success', "Persoon hersteld. {$steps}");
+
+        return redirect()->route('admin.contacts.persons.view', $restored->id);
+    }
+
+    /**
+     * Only persons merged into this one may be restored, never an arbitrary soft-deleted person.
+     */
+    private function findMergedPerson(int $personId, int $entityId): Person
+    {
+        $mergedPerson = $this->personRepository->mergedAwayPersons($personId)->firstWhere('id', $entityId);
+
+        abort_unless($mergedPerson, 422, 'Deze persoon is niet in deze persoon samengevoegd.');
+
+        return $mergedPerson;
     }
 
     /**

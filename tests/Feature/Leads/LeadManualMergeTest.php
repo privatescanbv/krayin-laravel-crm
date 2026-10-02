@@ -106,7 +106,8 @@ test('manual merge still uses the existing merge endpoint', function () {
     ]);
 
     $response->assertOk()
-        ->assertJson(['success' => true]);
+        ->assertJson(['success' => true])
+        ->assertSessionHas('success');
 
     expect(Lead::find($duplicate->id))->toBeNull()
         ->and(Lead::withTrashed()->find($duplicate->id))->not->toBeNull()

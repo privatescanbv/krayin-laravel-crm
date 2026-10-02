@@ -25,6 +25,19 @@ class PersonRepository extends Repository
     use JsonDuplicateMatcher;
 
     /**
+     * Merge audit activities written on the primary person by {@see mergePersons()}, used to find
+     * which duplicate was merged into which primary. Includes the legacy "Person Merge" title so
+     * merges done before the title change remain discoverable.
+     *
+     * @var list<array{type: string, title: string, pattern: string}>
+     */
+    public const MERGE_MARKERS = [
+        ['type' => 'system', 'title' => 'System: Duplicate Person Removed', 'pattern' => '/\(ID: (\d+)\)/'],
+        ['type' => 'note', 'title' => 'Person Merge', 'pattern' => '/\(ID: (\d+)\)/'],
+        ['type' => 'note', 'title' => 'Person Merged', 'pattern' => '/^Person #(\d+) /'],
+    ];
+
+    /**
      * Searchable fields.
      */
     protected $fieldSearchable = [
@@ -394,6 +407,32 @@ class PersonRepository extends Repository
             Log::error('Error merging persons: '.$e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * Soft-deleted persons that were merged into the given primary person (still restorable).
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, PersonModel>
+     */
+    public function mergedAwayPersons(int $primaryPersonId): Collection
+    {
+        $ids = [];
+
+        foreach (self::MERGE_MARKERS as $marker) {
+            $comments = DB::table('activities')
+                ->where('person_id', $primaryPersonId)
+                ->where('type', $marker['type'])
+                ->where('title', $marker['title'])
+                ->pluck('comment');
+
+            foreach ($comments as $comment) {
+                if (preg_match($marker['pattern'], (string) $comment, $matches)) {
+                    $ids[] = (int) $matches[1];
+                }
+            }
+        }
+
+        return PersonModel::onlyTrashed()->whereIn('id', array_unique($ids))->get();
     }
 
     /**

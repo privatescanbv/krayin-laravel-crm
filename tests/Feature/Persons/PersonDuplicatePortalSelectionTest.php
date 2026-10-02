@@ -44,7 +44,8 @@ test('two persons that both have a portal account can be marked as not a duplica
         'entity_ids' => [$person->id, $other->id],
     ])
         ->assertOk()
-        ->assertJson(['success' => true]);
+        ->assertJson(['success' => true])
+        ->assertSessionHas('success');
 
     expect(
         DB::table('duplicates_false_positives')

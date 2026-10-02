@@ -1592,6 +1592,7 @@ namespace App\Models{
  * @property string $name
  * @property string|null $description
  * @property \App\Enums\LostReason|null $lost_reason
+ * @property \App\Enums\AssessmentOutcome|null $assessment_outcome App\Enums\AssessmentOutcome — Herniapoli uitkomst beoordeling
  * @property \Illuminate\Support\Carbon|null $closed_at
  * @property int $pipeline_stage_id
  * @property int|null $lead_id
@@ -1651,6 +1652,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead resolveDepartment(int $salesId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereAssessmentOutcome($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereClosedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereContactPersonId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereCreatedAt($value)

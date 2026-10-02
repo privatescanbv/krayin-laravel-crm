@@ -478,10 +478,14 @@ class PersonController extends Controller
             $this->falsePositiveService->partnerIdsFor(DuplicateEntityType::PERSON, $person->id)
         )->get();
 
+        // Persons wrongly merged into this one can be restored from the UI.
+        $mergedPersons = $this->personRepository->mergedAwayPersons($person->id);
+
         return view('admin::contacts.persons.view', [
             'person'               => $person,
             'duplicateCount'       => $duplicateCount,
             'falsePositivePersons' => $falsePositivePersons,
+            'mergedPersons'        => $mergedPersons,
             'sortedLeads'     => $sortedLeads,
             'activitiesCount' => $activitiesCount,
             'patientMessageActivity' => $patientMessageActivity,

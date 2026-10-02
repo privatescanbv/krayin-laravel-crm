@@ -125,6 +125,34 @@
                     </details>
                 @endif
 
+                <!-- Wrongly merged persons: restore them here; moved relations are redistributed by hand -->
+                @if (($mergedPersons ?? collect())->isNotEmpty())
+                    <details class="group -mx-1 rounded px-1 open:bg-gray-50 dark:open:bg-gray-800/50">
+                        <summary class="flex cursor-pointer list-none items-center justify-between text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
+                            <span class="flex items-center gap-1">
+                                <span class="icon-info text-sm"></span>
+
+                                Samengevoegd met deze persoon ({{ $mergedPersons->count() }})
+                            </span>
+
+                            <span class="icon-down-arrow text-[10px] transition-transform group-open:rotate-180"></span>
+                        </summary>
+
+                        <div class="mb-2 mt-1 flex flex-col gap-1">
+                            @foreach ($mergedPersons as $mergedPerson)
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <span class="truncate">{{ $mergedPerson->name }} (#{{ $mergedPerson->id }})</span>
+
+                                    <a href="{{ route('admin.contacts.persons.duplicates.unmerge.confirm', ['id' => $person->id, 'entity_id' => $mergedPerson->id]) }}"
+                                       class="shrink-0 underline hover:text-gray-700 dark:hover:text-gray-200">
+                                        Samenvoegen ongedaan maken
+                                    </a>
+                                </div>
+                            @endforeach
+                        </div>
+                    </details>
+                @endif
+
                 <div class="flex justify-between">
                     <span>Aangemaakt:</span>
                     <span>{{ $person->created_at->format('d-m-Y') }}</span>

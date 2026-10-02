@@ -254,7 +254,8 @@ if (typeof window !== 'undefined') {
      *
      * opts:
      * - confirmText: string|null
-     * - successMessage: string|null (fallback als response.data.message ontbreekt)
+     * - successMessage: string|null (fallback als response.data.message ontbreekt; alleen zonder onSuccess,
+     *   bij reload/redirect toont de volgende pagina de server-side session flash)
      * - onSuccess: 'reload' | 'redirect' | null
      * - redirectUrl: string|null (alleen bij onSuccess='redirect')
      * - okStatuses: number[] (default [200])
@@ -283,7 +284,8 @@ if (typeof window !== 'undefined') {
 
             if (result.ok) {
                 const msg = result?.data?.message || successMessage;
-                if (msg) {
+                // Navigating away: the endpoint flashes the message, the next page shows it.
+                if (msg && !onSuccess) {
                     alert(msg);
                 }
 

@@ -202,6 +202,9 @@ class DuplicateController extends Controller
         try {
             $mergedLead = $this->leadRepository->mergeLeads($primaryLeadId, $duplicateLeadIds, $fieldMappings);
 
+            // Shown on the page the client redirects to (no JS alert).
+            session()->flash('success', __('messages.lead.merge_success'));
+
             return response()->json([
                 'success' => true,
                 'message' => __('messages.lead.merge_success'),
@@ -244,6 +247,8 @@ class DuplicateController extends Controller
                 $entityIds,
                 null
             );
+
+            session()->flash('success', 'Geselecteerde leads gemarkeerd als geen duplicaat.');
 
             return response()->json([
                 'success' => true,

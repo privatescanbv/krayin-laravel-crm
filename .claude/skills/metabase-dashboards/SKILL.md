@@ -196,3 +196,15 @@ To simulate a dashboard filter being set, pass a real parameter in that array, e
   click_behavior/parameters even though its own use case is different.
 - `database/analytics/*.sql` — the source schema these dashboards query
   (`analytics.fact_leads`, `analytics.fact_orders`, `analytics.dim_user`, …).
+
+8. **Cards with template tags need a matching `parameters` array** (`id` = the tag's
+   `id`, plus `name`/`slug`/`type`/`target`), otherwise filter values are silently
+   ignored. Verify filters through the dashboard endpoint, which uses the real
+   dashboard parameter ids: `POST /dashboard/{d}/dashcard/{dc}/card/{card}/query` with
+   `['parameters' => [['id' => $dashParamId, 'type' => 'number/=', 'value' => [2025]]]]`.
+   Plain `POST /card/{id}/query` requires an `id` on every parameter and ignored them here.
+
+9. **Adding tabs / a filter to an embedded dashboard** (one `PUT /dashboard/{id}`): new
+   tabs and dashcards get negative ids (`tabs: [{id:-1,…}]`, dashcard `dashboard_tab_id: -1`);
+   send `visualization_settings` as `(object)`, since an empty PHP array encodes as `[]` → HTTP 400.
+   A new filter also needs `embedding_params[slug] = 'enabled'`, otherwise the CRM embed ignores it.

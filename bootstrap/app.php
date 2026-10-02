@@ -83,16 +83,18 @@ $app = Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withSchedule(function (Schedule $schedule) {
-        $schedule->command('emails:sync-graph')->everyMinute()->withoutOverlapping();
+        // First: schedule:run executes due events sequentially, so anything listed above this
+        // would delay the AFB mail (on 2026-10-01 it started at 11:19 instead of 11:00).
+        $schedule->command('afb:send-daily')->dailyAt(AfbDispatchService::AFB_LATE_BOOKING_CUTOFF_HOUR.':00')->withoutOverlapping()->runInBackground();
+        $schedule->command('emails:sync-graph')->everyTwoMinutes()->withoutOverlapping();
         $schedule->command('activities:release-overdue')->hourly();
         $schedule->command('activities:sync-statuses')->hourly();
         // The index is what the duplicate counters and the persons list read, so it is rebuilt
         // hourly now that a rebuild is one pass instead of a detection per person.
-        $schedule->command('duplicates:refresh-cache --index')->hourly()->withoutOverlapping();
+        $schedule->command('duplicates:refresh-cache --index')->hourly()->withoutOverlapping()->runInBackground();
         $schedule->command('emails:cleanup-logs')->daily();
         $schedule->command('emails:cleanup-graph-inbox')->daily();
         $schedule->command('patient:send-notification-email')->everyFiveMinutes()->withoutOverlapping();
-        $schedule->command('afb:send-daily')->dailyAt(AfbDispatchService::AFB_LATE_BOOKING_CUTOFF_HOUR.':00')->withoutOverlapping();
         $schedule->command('revops:check-lead-activity')->hourly()->withoutOverlapping();
         $schedule->command('forms:sync-anamnesis-status')->hourly()->withoutOverlapping();
         $schedule->command('email-templates:verify-codes')->hourly();

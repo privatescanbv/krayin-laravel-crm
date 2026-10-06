@@ -5,12 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\DataGrids\SalesLeadDataGrid;
 use App\Enums\ActivityStatus;
 use App\Enums\ActivityType;
-use App\Enums\AssessmentOutcome;
 use App\Enums\LostReason;
 use App\Enums\PipelineStage;
 use App\Enums\PipelineType;
 use App\Helpers\RequestHelper;
 use App\Http\Controllers\Controller;
+use App\Models\AssessmentOutcome;
 use App\Models\Department;
 use App\Models\Order;
 use App\Models\SalesLead;
@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -181,21 +182,22 @@ class SalesLeadController extends Controller
                             'id'   => $salesLead->user->id,
                             'name' => $salesLead->user->name,
                         ] : null,
-                        'created_at'            => $salesLead->created_at,
-                        'open_activities_count' => $salesLead->open_activities_count,
-                        'unread_emails_count'   => $salesLead->unread_emails_count ?? 0,
-                        'has_duplicates'        => false,
-                        'duplicates_count'      => 0,
-                        'rotten_days'           => 0,
-                        'days_until_due_date'   => null,
-                        'mri_status'            => null,
-                        'mri_status_label'      => null,
-                        'has_diagnosis_form'    => false,
-                        'lost_reason_label'     => $salesLead->lost_reason_label,
-                        'assessment_outcome'    => $salesLead->assessment_outcome?->value,
-                        'has_multiple_persons'  => $salesLead->persons->count() > 1,
-                        'persons_count'         => $salesLead->persons->count(),
-                        'orders'                => $salesLead->orders->map(function ($order) {
+                        'created_at'                   => $salesLead->created_at,
+                        'open_activities_count'        => $salesLead->open_activities_count,
+                        'unread_emails_count'          => $salesLead->unread_emails_count ?? 0,
+                        'has_duplicates'               => false,
+                        'duplicates_count'             => 0,
+                        'rotten_days'                  => 0,
+                        'days_until_due_date'          => null,
+                        'mri_status'                   => null,
+                        'mri_status_label'             => null,
+                        'has_diagnosis_form'           => false,
+                        'lost_reason_label'            => $salesLead->lost_reason_label,
+                        'assessment_outcome'           => $salesLead->assessment_outcome,
+                        'additional_research_required' => (bool) $salesLead->additional_research_required,
+                        'has_multiple_persons'         => $salesLead->persons->count() > 1,
+                        'persons_count'                => $salesLead->persons->count(),
+                        'orders'                       => $salesLead->orders->map(function ($order) {
                             $status = $order->status;
 
                             return [
@@ -270,12 +272,18 @@ class SalesLeadController extends Controller
         $request->validate($this->getValidationRules());
 
         $salesLead = SalesLead::findOrFail($id);
+        $targetStage = $request->filled('pipeline_stage_id') ? StageProxy::find((int) $request->input('pipeline_stage_id')) : null;
+        $additionalResearch = $this->resolveAdditionalResearch($salesLead, $targetStage ?? $salesLead->stage);
         $this->ensureAssessmentOutcome(
             $salesLead,
-            $request->filled('pipeline_stage_id') ? StageProxy::find((int) $request->input('pipeline_stage_id')) : null,
+            $targetStage,
             $request->exists('assessment_outcome') ? $request->input('assessment_outcome') : $salesLead->assessment_outcome,
+            $additionalResearch,
         );
-        $salesLead->update($this->prepareSalesLeadData($request->all()));
+        $salesLead->update([
+            ...$this->prepareSalesLeadData($request->all()),
+            'additional_research_required' => $additionalResearch,
+        ]);
 
         // Handle person relationships - always sync if person_ids is in request, even if empty array
         if ($request->has('person_ids')) {
@@ -369,10 +377,11 @@ class SalesLeadController extends Controller
     public function updateStage($id)
     {
         request()->validate([
-            'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
-            'lost_reason'            => ['nullable', new Enum(LostReason::class)],
-            'assessment_outcome'     => ['nullable', new Enum(AssessmentOutcome::class)],
-            'closed_at'              => 'nullable',
+            'lead_pipeline_stage_id'       => 'required|exists:lead_pipeline_stages,id',
+            'lost_reason'                  => ['nullable', new Enum(LostReason::class)],
+            'assessment_outcome'           => ['nullable', Rule::exists('assessment_outcomes', 'code')],
+            'additional_research_required' => 'nullable|boolean',
+            'closed_at'                    => 'nullable',
         ]);
 
         $salesLead = SalesLead::findOrFail($id);
@@ -388,7 +397,8 @@ class SalesLeadController extends Controller
         }
 
         $outcome = request('assessment_outcome') ?: $salesLead->assessment_outcome;
-        $this->ensureAssessmentOutcome($salesLead, $targetStage, $outcome);
+        $additionalResearch = $this->resolveAdditionalResearch($salesLead, $targetStage);
+        $this->ensureAssessmentOutcome($salesLead, $targetStage, $outcome, $additionalResearch);
 
         // Optionally close open activities for this Sales when requested (parity with lead stage update)
         if (request()->boolean('close_open_activities')) {
@@ -398,8 +408,9 @@ class SalesLeadController extends Controller
         }
 
         $attributes = [
-            'pipeline_stage_id' => $targetStage->id,
-            'closed_at'         => StageTransitionAttributes::resolveClosedAt($targetStage, request('closed_at')),
+            'pipeline_stage_id'            => $targetStage->id,
+            'closed_at'                    => StageTransitionAttributes::resolveClosedAt($targetStage, request('closed_at')),
+            'additional_research_required' => $additionalResearch,
         ];
 
         if ($targetStage->is_lost) {
@@ -850,15 +861,17 @@ class SalesLeadController extends Controller
     /**
      * Herniapoli: from "Beoordeling gereed" onwards the assessment outcome is required
      * (AssessmentOutcome::requiredForStageCodes). Only checked on an actual stage change, so
-     * existing sales without an outcome can still be edited.
+     * existing sales without an outcome can still be edited. When additional research is still
+     * required (only allowed up to "Gepland voor aanvullend onderzoek") the outcome may stay empty.
      *
      * @throws ValidationException
      */
-    private function ensureAssessmentOutcome(SalesLead $salesLead, mixed $targetStage, mixed $outcome): void
+    private function ensureAssessmentOutcome(SalesLead $salesLead, mixed $targetStage, mixed $outcome, bool $additionalResearch = false): void
     {
         if (! $targetStage
             || (int) $targetStage->id === (int) $salesLead->pipeline_stage_id
             || ! in_array($targetStage->code, AssessmentOutcome::requiredForStageCodes(), true)
+            || $additionalResearch
             || ! blank($outcome)) {
             return;
         }
@@ -866,6 +879,23 @@ class SalesLeadController extends Controller
         throw ValidationException::withMessages([
             'assessment_outcome' => "Vul eerst de uitkomst beoordeling in voordat de sales naar \"{$targetStage->name}\" gaat.",
         ]);
+    }
+
+    /**
+     * "Aanvullend onderzoek vereist" from the request (or the current value), forced to nee once the
+     * stage is past "Gepland voor aanvullend onderzoek" (AssessmentOutcome::additionalResearchAllowedStageCodes).
+     */
+    private function resolveAdditionalResearch(SalesLead $salesLead, mixed $stage): bool
+    {
+        $requested = request()->has('additional_research_required')
+            ? request()->boolean('additional_research_required')
+            : (bool) $salesLead->additional_research_required;
+
+        $pastAllowedStages = $stage
+            && in_array($stage->code, AssessmentOutcome::requiredForStageCodes(), true)
+            && ! in_array($stage->code, AssessmentOutcome::additionalResearchAllowedStageCodes(), true);
+
+        return $requested && ! $pastAllowedStages;
     }
 
     private function prepareSalesLeadData(array $data): array
@@ -893,17 +923,18 @@ class SalesLeadController extends Controller
         $personIdsRule = $isCreate ? 'nullable|array' : 'required|array|min:1';
 
         return [
-            'name'                      => 'required|string|max:255',
-            'description'               => 'nullable|string',
-            'pipeline_stage_id'         => 'nullable|exists:lead_pipeline_stages,id',
-            'lead_id'                   => $leadRule,
-            'user_id'                   => 'nullable|exists:users,id',
-            'department_id'             => 'nullable|exists:departments,id',
-            'assessment_outcome'        => ['nullable', new Enum(AssessmentOutcome::class)],
-            'contact_person_id'         => 'nullable|exists:persons,id',
-            'contact_person_id_display' => 'nullable|string',
-            'person_ids'                => $personIdsRule,
-            'person_ids.*'              => 'exists:persons,id',
+            'name'                         => 'required|string|max:255',
+            'description'                  => 'nullable|string',
+            'pipeline_stage_id'            => 'nullable|exists:lead_pipeline_stages,id',
+            'lead_id'                      => $leadRule,
+            'user_id'                      => 'nullable|exists:users,id',
+            'department_id'                => 'nullable|exists:departments,id',
+            'assessment_outcome'           => ['nullable', Rule::exists('assessment_outcomes', 'code')],
+            'additional_research_required' => 'nullable|boolean',
+            'contact_person_id'            => 'nullable|exists:persons,id',
+            'contact_person_id_display'    => 'nullable|string',
+            'person_ids'                   => $personIdsRule,
+            'person_ids.*'                 => 'exists:persons,id',
         ];
     }
 }

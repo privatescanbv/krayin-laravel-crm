@@ -395,7 +395,7 @@ return [
     ], [
         'key'   => 'settings.lead',
         'name'  => 'admin::app.acl.lead',
-        'route' => ['admin.settings.pipelines.index', 'admin.settings.sources.index', 'admin.settings.types.index'],
+        'route' => ['admin.settings.pipelines.index', 'admin.settings.sources.index', 'admin.settings.types.index', 'admin.settings.assessment_outcomes.index'],
         'sort'  => 2,
     ], [
         'key'   => 'settings.lead.pipelines',
@@ -456,6 +456,26 @@ return [
         'key'   => 'settings.lead.types.delete',
         'name'  => 'admin::app.acl.delete',
         'route' => 'admin.settings.types.delete',
+        'sort'  => 3,
+    ], [
+        'key'   => 'settings.lead.assessment_outcomes',
+        'name'  => 'admin::app.layouts.assessment_outcomes',
+        'route' => 'admin.settings.assessment_outcomes.index',
+        'sort'  => 4,
+    ], [
+        'key'   => 'settings.lead.assessment_outcomes.create',
+        'name'  => 'admin::app.acl.create',
+        'route' => ['admin.settings.assessment_outcomes.create', 'admin.settings.assessment_outcomes.store'],
+        'sort'  => 1,
+    ], [
+        'key'   => 'settings.lead.assessment_outcomes.edit',
+        'name'  => 'admin::app.acl.edit',
+        'route' => ['admin.settings.assessment_outcomes.edit', 'admin.settings.assessment_outcomes.update', 'admin.settings.assessment_outcomes.reorder'],
+        'sort'  => 2,
+    ], [
+        'key'   => 'settings.lead.assessment_outcomes.delete',
+        'name'  => 'admin::app.acl.delete',
+        'route' => 'admin.settings.assessment_outcomes.delete',
         'sort'  => 3,
     ], [
         'key'   => 'settings.automation',

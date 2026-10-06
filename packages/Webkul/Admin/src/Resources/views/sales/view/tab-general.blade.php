@@ -35,7 +35,11 @@
     @if ($sales->getDepartment()?->isHernia())
         <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Uitkomst beoordeling</span>
-            <span class="text-sm font-semibold dark:text-white">{{ $sales->assessment_outcome?->label() ?? 'Nog niet ingevuld' }}</span>
+            <span class="text-sm font-semibold dark:text-white">{{ $sales->assessmentOutcome?->label ?? 'Nog niet ingevuld' }}</span>
+        </div>
+        <div class="flex items-center justify-between rounded-lg border bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Aanvullend onderzoek vereist</span>
+            <span class="text-sm font-semibold dark:text-white">{{ $sales->additional_research_required ? 'Ja' : 'Nee' }}</span>
         </div>
     @endif
 

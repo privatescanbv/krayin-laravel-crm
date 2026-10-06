@@ -810,6 +810,43 @@ return [
             ],
         ],
 
+        'assessment_outcomes' => [
+            'index' => [
+                'title'           => 'Assessment outcomes',
+                'create-btn'      => 'Add outcome',
+                'create-success'  => 'Outcome created successfully.',
+                'update-success'  => 'Outcome updated successfully.',
+                'destroy-success' => 'Outcome deleted successfully.',
+                'delete-failed'   => 'Failed to delete outcome.',
+                'reorder-success' => 'Order saved.',
+                'reorder-hint'    => 'Drag the rows to set the order used in the dropdowns.',
+                'actions'         => 'Actions',
+                'in-use'          => 'This outcome is used by one or more sales and cannot be deleted.',
+
+                'datagrid' => [
+                    'label'             => 'Label',
+                    'code'              => 'Code',
+                    'is_surgery_advice' => 'Surgery advice',
+                    'sort_order'        => 'Sort order',
+                    'edit'              => 'Edit',
+                    'delete'            => 'Delete',
+                ],
+
+                'edit' => [
+                    'title' => 'Edit outcome',
+                ],
+
+                'create' => [
+                    'title'             => 'Create outcome',
+                    'label'             => 'Label',
+                    'code'              => 'Code',
+                    'is_surgery_advice' => 'Surgery advice',
+                    'sort_order'        => 'Sort order',
+                    'save-btn'          => 'Save',
+                ],
+            ],
+        ],
+
         'resource_types' => [
             'index' => [
                 'title'           => 'Resource Types',
@@ -2598,6 +2635,8 @@ return [
         'clinics-info'         => 'Manage clinics',
         'partner_products'     => 'Partner Products',
         'partner_products-info'=> 'Manage partner products',
+        'assessment_outcomes'      => 'Assessment outcomes',
+        'assessment_outcomes-info' => 'Manage Herniapoli assessment outcomes',
         'resource_types'       => 'Resource Types',
         'resource_types-info'  => 'Manage resource types',
         'product_types'        => 'Product Types',

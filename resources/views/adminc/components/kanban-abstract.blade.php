@@ -1,5 +1,5 @@
 @php
-    use App\Enums\AssessmentOutcome;
+    use App\Models\AssessmentOutcome;
     use App\Enums\Departments;
     use App\Enums\LostReason;
     use App\Models\Department;
@@ -563,22 +563,38 @@
 
                             <!-- Herniapoli: uitkomst beoordeling -->
                             <template v-else-if="currentStageUpdate.type === 'outcome'">
-                                <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        Uitkomst beoordeling
-                                    </x-admin::form.control-group.label>
-                                    <select
-                                        name="assessment_outcome"
-                                        class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
-                                        v-model="currentStageUpdate.assessment_outcome"
-                                        required
-                                    >
-                                        <option value="">Selecteer uitkomst...</option>
-                                        @foreach (AssessmentOutcome::cases() as $outcome)
-                                            <option value="{{ $outcome->value }}">{{ $outcome->label() }}</option>
-                                        @endforeach
-                                    </select>
-                                </x-admin::form.control-group>
+                                <div class="grid gap-x-4" :class="additionalResearchAllowed(currentStageUpdate.stage) ? 'grid-cols-2' : 'grid-cols-1'">
+                                    <x-admin::form.control-group>
+                                        <x-admin::form.control-group.label ::class="{ required: ! outcomeOptional(currentStageUpdate) }">
+                                            Uitkomst beoordeling
+                                        </x-admin::form.control-group.label>
+                                        <select
+                                            name="assessment_outcome"
+                                            class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
+                                            v-model="currentStageUpdate.assessment_outcome"
+                                            :required="! outcomeOptional(currentStageUpdate)"
+                                        >
+                                            <option value="">Selecteer uitkomst...</option>
+                                            @foreach (AssessmentOutcome::ordered()->get() as $outcome)
+                                                <option value="{{ $outcome->code }}">{{ $outcome->label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </x-admin::form.control-group>
+
+                                    <x-admin::form.control-group v-if="additionalResearchAllowed(currentStageUpdate.stage)">
+                                        <x-admin::form.control-group.label>
+                                            Aanvullend onderzoek vereist?
+                                        </x-admin::form.control-group.label>
+                                        <select
+                                            name="additional_research_required"
+                                            class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
+                                            v-model="currentStageUpdate.additional_research_required"
+                                        >
+                                            <option :value="false">Nee</option>
+                                            <option :value="true">Ja</option>
+                                        </select>
+                                    </x-admin::form.control-group>
+                                </div>
                             </template>
 
                             <!-- Lost stage fields -->
@@ -682,6 +698,7 @@
                         departmentOptions: @json($departmentOptions),
 
                         outcomeRequiredCodes: @json($type === 'sales' ? AssessmentOutcome::requiredForStageCodes() : []),
+                        additionalResearchCodes: @json($type === 'sales' ? AssessmentOutcome::additionalResearchAllowedStageCodes() : []),
                     };
                 },
 
@@ -758,7 +775,17 @@
                     },
 
                     needsAssessmentOutcome(stage, lead) {
-                        return this.outcomeRequiredCodes.includes(stage?.code) && ! lead?.assessment_outcome;
+                        return this.outcomeRequiredCodes.includes(stage?.code)
+                            && ! lead?.assessment_outcome
+                            && ! (lead?.additional_research_required && this.additionalResearchAllowed(stage));
+                    },
+
+                    additionalResearchAllowed(stage) {
+                        return this.additionalResearchCodes.includes(stage?.code);
+                    },
+
+                    outcomeOptional(update) {
+                        return update.additional_research_required && this.additionalResearchAllowed(update.stage);
                     },
 
                     isWonOrLost(stage) {
@@ -1168,6 +1195,7 @@
                             lead: lead,
                             lost_reason: '',
                             assessment_outcome: '',
+                            additional_research_required: false,
                             closed_at: new Date().toISOString().slice(0, 10),
                             user_id: String(lead.user_id || lead.user?.id || ''),
                             order_department_id_after_won: String(lead.department_id || ''),
@@ -1196,7 +1224,7 @@
                             return;
                         }
 
-                        if (update.type === 'outcome' && ! update.assessment_outcome) {
+                        if (update.type === 'outcome' && ! update.assessment_outcome && ! this.outcomeOptional(update)) {
                             this.$emitter.emit('add-flash', {
                                 type: 'error',
                                 message: 'Uitkomst beoordeling is verplicht'
@@ -1207,8 +1235,12 @@
                         let extraData = {};
 
                         if (update.type === 'outcome') {
+                            const additionalResearch = this.outcomeOptional(update);
+
                             extraData.assessment_outcome = update.assessment_outcome;
-                            update.lead.assessment_outcome = update.assessment_outcome;
+                            extraData.additional_research_required = additionalResearch ? 1 : 0;
+                            update.lead.assessment_outcome = update.assessment_outcome || null;
+                            update.lead.additional_research_required = additionalResearch;
                         } else if (update.type === 'won') {
                             if (this.entityType === 'leads' && ! String(update.order_department_id_after_won || '').trim()) {
                                 this.$emitter.emit('add-flash', {

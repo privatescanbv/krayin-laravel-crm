@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\AssessmentOutcome;
 use App\Enums\LostReason;
 use App\Models\Concerns\HasAiSummary;
 use App\Traits\HasAuditTrail;
@@ -51,6 +50,7 @@ class SalesLead extends Model
         'description',
         'lost_reason',
         'assessment_outcome',
+        'additional_research_required',
         'closed_at',
         'pipeline_stage_id',
         'lead_id',
@@ -67,11 +67,11 @@ class SalesLead extends Model
      * @var array
      */
     protected $casts = [
-        'created_by'         => 'integer',
-        'updated_by'         => 'integer',
-        'closed_at'          => 'date',
-        'lost_reason'        => LostReason::class,
-        'assessment_outcome' => AssessmentOutcome::class,
+        'created_by'                   => 'integer',
+        'updated_by'                   => 'integer',
+        'closed_at'                    => 'date',
+        'lost_reason'                  => LostReason::class,
+        'additional_research_required' => 'boolean',
     ];
 
     /**
@@ -266,6 +266,19 @@ class SalesLead extends Model
         }
 
         $this->attributes['lost_reason'] = $value;
+    }
+
+    /**
+     * Herniapoli assessment outcome; assessment_outcome holds the outcome's immutable code.
+     */
+    public function assessmentOutcome(): BelongsTo
+    {
+        return $this->belongsTo(AssessmentOutcome::class, 'assessment_outcome', 'code');
+    }
+
+    public function setAssessmentOutcomeAttribute($value): void
+    {
+        $this->attributes['assessment_outcome'] = $value === '' ? null : $value;
     }
 
     /**

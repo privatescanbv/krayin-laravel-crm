@@ -249,6 +249,13 @@ return [
         'sort'       => 3,
         'icon-class' => 'icon-settings-type',
     ], [
+        'key'        => 'settings.lead.assessment_outcomes',
+        'name'       => 'admin::app.layouts.assessment_outcomes',
+        'info'       => 'admin::app.layouts.assessment_outcomes-info',
+        'route'      => 'admin.settings.assessment_outcomes.index',
+        'sort'       => 4,
+        'icon-class' => 'icon-setting',
+    ], [
         'key'        => 'settings.automation',
         'name'       => 'admin::app.layouts.automation',
         'info'       => 'admin::app.layouts.automation-info',

@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\Settings\ImportRunController;
 use App\Http\Controllers\Admin\Settings\MarketingCampaignController;
 use App\Http\Controllers\Admin\Settings\ProductTypeController;
 use App\Http\Controllers\Admin\Settings\ResourceController;
+use App\Http\Controllers\Admin\Settings\AssessmentOutcomeController;
 use App\Http\Controllers\Admin\Settings\ResourceTypeController;
 use App\Http\Controllers\Admin\Settings\ShiftController;
 use Illuminate\Support\Facades\Route;
@@ -142,6 +143,19 @@ Route::prefix('settings')->group(function () {
         Route::get('view/{id}', 'view')->name('admin.settings.import-logs.view');
         Route::delete('', 'destroy')->name('admin.settings.import-logs.bulk_delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.import-logs.delete');
+    });
+
+    /**
+     * Assessment outcome ("Uitkomst beoordeling") routes.
+     */
+    Route::controller(AssessmentOutcomeController::class)->prefix('assessment-outcomes')->group(function () {
+        Route::get('', 'index')->name('admin.settings.assessment_outcomes.index');
+        Route::get('create', 'create')->name('admin.settings.assessment_outcomes.create');
+        Route::post('create', 'store')->name('admin.settings.assessment_outcomes.store');
+        Route::get('edit/{id}', 'edit')->name('admin.settings.assessment_outcomes.edit');
+        Route::put('edit/{id}', 'update')->name('admin.settings.assessment_outcomes.update');
+        Route::put('reorder', 'reorder')->name('admin.settings.assessment_outcomes.reorder');
+        Route::delete('{id}', 'destroy')->name('admin.settings.assessment_outcomes.delete');
     });
 
     /**

@@ -384,7 +384,6 @@ services:
 
   ai-agent:
     build: ./ai-agents/ai-agent
-    container_name: ai-agent
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
     env_file:
       - .env.ai
@@ -406,7 +405,6 @@ services:
 
   ai-frontend:
     build: ./ai-agents/ai-frontend
-    container_name: ai-frontend
     volumes:
       - ./ai-agents/ai-frontend:/app
     labels:
@@ -425,7 +423,6 @@ services:
 
   ai-visualizer:
     build: ./ai-agents/ai-visualizer
-    container_name: ai-visualizer
     ports:
       - "8002:8002"
     volumes:

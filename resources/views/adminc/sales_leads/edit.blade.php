@@ -157,7 +157,7 @@
                 @if ($salesLead->getDepartment()?->isHernia())
                     <!-- Uitkomst beoordeling (Herniapoli) -->
                     <div class="flex-1">
-                        @php($currentOutcome = old('assessment_outcome', $salesLead->assessment_outcome?->value))
+                        @php($currentOutcome = old('assessment_outcome', $salesLead->assessment_outcome))
                         <x-adminc::components.field
                             type="select"
                             name="assessment_outcome"
@@ -165,11 +165,25 @@
                             label="Uitkomst beoordeling"
                         >
                             <option value="">-- Nog niet beoordeeld --</option>
-                            @foreach (\App\Enums\AssessmentOutcome::cases() as $outcome)
-                                <option value="{{ $outcome->value }}" {{ $currentOutcome === $outcome->value ? 'selected' : '' }}>
-                                    {{ $outcome->label() }}
+                            @foreach (\App\Models\AssessmentOutcome::ordered()->get() as $outcome)
+                                <option value="{{ $outcome->code }}" {{ $currentOutcome === $outcome->code ? 'selected' : '' }}>
+                                    {{ $outcome->label }}
                                 </option>
                             @endforeach
+                        </x-adminc::components.field>
+                    </div>
+
+                    <!-- Aanvullend onderzoek vereist (Herniapoli); forced to nee after "Gepland voor aanvullend onderzoek" -->
+                    <div class="flex-1">
+                        @php($currentAdditionalResearch = (bool) old('additional_research_required', $salesLead->additional_research_required))
+                        <x-adminc::components.field
+                            type="select"
+                            name="additional_research_required"
+                            value="{{ (int) $currentAdditionalResearch }}"
+                            label="Aanvullend onderzoek vereist?"
+                        >
+                            <option value="0" {{ $currentAdditionalResearch ? '' : 'selected' }}>Nee</option>
+                            <option value="1" {{ $currentAdditionalResearch ? 'selected' : '' }}>Ja</option>
                         </x-adminc::components.field>
                     </div>
                 @endif

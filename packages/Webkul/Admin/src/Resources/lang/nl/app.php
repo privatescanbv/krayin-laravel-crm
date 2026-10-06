@@ -1768,6 +1768,43 @@ return [
                 'save-btn'   => 'Opslaan',
             ],
         ],
+        'assessment_outcomes' => [
+            'index' => [
+                'title'           => 'Uitkomsten beoordeling',
+                'create-btn'      => 'Uitkomst toevoegen',
+                'create-success'  => 'Uitkomst succesvol aangemaakt.',
+                'update-success'  => 'Uitkomst succesvol bijgewerkt.',
+                'destroy-success' => 'Uitkomst succesvol verwijderd.',
+                'delete-failed'   => 'Verwijderen van uitkomst mislukt.',
+                'reorder-success' => 'Volgorde opgeslagen.',
+                'reorder-hint'    => 'Sleep de regels om de volgorde in de keuzelijsten te bepalen.',
+                'actions'         => 'Acties',
+                'in-use'          => 'Deze uitkomst is in gebruik bij een of meer sales en kan niet verwijderd worden.',
+
+                'datagrid' => [
+                    'label'             => 'Label',
+                    'code'              => 'Code',
+                    'is_surgery_advice' => 'Operatieadvies',
+                    'sort_order'        => 'Volgorde',
+                    'edit'              => 'Bewerken',
+                    'delete'            => 'Verwijderen',
+                ],
+
+                'edit' => [
+                    'title' => 'Uitkomst bewerken',
+                ],
+
+                'create' => [
+                    'title'             => 'Uitkomst aanmaken',
+                    'label'             => 'Label',
+                    'code'              => 'Code',
+                    'is_surgery_advice' => 'Operatieadvies',
+                    'sort_order'        => 'Volgorde',
+                    'save-btn'          => 'Opslaan',
+                ],
+            ],
+        ],
+
         'resource_types' => [
             'index' => [
                 'title'           => 'Resourcetypen',
@@ -2599,6 +2636,8 @@ return [
         'clinics-info'          => 'Beheer klinieken',
         'partner_products'      => 'Partnerproducten',
         'partner_products-info' => 'Beheer partnerproducten',
+        'assessment_outcomes'      => 'Uitkomst beoordeling',
+        'assessment_outcomes-info' => 'Beheer de uitkomsten van de Herniapoli-beoordeling',
         'resource_types'        => 'Resource types',
         'resource_types-info'   => 'Beheer resource types',
         'resources'             => 'Resources',

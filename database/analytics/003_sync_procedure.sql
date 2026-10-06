@@ -425,24 +425,8 @@ BEGIN
         IF(COALESCE(r.heeft_mri, 0) OR m.ooit_16, 'Intern', 'Extern'),
         r.behandeling_type,
         r.behandeling_soort,
-        CASE hs.assessment_outcome  -- labels = App\Enums\AssessmentOutcome::label()
-            WHEN 'pted_1' THEN 'PTED 1 niv.'
-            WHEN 'pted_2' THEN 'PTED 2 niv.'
-            WHEN 'micro_1' THEN 'Mikro 1 niv.'
-            WHEN 'micro_2' THEN 'Mikro 2 niv.'
-            WHEN 'micro_3' THEN 'Mikro 3 niv.'
-            WHEN 'micro_4' THEN 'Mikro 4 niv.'
-            WHEN 'acdf_1' THEN 'ACDF 1 niv.'
-            WHEN 'acdf_2' THEN 'ACDF 2 niv.'
-            WHEN 'tlif_1' THEN 'TLIF 1 niv.'
-            WHEN 'tlif_2' THEN 'TLIF 2 niv.'
-            WHEN 'geen_op_indicatie' THEN 'Kein OP indikation'
-            WHEN 'injecties_infiltraties' THEN 'Injecties/Infiltraties'
-        END,
-        CASE
-            WHEN hs.assessment_outcome IS NULL THEN NULL
-            ELSE hs.assessment_outcome NOT IN ('geen_op_indicatie', 'injecties_infiltraties')  -- AssessmentOutcome::isSurgeryAdvice()
-        END,
+        ao.label,  -- privatescan.assessment_outcomes (beheerd in CRM-instellingen)
+        ao.is_surgery_advice,
         CASE
             WHEN m.ingepland_at IS NOT NULL     THEN 'Ingepland'
             WHEN m.beoordeeld_at IS NULL        THEN IF(hs.pipeline_stage_id = 29, 'Afgehaakt voor beoordeling', 'Wacht op beoordeling')
@@ -490,7 +474,8 @@ BEGIN
     FROM hs
     JOIN mijlpaal m ON m.sl_id = hs.id
     JOIN privatescan.lead_pipeline_stages st ON st.id = hs.pipeline_stage_id
-    LEFT JOIN regels r ON r.sl_id = hs.id;
+    LEFT JOIN regels r ON r.sl_id = hs.id
+    LEFT JOIN privatescan.assessment_outcomes ao ON ao.code = hs.assessment_outcome;
 
     DROP TEMPORARY TABLE IF EXISTS tmp_slot;
     DROP TEMPORARY TABLE IF EXISTS tmp_order_regels;

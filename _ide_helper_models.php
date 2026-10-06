@@ -481,6 +481,44 @@ namespace App\Models{
 
 namespace App\Models{
 /**
+ * Outcome of the Herniapoli doctor's assessment on a sale ("Uitkomst beoordeling"), managed in settings.
+ *
+ * `code` is stored in salesleads.assessment_outcome and joined by the analytics sync
+ * (database/analytics/003_sync_procedure.sql, fact_hernia_traject): it is immutable after creation.
+ *
+ * @property int $id
+ * @property string $code Stored in salesleads.assessment_outcome; immutable
+ * @property string $label
+ * @property bool $is_surgery_advice
+ * @property int $sort_order
+ * @property int|null $created_by
+ * @property int|null $updated_by
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \Webkul\User\Models\User|null $creator
+ * @property-read \Webkul\User\Models\User|null $updater
+ * @method static \Database\Factories\AssessmentOutcomeFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AssessmentOutcome newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AssessmentOutcome newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AssessmentOutcome ordered()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AssessmentOutcome query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AssessmentOutcome whereCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AssessmentOutcome whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AssessmentOutcome whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AssessmentOutcome whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AssessmentOutcome whereIsSurgeryAdvice($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AssessmentOutcome whereLabel($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AssessmentOutcome whereSortOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AssessmentOutcome whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AssessmentOutcome whereUpdatedBy($value)
+ * @mixin \Eloquent
+ */
+	#[\AllowDynamicProperties]
+	class IdeHelperAssessmentOutcome {}
+}
+
+namespace App\Models{
+/**
  * @property int $id
  * @property \App\Enums\CallStatus|string $status
  * @property string|null $omschrijving
@@ -1592,7 +1630,8 @@ namespace App\Models{
  * @property string $name
  * @property string|null $description
  * @property \App\Enums\LostReason|null $lost_reason
- * @property \App\Enums\AssessmentOutcome|null $assessment_outcome App\Enums\AssessmentOutcome — Herniapoli uitkomst beoordeling
+ * @property string|null $assessment_outcome App\Enums\AssessmentOutcome — Herniapoli uitkomst beoordeling
+ * @property bool $additional_research_required Herniapoli: aanvullend onderzoek vereist; alleen ja t/m "Gepland voor aanvullend onderzoek"
  * @property \Illuminate\Support\Carbon|null $closed_at
  * @property int $pipeline_stage_id
  * @property int|null $lead_id
@@ -1611,6 +1650,7 @@ namespace App\Models{
  * @property-read \App\Models\AiSummary|null $aiSummary
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Anamnesis> $anamnesisRecords
  * @property-read int|null $anamnesis_records_count
+ * @property-read \App\Models\AssessmentOutcome|null $assessmentOutcome
  * @property-read \Webkul\Contact\Models\Person|null $contactPerson
  * @property-read \Webkul\User\Models\User|null $creator
  * @property-read \App\Models\Department|null $department
@@ -1652,6 +1692,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead resolveDepartment(int $salesId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereAdditionalResearchRequired($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereAssessmentOutcome($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereClosedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereContactPersonId($value)

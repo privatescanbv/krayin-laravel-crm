@@ -218,7 +218,7 @@ CREATE TABLE analytics.fact_planning (
 -- Cohort = ter_beoordeling_at. Afgeleid uit de fase-historie in activities (SalesLeadObserver:
 -- additional->>'$.attribute' = 'Status', niet op activity-titel) + de aanmaakfase van de sale.
 -- Zie 003_sync_procedure.sql voor de exacte regels (ook: overgeslagen fases, heen-en-weer, 17 → 16).
--- uitkomst_beoordeling/operatieadvies komen uit salesleads.assessment_outcome (App\Enums\AssessmentOutcome);
+-- uitkomst_beoordeling/operatieadvies komen uit salesleads.assessment_outcome → privatescan.assessment_outcomes (code);
 -- NULL = niet ingevuld (sales van vóór het veld, of nog niet beoordeeld).
 CREATE TABLE analytics.fact_hernia_traject (
     lead_sk               BIGINT       NOT NULL COMMENT 'salesleads.id',
@@ -234,8 +234,8 @@ CREATE TABLE analytics.fact_hernia_traject (
     mri_herkomst          VARCHAR(10)  NOT NULL COMMENT 'Intern = MRI-orderregel op de sale of ooit in fase 16 "Onderzoek via Privatescan"; anders Extern',
     behandeling_type      VARCHAR(100) NULL     COMMENT 'productgroep (PTED/Micro/ACDF/TLIF/PRT/...) van eerste niet-verloren behandelregel',
     behandeling_soort     VARCHAR(100) NULL     COMMENT 'Operatief / Conservatief',
-    uitkomst_beoordeling  VARCHAR(50)  NULL     COMMENT 'label van AssessmentOutcome (PTED 1 niv. / Kein OP indikation / ...)',
-    operatieadvies        BOOLEAN      NULL     COMMENT '1 = operatie geadviseerd, 0 = geen OP / injecties, NULL = niet ingevuld',
+    uitkomst_beoordeling  VARCHAR(50)  NULL     COMMENT 'label uit assessment_outcomes (PTED 1 niv. / Geen OP indicatie / ...)',
+    operatieadvies        BOOLEAN      NULL     COMMENT 'assessment_outcomes.is_surgery_advice; NULL = niet ingevuld',
     uitkomst              VARCHAR(50)  NOT NULL COMMENT 'Ingepland / Verloren / Afgerond zonder behandeling / Open / Wacht op beoordeling / Afgehaakt voor beoordeling',
     reden_niet_ingepland  VARCHAR(100) NULL     COMMENT 'LostReason-label bij Verloren, anders huidige fase',
     lost_reason           VARCHAR(100) NULL     COMMENT 'ruwe enum-code',

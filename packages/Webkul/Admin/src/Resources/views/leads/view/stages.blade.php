@@ -1,5 +1,5 @@
 @php
-    use App\Enums\AssessmentOutcome;
+    use App\Models\AssessmentOutcome;
     use App\Enums\Departments;
     use App\Enums\LostReason;
     use App\Models\Department;
@@ -33,6 +33,9 @@
 
     // Herniapoli sales: "Beoordeling gereed" and later require an assessment outcome.
     $outcomeRequiredCodes = $isSalesLead ? AssessmentOutcome::requiredForStageCodes() : [];
+    // Up to "Gepland voor aanvullend onderzoek" the outcome may stay empty when additional research is required.
+    $additionalResearchCodes = $isSalesLead ? AssessmentOutcome::additionalResearchAllowedStageCodes() : [];
+    $currentAdditionalResearch = (bool) $salesLead?->additional_research_required;
 @endphp
 
     <!-- Stages Navigation -->
@@ -201,21 +204,37 @@
                                     </template>
                                     <!-- Herniapoli: uitkomst beoordeling -->
                                     <template v-else-if="needsAssessmentOutcome(nextStage)">
-                                        <x-admin::form.control-group>
-                                            <x-admin::form.control-group.label class="required">
-                                                Uitkomst beoordeling
-                                            </x-admin::form.control-group.label>
-                                            <select
-                                                name="assessment_outcome"
-                                                class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
-                                                v-model="nextStage.assessment_outcome"
-                                            >
-                                                <option value="">Selecteer uitkomst...</option>
-                                                @foreach (AssessmentOutcome::cases() as $outcome)
-                                                    <option value="{{ $outcome->value }}">{{ $outcome->label() }}</option>
-                                                @endforeach
-                                            </select>
-                                        </x-admin::form.control-group>
+                                        <div class="grid gap-x-4" :class="additionalResearchAllowed(nextStage) ? 'grid-cols-2' : 'grid-cols-1'">
+                                            <x-admin::form.control-group>
+                                                <x-admin::form.control-group.label ::class="{ required: ! outcomeOptional(nextStage) }">
+                                                    Uitkomst beoordeling
+                                                </x-admin::form.control-group.label>
+                                                <select
+                                                    name="assessment_outcome"
+                                                    class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
+                                                    v-model="nextStage.assessment_outcome"
+                                                >
+                                                    <option value="">Selecteer uitkomst...</option>
+                                                    @foreach (AssessmentOutcome::ordered()->get() as $outcome)
+                                                        <option value="{{ $outcome->code }}">{{ $outcome->label }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </x-admin::form.control-group>
+
+                                            <x-admin::form.control-group v-if="additionalResearchAllowed(nextStage)">
+                                                <x-admin::form.control-group.label>
+                                                    Aanvullend onderzoek vereist?
+                                                </x-admin::form.control-group.label>
+                                                <select
+                                                    name="additional_research_required"
+                                                    class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
+                                                    v-model="nextStage.additional_research_required"
+                                                >
+                                                    <option :value="false">Nee</option>
+                                                    <option :value="true">Ja</option>
+                                                </select>
+                                            </x-admin::form.control-group>
+                                        </div>
                                     </template>
                                     <template v-else>
                                         <!-- No extra fields required for regular stage transitions -->
@@ -266,7 +285,11 @@
 
                     outcomeRequiredCodes: @json($outcomeRequiredCodes),
 
-                    currentAssessmentOutcome: @json($salesLead?->assessment_outcome?->value),
+                    currentAssessmentOutcome: @json($salesLead?->assessment_outcome),
+
+                    additionalResearchCodes: @json($additionalResearchCodes),
+
+                    currentAdditionalResearch: @json($currentAdditionalResearch),
                 }
             },
 
@@ -313,7 +336,17 @@
                 },
 
                 needsAssessmentOutcome(stage) {
-                    return this.outcomeRequiredCodes.includes(stage?.code) && ! this.currentAssessmentOutcome;
+                    return this.outcomeRequiredCodes.includes(stage?.code)
+                        && ! this.currentAssessmentOutcome
+                        && ! (this.currentAdditionalResearch && this.additionalResearchAllowed(stage));
+                },
+
+                additionalResearchAllowed(stage) {
+                    return this.additionalResearchCodes.includes(stage?.code);
+                },
+
+                outcomeOptional(stage) {
+                    return !! stage?.additional_research_required && this.additionalResearchAllowed(stage);
                 },
 
                 isWonOrLost(stage) {
@@ -394,7 +427,7 @@
                             params.order_department_id_after_won = this.nextStage.order_department_id_after_won;
                         }
                     } else if (this.needsAssessmentOutcome(this.nextStage)) {
-                        if (! this.nextStage.assessment_outcome) {
+                        if (! this.nextStage.assessment_outcome && ! this.outcomeOptional(this.nextStage)) {
                             this.$emitter.emit('add-flash', {
                                 type: 'error',
                                 message: 'Uitkomst beoordeling is verplicht'
@@ -403,6 +436,7 @@
                         }
 
                         params.assessment_outcome = this.nextStage.assessment_outcome;
+                        params.additional_research_required = this.outcomeOptional(this.nextStage) ? 1 : 0;
                     } else if (this.isLostStage(this.nextStage)) {
                         if (! String(this.nextStage.lost_reason || '').trim()) {
                             this.$emitter.emit('add-flash', {
@@ -425,7 +459,7 @@
                     }
 
                     if (! params && this.needsAssessmentOutcome(stage)) {
-                        this.nextStage = { ...stage, assessment_outcome: '' };
+                        this.nextStage = { ...stage, assessment_outcome: '', additional_research_required: false };
                         this.$refs.stageUpdateModal.open();
 
                         return;
@@ -445,6 +479,12 @@
                             this.currentStage = stage;
                             if (params?.assessment_outcome) {
                                 this.currentAssessmentOutcome = params.assessment_outcome;
+                            }
+                            // Mirrors the backend: the flag is kept (or set) up to "Gepland voor aanvullend onderzoek", nee afterwards.
+                            if (params && 'additional_research_required' in params) {
+                                this.currentAdditionalResearch = !! params.additional_research_required;
+                            } else if (this.outcomeRequiredCodes.includes(stage?.code) && ! this.additionalResearchAllowed(stage)) {
+                                this.currentAdditionalResearch = false;
                             }
                             if (this.$parent.$refs.activities) {
                                 this.$parent.$refs.activities.get();

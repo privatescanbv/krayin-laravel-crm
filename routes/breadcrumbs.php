@@ -528,6 +528,20 @@ Breadcrumbs::for('settings.tags.edit', function (BreadcrumbTrail $trail, $tag) {
     $trail->push(trans('admin::app.settings.tags.edit-title'), route('admin.settings.tags.edit', $tag->id));
 });
 
+// Settings > Assessment Outcomes
+Breadcrumbs::for('settings.assessment_outcomes', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings');
+    $trail->push(trans('admin::app.layouts.assessment_outcomes'), route('admin.settings.assessment_outcomes.index'));
+});
+Breadcrumbs::for('settings.assessment_outcomes.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings.assessment_outcomes');
+    $trail->push('', route('admin.settings.assessment_outcomes.create'));
+});
+Breadcrumbs::for('settings.assessment_outcomes.edit', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings.assessment_outcomes');
+    $trail->push('', route('admin.settings.assessment_outcomes.index'));
+});
+
 // Settings > Resource Types
 Breadcrumbs::for('settings.resource_types', function (BreadcrumbTrail $trail) {
     $trail->parent('settings');

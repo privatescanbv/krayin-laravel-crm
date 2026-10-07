@@ -8,7 +8,6 @@ use Illuminate\Container\Container;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use PDOException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 
@@ -63,25 +62,9 @@ class Handler extends AppExceptionHandler
             return $this->renderCustomResponse($exception);
         }
 
-        // A failed form validation is user input error, not an application error. Don't log it -
-        // the `sentry` log channel turns Log::error into a Sentry/Bugsink issue. The response is
-        // still produced below (parent::render turns it into a redirect-back-with-errors).
-        if (! $exception instanceof ValidationException) {
-            // Log all exceptions in admin context with additional details
-            Log::error('Admin exception occurred', [
-                'exception' => get_class($exception),
-                'message' => $exception->getMessage(),
-                'file' => $exception->getFile(),
-                'line' => $exception->getLine(),
-                'trace' => $exception->getTraceAsString(),
-                'url' => $request->fullUrl(),
-                'method' => $request->method(),
-                'user_id' => auth()->guard('user')->id(),
-                'request_data' => $request->all(),
-                'session_id' => session()->getId(),
-            ]);
-        }
-
+        // No Log::error here: report() already sends the exception to Sentry (grouped per exception)
+        // and logs its context (bootstrap/app.php). A fixed-message log on top lumped every admin
+        // error into one Bugsink issue ("Admin exception occurred", PRIVATESCAN_CRM_PROD-3).
         if (! config('app.debug')) {
             return $this->renderCustomResponse($exception);
         }
@@ -125,25 +108,10 @@ class Handler extends AppExceptionHandler
         if ($exception instanceof ModelNotFoundException) {
             // Already logged as a warning in render() above.
             return $this->response(404);
-        } elseif ($exception instanceof PDOException || $exception instanceof \ParseError) {
-            Log::error('Database error in admin', [
-                'error' => $exception->getMessage(),
-                'code' => $exception->getCode(),
-                'url' => request()->fullUrl(),
-                'user_id' => auth()->guard('user')->id(),
-                'trace' => $exception->getTraceAsString(),
-            ]);
-            return $this->response(500);
-        } else {
-            Log::error('General error in admin', [
-                'error' => $exception->getMessage(),
-                'class' => get_class($exception),
-                'url' => request()->fullUrl(),
-                'user_id' => auth()->guard('user')->id(),
-                'trace' => $exception->getTraceAsString(),
-            ]);
-            return $this->response(500);
         }
+
+        // Already reported (Sentry + log) by report(); see render().
+        return $this->response(500);
     }
 
     /**

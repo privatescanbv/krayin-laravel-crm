@@ -1,3 +1,34 @@
+### openrouter
+
+# curl https://openrouter.ai/api/v1/chat/completions
+#  -H "Content-Type: application/json"
+#  -H "Authorization: Bearer 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"
+#  -d '{
+#  "model": "openai/gpt-4o",
+#  "messages": [
+#    {
+#      "role": "user",
+#      "content": "What is the meaning of life?"
+#    }
+#  ]
+#}'
+POST https://openrouter.ai/api/v1/chat/completions
+Authorization: Bearer {{ openrouter_api_key }}
+Content-Type: application/json
+
+{
+    "model": "openai/gpt-4o",
+    "messages": [
+        {
+            "role": "user",
+            "content": "What is the meaning of life?"
+        }
+    ]
+}
+
+###
+
+
 ### create  lead
 POST http://localhost:8000/api/leads
 Content-Type: application/json

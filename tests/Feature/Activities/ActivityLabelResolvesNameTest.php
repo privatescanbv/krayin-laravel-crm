@@ -3,6 +3,7 @@
 namespace Tests\Feature\Activities;
 
 use Database\Seeders\TestSeeder;
+use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Models\Source;
@@ -97,4 +98,43 @@ test('activity log shows pipeline stage names instead of raw ids', function () {
     expect($sourceActivity)->not->toBeNull()
         ->and($sourceActivity->additional['old']['label'])->toBe($this->sourceOne->name)
         ->and($sourceActivity->additional['new']['label'])->toBe($this->sourceTwo->name);
+});
+
+test('activity log shows the owner name when the lead owner changes', function () {
+    $this->actingAs($this->user);
+
+    $newOwner = User::create([
+        'first_name' => 'Nieuwe',
+        'last_name'  => 'Eigenaar',
+        'email'      => 'activity-label-owner@example.com',
+        'password'   => bcrypt('password'),
+        'status'     => 1,
+        'role_id'    => $this->user->role_id,
+    ]);
+
+    $lead = Lead::create([
+        'first_name'             => 'John',
+        'last_name'              => 'Doe',
+        'user_id'                => $this->user->id,
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stageOne->id,
+        'lead_source_id'         => $this->sourceOne->id,
+        'lead_type_id'           => $this->type->id,
+    ]);
+
+    $lead->update(['user_id' => $newOwner->id]);
+
+    $ownerActivity = $lead->activities()->get()
+        ->first(fn ($activity) => ($activity->additional['new']['value'] ?? null) === $newOwner->id);
+
+    expect($ownerActivity)->not->toBeNull()
+        ->and($ownerActivity->additional['old']['label'])->toBe($this->user->name)
+        ->and($ownerActivity->additional['new']['label'])->toBe('Nieuwe Eigenaar');
+});
+
+test('user lookup entity resolves the name from first and last name', function () {
+    $entity = app(AttributeRepository::class)->getLookUpEntity('users', $this->user->id);
+
+    expect($entity->id)->toBe($this->user->id)
+        ->and($entity->name)->toBe($this->user->name);
 });

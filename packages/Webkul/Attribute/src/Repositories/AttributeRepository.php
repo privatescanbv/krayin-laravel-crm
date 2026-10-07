@@ -212,6 +212,11 @@ class AttributeRepository extends Repository
             });
         }
 
+        // users has no name column: select what User's `name` accessor needs (name parts, email fallback)
+        if (! count($columns) && Str::contains($lookup['repository'], 'UserRepository')) {
+            $columns = ['id', 'first_name', 'last_name', 'email'];
+        }
+
         // Default columns for other repositories
         if (! count($columns)) {
             $columns = [($lookup['value_column'] ?? 'id').' as id', ($lookup['label_column'] ?? 'name').' as name'];

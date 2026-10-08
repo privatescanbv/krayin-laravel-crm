@@ -99,4 +99,14 @@ return [
         'sort'         => 9,
         'icon-class'   => 'icon-dashboard',
     ],
+    [
+        'key'          => 'metabase.doorlooptijden',
+        'group'        => 'Operationeel',
+        'name'         => 'Doorlooptijden',
+        'path'         => 'dashboards/doorlooptijden',
+        'dashboard_id' => (int) env('METABASE_DASHBOARD_DOORLOOPTIJDEN', 11),
+        'params'       => [],
+        'sort'         => 10,
+        'icon-class'   => 'icon-dashboard',
+    ],
 ];

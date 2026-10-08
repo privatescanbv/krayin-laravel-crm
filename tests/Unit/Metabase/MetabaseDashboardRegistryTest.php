@@ -140,3 +140,18 @@ it('puts every configured dashboard in a known group', function () {
 
     expect(array_diff($groups, array_keys(MetabaseDashboardRegistry::GROUPS)))->toBe([]);
 });
+
+it('lists the doorlooptijden dashboard under its own Operationeel tile', function () {
+    $registry = new MetabaseDashboardRegistry;
+    $page = $registry->findByKey('metabase.doorlooptijden');
+
+    expect($page)->not->toBeNull()
+        ->and($page['dashboard_id'])->toBe(11)
+        ->and($page['route'])->toBe('admin.dashboards.doorlooptijden')
+        ->and($page['params'])->toBe([]);
+
+    $groups = $registry->groupLinks([['group' => $page['group'], 'name' => $page['name'], 'url' => '/x']]);
+
+    expect($groups[0]['name'])->toBe('Operationeel')
+        ->and($groups[0]['icon'])->toBe('icon-activity');
+});

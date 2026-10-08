@@ -20,6 +20,7 @@ class MetabaseDashboardRegistry
         'Orders'     => 'icon-order',
         'Omzet'      => 'icon-dollar',
         'Herniapoli' => 'icon-anamnesis',
+        'Operationeel' => 'icon-activity',
     ];
 
     public const FALLBACK_GROUP = 'Overig';

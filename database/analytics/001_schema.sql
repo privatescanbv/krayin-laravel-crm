@@ -12,6 +12,12 @@
 --   fact_planning      1 rij per resource-slot — onderzoekdatum / capaciteit
 --   fact_leads         1 rij per salesleads   — leads per maand, won/lost, bron/campagne/landing_page/attribution_url, lost reason
 --   fact_hernia_traject 1 rij per Herniapoli-sale die ter beoordeling is aangeboden — beoordeling → planning funnel
+--   fact_aanvragen     1 rij per Krayin-lead (aanvraag) — doorlooptijd aanvraag → sales / gesloten
+--   fact_activiteiten  1 rij per call/task — doorlooptijd aangemaakt → afgerond, op tijd / achterstallig
+--
+-- Doorlooptijden op basis van closed_at zijn pas betrouwbaar voor records aangemaakt vanaf de
+-- livegang van dit CRM (2026-05-16): de migratie zette closed_at = created_at + 30 dagen.
+-- Daarvóór staat doorloop_dagen op NULL (zie 003_sync_procedure.sql).
 --
 -- Uitvoeren: docker compose exec -T mysql_crm mysql -uroot -p < database/analytics/001_schema.sql
 -- =========================================================
@@ -23,6 +29,8 @@ CREATE DATABASE IF NOT EXISTS analytics
 -- Legacy: incrementele sync met watermark is vervangen door full-reload.
 DROP TABLE IF EXISTS analytics.sync_watermark;
 
+DROP TABLE IF EXISTS analytics.fact_activiteiten;
+DROP TABLE IF EXISTS analytics.fact_aanvragen;
 DROP TABLE IF EXISTS analytics.fact_hernia_traject;
 DROP TABLE IF EXISTS analytics.fact_planning;
 DROP TABLE IF EXISTS analytics.fact_order_items;
@@ -118,6 +126,7 @@ CREATE TABLE analytics.fact_orders (
     verkoopdatum_sk           DATE          NOT NULL COMMENT 'DATE(orders.created_at)',
     gesloten_datum_sk         DATE          NULL,
     verloren_at                 DATETIME      NULL COMMENT 'Exact moment van overgang naar order-verloren (stage 38/47), uit activities-log (OrderObserver). NULL = legacy order zonder logging.',
+    doorloop_dagen            INT           NULL COMMENT 'DATEDIFF(closed_at, created_at); NULL voor orders van vóór livegang 2026-05-16 (closed_at gemigreerd = +30d)',
     eerste_onderzoek_datum_sk DATE          NULL,
     eerste_onderzoek_at       DATETIME      NULL,
     verkoopprijs              DECIMAL(12,2) NOT NULL DEFAULT 0.00,
@@ -160,6 +169,7 @@ CREATE TABLE analytics.fact_leads (
     beschrijving         TEXT          NULL COMMENT 'salesleads.description, voor drill-down',
     aangemaakt_datum_sk  DATE          NOT NULL COMMENT 'DATE(salesleads.created_at)',
     gesloten_datum_sk    DATE          NULL     COMMENT 'salesleads.closed_at',
+    doorloop_dagen       INT           NULL     COMMENT 'DATEDIFF(closed_at, created_at); NULL voor sales van vóór livegang 2026-05-16 (closed_at gemigreerd = +30d)',
     geladen_op           TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (lead_sk),
     INDEX idx_aangemaakt_datum (aangemaakt_datum_sk),
@@ -236,10 +246,55 @@ CREATE TABLE analytics.fact_hernia_traject (
     behandeling_soort     VARCHAR(100) NULL     COMMENT 'Operatief / Conservatief',
     uitkomst_beoordeling  VARCHAR(50)  NULL     COMMENT 'label uit assessment_outcomes (PTED 1 niv. / Geen OP indicatie / ...)',
     operatieadvies        BOOLEAN      NULL     COMMENT 'assessment_outcomes.is_surgery_advice; NULL = niet ingevuld',
+    aanvullend_onderzoek  BOOLEAN      NOT NULL DEFAULT 0 COMMENT 'salesleads.additional_research_required: beoordeeld, uitkomst volgt na aanvullend onderzoek',
     uitkomst              VARCHAR(50)  NOT NULL COMMENT 'Ingepland / Verloren / Afgerond zonder behandeling / Open / Wacht op beoordeling / Afgehaakt voor beoordeling',
     reden_niet_ingepland  VARCHAR(100) NULL     COMMENT 'LostReason-label bij Verloren, anders huidige fase',
     lost_reason           VARCHAR(100) NULL     COMMENT 'ruwe enum-code',
     geladen_op            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (lead_sk),
     INDEX idx_maand (ter_beoordeling_maand)
+) ENGINE=InnoDB;
+
+-- ---- fact_aanvragen: één rij per Krayin-lead (aanvraag), ook aanvragen die nooit sales werden ----
+-- status_categorie = won / lost / open, uit dim_pipeline_stage (lead-pipelines 1 en 2).
+-- omgezet_at = eerste salesleads.created_at voor deze lead — betrouwbaar over alle jaren.
+-- gesloten_at = leads.closed_at — bestaat pas sinds livegang (legacy = NULL).
+CREATE TABLE analytics.fact_aanvragen (
+    aanvraag_sk          BIGINT       NOT NULL COMMENT 'leads.id',
+    verkoper_sk          INT          NULL     COMMENT 'leads.user_id',
+    stage_sk             INT          NULL,
+    afdeling             VARCHAR(20)  NULL,
+    status_categorie     VARCHAR(10)  NOT NULL COMMENT 'won / lost / open',
+    aangemaakt_at        DATETIME     NOT NULL,
+    aangemaakt_datum_sk  DATE         NOT NULL COMMENT 'DATE(leads.created_at)',
+    omgezet_at           DATETIME     NULL     COMMENT 'MIN(salesleads.created_at)',
+    gesloten_at          DATETIME     NULL     COMMENT 'leads.closed_at',
+    uren_tot_sales       INT          NULL     COMMENT 'TIMESTAMPDIFF(HOUR, aangemaakt_at, omgezet_at)',
+    uren_tot_gesloten    INT          NULL     COMMENT 'TIMESTAMPDIFF(HOUR, aangemaakt_at, gesloten_at); NULL vóór livegang 2026-05-16',
+    geladen_op           TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (aanvraag_sk),
+    INDEX idx_aangemaakt_datum (aangemaakt_datum_sk),
+    INDEX idx_stage            (stage_sk)
+) ENGINE=InnoDB;
+
+-- ---- fact_activiteiten: één rij per call/task (notes/files/system zijn geen werk met doorlooptijd) ----
+-- afdeling via de gekoppelde order → sale → lead (eerste die er is).
+-- afgerond_at = completed_at; legacy taken (vóór 2025) hebben geen completed_at, daar is updated_at
+-- de beste benadering (waar beide gevuld zijn is updated_at = completed_at in >99%).
+CREATE TABLE analytics.fact_activiteiten (
+    activiteit_sk        BIGINT       NOT NULL COMMENT 'activities.id',
+    type                 VARCHAR(10)  NOT NULL COMMENT 'call / task',
+    gebruiker_sk         INT          NULL     COMMENT 'activities.user_id',
+    afdeling             VARCHAR(20)  NULL,
+    is_afgerond          BOOLEAN      NOT NULL COMMENT 'activities.is_done',
+    aangemaakt_at        DATETIME     NOT NULL,
+    aangemaakt_datum_sk  DATE         NOT NULL,
+    gepland_tot          DATETIME     NULL     COMMENT 'activities.schedule_to (deadline)',
+    afgerond_at          DATETIME     NULL     COMMENT 'COALESCE(completed_at, updated_at) als is_done',
+    uren_doorloop        INT          NULL     COMMENT 'TIMESTAMPDIFF(HOUR, aangemaakt_at, afgerond_at)',
+    is_op_tijd           BOOLEAN      NULL     COMMENT 'afgerond op of vóór de deadline-dag; NULL = open of geen deadline',
+    geladen_op           TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (activiteit_sk),
+    INDEX idx_aangemaakt_datum (aangemaakt_datum_sk),
+    INDEX idx_gebruiker        (gebruiker_sk)
 ) ENGINE=InnoDB;

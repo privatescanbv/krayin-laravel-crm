@@ -23,7 +23,9 @@ UNION ALL SELECT 'fact_orders',          COUNT(*) FROM analytics.fact_orders
 UNION ALL SELECT 'fact_order_items',     COUNT(*) FROM analytics.fact_order_items
 UNION ALL SELECT 'fact_planning',        COUNT(*) FROM analytics.fact_planning
 UNION ALL SELECT 'fact_leads',           COUNT(*) FROM analytics.fact_leads
-UNION ALL SELECT 'fact_hernia_traject',  COUNT(*) FROM analytics.fact_hernia_traject;
+UNION ALL SELECT 'fact_hernia_traject',  COUNT(*) FROM analytics.fact_hernia_traject
+UNION ALL SELECT 'fact_aanvragen',       COUNT(*) FROM analytics.fact_aanvragen
+UNION ALL SELECT 'fact_activiteiten',    COUNT(*) FROM analytics.fact_activiteiten;
 
 -- ---- fact_order_items mag geen wees-rijen bevatten ----
 SELECT COUNT(*) AS wees_orderregels

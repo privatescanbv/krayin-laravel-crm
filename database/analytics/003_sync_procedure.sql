@@ -165,7 +165,7 @@ BEGIN
         (order_sk, ordernummer, order_titel, naam, verkoper_sk, stage_sk,
          afdeling, status_categorie, is_verloren, is_gewonnen, lost_reason,
          bron, campagne, landing_page, attribution_url, is_zakelijk, organisatie,
-         verkoopdatum_sk, gesloten_datum_sk, verloren_at, eerste_onderzoek_datum_sk, eerste_onderzoek_at,
+         verkoopdatum_sk, gesloten_datum_sk, verloren_at, doorloop_dagen, eerste_onderzoek_datum_sk, eerste_onderzoek_at,
          verkoopprijs, inkoopprijs, marge, betaalstatus, aantal_regels, aantal_regels_actief, geladen_op)
     SELECT
         o.id,
@@ -194,6 +194,7 @@ BEGIN
         DATE(o.created_at),
         o.closed_at,
         lsa.verloren_op,
+        IF(o.created_at >= '2026-05-16', DATEDIFF(o.closed_at, o.created_at), NULL),  -- vóór livegang: closed_at gemigreerd = +30d
         COALESCE(o.first_examination_at, DATE(sl_slot.vroegste)),
         CASE
             WHEN o.first_examination_at IS NOT NULL OR sl_slot.vroegste IS NOT NULL
@@ -240,7 +241,7 @@ BEGIN
     REPLACE INTO analytics.fact_leads
         (lead_sk, naam, lead_id, verkoper_sk, stage_sk, afdeling, status_categorie,
          is_verloren, is_gewonnen, bron, lead_type, campagne, landing_page, attribution_url,
-         lost_reason, beschrijving, aangemaakt_datum_sk, gesloten_datum_sk, geladen_op)
+         lost_reason, beschrijving, aangemaakt_datum_sk, gesloten_datum_sk, doorloop_dagen, geladen_op)
     SELECT
         sl.id,
         sl.name,
@@ -266,6 +267,7 @@ BEGIN
         sl.description,
         DATE(sl.created_at),
         sl.closed_at,
+        IF(sl.created_at >= '2026-05-16', DATEDIFF(sl.closed_at, sl.created_at), NULL),  -- vóór livegang: closed_at gemigreerd = +30d
         NOW()
     FROM privatescan.salesleads sl
     LEFT JOIN analytics.dim_pipeline_stage ds   ON ds.stage_sk = sl.pipeline_stage_id
@@ -353,7 +355,7 @@ BEGIN
     REPLACE INTO analytics.fact_hernia_traject  -- REPLACE: tolerant voor een gelijktijdige sync (event + handmatige CALL)
         (lead_sk, naam, verkoper_sk, stage_sk, ter_beoordeling_at, ter_beoordeling_maand,
          beoordeeld_at, ingepland_at, is_beoordeeld, is_ingepland, mri_herkomst,
-         behandeling_type, behandeling_soort, uitkomst_beoordeling, operatieadvies,
+         behandeling_type, behandeling_soort, uitkomst_beoordeling, operatieadvies, aanvullend_onderzoek,
          uitkomst, reden_niet_ingepland, lost_reason, geladen_op)
     WITH hs AS (
         SELECT s.* FROM privatescan.salesleads s
@@ -427,6 +429,7 @@ BEGIN
         r.behandeling_soort,
         ao.label,  -- privatescan.assessment_outcomes (beheerd in CRM-instellingen)
         ao.is_surgery_advice,
+        COALESCE(hs.additional_research_required, 0),
         CASE
             WHEN m.ingepland_at IS NOT NULL     THEN 'Ingepland'
             WHEN m.beoordeeld_at IS NULL        THEN IF(hs.pipeline_stage_id = 29, 'Afgehaakt voor beoordeling', 'Wacht op beoordeling')
@@ -476,6 +479,63 @@ BEGIN
     JOIN privatescan.lead_pipeline_stages st ON st.id = hs.pipeline_stage_id
     LEFT JOIN regels r ON r.sl_id = hs.id
     LEFT JOIN privatescan.assessment_outcomes ao ON ao.code = hs.assessment_outcome;
+
+    -- fact_aanvragen (Krayin-lead-grain) — zie 001_schema.sql
+    REPLACE INTO analytics.fact_aanvragen
+        (aanvraag_sk, verkoper_sk, stage_sk, afdeling, status_categorie, aangemaakt_at, aangemaakt_datum_sk,
+         omgezet_at, gesloten_at, uren_tot_sales, uren_tot_gesloten, geladen_op)
+    SELECT
+        l.id,
+        l.user_id,
+        l.lead_pipeline_stage_id,
+        ds.afdeling,
+        CASE WHEN ds.is_gewonnen THEN 'won' WHEN ds.is_verloren THEN 'lost' ELSE 'open' END,
+        l.created_at,
+        DATE(l.created_at),
+        s.omgezet_at,
+        l.closed_at,
+        TIMESTAMPDIFF(HOUR, l.created_at, s.omgezet_at),
+        IF(l.created_at >= '2026-05-16', TIMESTAMPDIFF(HOUR, l.created_at, l.closed_at), NULL),  -- legacy-aanvragen zijn bij livegang in bulk gesloten
+        NOW()
+    FROM privatescan.leads l
+    LEFT JOIN (SELECT lead_id, MIN(created_at) AS omgezet_at FROM privatescan.salesleads GROUP BY lead_id) s ON s.lead_id = l.id
+    LEFT JOIN analytics.dim_pipeline_stage ds ON ds.stage_sk = l.lead_pipeline_stage_id
+    WHERE l.created_at IS NOT NULL AND l.deleted_at IS NULL;
+
+    DELETE f FROM analytics.fact_aanvragen f
+    LEFT JOIN privatescan.leads l ON l.id = f.aanvraag_sk AND l.deleted_at IS NULL
+    WHERE l.id IS NULL;
+
+    -- fact_activiteiten (call/task-grain) — zie 001_schema.sql
+    REPLACE INTO analytics.fact_activiteiten
+        (activiteit_sk, type, gebruiker_sk, afdeling, is_afgerond, aangemaakt_at, aangemaakt_datum_sk,
+         gepland_tot, afgerond_at, uren_doorloop, is_op_tijd, geladen_op)
+    SELECT
+        a.id,
+        a.type,
+        a.user_id,
+        COALESCE(dso.afdeling, dss.afdeling, dsl.afdeling),
+        a.is_done,
+        a.created_at,
+        DATE(a.created_at),
+        a.schedule_to,
+        x.afgerond_at,
+        TIMESTAMPDIFF(HOUR, a.created_at, x.afgerond_at),
+        IF(x.afgerond_at IS NULL OR a.schedule_to IS NULL, NULL, DATE(x.afgerond_at) <= DATE(a.schedule_to)),
+        NOW()
+    FROM privatescan.activities a
+    CROSS JOIN LATERAL (SELECT IF(a.is_done, COALESCE(a.completed_at, a.updated_at), NULL) AS afgerond_at) x
+    LEFT JOIN privatescan.orders     o  ON o.id  = a.order_id
+    LEFT JOIN privatescan.salesleads sl ON sl.id = a.sales_lead_id
+    LEFT JOIN privatescan.leads      l  ON l.id  = a.lead_id
+    LEFT JOIN analytics.dim_pipeline_stage dso ON dso.stage_sk = o.pipeline_stage_id
+    LEFT JOIN analytics.dim_pipeline_stage dss ON dss.stage_sk = sl.pipeline_stage_id
+    LEFT JOIN analytics.dim_pipeline_stage dsl ON dsl.stage_sk = l.lead_pipeline_stage_id
+    WHERE a.type IN ('call', 'task') AND a.created_at IS NOT NULL;
+
+    DELETE f FROM analytics.fact_activiteiten f
+    LEFT JOIN privatescan.activities a ON a.id = f.activiteit_sk
+    WHERE a.id IS NULL;
 
     DROP TEMPORARY TABLE IF EXISTS tmp_slot;
     DROP TEMPORARY TABLE IF EXISTS tmp_order_regels;

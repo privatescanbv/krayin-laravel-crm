@@ -33,6 +33,15 @@ class LeadContextBuilder extends AiContextBuilder
     /**
      * @return array<string, mixed>
      */
+    protected function extraBlocks(Model $subject, AiContextScope $scope): array
+    {
+        /** @var Lead $subject */
+        return ['customer_history' => $this->leadCustomerHistoryBlock($subject)];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     protected function subjectEntry(Model $subject, AiContextScope $scope): array
     {
         /** @var Lead $subject */

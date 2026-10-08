@@ -12,7 +12,7 @@
 --   fact_planning      1 rij per resource-slot — onderzoekdatum / capaciteit
 --   fact_leads         1 rij per salesleads   — leads per maand, won/lost, bron/campagne/landing_page/attribution_url, lost reason
 --   fact_hernia_traject 1 rij per Herniapoli-sale die ter beoordeling is aangeboden — beoordeling → planning funnel
---   fact_aanvragen     1 rij per Krayin-lead (aanvraag) — doorlooptijd aanvraag → sales / gesloten
+--   fact_aanvragen     1 rij per Krayin-lead (aanvraag) — doorlooptijd aanvraag → sales / gesloten, klanttype / contact bij verlies
 --   fact_activiteiten  1 rij per call/task — doorlooptijd aangemaakt → afgerond, op tijd / achterstallig
 --
 -- Doorlooptijden op basis van closed_at zijn pas betrouwbaar voor records aangemaakt vanaf de
@@ -271,10 +271,22 @@ CREATE TABLE analytics.fact_aanvragen (
     gesloten_at          DATETIME     NULL     COMMENT 'leads.closed_at',
     uren_tot_sales       INT          NULL     COMMENT 'TIMESTAMPDIFF(HOUR, aangemaakt_at, omgezet_at)',
     uren_tot_gesloten    INT          NULL     COMMENT 'TIMESTAMPDIFF(HOUR, aangemaakt_at, gesloten_at); NULL vóór livegang 2026-05-16',
+    persoon_sk           INT          NULL     COMMENT 'leads.contact_person_id, anders eerste lead_persons.person_id — voor doorklikken naar de persoon',
+    persoon_naam         VARCHAR(255) NULL     COMMENT 'voornaam + tussenvoegsel + achternaam (persons.name is niet gevuld)',
+    bron                 VARCHAR(255) NULL     COMMENT 'lead_sources.name',
+    campagne             VARCHAR(255) NULL     COMMENT 'marketing_campaigns.name via lead_marketing_data key=campaign_id, zelfde route als fact_leads.campagne',
+    klanttype            VARCHAR(30)  NULL     COMMENT 'leads.customer_type (ruwe code new / existing_buyer / existing_non_buyer), snapshot bij binnenkomst; NULL = nog niet bepaald',
+    eerdere_leads        SMALLINT     NULL     COMMENT 'leads.prior_lead_count (snapshot)',
+    eerdere_aankopen     SMALLINT     NULL     COMMENT 'leads.prior_purchase_count (snapshot)',
+    contact_gehad        BOOLEAN      NULL     COMMENT 'leads.had_contact, vastgelegd bij verliezen; NULL = niet verloren of niet bepaald',
+    aantal_salesactiviteiten INT      NOT NULL DEFAULT 0 COMMENT 'calls/taken + door ons verstuurde e-mails op deze lead en haar sales (definitie CustomerHistoryService)',
+    omzet                DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'SUM(fact_orders.verkoopprijs) van gewonnen orders van de sales van deze lead',
     geladen_op           TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (aanvraag_sk),
     INDEX idx_aangemaakt_datum (aangemaakt_datum_sk),
-    INDEX idx_stage            (stage_sk)
+    INDEX idx_stage            (stage_sk),
+    INDEX idx_klanttype        (klanttype),
+    INDEX idx_persoon          (persoon_sk)
 ) ENGINE=InnoDB;
 
 -- ---- fact_activiteiten: één rij per call/task (notes/files/system zijn geen werk met doorlooptijd) ----

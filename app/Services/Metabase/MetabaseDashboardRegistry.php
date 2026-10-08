@@ -16,10 +16,10 @@ class MetabaseDashboardRegistry
      * Tiles on the dashboard Rapportages widget, in display order, with their icon.
      */
     public const GROUPS = [
-        'Leads'      => 'icon-leads',
-        'Orders'     => 'icon-order',
-        'Omzet'      => 'icon-dollar',
-        'Herniapoli' => 'icon-anamnesis',
+        'Leads'        => 'icon-leads',
+        'Orders'       => 'icon-order',
+        'Omzet'        => 'icon-dollar',
+        'Herniapoli'   => 'icon-anamnesis',
         'Operationeel' => 'icon-activity',
     ];
 

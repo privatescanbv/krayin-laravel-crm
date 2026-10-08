@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Lead;
 
+use App\Actions\Leads\SnapshotLeadCustomerTypeAction;
 use App\Enums\LostReason;
 use App\Enums\ActivityStatus;
 use App\Enums\PipelineDefaultKeys;
@@ -1424,6 +1425,11 @@ class LeadController extends Controller
             Anamnesis::where('lead_id', $leadId)
                 ->where('person_id', $personId)
                 ->delete();
+
+            // The raw delete above skips LeadPerson events, which keep the customer type current.
+            if ($lead = $this->leadRepository->find($leadId)) {
+                app(SnapshotLeadCustomerTypeAction::class)->execute($lead);
+            }
 
             return response()->json([
                 'message' => 'Persoon succesvol ontkoppeld van lead.',

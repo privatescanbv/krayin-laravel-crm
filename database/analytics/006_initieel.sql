@@ -27,6 +27,22 @@ UNION ALL SELECT 'fact_hernia_traject',  COUNT(*) FROM analytics.fact_hernia_tra
 UNION ALL SELECT 'fact_aanvragen',       COUNT(*) FROM analytics.fact_aanvragen
 UNION ALL SELECT 'fact_activiteiten',    COUNT(*) FROM analytics.fact_activiteiten;
 
+-- ---- Klanttype: aantallen moeten gelijk zijn aan leads.customer_type (snapshot) ----
+SELECT f.klanttype, COUNT(*) AS fact_aanvragen,
+       (SELECT COUNT(*) FROM privatescan.leads l
+        -- COLLATE: leads.customer_type krijgt de servercollatie (ACC: utf8mb4_0900_ai_ci), analytics is unicode_ci.
+        WHERE l.deleted_at IS NULL AND l.created_at IS NOT NULL
+          AND l.customer_type COLLATE utf8mb4_unicode_ci <=> f.klanttype) AS leads
+FROM analytics.fact_aanvragen f
+GROUP BY f.klanttype;
+
+-- ---- Verloren aanvragen per categorie (precies één per verloren aanvraag) ----
+SELECT verloren_categorie, COUNT(*) AS aanvragen
+FROM analytics.v_lead_klanttype
+WHERE status_categorie = 'lost'
+GROUP BY verloren_categorie
+ORDER BY aanvragen DESC;
+
 -- ---- fact_order_items mag geen wees-rijen bevatten ----
 SELECT COUNT(*) AS wees_orderregels
 FROM analytics.fact_order_items f

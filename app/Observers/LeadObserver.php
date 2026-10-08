@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Actions\Leads\LeadToLostAction;
+use App\Actions\Leads\RecordLeadContactAction;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\WebhookType;
 use App\Jobs\GenerateAiSummaryJob;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Throwable;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
@@ -133,11 +135,27 @@ class LeadObserver
             }
         }
 
+        if ($lead->wasChanged('lead_pipeline_stage_id')) {
+            $this->recordContact($lead);
+        }
+
         // Log activities for fixed fields
         $this->logFixedFieldsActivity($lead);
 
         // Invalidate duplicate cache when lead is updated
         $this->invalidateDuplicateCache($lead);
+    }
+
+    /**
+     * Lost leads record whether the person was ever reached; that must never block a stage change.
+     */
+    private function recordContact(Lead $lead): void
+    {
+        try {
+            app(RecordLeadContactAction::class)->execute($lead);
+        } catch (Throwable $e) {
+            report($e);
+        }
     }
 
     private function setDefaultPipelineState(Lead $lead): void

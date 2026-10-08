@@ -48,6 +48,16 @@ return [
         'icon-class'   => 'icon-dashboard',
     ],
     [
+        'key'          => 'metabase.salesinspanning-conversie',
+        'group'        => 'Leads',
+        'name'         => 'Salesinspanning & conversie',
+        'path'         => 'dashboards/salesinspanning-conversie',
+        'dashboard_id' => (int) env('METABASE_DASHBOARD_SALESINSPANNING_CONVERSIE', 12),
+        'params'       => [],
+        'sort'         => 4,
+        'icon-class'   => 'icon-dashboard',
+    ],
+    [
         'key'          => 'metabase.orders-per-maand',
         'group'        => 'Orders',
         'name'         => 'Orders per maand',

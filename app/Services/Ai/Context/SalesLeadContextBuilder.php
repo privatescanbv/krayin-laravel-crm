@@ -15,7 +15,7 @@ class SalesLeadContextBuilder extends AiContextBuilder
     protected function resolveScope(Model $subject): AiContextScope
     {
         /** @var SalesLead $subject */
-        $subject->loadMissing(['stage', 'persons', 'orders.stage', 'department', 'user']);
+        $subject->loadMissing(['stage', 'persons', 'orders.stage', 'department', 'user', 'lead']);
 
         return $this->scopeForPersons(
             personIds: $this->personIdsOf($subject),
@@ -66,6 +66,8 @@ class SalesLeadContextBuilder extends AiContextBuilder
     {
         /** @var SalesLead $subject */
         return [
+            'customer_history' => $this->leadCustomerHistoryBlock($subject->lead),
+
             'orders' => $subject->orders
                 ->sortByDesc(fn (Order $order) => $order->created_at?->getTimestamp() ?? 0)
                 ->map(fn (Order $order) => $this->orderEntry($order, $subject))

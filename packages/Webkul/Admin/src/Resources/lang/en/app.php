@@ -2133,6 +2133,8 @@ return [
                 'rotten-lead'         => 'Rotten Lead',
                 'date-to'             => 'Date To',
                 'created-at'          => 'Created At',
+                'customer-type'  => 'Customer Type',
+                'had-contact'    => 'Had Contact',
                 'no'                  => 'No',
                 'yes'                 => 'Yes',
                 'delete'              => 'Delete',

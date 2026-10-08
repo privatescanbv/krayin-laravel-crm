@@ -2,7 +2,9 @@
 
 namespace App\Services\Ai\Context;
 
+use App\Enums\CustomerType;
 use App\Models\Order;
+use App\Services\CustomerHistory\CustomerHistoryService;
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -81,7 +83,18 @@ class PersonContextBuilder extends AiContextBuilder
             fn (Lead $lead) => ! ($lead->stage?->is_won || $lead->stage?->is_lost)
         );
 
+        $history = app(CustomerHistoryService::class)->forPerson($subject);
+
         return [
+            // Where the patient stands with us today; leads and sales effort without a purchase
+            // is the pattern sales wants called out.
+            'customer_history' => $history->customerType === CustomerType::New ? [] : array_filter([
+                'customer_type'        => $history->customerType->label(),
+                'lost_lead_count'      => $history->priorLostLeadCount,
+                'sales_activity_count' => $history->salesActivityCount,
+                'revenue_total'        => $history->revenueTotal,
+            ], fn ($value) => ! empty($value)),
+
             'relationship' => array_filter([
                 'lead_count'          => $scope->leads->count(),
                 'open_lead_count'     => $openLeads->count(),

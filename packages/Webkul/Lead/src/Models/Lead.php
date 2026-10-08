@@ -2,7 +2,9 @@
 
 namespace Webkul\Lead\Models;
 
+use App\Actions\Leads\SnapshotLeadCustomerTypeAction;
 use App\Casts\EncryptedString;
+use App\Enums\CustomerType;
 use App\Enums\LostReason;
 use App\Enums\MRIStatus;
 use App\Enums\PersonGender;
@@ -60,6 +62,10 @@ class Lead extends Model implements LeadContract
         'mri_status'                     => MRIStatus::class,
         'lost_reason'                    => LostReason::class,
         'national_identification_number' => EncryptedString::class,
+        'customer_type'                  => CustomerType::class,
+        'last_purchase_at'               => 'date',
+        'customer_type_determined_at'    => 'datetime',
+        'had_contact'                    => 'boolean',
     ];
 
     /**
@@ -358,6 +364,9 @@ class Lead extends Model implements LeadContract
         // Add new relationships
         if (! empty($personIds)) {
             $this->attachPersons($personIds);
+        } else {
+            // The raw delete above skips LeadPerson events; attaching re-derives it otherwise.
+            app(SnapshotLeadCustomerTypeAction::class)->execute($this);
         }
     }
 

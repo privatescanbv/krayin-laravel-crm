@@ -2,6 +2,7 @@
 
 namespace Webkul\Lead\Repositories;
 
+use App\Actions\Leads\SnapshotLeadCustomerTypeAction;
 use App\Enums\Departments;
 use App\Enums\DuplicateEntityType;
 use App\Enums\PipelineDefaultKeys;
@@ -581,6 +582,15 @@ class LeadRepository extends Repository
                 $cacheService->handleLeadMerge($primaryLeadId, $duplicateLeadIds);
             } catch (Exception $e) {
                 Log::warning('Failed to update cache after lead merge: ' . $e->getMessage());
+            }
+
+            // The duplicate no longer counts as a prior lead, and the primary may have gained persons.
+            try {
+                app(SnapshotLeadCustomerTypeAction::class)->executeForPersons(
+                    DB::table('lead_persons')->where('lead_id', $primaryLeadId)->pluck('person_id')
+                );
+            } catch (Exception $e) {
+                Log::warning('Failed to refresh lead customer types after lead merge: ' . $e->getMessage());
             }
 
             return $primaryLead->fresh();

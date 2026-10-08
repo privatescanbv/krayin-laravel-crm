@@ -105,6 +105,7 @@ Output-schema:
 }
 
 Regels:
+- "customer_history" (alleen aanwezig bij een terugkerende patiënt) beschrijft wie deze persoon voor ons was toen de lead binnenkwam: eerdere leads, verloren leads, aankopen en salesactiviteiten. Noem het alleen als het opvalt (terugkerend zonder aankoop, veel inspanning zonder omzet, eerdere koper). Neem de getallen letterlijk over; reken niet zelf.
 - priority is exact "low", "medium" of "high".
 - Geef maximaal drie highlights en maximaal drie aandachtspunten.
 - Gebruik lege arrays wanneer een sectie geen betrouwbare inhoud heeft.
@@ -176,6 +177,7 @@ Output-schema:
 }
 
 Regels:
+- "customer_history" (alleen aanwezig bij een terugkerende patiënt) geeft het klanttype, het aantal verloren leads, salesactiviteiten en de totale omzet. Noem het alleen als het opvalt (terugkerend zonder aankoop, veel inspanning zonder omzet, herhaalaankoop). Neem de getallen letterlijk over; reken niet zelf.
 - priority is exact "low", "medium" of "high".
 - Geef maximaal drie highlights en maximaal drie aandachtspunten.
 - Goede highlights zijn bijvoorbeeld klantwaarde, aantal onderzoeken, laatste onderzoek, eerstvolgende afspraak of voorkeur.
@@ -247,6 +249,7 @@ Output-schema:
 }
 
 Regels:
+- "customer_history" geeft de hoeveelste aankoop deze order is (purchase_sequence) en wanneer de vorige aankoop was. Noem het alleen bij een herhaalaankoop. Neem de getallen letterlijk over; reken niet zelf.
 - priority is exact "low", "medium" of "high".
 - Zet priority op "high" wanneer de onderzoeksdatum dichtbij is en er nog iets blokkerends openstaat.
 - Geef maximaal drie highlights en maximaal drie aandachtspunten.
@@ -317,6 +320,7 @@ Output-schema:
 }
 
 Regels:
+- "customer_history" (alleen aanwezig bij een terugkerende patiënt) beschrijft wie deze persoon voor ons was toen de lead binnenkwam: eerdere leads, verloren leads, aankopen en salesactiviteiten. Noem het alleen als het opvalt (terugkerend zonder aankoop, veel inspanning zonder omzet, eerdere koper). Neem de getallen letterlijk over; reken niet zelf.
 - priority is exact "low", "medium" of "high".
 - Geef maximaal drie highlights en maximaal drie aandachtspunten.
 - Goede highlights zijn bijvoorbeeld trajectwaarde, aantal orders, eerstvolgende onderzoeksdatum of stage.

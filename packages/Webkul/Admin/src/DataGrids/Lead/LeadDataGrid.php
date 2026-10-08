@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\DataGrids\Lead;
 
+use App\Enums\CustomerType;
 use App\Enums\PipelineType;
 use App\Helpers\DatabaseHelper;
 use Illuminate\Contracts\Database\Query\Builder;
@@ -57,6 +58,8 @@ class LeadDataGrid extends DataGrid
                 'lead_sources.name as lead_source_name',
                 'lead_types.name as lead_type_name',
                 'leads.created_at',
+                'leads.customer_type',
+                'leads.had_contact',
                 'lead_pipeline_stages.name as stage',
                 'lead_tags.tag_id as tag_id',
                 'users.id as user_id',
@@ -100,6 +103,8 @@ class LeadDataGrid extends DataGrid
         $this->addFilter('stage', 'lead_pipeline_stages.id');
         $this->addFilter('tag_name', 'tags.name');
         $this->addFilter('created_at', 'leads.created_at');
+        $this->addFilter('customer_type', 'leads.customer_type');
+        $this->addFilter('had_contact', 'leads.had_contact');
         $this->addFilter('rotten_lead', DB::raw('DATEDIFF(NOW(), '.$tablePrefix.'leads.created_at) >= '.$tablePrefix.'lead_pipelines.rotten_days'));
 
         return $queryBuilder;
@@ -232,7 +237,39 @@ class LeadDataGrid extends DataGrid
             },
         ]);
 
+        $this->addColumn([
+            'index'              => 'customer_type',
+            'label'              => trans('admin::app.leads.index.datagrid.customer-type'),
+            'type'               => 'string',
+            'searchable'         => false,
+            'sortable'           => true,
+            'filterable'         => true,
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => collect(CustomerType::cases())
+                ->map(fn (CustomerType $type) => ['value' => $type->value, 'label' => $type->label()])
+                ->all(),
+            'closure'            => fn ($row) => CustomerType::tryFrom((string) $row->customer_type)?->label() ?? '--',
+        ]);
 
+        // Only set on lost leads (see RecordLeadContactAction).
+        $this->addColumn([
+            'index'              => 'had_contact',
+            'label'              => trans('admin::app.leads.index.datagrid.had-contact'),
+            'type'               => 'string',
+            'searchable'         => false,
+            'sortable'           => true,
+            'filterable'         => true,
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => [
+                ['value' => 1, 'label' => trans('admin::app.leads.index.datagrid.yes')],
+                ['value' => 0, 'label' => trans('admin::app.leads.index.datagrid.no')],
+            ],
+            'closure'            => fn ($row) => match ($row->had_contact === null ? null : (bool) $row->had_contact) {
+                true    => trans('admin::app.leads.index.datagrid.yes'),
+                false   => trans('admin::app.leads.index.datagrid.no'),
+                default => '--',
+            },
+        ]);
 
         $this->addColumn([
             'index'           => 'created_at',

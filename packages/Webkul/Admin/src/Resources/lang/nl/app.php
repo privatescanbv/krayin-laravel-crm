@@ -2172,6 +2172,8 @@ return [
                 'rotten-lead'    => 'Verlopen lead',
                 'date-to'        => 'Datum tot',
                 'created-at'     => 'Aangemaakt op',
+                'customer-type'  => 'Klanttype',
+                'had-contact'    => 'Contact gehad',
                 'no'             => 'Nee',
                 'yes'            => 'Ja',
                 'delete'         => 'Verwijderen',

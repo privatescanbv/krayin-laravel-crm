@@ -6,6 +6,8 @@ use App\Models\Order;
 use App\Models\OrderCheck;
 use App\Models\OrderItem;
 use App\Models\SalesLead;
+use App\Services\CustomerHistory\CustomerHistory;
+use App\Services\CustomerHistory\CustomerHistoryService;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -78,6 +80,8 @@ class OrderContextBuilder extends AiContextBuilder
     {
         /** @var Order $subject */
         return [
+            'customer_history' => $this->purchaseSequenceBlock($subject),
+
             'order_items' => $subject->displayableOrderItems()
                 ->map(fn (OrderItem $item) => array_filter([
                     'name'     => $this->compactText($item->name, 120),
@@ -95,6 +99,38 @@ class OrderContextBuilder extends AiContextBuilder
                 ->values()
                 ->all(),
         ];
+    }
+
+    /**
+     * Which purchase this is for the patient and how long ago the previous one was, counted
+     * as CustomerHistoryService counts purchases. With several patients on one order the one
+     * with the most purchases decides, as for a lead's customer type.
+     *
+     * @return array<string, mixed>
+     */
+    private function purchaseSequenceBlock(Order $order): array
+    {
+        $purchasedAt = $order->closed_at ?? $order->created_at;
+
+        $history = $order->orderItems
+            ->pluck('person_id')
+            ->filter()
+            ->unique()
+            ->map(fn (int $personId) => app(CustomerHistoryService::class)->forPerson($personId, $purchasedAt))
+            ->sortByDesc(fn (CustomerHistory $history) => $history->purchaseCount)
+            ->first();
+
+        if ($history === null) {
+            return [];
+        }
+
+        return array_filter([
+            'purchase_sequence'              => $history->purchaseCount + 1,
+            'previous_purchase_at'           => $this->dateOnly($history->lastPurchaseAt),
+            'months_since_previous_purchase' => $history->lastPurchaseAt
+                ? (int) $history->lastPurchaseAt->diffInMonths($purchasedAt)
+                : null,
+        ], fn ($value) => $value !== null);
     }
 
     private function daysUntilExamination(Order $order): ?int

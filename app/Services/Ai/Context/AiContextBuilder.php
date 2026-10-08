@@ -3,10 +3,12 @@
 namespace App\Services\Ai\Context;
 
 use App\Enums\ActivityType;
+use App\Enums\CustomerType;
 use App\Models\AiFeedback;
 use App\Models\Order;
 use App\Models\SalesLead;
 use App\Services\Ai\AiSubjectDefinition;
+use App\Services\CustomerHistory\CustomerHistoryService;
 use BackedEnum;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
@@ -204,6 +206,8 @@ abstract class AiContextBuilder
             'historical_lead_ids' => $context['historical_lead_ids'] ?? [],
             'sales_ids'           => $context['sales_ids'] ?? [],
             'history_count'       => count($context['history'] ?? []),
+            // The facts the model was given about the customer's history, so its wording can be checked later.
+            'customer_history'    => $context['extra']['customer_history'] ?? null,
             'timeline_count'      => count($context['timeline'] ?? []),
             'feedback'            => collect($context['active_feedback'] ?? [])
                 ->map(fn (array $item) => ['id' => $item['id'], 'updated_at' => $item['updated_at']])
@@ -234,6 +238,31 @@ abstract class AiContextBuilder
     protected function extraBlocks(Model $subject, AiContextScope $scope): array
     {
         return [];
+    }
+
+    /**
+     * Who the patient was to us when this lead came in (CustomerHistoryService, the same
+     * numbers as the lead's customer_type snapshot). Empty for a new patient, so the model
+     * has nothing to remark on.
+     *
+     * @return array<string, mixed>
+     */
+    protected function leadCustomerHistoryBlock(?Lead $lead): array
+    {
+        $history = $lead ? app(CustomerHistoryService::class)->forLead($lead) : null;
+
+        if ($history === null || $history->customerType === CustomerType::New) {
+            return [];
+        }
+
+        return array_filter([
+            'customer_type'              => $history->customerType->label(),
+            'prior_lead_count'           => $history->priorLeadCount,
+            'prior_lost_lead_count'      => $history->priorLostLeadCount,
+            'prior_purchase_count'       => $history->purchaseCount,
+            'last_purchase_at'           => $this->dateOnly($history->lastPurchaseAt),
+            'prior_sales_activity_count' => $history->salesActivityCount,
+        ], fn ($value) => ! empty($value));
     }
 
     /*

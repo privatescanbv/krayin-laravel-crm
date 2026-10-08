@@ -481,9 +481,13 @@ BEGIN
     LEFT JOIN privatescan.assessment_outcomes ao ON ao.code = hs.assessment_outcome;
 
     -- fact_aanvragen (Krayin-lead-grain) — zie 001_schema.sql
+    -- Klanttype/eerdere leads/aankopen/contact komen uit de snapshot op leads (CustomerHistoryService,
+    -- gevuld door SnapshotLeadCustomerTypeAction / RecordLeadContactAction); hier alleen overnemen.
     REPLACE INTO analytics.fact_aanvragen
         (aanvraag_sk, verkoper_sk, stage_sk, afdeling, status_categorie, aangemaakt_at, aangemaakt_datum_sk,
-         omgezet_at, gesloten_at, uren_tot_sales, uren_tot_gesloten, geladen_op)
+         omgezet_at, gesloten_at, uren_tot_sales, uren_tot_gesloten,
+         persoon_sk, persoon_naam, bron, campagne,
+         klanttype, eerdere_leads, eerdere_aankopen, contact_gehad, aantal_salesactiviteiten, omzet, geladen_op)
     SELECT
         l.id,
         l.user_id,
@@ -496,10 +500,56 @@ BEGIN
         l.closed_at,
         TIMESTAMPDIFF(HOUR, l.created_at, s.omgezet_at),
         IF(l.created_at >= '2026-05-16', TIMESTAMPDIFF(HOUR, l.created_at, l.closed_at), NULL),  -- legacy-aanvragen zijn bij livegang in bulk gesloten
+        pp.person_id,
+        NULLIF(TRIM(CONCAT_WS(' ', NULLIF(TRIM(p.first_name), ''), NULLIF(TRIM(p.lastname_prefix), ''), NULLIF(TRIM(p.last_name), ''))), ''),  -- persons.name is leeg; trouwnaam laten we hier weg
+        lsrc.name,
+        (SELECT mc.name
+         FROM   privatescan.lead_marketing_data lmd
+         JOIN   privatescan.marketing_campaigns mc ON mc.external_id = lmd.value
+         WHERE  lmd.lead_id = l.id AND lmd.key = 'campaign_id'
+         ORDER  BY lmd.id DESC LIMIT 1),
+        l.customer_type,
+        l.prior_lead_count,
+        l.prior_purchase_count,
+        l.had_contact,
+        COALESCE(act.aantal, 0),
+        COALESCE(om.omzet, 0),
         NOW()
     FROM privatescan.leads l
     LEFT JOIN (SELECT lead_id, MIN(created_at) AS omgezet_at FROM privatescan.salesleads GROUP BY lead_id) s ON s.lead_id = l.id
     LEFT JOIN analytics.dim_pipeline_stage ds ON ds.stage_sk = l.lead_pipeline_stage_id
+    LEFT JOIN privatescan.lead_sources lsrc ON lsrc.id = l.lead_source_id
+    -- Eén persoon per aanvraag: de contactpersoon, anders de eerst gekoppelde persoon.
+    LEFT JOIN (SELECT lead_id, MIN(person_id) AS person_id FROM privatescan.lead_persons GROUP BY lead_id) lp ON lp.lead_id = l.id
+    CROSS JOIN LATERAL (SELECT COALESCE(l.contact_person_id, lp.person_id) AS person_id) pp
+    LEFT JOIN privatescan.persons p ON p.id = pp.person_id
+    -- Salesactiviteiten zoals CustomerHistoryService ze telt: calls/taken en door ons verstuurde e-mails,
+    -- op de lead zelf of op een van haar sales. Een record met lead_id telt via de lead, anders via de sale.
+    LEFT JOIN (
+        SELECT lead_id, SUM(n) AS aantal FROM (
+            SELECT a.lead_id, COUNT(*) AS n FROM privatescan.activities a
+            WHERE a.type IN ('call', 'task') AND a.lead_id IS NOT NULL GROUP BY a.lead_id
+            UNION ALL
+            SELECT sl.lead_id, COUNT(*) FROM privatescan.activities a
+            JOIN privatescan.salesleads sl ON sl.id = a.sales_lead_id
+            WHERE a.type IN ('call', 'task') AND a.lead_id IS NULL GROUP BY sl.lead_id
+            UNION ALL
+            SELECT e.lead_id, COUNT(*) FROM privatescan.emails e
+            WHERE e.user_type = 'user' AND e.lead_id IS NOT NULL GROUP BY e.lead_id
+            UNION ALL
+            SELECT sl.lead_id, COUNT(*) FROM privatescan.emails e
+            JOIN privatescan.salesleads sl ON sl.id = e.sales_lead_id
+            WHERE e.user_type = 'user' AND e.lead_id IS NULL GROUP BY sl.lead_id
+        ) x GROUP BY lead_id
+    ) act ON act.lead_id = l.id
+    LEFT JOIN (
+        SELECT sl.lead_id, SUM(fo.verkoopprijs) AS omzet
+        FROM analytics.fact_orders fo
+        JOIN privatescan.orders     o  ON o.id  = fo.order_sk
+        JOIN privatescan.salesleads sl ON sl.id = o.sales_lead_id
+        WHERE fo.is_gewonnen
+        GROUP BY sl.lead_id
+    ) om ON om.lead_id = l.id
     WHERE l.created_at IS NOT NULL AND l.deleted_at IS NULL;
 
     DELETE f FROM analytics.fact_aanvragen f

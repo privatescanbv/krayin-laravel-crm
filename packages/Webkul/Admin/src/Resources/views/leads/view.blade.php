@@ -42,6 +42,34 @@
 
                     {!! view_render_event('admin.leads.view.title.before', ['lead' => $lead]) !!}
 
+                    <!-- Customer history snapshot (see SnapshotLeadCustomerTypeAction) -->
+                    @if ($lead->customer_type)
+                        <div class="flex flex-wrap gap-2" data-testid="lead-customer-type">
+                            @switch($lead->customer_type)
+                                @case(\App\Enums\CustomerType::ExistingBuyer)
+                                    <span class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-200">
+                                        Bestaande klant · {{ $lead->prior_purchase_count }} {{ $lead->prior_purchase_count === 1 ? 'aankoop' : 'aankopen' }}@if ($lead->last_purchase_at), laatste {{ $lead->last_purchase_at->format('d-m-Y') }}@endif
+                                    </span>
+                                    @break
+                                @case(\App\Enums\CustomerType::ExistingNonBuyer)
+                                    <span class="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                                        Terugkerend · nooit gekocht ({{ $lead->prior_lead_count }} eerdere {{ $lead->prior_lead_count === 1 ? 'lead' : 'leads' }})
+                                    </span>
+                                    @break
+                                @default
+                                    <span class="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
+                                        Nieuwe lead
+                                    </span>
+                            @endswitch
+
+                            @if ($lead->had_contact === false)
+                                <span class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-200">
+                                    Nooit contact gehad
+                                </span>
+                            @endif
+                        </div>
+                    @endif
+
                     {!! view_render_event('admin.leads.view.title.after', ['lead' => $lead]) !!}
 
                     <!-- Duplicate Detection -->

@@ -2,6 +2,7 @@
 
 namespace Webkul\Contact\Repositories;
 
+use App\Actions\Leads\SnapshotLeadCustomerTypeAction;
 use App\Enums\DuplicateEntityType;
 use App\Exceptions\CannotMergePersonWithPortalException;
 use App\Repositories\AddressRepository;
@@ -399,6 +400,12 @@ class PersonRepository extends Repository
                 $this->getCacheService()->handlePersonMerge($primaryPersonId, $duplicatePersonIds, $counterpartIds);
             } catch (Exception $e) {
                 Log::warning('Error clearing person duplicate cache: '.$e->getMessage());
+            }
+
+            try {
+                app(SnapshotLeadCustomerTypeAction::class)->executeForPersons([$primaryPersonId]);
+            } catch (Exception $e) {
+                Log::warning('Error refreshing lead customer types after person merge: '.$e->getMessage());
             }
 
             return $primaryPerson->fresh();

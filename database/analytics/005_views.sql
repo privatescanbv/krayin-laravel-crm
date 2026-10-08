@@ -7,6 +7,7 @@
 --   v_omzet_per_maand(_rapport)  = /admin/reports/revenue-by-month
 --   v_omzet_per_medewerker       = /admin/reports/revenue-by-employee
 --   v_onderzoeksdagen            = /admin/reports/orders-by-investigation-date
+--   v_lead_klanttype             aanvraag-grain + klanttype-label en verloren_categorie
 -- =========================================================
 
 
@@ -197,3 +198,27 @@ GROUP BY o.order_sk, o.ordernummer, o.naam, p.van_datum_sk,
          o.eerste_onderzoek_at, o.pipeline_fase, o.afdeling, o.eerste_onderzoek_datum
 HAVING o.eerste_onderzoek_datum IS NULL
     OR p.van_datum_sk <> o.eerste_onderzoek_datum;
+
+
+-- ---- aanvraag-grain: klanttype en verloren-categorie (App\Enums\CustomerType) ----
+-- verloren_categorie alleen voor verloren aanvragen; precies één waarde per verloren aanvraag.
+-- "Nooit contact gehad" gaat voor klanttype: wie we nooit spraken, verloren we niet op historie.
+CREATE OR REPLACE VIEW analytics.v_lead_klanttype AS
+SELECT
+    f.*,
+    du.naam AS verkoper,
+    CASE f.klanttype
+        WHEN 'new'                THEN 'Nieuwe lead'
+        WHEN 'existing_buyer'     THEN 'Bestaande klant, eerder gekocht'
+        WHEN 'existing_non_buyer' THEN 'Bestaande klant, nooit gekocht'
+    END AS klanttype_label,
+    CASE
+        WHEN f.status_categorie <> 'lost'           THEN NULL
+        WHEN f.contact_gehad = 0                    THEN 'Nooit contact gehad'
+        WHEN f.contact_gehad IS NULL OR f.klanttype IS NULL THEN 'Onbekend (nog niet bepaald)'
+        WHEN f.klanttype = 'existing_buyer'         THEN 'Bestaande klant, eerder gekocht'
+        WHEN f.klanttype = 'existing_non_buyer'     THEN 'Bestaande klant, nooit gekocht'
+        ELSE 'Nieuwe lead, wel contact'
+    END AS verloren_categorie
+FROM analytics.fact_aanvragen f
+LEFT JOIN analytics.dim_user du ON du.user_sk = f.verkoper_sk;

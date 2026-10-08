@@ -308,6 +308,7 @@ class DashboardSyncService
             'description' => $dashboard['description'] ?? null,
             'parameters'  => $this->translateParameters($dashboard['parameters'] ?? []),
             'dashcards'   => $dashcardsPayload,
+            'width'       => 'full', // altijd volle breedte: dashboards draaien in de CRM-iframe
         ];
 
         if ($tabsPayload !== []) {

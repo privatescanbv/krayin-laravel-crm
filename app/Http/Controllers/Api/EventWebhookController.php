@@ -8,6 +8,7 @@ use App\Events\PatientFormCompletedEvent;
 use App\Events\PatientFormStatusUpdatedEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EventWebhookRequest;
+use App\Models\AnamnesisGvlForm;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Webkul\Contact\Models\Person;
@@ -43,13 +44,19 @@ class EventWebhookController extends Controller
         ]);
 
         if ($request->get('entity_type') === 'forms') {
+            // Forms delivers its queued webhooks in bulk after a worker restart, each carrying the form's
+            // current status. A form already completed here (webhook or hourly sync) already has its review task.
+            $alreadyCompleted = AnamnesisGvlForm::where('gvl_form_id', $request->input('id'))
+                ->where('gvl_form_status', FormStatus::Completed->value)
+                ->exists();
+
             PatientFormStatusUpdatedEvent::dispatch(
                 $request->input('id'),
                 FormStatus::mapFrom($request->input('status')),
                 FormType::from($request->input('form_type')),
             );
 
-            if ($request->input('status') === 'completed') {
+            if ($request->input('status') === 'completed' && ! $alreadyCompleted) {
                 /** @var Person $person */
                 $person = Person::findOrFail($request->integer('person_id'));
                 PatientFormCompletedEvent::dispatch($person, $request->input('id'), FormType::from($request->input('form_type')));

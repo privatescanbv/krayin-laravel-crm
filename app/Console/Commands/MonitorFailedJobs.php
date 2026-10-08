@@ -15,12 +15,16 @@ class MonitorFailedJobs extends Command
 {
     private const int CACHE_TTL_MINUTES = 12 * 60;
 
+    private const int STALE_JOB_MINUTES = 15;
+
     protected $signature = 'queue:monitor-failed-jobs';
 
     protected $description = 'Monitor the failed_jobs table and send alerts when thresholds are exceeded.';
 
     public function handle(): int
     {
+        $this->checkStaleJobs();
+
         $alertEmail = (string) config('failed_jobs.alert_email', '');
 
         if (empty($alertEmail)) {
@@ -57,6 +61,37 @@ class MonitorFailedJobs extends Command
         }
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * A dead worker fails nothing, it just leaves jobs waiting in `jobs` (30 Sep - 7 Oct 2026:
+     * a week of forms webhooks delivered in one burst). Only the `default` queue: the worker
+     * drains it first, while bulk queues (ai-summary-scheduled) legitimately wait for hours.
+     */
+    private function checkStaleJobs(): void
+    {
+        $connection = config('queue.connections.'.config('queue.default'));
+
+        if (($connection['driver'] ?? null) !== 'database') {
+            return;
+        }
+
+        $stale = DB::table($connection['table'] ?? 'jobs')
+            ->where('queue', 'default')
+            ->where('available_at', '<=', now()->subMinutes(self::STALE_JOB_MINUTES)->getTimestamp());
+
+        $count = $stale->count();
+
+        if ($count === 0) {
+            return;
+        }
+
+        Log::error('Queue worker draait niet: jobs wachten langer dan '.self::STALE_JOB_MINUTES.' minuten', [
+            'count'         => $count,
+            'oldest_job_at' => date('Y-m-d H:i:s', (int) $stale->min('available_at')),
+        ]);
+
+        $this->error("{$count} jobs wachten langer dan ".self::STALE_JOB_MINUTES.' minuten.');
     }
 
     /**

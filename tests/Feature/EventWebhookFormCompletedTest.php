@@ -377,3 +377,33 @@ test('UpdateAnamnesisFormStatus listener logs error when no anamnesis found', fu
     $listener = app(UpdateAnamnesisFormStatus::class);
     $listener->handle($event);
 });
+
+test('a repeated completed webhook for an already completed form creates no second review task', function () {
+    $this->seed(TestSeeder::class);
+
+    $person = Person::factory()->create();
+    $lead = Lead::factory()->create();
+    $anamnesis = Anamnesis::factory()->create(['lead_id' => $lead->id, 'person_id' => $person->id, 'sales_id' => null]);
+    AnamnesisGvlForm::create(['anamnesis_id' => $anamnesis->id, 'gvl_form_id' => 'form-replay-1']);
+
+    Log::spy();
+
+    $payload = [
+        'entity_type' => 'forms',
+        'id'          => 'form-replay-1',
+        'action'      => 'STATUS_UPDATE',
+        'status'      => 'completed',
+        'url'         => 'https://forms.example.com/form-replay-1',
+        'person_id'   => $person->id,
+        'form_type'   => 'privatescan',
+    ];
+
+    // First delivery creates the task; the review is done; forms then re-delivers its queued webhooks (twice).
+    $this->withHeaders(['X-API-KEY' => 'valid-api-key-123'])->putJson('/api/webhooks/event', $payload)->assertOk();
+    Activity::where('lead_id', $lead->id)->update(['is_done' => true]);
+    $this->withHeaders(['X-API-KEY' => 'valid-api-key-123'])->putJson('/api/webhooks/event', $payload)->assertOk();
+    $this->withHeaders(['X-API-KEY' => 'valid-api-key-123'])->putJson('/api/webhooks/event', $payload)->assertOk();
+
+    expect(Activity::where('lead_id', $lead->id)->where('title', 'like', '%controleren')->count())->toBe(1);
+    Log::shouldNotHaveReceived('error', fn ($message) => str_contains($message, 'geen anamnese gvl-formulier gevonden'));
+});

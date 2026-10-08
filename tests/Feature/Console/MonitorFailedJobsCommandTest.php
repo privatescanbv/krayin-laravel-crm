@@ -6,6 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -331,4 +332,45 @@ test('critical mailable exposes environment and timestamp properties', function 
 
     expect($mailable->environment)->not->toBeEmpty()
         ->and($mailable->timestamp)->not->toBeEmpty();
+});
+
+// ─── Stale jobs (dead worker) ───────────────────────────────────────────────
+
+function insertQueuedJob(string $queue, int $minutesAgo): void
+{
+    DB::table('jobs')->insert([
+        'queue'        => $queue,
+        'payload'      => json_encode(['job' => 'TestJob']),
+        'attempts'     => 0,
+        'reserved_at'  => null,
+        'available_at' => now()->subMinutes($minutesAgo)->getTimestamp(),
+        'created_at'   => now()->subMinutes($minutesAgo)->getTimestamp(),
+    ]);
+}
+
+test('logs an error when default-queue jobs wait longer than 15 minutes', function () {
+    config(['queue.default' => 'database', 'failed_jobs.alert_email' => '']);
+    Log::spy();
+
+    insertQueuedJob('default', 20);
+    insertQueuedJob('default', 1);
+
+    Artisan::call('queue:monitor-failed-jobs');
+
+    Log::shouldHaveReceived('error')->withArgs(
+        fn (string $message, array $context = []) => str_contains($message, 'Queue worker draait niet') && $context['count'] === 1
+    )->once();
+});
+
+test('ignores fresh jobs, delayed jobs and old jobs on bulk queues', function () {
+    config(['queue.default' => 'database', 'failed_jobs.alert_email' => '']);
+    Log::spy();
+
+    insertQueuedJob('default', 5);
+    insertQueuedJob('default', -60);
+    insertQueuedJob('ai-summary-scheduled', 120);
+
+    Artisan::call('queue:monitor-failed-jobs');
+
+    Log::shouldNotHaveReceived('error', [Mockery::pattern('/Queue worker draait niet/'), Mockery::any()]);
 });

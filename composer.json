@@ -12,7 +12,7 @@
         "barryvdh/laravel-dompdf": "^3.0",
         "diglactic/laravel-breadcrumbs": "^10.0",
         "doctrine/dbal": "^3.0",
-        "enshrined/svg-sanitize": "^0.22.0",
+        "enshrined/svg-sanitize": "^1.0.0",
         "guzzlehttp/guzzle": "^7.0.1",
         "khaled.alshamaa/ar-php": "^6.3",
         "knuckleswtf/scribe": "^5.9",

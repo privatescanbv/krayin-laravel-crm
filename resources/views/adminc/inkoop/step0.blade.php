@@ -9,6 +9,7 @@
                 <div class="flex flex-col gap-2">
                     <div class="text-xl font-bold dark:text-gray-300">Referentiedatum bevestigen</div>
                     <div class="text-sm text-gray-500 dark:text-gray-400">{{ $invoice->name ?? $invoice->filename }}</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Parser: <span class="font-medium text-gray-800 dark:text-gray-200">{{ $invoice->parser?->label() ?? '-' }}</span></div>
                 </div>
 
                 <div class="flex items-center gap-x-2.5">
@@ -18,6 +19,18 @@
             </div>
 
             @include('adminc.components.validation-errors')
+
+            @if ($invoice->parse_warnings)
+                <div class="rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800 dark:border-orange-800 dark:bg-orange-900/20 dark:text-orange-300">
+                    <div class="font-semibold">De factuur is mogelijk niet volledig ingelezen</div>
+                    <ul class="mt-1 list-disc pl-5">
+                        @foreach ($invoice->parse_warnings as $warning)
+                            <li>{{ $warning }}</li>
+                        @endforeach
+                    </ul>
+                    <p class="mt-2">Meld dit bij de technische dienst en vermeld factuur #{{ $invoice->id }} ({{ $invoice->name ?? $invoice->filename }}).</p>
+                </div>
+            @endif
 
             <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div class="grid gap-4 md:grid-cols-2">

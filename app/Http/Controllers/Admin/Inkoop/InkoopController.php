@@ -71,13 +71,15 @@ class InkoopController extends Controller
         }
 
         try {
-            $this->activityRepository->create([
+            $activity = $this->activityRepository->create([
                 'type'      => ActivityType::FILE,
                 'title'     => 'Inkoop factuur: '.$originalFilename,
                 'clinic_id' => $clinic->id,
                 'user_id'   => auth()->guard('user')->id() ?: auth()->id(),
                 'file'      => $file,
             ]);
+
+            $invoice->update(['activity_id' => $activity->id]);
         } catch (Exception $e) {
             Log::error('Error creating activity for inkoop PDF upload', [
                 'invoice_id' => $invoice->id,
@@ -88,13 +90,6 @@ class InkoopController extends Controller
 
         return redirect()->route('admin.inkoop.step0', ['invoice' => $invoice->id])
             ->with('success', 'Factuur is succesvol geupload.');
-    }
-
-    public function download(InkoopInvoice $invoice)
-    {
-        abort_unless($invoice->pdf_path && Storage::disk('public')->exists($invoice->pdf_path), 404);
-
-        return Storage::disk('public')->download($invoice->pdf_path, $invoice->name ?? $invoice->filename);
     }
 
     public function destroy(InkoopInvoice $invoice)
@@ -142,8 +137,10 @@ class InkoopController extends Controller
             if (isset($result['reference_date'])) {
                 $invoice->reference_date = $result['reference_date'];
                 $invoice->invoice_date = $result['reference_date'];
-                $invoice->save();
             }
+
+            $invoice->parse_warnings = ($result['warnings'] ?? []) ?: null;
+            $invoice->save();
 
             if (empty($patients)) {
                 Log::warning('Parsed inkoop PDF contained no patients', [

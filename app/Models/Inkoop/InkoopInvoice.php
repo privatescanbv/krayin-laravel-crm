@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Webkul\Activity\Models\Activity;
 
 /**
  * @mixin IdeHelperInkoopInvoice
@@ -23,6 +24,7 @@ class InkoopInvoice extends Model
 
     protected $fillable = [
         'clinic_id',
+        'activity_id',
         'invoice_number',
         'invoice_date',
         'total_amount',
@@ -31,6 +33,7 @@ class InkoopInvoice extends Model
         'name',
         'reference_date',
         'parser',
+        'parse_warnings',
         'status',
         'created_by',
         'updated_by',
@@ -42,11 +45,17 @@ class InkoopInvoice extends Model
         'total_amount'   => 'decimal:2',
         'status'         => InkoopInvoiceStatus::class,
         'parser'         => InkoopInvoiceParser::class,
+        'parse_warnings' => 'array',
     ];
 
     public function clinic(): BelongsTo
     {
         return $this->belongsTo(Clinic::class);
+    }
+
+    public function activity(): BelongsTo
+    {
+        return $this->belongsTo(Activity::class);
     }
 
     public function persons(): HasMany

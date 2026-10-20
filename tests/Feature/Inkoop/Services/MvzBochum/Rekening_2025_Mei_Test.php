@@ -17,8 +17,16 @@ it('mvz_bochum_rekening_mei_2025_parses_68_patients', function () {
     $invoice = $this->makeInkoopInvoice(InkoopInvoiceParser::MVZ_BOCHUM, $filename);
     $result = $this->parseInkoop($invoice, $filename);
 
+    $patients = collect($result['patients']);
+    $find = fn (string $lastname, string $firstname) => $patients->first(fn ($p) => $p['lastname'] === $lastname && $p['firstname'] === $firstname);
+
     expect($result['patients'])->toHaveCount(68)
-        ->and($result['reference_date'])->toBeNull();
+        ->and($result['reference_date'])->toBeNull()
+        ->and($result['warnings'])->toBeEmpty()
+        ->and(round($patients->sum(fn ($p) => (float) $p['products'][0]['price']), 2))->toBe(22782.86)
+        // Zusatz line "CEA 14,57€" (without '+') must not overwrite the price
+        ->and($find('Gietman-Blok', 'Jolande')['products'][0]['price'])->toBe('230.84')
+        ->and($find('Martens', 'Catherine')['products'][0]['price'])->toBe('661.55');
 
     $firstPatient = $result['patients'][0];
     expect($firstPatient)->toHaveKeys(['firstname', 'lastname', 'birthday', 'products'])

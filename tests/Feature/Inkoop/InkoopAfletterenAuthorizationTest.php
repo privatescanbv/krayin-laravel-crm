@@ -6,6 +6,7 @@ use App\Models\Clinic;
 use App\Models\Inkoop\InkoopInvoice;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Webkul\Activity\Models\Activity;
 use Webkul\User\Models\Role;
 use Webkul\User\Models\User;
 
@@ -77,34 +78,32 @@ test('clinic view hides the Inkoop afletteren tab unless permitted', function ()
         ->assertSee('Inkoop afletteren');
 });
 
-test('inkoop invoice pdf can be downloaded with permission', function () {
-    \Illuminate\Support\Facades\Storage::fake('public');
-    \Illuminate\Support\Facades\Storage::disk('public')->put('inkoop/test.pdf', '%PDF-1.4 test');
-    $this->invoice->update(['name' => 'Factuur maart.pdf']);
+test('clinic view links to the invoice activity as Factuur bekijken', function () {
+    $activity = Activity::create([
+        'type'      => 'file',
+        'title'     => 'Inkoop factuur: test.pdf',
+        'clinic_id' => $this->clinic->id,
+    ]);
+    $this->invoice->update(['activity_id' => $activity->id]);
 
-    actingAs(makeRoleUser('custom', ['settings.clinics.view', 'inkoop-afletteren']), 'user')
-        ->get(route('admin.inkoop.download', $this->invoice->id))
-        ->assertOk()
-        ->assertDownload('Factuur maart.pdf');
-});
-
-test('inkoop invoice pdf download is blocked without permission', function () {
-    actingAs(makeRoleUser('custom', ['settings.clinics', 'settings.clinics.view']), 'user')
-        ->get(route('admin.inkoop.download', $this->invoice->id))
-        ->assertStatus(401);
-});
-
-test('inkoop invoice pdf download returns 404 when file is missing', function () {
-    \Illuminate\Support\Facades\Storage::fake('public');
-
-    actingAs(makeRoleUser('all'), 'user')
-        ->get(route('admin.inkoop.download', $this->invoice->id))
-        ->assertNotFound();
-});
-
-test('clinic view shows the pdf download action', function () {
     actingAs(makeRoleUser('all'), 'user')
         ->get(route('admin.clinics.view', $this->clinic->id))
         ->assertOk()
-        ->assertSee(route('admin.inkoop.download', $this->invoice->id));
+        ->assertSee('Factuur bekijken')
+        ->assertSee(route('admin.activities.edit', ['id' => $activity->id, 'return_url' => route('admin.clinics.view', $this->clinic->id, false).'#inkoop-afletteren']), false);
+});
+
+test('clinic view hides Factuur bekijken without linked activity or activities.edit permission', function () {
+    actingAs(makeRoleUser('all'), 'user')
+        ->get(route('admin.clinics.view', $this->clinic->id))
+        ->assertOk()
+        ->assertDontSee('Factuur bekijken');
+
+    $activity = Activity::create(['type' => 'file', 'title' => 'x', 'clinic_id' => $this->clinic->id]);
+    $this->invoice->update(['activity_id' => $activity->id]);
+
+    actingAs(makeRoleUser('custom', ['settings.clinics', 'settings.clinics.view', 'inkoop-afletteren']), 'user')
+        ->get(route('admin.clinics.view', $this->clinic->id))
+        ->assertOk()
+        ->assertDontSee('Factuur bekijken');
 });

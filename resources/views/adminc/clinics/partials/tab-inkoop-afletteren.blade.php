@@ -141,12 +141,13 @@
                                             </a>
                                         @endif
 
-                                        @if ($invoice->pdf_path)
+                                        @if ($invoice->activity_id && bouncer()->hasPermission('activities.edit'))
                                             <a
-                                                href="{{ route('admin.inkoop.download', $invoice->id) }}"
-                                                class="cursor-pointer rounded-md p-1.5 text-xl text-gray-500 transition-all hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-800 icon-download"
-                                                title="PDF downloaden"
-                                            ></a>
+                                                href="{{ route('admin.activities.edit', ['id' => $invoice->activity_id, 'return_url' => route('admin.clinics.view', $clinic->id, false).'#inkoop-afletteren']) }}"
+                                                class="secondary-button py-1 text-xs"
+                                            >
+                                                Factuur bekijken
+                                            </a>
                                         @endif
 
                                         <form

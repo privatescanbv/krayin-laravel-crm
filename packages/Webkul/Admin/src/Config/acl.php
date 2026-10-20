@@ -751,7 +751,6 @@ return [
             'admin.inkoop.force-received-bulk',
             'admin.inkoop.step3',
             'admin.inkoop.mark-as-processed',
-            'admin.inkoop.download',
             'admin.inkoop.delete',
         ],
         'sort'  => 98,

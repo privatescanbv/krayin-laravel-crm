@@ -186,6 +186,8 @@ class InkoopPdfParser
         $lines = explode("\n", $pdfText);
         $patients = [];
         $referenceDate = null;
+        $invoiceTotal = null;
+        $warnings = [];
         $tableHeadersFound = false;
         $currentPersonData = null;
         $lastPrice = null;
@@ -244,9 +246,14 @@ class InkoopPdfParser
                         'reference_date' => $referenceDate,
                     ]);
                 }
+
+                // Zoek factuurtotaal "Den Rechnungsbetrag von 11.950,11 €"
+                if (! $invoiceTotal && preg_match('/Rechnungsbetrag von\s+([\d.]+,\d{2})\s*€/', $line, $match)) {
+                    $invoiceTotal = (float) str_replace(['.', ','], ['', '.'], $match[1]);
+                }
             } else {
                 // support all fields in one line, including price
-                if ((str_contains($line, ',')) && str_contains($line, '*') && str_contains($line, '€') && preg_match('/^([\p{L}\s\'\-]+),\s+([\p{L}\s\'\-]+)\s+\*(\d{2}\.\d{2}\.\d{4})\s+(\d{2}\.\d{2}\.\d{4})\s+(\d{1,3},\d{2})\s+€/u', $line, $matches)) {
+                if ((str_contains($line, ',')) && str_contains($line, '*') && str_contains($line, '€') && preg_match('/^([\p{L}\s\'\-]+),\s*([\p{L}\s\'\-]+)\s+\*(\d{2}\.\d{2}\.\d{4})\s+(\d{2}\.\d{2}\.\d{4})\s+(\d{1,3},\d{2})\s+€/u', $line, $matches)) {
 
                     $lastName = $matches[1];
                     $firstName = $matches[2];
@@ -270,7 +277,7 @@ class InkoopPdfParser
                     str_contains($line, '*') &&
                     ! str_contains($line, '€') &&
                     preg_match(
-                        '/^([\p{L}\s\'\-]+),\s+([\p{L}\s\'\-]+)\s+\*\s*(\d{2}\.\d{2}\.\d{4})\s+(\d{2}\.\d{2}\.\d{4})$/u',
+                        '/^([\p{L}\s\'\-]+),\s*([\p{L}\s\'\-]+)\s+\*\s*(\d{2}\.\d{2}\.\d{4})\s+(\d{2}\.\d{2}\.\d{4})$/u',
                         $line,
                         $matches
                     )
@@ -332,12 +339,10 @@ class InkoopPdfParser
                     ]);
                 } elseif (! empty($lastFoundedName) && preg_match('/\*(\d{2}\.\d{2}\.\d{4})\s+(\d{2}\.\d{2}\.\d{4})\s+(\d{1,3},\d{2})\s*€/', $line, $matches)) {
                     // *16.02.1969 22.05.2025 661,55 €
-                    $lastPrice = $matches[3];
-                    if ($currentPersonData && $lastPrice) {
+                    if ($currentPersonData) {
                         $patients[] = $this->preparePatientData($currentPersonData, $lastPrice);
-                        $lastPrice = null;
                     }
-                    $lastExamDate = $matches[2];
+                    $price = str_replace(',', '.', $matches[3]);
                     $currentPersonData = [
                         'name'     => $lastFoundedName,
                         'birthday' => $this->formatDate($matches[1]),
@@ -345,7 +350,7 @@ class InkoopPdfParser
                             [
                                 'exam_date'    => $this->formatDate($matches[2], 'Y-m-d'),
                                 'product_name' => self::DEFAULT_PRODUCT_NAME,
-                                'price'        => $lastPrice,
+                                'price'        => $price,
                             ],
                         ],
                     ];
@@ -354,9 +359,16 @@ class InkoopPdfParser
                         'line_number' => $lineNumber,
                         'name'        => $lastFoundedName,
                         'birthday'    => $matches[1],
-                        'price'       => $lastPrice,
-                        'exam_date'   => $lastExamDate,
+                        'price'       => $price,
+                        'exam_date'   => $matches[2],
                     ]);
+
+                    // Complete patient: store immediately, so a Zusatz line like "CEA 14,57€" can't overwrite the price
+                    $patients[] = $this->preparePatientData($currentPersonData, $price);
+                    $currentPersonData = null;
+                    $lastPrice = null;
+                    $lastBirthDate = null;
+                    $lastExamDate = null;
                     $lastFoundedName = null;
                 } elseif (! empty($lastFoundedName) && preg_match('/(\w+)\s+\*(\d{2}\.\d{2}\.\d{4})\s+(\d{2}\.\d{2}\.\d{4})/', $line, $matches)) {
                     // Desmond *03.08.1980 13.06.2025
@@ -546,6 +558,23 @@ class InkoopPdfParser
             'last_price'          => $lastPrice,
         ]);
 
+        $parsedTotal = round(collect($patients)->flatMap(fn ($p) => $p['products'])->sum(fn ($product) => (float) ($product['price'] ?? 0)), 2);
+        if ($invoiceTotal !== null && abs($parsedTotal - $invoiceTotal) > 0.01) {
+            $warnings[] = sprintf(
+                'Totaal van ingelezen regels (€ %s, %d patiënten) wijkt af van het factuurtotaal (€ %s).',
+                number_format($parsedTotal, 2, ',', '.'),
+                count($patients),
+                number_format($invoiceTotal, 2, ',', '.')
+            );
+        }
+
+        if ($warnings) {
+            Log::warning('MVZ Bochum PDF parsed with warnings', [
+                'invoice_id' => $invoice->id,
+                'warnings'   => $warnings,
+            ]);
+        }
+
         // If no patients found, log more details
         if (empty($patients)) {
             Log::warning('No patients found in PDF', [
@@ -559,6 +588,7 @@ class InkoopPdfParser
         return [
             'reference_date' => $referenceDate,
             'patients'       => $patients,
+            'warnings'       => $warnings,
         ];
     }
 

@@ -940,26 +940,22 @@ class OrderController extends SimpleEntityController
 
         $stageIds = $currentPipeline->stages->pluck('id');
 
-        // Two kinds of rows:
-        // - open orders (not lost, with an examination date) that are not fully paid yet;
-        // - orders with a credit (customer paid more than the total, e.g. order or lines set to LOST
-        //   after a deposit). Those must be refunded, so they are shown even when the order is lost
-        //   or has no examination date (planning is cleared when an order is lost).
+        // Lost orders are never shown. Two kinds of rows:
+        // - open orders with an examination date that are not fully paid yet;
+        // - orders with a credit (customer paid more than the total, e.g. lines set to LOST after a
+        //   deposit). Those must be refunded, so they are shown even without an examination date.
         $orders = Order::query()
             ->with(['payments', 'orderItems.resourceOrderItems', 'stage'])
             ->whereIn('pipeline_stage_id', $stageIds)
+            ->whereHas('stage', fn ($s) => $s->where('is_lost', false))
             ->where(function ($q) {
-                $q->where(function ($open) {
-                    $open->whereHas('stage', fn ($s) => $s->where('is_lost', false))
-                        ->where(function ($exam) {
-                            $exam->whereNotNull('first_examination_at')
-                                ->orWhereHas('orderItems', function ($orderItems) {
-                                    $orderItems
-                                        ->where('status', '!=', OrderItemStatus::LOST->value)
-                                        ->whereHas('resourceOrderItems', fn ($roi) => $roi->whereNotNull('from'));
-                                });
-                        });
-                })->orWhereHas('payments');
+                $q->whereNotNull('first_examination_at')
+                    ->orWhereHas('orderItems', function ($orderItems) {
+                        $orderItems
+                            ->where('status', '!=', OrderItemStatus::LOST->value)
+                            ->whereHas('resourceOrderItems', fn ($roi) => $roi->whereNotNull('from'));
+                    })
+                    ->orWhereHas('payments');
             })
             ->get()
             ->filter(function (Order $o) {
@@ -969,8 +965,7 @@ class OrderController extends SimpleEntityController
                     return true;
                 }
 
-                return ! $o->stage?->is_lost
-                    && $o->firstExaminationCarbon() !== null
+                return $o->firstExaminationCarbon() !== null
                     && ! in_array($status, [OrderPaymentStatus::FULLY_PAID, OrderPaymentStatus::NOT_APPLICABLE], true);
             })
             ->sortBy(fn (Order $o) => $o->firstExaminationCarbon()?->getTimestamp() ?? PHP_INT_MAX)

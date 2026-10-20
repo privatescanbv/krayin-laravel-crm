@@ -100,7 +100,7 @@ class PersonContextBuilder extends AiContextBuilder
                 'open_lead_count'     => $openLeads->count(),
                 'order_count'         => $orders->count(),
                 'examined_count'      => $examined->count(),
-                'lifetime_value'      => round((float) $examined->sum(fn (Order $order) => (float) $order->total_price), 2),
+                'lifetime_value'      => round((float) $examined->sum(fn (Order $order) => $order->payableTotal()), 2),
                 'last_examination_at' => $this->dateOnly($lastExamination),
             ], fn ($value) => ! empty($value)),
 

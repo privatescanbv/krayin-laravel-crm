@@ -69,17 +69,30 @@ class OrderObserver
             $newStageId = $this->orderStatusService->recalculateAndPersist($order);
             $stageChange = ! is_null($newStageId);
         }
+        $lostStageIds = PipelineStage::getLostOrderStageIds();
+
+        // Reopened after Verloren: restore the lines that were set to LOST together with the order.
+        if ($order->wasChanged('pipeline_stage_id')
+            && in_array((int) $order->getRawOriginal('pipeline_stage_id'), $lostStageIds, true)
+            && ! in_array($order->pipeline_stage_id, $lostStageIds, true)) {
+            Log::info('Restoring order items lost with order '.$order->id);
+            OrderItem::where('order_id', $order->id)
+                ->where('lost_with_order', true)
+                ->update(['status' => OrderItemStatus::NEW->value, 'lost_with_order' => false]);
+            $order->recalculateTotalPrice();
+        }
+
         if ($stageChange && in_array($order->pipeline_stage_id, PipelineStage::getStageIdsAfterExecutionExLost(), true)) {
             Log::info('Updating order items to WON for order '.$order->id);
             OrderItem::forOrderAndNotLost($order->id)
                 ->update(['status' => OrderItemStatus::WON->value]);
         }
 
-        if ($stageChange && in_array($order->pipeline_stage_id, PipelineStage::getLostOrderStageIds(), true)) {
+        if ($stageChange && in_array($order->pipeline_stage_id, $lostStageIds, true)) {
             Log::info('Updating order items to LOST for order '.$order->id);
             $orderItemIds = OrderItem::where('order_id', $order->id)->pluck('id');
-            OrderItem::where('order_id', $order->id)
-                ->update(['status' => OrderItemStatus::LOST->value]);
+            OrderItem::forOrderAndNotLost($order->id)
+                ->update(['status' => OrderItemStatus::LOST->value, 'lost_with_order' => true]);
             DB::table('resource_orderitem')->whereIn('orderitem_id', $orderItemIds)->delete();
             $order->recalculateTotalPrice();
             $this->orderRefundService->createRefundIfSurplus($order, auth()->id());

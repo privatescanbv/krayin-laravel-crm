@@ -26,7 +26,7 @@ test('total_price includes newly created order item', function () {
     expect((float) $order->fresh()->total_price)->toBe(150.0);
 });
 
-test('total_price excludes LOST items on creation', function () {
+test('total_price is the sum of the lines when the only item is LOST, payable total is 0', function () {
     $order = Order::factory()->create(['total_price' => 0]);
 
     OrderItem::factory()->create([
@@ -35,10 +35,11 @@ test('total_price excludes LOST items on creation', function () {
         'status'      => OrderItemStatus::LOST->value,
     ]);
 
-    expect((float) $order->fresh()->total_price)->toBe(0.0);
+    expect((float) $order->fresh()->total_price)->toBe(200.0)
+        ->and($order->fresh()->payableTotal())->toBe(0.0);
 });
 
-test('total_price decreases when order item is set to LOST', function () {
+test('total_price keeps the line when the only order item is set to LOST, payable total drops it', function () {
     $order = Order::factory()->create(['total_price' => 0]);
     $item = OrderItem::factory()->create([
         'order_id'    => $order->id,
@@ -50,7 +51,8 @@ test('total_price decreases when order item is set to LOST', function () {
 
     $item->update(['status' => OrderItemStatus::LOST->value]);
 
-    expect((float) $order->fresh()->total_price)->toBe(0.0);
+    expect((float) $order->fresh()->total_price)->toBe(300.0)
+        ->and($order->fresh()->payableTotal())->toBe(0.0);
 });
 
 test('total_price updates when order item total_price changes', function () {
@@ -68,7 +70,7 @@ test('total_price updates when order item total_price changes', function () {
     expect((float) $order->fresh()->total_price)->toBe(250.0);
 });
 
-test('total_price sums multiple non-LOST items', function () {
+test('total_price sums only non-LOST items when the order still has active lines', function () {
     $order = Order::factory()->create(['total_price' => 0]);
 
     OrderItem::factory()->create([
@@ -87,7 +89,9 @@ test('total_price sums multiple non-LOST items', function () {
         'status'      => OrderItemStatus::LOST->value,
     ]);
 
-    expect((float) $order->fresh()->total_price)->toBe(300.0);
+    expect((float) $order->fresh()->total_price)->toBe(300.0)
+        ->and($order->fresh()->payableTotal())->toBe(300.0)
+        ->and($order->fresh()->load('orderItems')->payableTotal())->toBe(300.0);
 });
 
 test('total_price decreases when order item is deleted', function () {
@@ -105,8 +109,7 @@ test('total_price decreases when order item is deleted', function () {
     expect((float) $order->fresh()->total_price)->toBe(0.0);
 });
 
-test('total_price becomes 0 when order pipeline stage is set to verloren', function () {
-    $lostStageId = PipelineStage::ORDER_VERLOREN->id();
+test('total_price is kept when order pipeline stage is set to verloren', function () {
     $order = Order::factory()->create(['total_price' => 0]);
 
     $item1 = OrderItem::factory()->create([
@@ -120,28 +123,30 @@ test('total_price becomes 0 when order pipeline stage is set to verloren', funct
         'status'      => OrderItemStatus::PLANNED->value,
     ]);
 
-    expect((float) $order->fresh()->total_price)->toBe(400.0);
+    $order->fresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_VERLOREN->id()]);
 
-    $order->pipeline_stage_id = $lostStageId;
-    $order->save();
-
-    // Check items are LOST (verifies observer ran)
     expect($item1->fresh()->status)->toBe(OrderItemStatus::LOST)
-        ->and($item2->fresh()->status)->toBe(OrderItemStatus::LOST);
-
-    // What does recalculate give NOW (from test scope, same connection)?
-    $freshOrder = $order->fresh();
-    $nonLostSum = $freshOrder->orderItems()->notLost()->sum('total_price');
-    expect((float) $nonLostSum)->toBe(0.0, 'notLost sum should be 0 after items set to LOST');
-
-    // Check DB total directly (bypasses model cast)
-    $dbTotal = DB::table('orders')->where('id', $order->id)->value('total_price');
-    expect((float) $dbTotal)->toBe(0.0)
-        ->and((float) $order->fresh()->total_price)->toBe(0.0);
-
+        ->and($item2->fresh()->status)->toBe(OrderItemStatus::LOST)
+        ->and((float) DB::table('orders')->where('id', $order->id)->value('total_price'))->toBe(400.0)
+        ->and($order->fresh()->payableTotal())->toBe(0.0);
 });
 
-test('total_price is 0 when all items are LOST', function () {
+test('editing an order item of a lost order updates the lost total_price', function () {
+    $order = Order::factory()->create(['total_price' => 0]);
+    $item = OrderItem::factory()->create([
+        'order_id'    => $order->id,
+        'total_price' => 300.00,
+        'status'      => OrderItemStatus::NEW->value,
+    ]);
+    $order->fresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_VERLOREN->id()]);
+
+    $item->fresh()->update(['total_price' => 350.00]);
+
+    expect((float) $order->fresh()->total_price)->toBe(350.0)
+        ->and($order->fresh()->payableTotal())->toBe(0.0);
+});
+
+test('total_price is the sum of the lines when all items are LOST', function () {
     $order = Order::factory()->create(['total_price' => 500]);
 
     OrderItem::factory()->create([
@@ -150,5 +155,19 @@ test('total_price is 0 when all items are LOST', function () {
         'status'      => OrderItemStatus::LOST->value,
     ]);
 
-    expect((float) $order->fresh()->total_price)->toBe(0.0);
+    expect((float) $order->fresh()->total_price)->toBe(500.0)
+        ->and($order->fresh()->payableTotal())->toBe(0.0);
+});
+
+test('total_price drops a LOST line on a won order but keeps it once all lines are LOST', function () {
+    $order = Order::factory()->create(['pipeline_stage_id' => PipelineStage::ORDER_GEWONNEN->id()]);
+    $won = OrderItem::factory()->create(['order_id' => $order->id, 'total_price' => 750, 'status' => OrderItemStatus::WON->value]);
+    $lost = OrderItem::factory()->create(['order_id' => $order->id, 'total_price' => 59, 'status' => OrderItemStatus::WON->value]);
+
+    $lost->update(['status' => OrderItemStatus::LOST->value]);
+    expect((float) $order->fresh()->total_price)->toBe(750.0);
+
+    $won->update(['status' => OrderItemStatus::LOST->value]);
+    expect((float) $order->fresh()->total_price)->toBe(809.0)
+        ->and($order->fresh()->payableTotal())->toBe(0.0);
 });

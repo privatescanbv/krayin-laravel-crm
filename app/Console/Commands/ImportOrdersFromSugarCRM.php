@@ -1149,7 +1149,7 @@ class ImportOrdersFromSugarCRM extends AbstractSugarCRMImport
             return;
         }
 
-        $total = round((float) ($order->total_price ?? 0), 2);
+        $total = $order->payableTotal();
         if ($total <= 0) {
             return;
         }

@@ -17,17 +17,19 @@ class OrderRefundService
 
     /**
      * Maak een REFUND-betaling en bijbehorende taakactiviteit aan als de klant meer betaald
-     * heeft dan de huidige order total na een LOST-markering.
+     * heeft dan het te betalen bedrag na een LOST-markering (verloren order: alles terug).
      *
      * Idempotent: als er al een REFUND bestaat die het surplus dekt, is surplus 0 → geen actie.
      */
     public function createRefundIfSurplus(Order $order, ?int $userId = null): ?OrderPayment
     {
-        // Verse betaaldata laden zodat eerder aangemaakte refunds worden meegenomen.
+        // Verse betaal-, stage- en regeldata laden zodat eerder aangemaakte refunds en net gewijzigde statussen worden meegenomen.
         $order->unsetRelation('payments');
+        $order->unsetRelation('stage');
+        $order->unsetRelation('orderItems');
 
         $paid = $order->netPaidAmount();
-        $total = round((float) $order->total_price, 2);
+        $total = $order->payableTotal();
         $surplus = round($paid - $total, 2);
 
         if ($surplus <= 0.01) {

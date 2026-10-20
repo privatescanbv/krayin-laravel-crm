@@ -431,7 +431,7 @@ class EmailTemplateRenderingService
 
         $totalPrice = $personId !== null
             ? $items->sum('total_price')
-            : ($order->total_price ?? 0);
+            : $order->payableTotal();
 
         return view('adminc.email_templates.order.order_items_table', [
             'items'          => $items,

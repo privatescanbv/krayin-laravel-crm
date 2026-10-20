@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\OrderItemStatus;
+use App\Enums\OrderPaymentStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentType;
 use App\Enums\PipelineStage;
@@ -240,4 +241,38 @@ test('PUT order via controller geeft refund_created mee in respons', function ()
         'amount'   => '250.00',
         'paid_at'  => null,
     ]);
+});
+
+// ── Verloren order volledig betaald → credit + volledige REFUND ─────────────
+
+test('verloren order van 809 die volledig betaald is krijgt status credit en een REFUND van 809', function () {
+    [$order] = makeOrderWithPayment(itemPrice: 809.00, paidAmount: 809.00);
+
+    $order->update(['pipeline_stage_id' => PipelineStage::ORDER_VERLOREN->id()]);
+
+    $order = $order->fresh();
+    $refund = $order->payments()->where('type', PaymentType::REFUND->value)->sole();
+
+    expect((float) $order->total_price)->toBe(809.0)
+        ->and($order->paymentStatus())->toBe(OrderPaymentStatus::CREDIT)
+        ->and((float) $refund->amount)->toBe(809.0)
+        ->and($refund->paid_at)->toBeNull();
+
+    $this->assertDatabaseHas('activities', [
+        'order_id' => $order->id,
+        'type'     => 'task',
+        'title'    => 'Klant terugbetalen',
+    ]);
+});
+
+test('gewonnen order met alleen verloren regels houdt het bruto totaal en is credit bij betaling', function () {
+    [$order, $item] = makeOrderWithPayment(itemPrice: 750.00, paidAmount: 809.00);
+    OrderItem::factory()->create(['order_id' => $order->id, 'total_price' => 59.00, 'status' => OrderItemStatus::LOST]);
+    $item->update(['status' => OrderItemStatus::LOST]);
+
+    $order = $order->fresh();
+
+    expect((float) $order->total_price)->toBe(809.0)
+        ->and($order->payableTotal())->toBe(0.0)
+        ->and($order->paymentStatus())->toBe(OrderPaymentStatus::CREDIT);
 });

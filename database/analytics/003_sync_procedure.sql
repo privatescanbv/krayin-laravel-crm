@@ -208,6 +208,9 @@ BEGIN
         COALESCE(r.inkoop, 0),
         COALESCE(o.total_price, 0) - COALESCE(r.inkoop, 0),
         CASE
+            -- verloren order of alle regels verloren: te betalen = 0 (Order::payableTotal), total_price = verloren omzet
+            WHEN COALESCE(ds.is_verloren, 0) = 1 OR (COALESCE(r.n_totaal, 0) > 0 AND COALESCE(r.n_actief, 0) = 0)
+                                                            THEN IF(COALESCE(op.ontvangen, 0) > 0, 'credit', 'niet_van_toepassing')
             WHEN COALESCE(o.total_price, 0) <= 0           THEN 'niet_van_toepassing'
             WHEN COALESCE(op.ontvangen, 0) <= 0             THEN 'niet_betaald'
             WHEN op.ontvangen > COALESCE(o.total_price, 0)  THEN 'credit'

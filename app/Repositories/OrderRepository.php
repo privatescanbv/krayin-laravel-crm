@@ -70,7 +70,7 @@ class OrderRepository extends Repository
             'order_number'     => $order->order_number ?? '',
             'order_title'      => $order->title ?? '',
             'order_status'     => $order->stage?->name ?? '',
-            'order_total'      => $order->total_price ?? 0,
+            'order_total'      => $order->payableTotal(),
             'customer_name'    => $this->resolveCustomerName($order, $personId),
         ];
 

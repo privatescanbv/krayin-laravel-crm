@@ -44,7 +44,7 @@ class SalesLeadContextBuilder extends AiContextBuilder
             'closed_at'    => $this->dateOnly($subject->closed_at),
             'person_count' => $subject->persons->count() > 1 ? $subject->persons->count() : null,
             'order_count'  => $orders->count(),
-            'total_value'  => round((float) $orders->sum(fn (Order $order) => (float) $order->total_price), 2),
+            'total_value'  => round((float) $orders->sum(fn (Order $order) => $order->payableTotal()), 2),
             'ref'          => $source['ref'] ?? null,
             '_source'      => $source,
         ];

@@ -51,7 +51,7 @@ class OrderContextBuilder extends AiContextBuilder
         /** @var Order $subject */
         $entry = $this->orderEntry($subject, $subject->salesLead);
         $confirmation = $subject->confirmationProgress();
-        $openAmount = round((float) $subject->total_price - $subject->netReceivedAmount(), 2);
+        $openAmount = round($subject->payableTotal() - $subject->netReceivedAmount(), 2);
 
         return array_merge($entry, [
             // The title is already carried by the entry's "description".

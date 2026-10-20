@@ -9,7 +9,6 @@ use InvalidArgumentException;
 
 /**
  * @property PurchasePriceType $type
- *
  * @mixin IdeHelperPurchasePrice
  */
 class PurchasePrice extends Model

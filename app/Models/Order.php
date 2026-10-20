@@ -592,23 +592,51 @@ class Order extends Model
     }
 
     /**
-     * Herbereken total_price op basis van niet-LOST orderregels en sla op zonder observers.
+     * Herbereken total_price en sla op zonder observers: som van de niet-LOST orderregels.
+     * Een verloren order, of een order waarvan alle regels LOST zijn, krijgt de som van alle regels (verloren omzet).
+     * Wat de klant moet betalen staat in payableTotal().
      */
     public function recalculateTotalPrice(): void
     {
-        $newTotal = $this->orderItems()->notLost()->sum('total_price');
+        $items = $this->orderItems()->get(['id', 'status', 'total_price']);
+        $active = $items->filter(fn (OrderItem $item) => $item->status !== OrderItemStatus::LOST);
+
+        $newTotal = $this->stage()->value('is_lost') || $active->isEmpty()
+            ? $items->sum('total_price')
+            : $active->sum('total_price');
+
         $this->total_price = $newTotal;
         DB::table('orders')->where('id', $this->id)->update(['total_price' => $newTotal]);
     }
 
     /**
-     * Betaalstatus klant: vergelijk netto ontvangen bedrag met total_price.
+     * Bedrag dat de klant moet betalen: som van de niet-LOST orderregels, 0 voor een verloren order
+     * (alles wordt terugbetaald). Zonder orderregels geldt het handmatige total_price.
+     * Uses eager-loaded orderItems when present.
+     */
+    public function payableTotal(): float
+    {
+        if ($this->isLost()) {
+            return 0.0;
+        }
+
+        $items = $this->relationLoaded('orderItems') ? $this->orderItems : $this->orderItems()->get(['id', 'order_id', 'status', 'total_price']);
+
+        if ($items->isEmpty()) {
+            return round((float) $this->total_price, 2);
+        }
+
+        return round((float) $items->filter(fn (OrderItem $item) => $item->status !== OrderItemStatus::LOST)->sum('total_price'), 2);
+    }
+
+    /**
+     * Betaalstatus klant: vergelijk netto ontvangen bedrag met het te betalen bedrag.
      * Openstaande terugbetalingen tellen niet als "terugbetaald" totdat ze uitbetaald zijn.
      */
     public function paymentStatus(): OrderPaymentStatus
     {
         return OrderPaymentStatus::forOrder(
-            round((float) $this->total_price, 2),
+            $this->payableTotal(),
             $this->netReceivedAmount(),
         );
     }

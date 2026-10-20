@@ -11,7 +11,7 @@
     $defaultCurrencyCode = Currency::default()->value;
     $today = now()->format('Y-m-d');
 
-    $totalToPay    = (float) ($order->total_price ?? 0);
+    $totalToPay    = $order->payableTotal();
     $totalPaid     = $order->netPaidAmount();
     $openAmount    = round($totalToPay - $totalPaid, 2);
     $pendingRefund = $order->payments->where('type', \App\Enums\PaymentType::REFUND)->whereNull('paid_at')->sum('amount');

@@ -176,7 +176,7 @@ class OrderMailService
             'order_reference'                  => $order->order_number,
             'order_title'                      => e($order->title ?? ''),
             'order_status'                     => e($order->status?->label() ?? ''),
-            'order_total'                      => $this->formatCurrency($order->total_price),
+            'order_total'                      => $this->formatCurrency($order->payableTotal()),
             'order_summary_table'              => $this->renderItemsTable($order, $personId),
             'appointments_by_person'           => $this->renderAppointmentsByPerson($order, $personId),
             'customer_name'                    => $person ? e($person->name) : e($this->resolveCustomerName($order)),

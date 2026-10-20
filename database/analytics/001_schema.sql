@@ -95,7 +95,7 @@ CREATE TABLE analytics.dim_pipeline_stage (
 ) ENGINE=InnoDB;
 
 -- ---- fact_orders: één rij per order (order-grain) ----
--- verkoopprijs = orders.total_price (som niet-verloren regels, Order::recalculateTotalPrice)
+-- verkoopprijs = orders.total_price: som niet-verloren regels; verloren order (of alle regels verloren) = som alle regels (Order::recalculateTotalPrice)
 -- inkoopprijs  = som hoofd-inkoopprijs van de niet-verloren regels (Order::totalPurchasePrice)
 -- eerste_onderzoek_* = firstExaminationCarbon(): first_examination_at, of anders het
 --                      vroegste niet-verloren resource-slot.

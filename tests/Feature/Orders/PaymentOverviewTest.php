@@ -1,5 +1,8 @@
 <?php
 
+use App\Enums\Currency;
+use App\Enums\OrderItemStatus;
+use App\Enums\OrderPaymentStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentType;
 use App\Enums\PipelineDefaultKeys;
@@ -85,7 +88,7 @@ function paymentOverviewPayment(Order $order, float $amount, PaymentType $type, 
     ]);
 }
 
-test('payment overview shows a lost order that still has a credit to refund', function () {
+test('payment overview never shows a lost order, even with a credit to refund', function () {
     $order = Order::factory()->create([
         'pipeline_stage_id'    => $this->stageLost->id,
         'title'                => 'Verloren order met credit '.uniqid(),
@@ -96,8 +99,7 @@ test('payment overview shows a lost order that still has a credit to refund', fu
 
     $this->get(route('admin.orders.payment-overview', ['pipeline_id' => $this->pipeline->id]))
         ->assertOk()
-        ->assertSee($order->title, false)
-        ->assertSee('Credit', false);
+        ->assertDontSee($order->title, false);
 });
 
 test('payment overview hides a lost order once the refund is paid out', function () {
@@ -141,7 +143,7 @@ test('payment overview still hides an open order without examination date that i
         ->assertDontSee($order->title, false);
 });
 
-test('order set to lost after a deposit appears as credit and the refund can be settled', function () {
+test('order set to lost after a deposit keeps its total, gets a full refund and leaves the overview', function () {
     // Scenario from acceptance: order of 5000, 2500 paid, order set to Verloren.
     $order = Order::factory()->create([
         'pipeline_stage_id'    => PipelineStage::ORDER_CONFIRM->id(),
@@ -151,38 +153,64 @@ test('order set to lost after a deposit appears as credit and the refund can be 
     OrderItem::factory()->create(['order_id' => $order->id, 'quantity' => 1, 'total_price' => 5000]);
     paymentOverviewPayment($order, 2500, PaymentType::ADVANCE, now()->toDateString());
 
+    $overviewUrl = route('admin.orders.payment-overview', ['pipeline_id' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value]);
+    $this->get($overviewUrl)->assertOk()->assertSee($order->title, false);
+
     $order->refresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_VERLOREN->id()]);
 
     $openRefund = OrderPayment::where('order_id', $order->id)->where('type', PaymentType::REFUND->value)->sole();
-    expect((float) $order->fresh()->total_price)->toBe(0.0)
+    expect((float) $order->fresh()->total_price)->toBe(5000.0)
+        ->and($order->fresh()->paymentStatus())->toBe(OrderPaymentStatus::CREDIT)
         ->and((float) $openRefund->amount)->toBe(2500.0)
         ->and($openRefund->paid_at)->toBeNull();
-
-    $overviewUrl = route('admin.orders.payment-overview', ['pipeline_id' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ORDERS_ID->value]);
-
-    $this->get($overviewUrl)
-        ->assertOk()
-        ->assertSee($order->title, false)
-        ->assertSee('Credit', false);
-
-    // Paying out the refund from the overview settles the open refund instead of adding a second one.
-    $this->postJson(route('admin.orders.payment-overview.save'), [
-        'rows' => [[
-            'order_id' => $order->id,
-            'amount'   => 2500,
-            'type'     => PaymentType::REFUND->value,
-            'method'   => PaymentMethod::BANK->value,
-            'paid_at'  => now()->toDateString(),
-            'currency' => 'EUR',
-        ]],
-    ])->assertOk();
-
-    $refunds = OrderPayment::where('order_id', $order->id)->where('type', PaymentType::REFUND->value)->get();
-    expect($refunds)->toHaveCount(1)
-        ->and($refunds->first()->id)->toBe($openRefund->id)
-        ->and($refunds->first()->paid_at)->not->toBeNull();
 
     $this->get($overviewUrl)
         ->assertOk()
         ->assertDontSee($order->title, false);
+});
+
+test('payment overview shows the full payment as credit for an order whose lines are all lost', function () {
+    // Order 1983 scenario: not a lost order, but both lines lost while € 809 was paid.
+    $order = Order::factory()->create([
+        'pipeline_stage_id'    => $this->stageOpen->id,
+        'title'                => 'Alle regels verloren '.uniqid(),
+        'first_examination_at' => null,
+    ]);
+    OrderItem::factory()->create(['order_id' => $order->id, 'total_price' => 750, 'status' => OrderItemStatus::LOST->value]);
+    OrderItem::factory()->create(['order_id' => $order->id, 'total_price' => 59, 'status' => OrderItemStatus::LOST->value]);
+    paymentOverviewPayment($order, 809, PaymentType::ADVANCE, now()->toDateString());
+
+    // total_price holds the lost revenue, the overview works with what is payable (€ 0).
+    expect((float) $order->fresh()->total_price)->toBe(809.0);
+
+    $this->get(route('admin.orders.payment-overview', ['pipeline_id' => $this->pipeline->id]))
+        ->assertOk()
+        ->assertViewHas('orders', fn ($orders) => $orders->contains('id', $order->id))
+        ->assertSee($order->title, false)
+        ->assertSeeText('Credit '.Currency::formatMoney('EUR', 809), false)
+        ->assertSee('placeholder="809.00"', false);
+});
+
+test('payment overview only counts the active lines of an order with a lost line as open', function () {
+    $order = Order::factory()->create([
+        'pipeline_stage_id'    => $this->stageOpen->id,
+        'title'                => 'Deels verloren '.uniqid(),
+        'first_examination_at' => now()->addWeek(),
+    ]);
+    OrderItem::factory()->create(['order_id' => $order->id, 'total_price' => 850, 'status' => OrderItemStatus::NEW->value]);
+    OrderItem::factory()->create(['order_id' => $order->id, 'total_price' => 450, 'status' => OrderItemStatus::LOST->value]);
+    paymentOverviewPayment($order, 100, PaymentType::ADVANCE, now()->toDateString());
+
+    $response = $this->get(route('admin.orders.payment-overview', ['pipeline_id' => $this->pipeline->id]))
+        ->assertOk()
+        ->assertSee($order->title, false);
+
+    $html = $response->getContent();
+    $start = strpos($html, $order->title);
+    $row = substr($html, $start, strpos($html, '</tr>', $start) - $start);
+
+    expect($row)->toContain(Currency::formatMoney('EUR', 850))
+        ->and($row)->toContain(Currency::formatMoney('EUR', 750))
+        ->and($row)->not->toContain(Currency::formatMoney('EUR', 1300))
+        ->and($row)->not->toContain('Credit €');
 });

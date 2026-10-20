@@ -570,7 +570,7 @@ abstract class AiContextBuilder
             'updated_at'           => $this->date($order->updated_at),
             'number'               => $order->order_number,
             'title'                => $order->title,
-            'value'                => (float) $order->total_price,
+            'value'                => $order->payableTotal(),
             'stage'                => $order->stage?->name,
             'lost_reason'          => $order->stage?->is_lost ? $order->lost_reason?->label() : null,
             'first_examination_at' => $this->date($order->first_examination_at),
@@ -589,7 +589,7 @@ abstract class AiContextBuilder
             'description'    => $description,
             'status'         => $order->stage?->name,
             'examination_at' => $this->dateOnly($order->first_examination_at),
-            'value'          => (float) $order->total_price,
+            'value'          => $order->payableTotal(),
             'ref'            => $primary['ref'] ?? null,
             '_sources'       => array_values(array_filter([$created, $examination, $closed])),
         ];

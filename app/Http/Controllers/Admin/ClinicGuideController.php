@@ -87,7 +87,7 @@ class ClinicGuideController extends Controller
                 'title'                => $order->title,
                 'first_examination_at' => $entryAt?->toIso8601String(),
                 'time'                 => $entryAt?->format('H:i'),
-                'total_price'          => $order->total_price,
+                'total_price'          => $order->payableTotal(),
                 'stage'                => $order->stage ? [
                     'name'    => $order->stage->name,
                     'is_won'  => (bool) $order->stage->is_won,

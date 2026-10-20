@@ -795,6 +795,7 @@ namespace App\Models\Inkoop{
 /**
  * @property int $id
  * @property int $clinic_id
+ * @property int|null $activity_id
  * @property string|null $invoice_number
  * @property \Illuminate\Support\Carbon|null $invoice_date
  * @property numeric|null $total_amount
@@ -803,11 +804,13 @@ namespace App\Models\Inkoop{
  * @property string|null $name
  * @property \Illuminate\Support\Carbon|null $reference_date
  * @property \App\Enums\Inkoop\InkoopInvoiceParser|null $parser
+ * @property array<array-key, mixed>|null $parse_warnings
  * @property \App\Enums\Inkoop\InkoopInvoiceStatus $status
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \Webkul\Activity\Models\Activity|null $activity
  * @property-read \App\Models\Clinic $clinic
  * @property-read \Webkul\User\Models\User|null $creator
  * @property-read string|null $supplier_type
@@ -821,6 +824,7 @@ namespace App\Models\Inkoop{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereActivityId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereClinicId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereCreatedBy($value)
@@ -829,6 +833,7 @@ namespace App\Models\Inkoop{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereInvoiceDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereInvoiceNumber($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereParseWarnings($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereParser($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice wherePdfPath($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|InkoopInvoice whereReferenceDate($value)
@@ -1145,6 +1150,7 @@ namespace App\Models{
  * @property numeric $total_price
  * @property string|null $currency
  * @property \App\Enums\OrderItemStatus $status
+ * @property bool $lost_with_order
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property \Carbon\CarbonImmutable|null $created_at
@@ -1175,6 +1181,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereExternalId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereLostWithOrder($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereOrderId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem wherePartnerProductId($value)

@@ -55,14 +55,14 @@
             <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Totaal nog open</div>
             <div class="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-500">
                 {{-- Credits (to refund) are not "open", so they don't lower this total. --}}
-                {{ Currency::formatMoney($defaultCurrencyCode, $orders->sum(fn ($o) => max(0, round((float) ($o->total_price ?? 0) - $o->netReceivedAmount(), 2)))) }}
+                {{ Currency::formatMoney($defaultCurrencyCode, $orders->sum(fn ($o) => max(0, round($o->payableTotal() - $o->netReceivedAmount(), 2)))) }}
             </div>
         </div>
 
         <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Totaalwaarde orders</div>
             <div class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-                {{ Currency::formatMoney($defaultCurrencyCode, $orders->sum(fn ($o) => (float) ($o->total_price ?? 0))) }}
+                {{ Currency::formatMoney($defaultCurrencyCode, $orders->sum(fn ($o) => $o->payableTotal())) }}
             </div>
         </div>
     </div>
@@ -124,7 +124,8 @@
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                         @foreach ($orders as $index => $order)
                             @php
-                                $totalPrice    = round((float) ($order->total_price ?? 0), 2);
+                                // Te betalen bedrag, niet total_price: die bevat bij alleen verloren regels de verloren omzet.
+                                $totalPrice    = $order->payableTotal();
                                 $netReceived   = $order->netReceivedAmount();
                                 $openAmount    = round($totalPrice - $netReceived, 2);
                                 $isCredit      = $openAmount < 0;

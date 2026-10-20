@@ -56,6 +56,7 @@ class OrderItem extends Model
         'total_price'        => 'decimal:2',
         'currency'           => 'string',
         'status'             => OrderItemStatus::class,
+        'lost_with_order'    => 'boolean',
         'created_by'         => 'integer',
         'updated_by'         => 'integer',
     ];

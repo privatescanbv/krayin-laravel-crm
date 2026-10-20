@@ -22,7 +22,7 @@ class FindUnrefundedSurplusOrders extends Command
 
         foreach ($orders as $order) {
             $netPaid = $order->netPaidAmount();
-            $total = round((float) $order->total_price, 2);
+            $total = $order->payableTotal();
             $surplus = round($netPaid - $total, 2);
 
             if ($surplus <= 0.01) {

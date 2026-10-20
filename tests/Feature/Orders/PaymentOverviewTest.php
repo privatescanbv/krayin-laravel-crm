@@ -88,7 +88,7 @@ function paymentOverviewPayment(Order $order, float $amount, PaymentType $type, 
     ]);
 }
 
-test('payment overview never shows a lost order, even with a credit to refund', function () {
+test('payment overview shows a lost order with a credit to refund', function () {
     $order = Order::factory()->create([
         'pipeline_stage_id'    => $this->stageLost->id,
         'title'                => 'Verloren order met credit '.uniqid(),
@@ -99,7 +99,7 @@ test('payment overview never shows a lost order, even with a credit to refund', 
 
     $this->get(route('admin.orders.payment-overview', ['pipeline_id' => $this->pipeline->id]))
         ->assertOk()
-        ->assertDontSee($order->title, false);
+        ->assertSee($order->title, false);
 });
 
 test('payment overview hides a lost order once the refund is paid out', function () {
@@ -143,7 +143,7 @@ test('payment overview still hides an open order without examination date that i
         ->assertDontSee($order->title, false);
 });
 
-test('order set to lost after a deposit keeps its total, gets a full refund and leaves the overview', function () {
+test('order set to lost after a deposit keeps its total, gets a full refund and stays in the overview until it is paid out', function () {
     // Scenario from acceptance: order of 5000, 2500 paid, order set to Verloren.
     $order = Order::factory()->create([
         'pipeline_stage_id'    => PipelineStage::ORDER_CONFIRM->id(),
@@ -164,6 +164,10 @@ test('order set to lost after a deposit keeps its total, gets a full refund and 
         ->and((float) $openRefund->amount)->toBe(2500.0)
         ->and($openRefund->paid_at)->toBeNull();
 
+    $this->get($overviewUrl)->assertOk()->assertSee($order->title, false);
+
+    $openRefund->update(['paid_at' => now()->toDateString()]);
+
     $this->get($overviewUrl)
         ->assertOk()
         ->assertDontSee($order->title, false);
@@ -180,8 +184,7 @@ test('payment overview shows the full payment as credit for an order whose lines
     OrderItem::factory()->create(['order_id' => $order->id, 'total_price' => 59, 'status' => OrderItemStatus::LOST->value]);
     paymentOverviewPayment($order, 809, PaymentType::ADVANCE, now()->toDateString());
 
-    // total_price holds the lost revenue, the overview works with what is payable (€ 0).
-    expect((float) $order->fresh()->total_price)->toBe(809.0);
+    expect($order->fresh()->payableTotal())->toBe(0.0);
 
     $this->get(route('admin.orders.payment-overview', ['pipeline_id' => $this->pipeline->id]))
         ->assertOk()
@@ -189,6 +192,30 @@ test('payment overview shows the full payment as credit for an order whose lines
         ->assertSee($order->title, false)
         ->assertSeeText('Credit '.Currency::formatMoney('EUR', 809), false)
         ->assertSee('placeholder="809.00"', false);
+});
+
+test('payment overview leaves fully paid orders out of the query and keeps partially paid ones', function () {
+    $paid = Order::factory()->create([
+        'pipeline_stage_id'    => $this->stageOpen->id,
+        'first_examination_at' => now()->addWeek(),
+    ]);
+    OrderItem::factory()->create(['order_id' => $paid->id, 'total_price' => 500, 'status' => OrderItemStatus::NEW->value]);
+    OrderItem::factory()->create(['order_id' => $paid->id, 'total_price' => 200, 'status' => OrderItemStatus::LOST->value]);
+    paymentOverviewPayment($paid, 500, PaymentType::ADVANCE, now()->toDateString());
+
+    $partial = Order::factory()->create([
+        'pipeline_stage_id'    => $this->stageOpen->id,
+        'first_examination_at' => now()->addWeek(),
+    ]);
+    OrderItem::factory()->create(['order_id' => $partial->id, 'total_price' => 500, 'status' => OrderItemStatus::NEW->value]);
+    paymentOverviewPayment($partial, 600, PaymentType::ADVANCE, now()->toDateString());
+    // An unpaid refund doesn't count as received back yet.
+    paymentOverviewPayment($partial, 200, PaymentType::REFUND, null);
+    paymentOverviewPayment($partial, 150, PaymentType::REFUND, now()->toDateString());
+
+    $this->get(route('admin.orders.payment-overview', ['pipeline_id' => $this->pipeline->id]))
+        ->assertOk()
+        ->assertViewHas('orders', fn ($orders) => ! $orders->contains('id', $paid->id) && $orders->contains('id', $partial->id));
 });
 
 test('payment overview only counts the active lines of an order with a lost line as open', function () {
@@ -213,4 +240,16 @@ test('payment overview only counts the active lines of an order with a lost line
         ->and($row)->toContain(Currency::formatMoney('EUR', 750))
         ->and($row)->not->toContain(Currency::formatMoney('EUR', 1300))
         ->and($row)->not->toContain('Credit €');
+});
+
+test('order payments tab shows the amount to refund for a lost order with a credit', function () {
+    $order = Order::factory()->create([
+        'pipeline_stage_id' => $this->stageLost->id,
+        'total_price'       => 1949.00,
+    ]);
+    paymentOverviewPayment($order, 500, PaymentType::ADVANCE, now()->toDateString());
+
+    $this->get(route('admin.orders.view', $order->id))
+        ->assertOk()
+        ->assertSeeInOrder(['Terug te betalen', '€ 500,00'], false);
 });

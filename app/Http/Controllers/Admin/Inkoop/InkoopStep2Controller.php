@@ -262,7 +262,7 @@ class InkoopStep2Controller extends Controller
                 'invoicePurchasePrice',
             ])
             ->whereIn('person_id', $persons->pluck('crm_id'))
-            ->where('status', '!=', OrderItemStatus::LOST->value)
+            ->whereNotIn('status', OrderItemStatus::lostValues())
             ->whereHas('resourceOrderItem.resource.clinicDepartment', function ($q) use ($invoice) {
                 $q->where('clinic_id', $invoice->clinic_id);
             })

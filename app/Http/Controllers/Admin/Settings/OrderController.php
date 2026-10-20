@@ -31,6 +31,7 @@ use App\Services\PipelineCookieService;
 use App\Services\StageTransitionAttributes;
 use App\Traits\CreatesInlineOrganization;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -494,7 +495,7 @@ class OrderController extends SimpleEntityController
         if ($request->has('items') || $request->has('removed_order_item_ids')) {
             $currentItems = $order->orderItems()->get()->keyBy('id');
             $currentActiveItems = $currentItems->filter(
-                fn ($item) => $item->status !== OrderItemStatus::LOST
+                fn ($item) => ! $item->status?->isLost()
             );
             $updatedItemIds = [];
 
@@ -561,7 +562,7 @@ class OrderController extends SimpleEntityController
 
             foreach ($explicitlyRemovedIds as $itemId) {
                 $item = $currentItems->get($itemId);
-                if ($item && $item->status !== OrderItemStatus::LOST) {
+                if ($item && ! $item->status?->isLost()) {
                     $item->update(['status' => OrderItemStatus::LOST]);
                 }
                 $updatedItemIds[] = $itemId;
@@ -573,7 +574,7 @@ class OrderController extends SimpleEntityController
                 $itemsToRemove = $currentActiveItems->keys()->diff(collect($updatedItemIds)->unique());
                 foreach ($itemsToRemove as $itemId) {
                     $item = $currentItems->get($itemId);
-                    if ($item && $item->status !== OrderItemStatus::LOST) {
+                    if ($item && ! $item->status?->isLost()) {
                         $item->update(['status' => OrderItemStatus::LOST]);
                     }
                 }
@@ -940,23 +941,24 @@ class OrderController extends SimpleEntityController
 
         $stageIds = $currentPipeline->stages->pluck('id');
 
-        // Lost orders are never shown. Two kinds of rows:
+        // Two kinds of rows:
         // - open orders with an examination date that are not fully paid yet;
         // - orders with a credit (customer paid more than the total, e.g. lines set to LOST after a
-        //   deposit). Those must be refunded, so they are shown even without an examination date.
+        //   deposit, or a lost order). Those must be refunded, so they are shown even without an
+        //   examination date. A lost order has nothing to pay, so it only shows up with a credit.
         $orders = Order::query()
             ->with(['payments', 'orderItems.resourceOrderItems', 'stage'])
             ->whereIn('pipeline_stage_id', $stageIds)
-            ->whereHas('stage', fn ($s) => $s->where('is_lost', false))
             ->where(function ($q) {
                 $q->whereNotNull('first_examination_at')
                     ->orWhereHas('orderItems', function ($orderItems) {
                         $orderItems
-                            ->where('status', '!=', OrderItemStatus::LOST->value)
+                            ->whereNotIn('status', OrderItemStatus::lostValues())
                             ->whereHas('resourceOrderItems', fn ($roi) => $roi->whereNotNull('from'));
                     })
                     ->orWhereHas('payments');
             })
+            ->tap(fn ($q) => $this->whereNotSettled($q))
             ->get()
             ->filter(function (Order $o) {
                 $status = $o->paymentStatus();
@@ -1055,6 +1057,30 @@ class OrderController extends SimpleEntityController
         );
 
         return $result instanceof AnonymousResourceCollection ? $result->response() : $result;
+    }
+
+    /**
+     * SQL pre-filter mirroring Order::payableTotal() / netReceivedAmount(): drops fully paid and
+     * N.v.t. orders before hydration (thousands of them), so only open/credit orders are loaded.
+     * The PHP filter on paymentStatus() stays the source of truth.
+     */
+    protected function whereNotSettled(Builder $query): void
+    {
+        [$lost, $incorrect] = OrderItemStatus::lostValues();
+
+        $payable = 'CASE WHEN EXISTS (SELECT 1 FROM lead_pipeline_stages s WHERE s.id = orders.pipeline_stage_id AND s.is_lost = 1) THEN 0
+            WHEN EXISTS (SELECT 1 FROM order_items oi WHERE oi.order_id = orders.id)
+            THEN COALESCE((SELECT SUM(oi.total_price) FROM order_items oi WHERE oi.order_id = orders.id AND oi.status NOT IN (?, ?)), 0)
+            ELSE COALESCE(orders.total_price, 0) END';
+
+        $net = 'COALESCE((SELECT SUM(CASE WHEN op.type = ? THEN (CASE WHEN op.paid_at IS NULL THEN 0 ELSE -op.amount END) ELSE op.amount END)
+            FROM order_payments op WHERE op.order_id = orders.id), 0)';
+
+        // Shown statuses: CREDIT (net > payable) or NOT/PARTIALLY_PAID (payable > 0 and net < payable).
+        $query->whereRaw(
+            "(($net) > ($payable) OR (($payable) > 0 AND ($net) < ($payable)))",
+            [PaymentType::REFUND->value, $lost, $incorrect, $lost, $incorrect, PaymentType::REFUND->value, $lost, $incorrect],
+        );
     }
 
     /**

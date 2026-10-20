@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Services\Mail\GraphMailService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
+use RuntimeException;
 use Sentry\ClientBuilder;
 use Sentry\Event;
 use Sentry\SentrySdk;
@@ -88,7 +89,7 @@ class SyncGraphEmailsAlertDedupTest extends TestCase
         $this->fakeSync(fn () => throw new ConnectionException('network down'));
         $this->artisan('emails:sync-graph')->assertSuccessful();
 
-        $this->fakeSync(fn () => throw new \RuntimeException('something else broke'));
+        $this->fakeSync(fn () => throw new RuntimeException('something else broke'));
         $this->artisan('emails:sync-graph')->assertSuccessful();
 
         $this->assertCount(2, $this->sentEvents);

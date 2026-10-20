@@ -44,9 +44,11 @@
             </div>
         </div>
         <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Nog open</div>
-            <div class="mt-1 text-lg font-semibold {{ $openAmount > 0 ? 'text-amber-600 dark:text-amber-500' : 'text-gray-900 dark:text-white' }}">
-                @if ($totalToPay > 0)
+            <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ $openAmount < 0 ? 'Terug te betalen' : 'Nog open' }}</div>
+            <div class="mt-1 text-lg font-semibold {{ $openAmount > 0 ? 'text-amber-600 dark:text-amber-500' : ($openAmount < 0 ? 'text-purple-700 dark:text-purple-400' : 'text-gray-900 dark:text-white') }}">
+                @if ($openAmount < 0)
+                    {{ Currency::formatMoney($defaultCurrencyCode, abs($openAmount)) }}
+                @elseif ($totalToPay > 0)
                     {{ Currency::formatMoney($defaultCurrencyCode, $openAmount) }}
                 @else
                     —

@@ -189,7 +189,7 @@ class AfbDocumentGenerator
                     fn ($item) => (int) $item->person_id === $personId || $item->person_id === null
                 )
             )
-            ->where('status', '!=', OrderItemStatus::LOST->value)
+            ->whereNotIn('status', OrderItemStatus::lostValues())
             ->filter(fn ($item) => $item->resourceOrderItems
                 ->contains(fn ($roi) => (int) $roi->resource?->clinic_department_id === $departmentId))
             ->pluck('id')
@@ -275,7 +275,7 @@ class AfbDocumentGenerator
     private function extractDepartmentExaminations(Order $order, int $departmentId): Collection
     {
         return $order->orderItems
-            ->where('status', '!=', OrderItemStatus::LOST->value)
+            ->whereNotIn('status', OrderItemStatus::lostValues())
             ->flatMap(function ($item) use ($departmentId) {
                 return $item->resourceOrderItems
                     ->filter(fn (ResourceOrderItem $resourceOrderItem) => (int) $resourceOrderItem->resource?->clinic_department_id === $departmentId)

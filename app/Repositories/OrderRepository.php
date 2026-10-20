@@ -124,7 +124,7 @@ class OrderRepository extends Repository
             ->appointmentEligible()
             ->forPerson($person)
             ->with([
-                'orderItems' => fn ($q) => $q->where('status', '!=', OrderItemStatus::LOST->value),
+                'orderItems' => fn ($q) => $q->whereNotIn('status', OrderItemStatus::lostValues()),
                 'orderItems.resourceOrderItems',
             ]);
     }

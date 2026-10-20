@@ -35,7 +35,7 @@ class OrderItemObserver
     public function updated(OrderItem $orderItem): void
     {
         // If status changed to LOST, free up planning slots
-        if ($orderItem->wasChanged('status') && $orderItem->status === OrderItemStatus::LOST) {
+        if ($orderItem->wasChanged('status') && $orderItem->status?->isLost()) {
             DB::table('resource_orderitem')
                 ->where('orderitem_id', $orderItem->id)
                 ->delete();
@@ -51,7 +51,7 @@ class OrderItemObserver
             $orderItem->order?->recalculateTotalPrice();
         }
 
-        if ($orderItem->wasChanged('status') && $orderItem->status === OrderItemStatus::LOST) {
+        if ($orderItem->wasChanged('status') && $orderItem->status?->isLost()) {
             if ($order = $orderItem->order) {
                 $this->orderRefundService->createRefundIfSurplus($order, auth()->id());
             }

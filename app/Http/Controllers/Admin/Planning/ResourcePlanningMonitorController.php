@@ -70,7 +70,7 @@ class ResourcePlanningMonitorController extends Controller
 
         $order->setRelation(
             'orderItems',
-            $order->orderItems->reject(fn (OrderItem $item) => $item->status === OrderItemStatus::LOST)->values()
+            $order->orderItems->reject(fn (OrderItem $item) => $item->status?->isLost())->values()
         );
 
         $resourceTypes = ResourceType::all(['id', 'name']);
@@ -95,7 +95,7 @@ class ResourcePlanningMonitorController extends Controller
         ])->findOrFail($orderId);
 
         $resourceTypeNames = $order->orderItems
-            ->reject(fn (OrderItem $item) => $item->status === OrderItemStatus::LOST)
+            ->reject(fn (OrderItem $item) => $item->status?->isLost())
             ->map(fn (OrderItem $item) => $item->resolvedResourceTypeName())
             ->filter()
             ->unique()
@@ -754,7 +754,7 @@ class ResourcePlanningMonitorController extends Controller
         }
 
         // Get order items with their existing bookings (LOST items excluded)
-        $orderItems = $order->orderItems()->where('status', '!=', OrderItemStatus::LOST->value)->with([
+        $orderItems = $order->orderItems()->whereNotIn('status', OrderItemStatus::lostValues())->with([
             'product.partnerProducts',
             'person',
             'resourceType',
@@ -832,7 +832,7 @@ class ResourcePlanningMonitorController extends Controller
         }
 
         // Get order items with their existing bookings (LOST items excluded)
-        $orderItems = $order->orderItems()->where('status', '!=', OrderItemStatus::LOST->value)->with([
+        $orderItems = $order->orderItems()->whereNotIn('status', OrderItemStatus::lostValues())->with([
             'product.partnerProducts',
             'person',
             'resourceType',

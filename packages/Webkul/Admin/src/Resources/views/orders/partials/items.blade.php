@@ -319,7 +319,7 @@
                     this.$emit('onRemoveItem', this.item);
                 },
                 onStatusChange() {
-                    if (this.item.id && this.item.status !== 'lost') {
+                    if (this.item.id && ! @json(\App\Enums\OrderItemStatus::lostValues()).includes(this.item.status)) {
                         this.$emit('onRestoreItem', this.item.id);
                     }
                 },
@@ -328,7 +328,8 @@
                         'new': 'bg-neutral-bg text-gray-800',
                         'planned': 'bg-green-100 text-green-800',
                         'won': 'bg-blue-100 text-blue-800',
-                        'lost': 'bg-red-100 text-red-800'
+                        'lost': 'bg-red-100 text-red-800',
+                        'incorrect': 'bg-orange-100 text-orange-800'
                     };
                     return classes[status] || 'bg-neutral-bg text-gray-800';
                 },

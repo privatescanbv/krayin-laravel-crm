@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\Departments;
+use App\Enums\OrderItemStatus;
 use App\Enums\PipelineStage;
 use App\Models\Order;
+use App\Models\OrderItem;
 use Database\Seeders\TestSeeder;
 use Illuminate\Auth\Middleware\Authenticate;
 use Webkul\User\Models\Role;
@@ -172,4 +174,31 @@ test('revenue by month index page loads with filter-linked status columns', func
         ->assertSee("selectedGroups.includes('won')", false)
         ->assertSee("selectedGroups.includes('lost')", false)
         ->assertSee('Omzet bruto minus verloren');
+});
+
+test('revenue by month takes verloren omzet from LOST lines and ignores Foutief lines', function () {
+    $month = now()->startOfMonth();
+    $at = ['created_at' => $month->copy()->addDays(2), 'updated_at' => $month->copy()->addDays(2)];
+
+    $won = Order::factory()->create(['pipeline_stage_id' => PipelineStage::ORDER_GEWONNEN->id()] + $at);
+    OrderItem::factory()->create(['order_id' => $won->id, 'total_price' => 750, 'status' => OrderItemStatus::WON->value]);
+    OrderItem::factory()->create(['order_id' => $won->id, 'total_price' => 59, 'status' => OrderItemStatus::LOST->value]);
+    OrderItem::factory()->create(['order_id' => $won->id, 'total_price' => 300, 'status' => OrderItemStatus::INCORRECT->value]);
+
+    $lost = Order::factory()->create(['pipeline_stage_id' => PipelineStage::ORDER_VERLOREN->id()] + $at);
+    OrderItem::factory()->create(['order_id' => $lost->id, 'total_price' => 200, 'status' => OrderItemStatus::LOST->value]);
+    OrderItem::factory()->create(['order_id' => $lost->id, 'total_price' => 999, 'status' => OrderItemStatus::INCORRECT->value]);
+
+    $row = collect($this->getJson(route('admin.reports.revenue-by-month.data', [
+        'from'        => $month->format('Y-m'),
+        'to'          => $month->format('Y-m'),
+        'groups'      => ['option', 'nearly_won', 'won'],
+        'departments' => ['privatescan'],
+    ]))->assertOk()->json('months_data'))->firstWhere('key', $month->format('Y-m'));
+
+    expect($row['won'])->toEqual(750.0)
+        ->and($row['verloren'])->toEqual(259.0)
+        ->and($row['bruto'])->toEqual(1009.0)
+        ->and($row['netto'])->toEqual(750.0)
+        ->and(collect($row['orders']['lost'])->pluck('total_price')->sort()->values()->all())->toEqual([59.0, 200.0]);
 });

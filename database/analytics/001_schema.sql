@@ -95,7 +95,10 @@ CREATE TABLE analytics.dim_pipeline_stage (
 ) ENGINE=InnoDB;
 
 -- ---- fact_orders: één rij per order (order-grain) ----
--- verkoopprijs = orders.total_price: som niet-verloren regels; verloren order (of alle regels verloren) = som alle regels (Order::recalculateTotalPrice)
+-- verkoopprijs          = omzet onder de stage (= orders.total_price): verloren order → regels met status lost,
+--                         anders actieve regels (niet lost/incorrect); zonder regels → orders.total_price
+-- verloren_regels_omzet = regels met status lost op een NIET-verloren order (telt ook als verloren omzet)
+-- 'incorrect' (foutief aangeboden) telt nergens mee
 -- inkoopprijs  = som hoofd-inkoopprijs van de niet-verloren regels (Order::totalPurchasePrice)
 -- eerste_onderzoek_* = firstExaminationCarbon(): first_examination_at, of anders het
 --                      vroegste niet-verloren resource-slot.
@@ -130,6 +133,7 @@ CREATE TABLE analytics.fact_orders (
     eerste_onderzoek_datum_sk DATE          NULL,
     eerste_onderzoek_at       DATETIME      NULL,
     verkoopprijs              DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    verloren_regels_omzet     DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Regels met status lost op een niet-verloren order',
     inkoopprijs               DECIMAL(12,2) NOT NULL DEFAULT 0.00,
     marge                     DECIMAL(12,2) NOT NULL DEFAULT 0.00,
     betaalstatus                 VARCHAR(30)   NULL COMMENT 'Afgeleid uit order_payments, zie Order::paymentStatus() / OrderPaymentStatus::forOrder()',
@@ -191,7 +195,8 @@ CREATE TABLE analytics.fact_order_items (
     quantity          INT           NOT NULL DEFAULT 1,
     verkoopprijs      DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'order_items.total_price',
     inkoopprijs       DECIMAL(10,2) NULL     COMMENT 'purchase_prices.purchase_price type=main',
-    is_verloren       BOOLEAN       NOT NULL COMMENT 'order_items.status = LOST',
+    status            VARCHAR(20)   NULL     COMMENT 'order_items.status (new/planned/won/lost/incorrect)',
+    is_verloren       BOOLEAN       NOT NULL COMMENT 'order_items.status = lost (excl. incorrect)',
     geladen_op        TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (order_item_sk),
     INDEX idx_order        (order_id),
@@ -216,7 +221,7 @@ CREATE TABLE analytics.fact_planning (
     tot            DATETIME     NULL,
     van_datum_sk   DATE         NOT NULL COMMENT 'DATE(van)',
     duur_minuten   INT          NULL     COMMENT 'TIMESTAMPDIFF(MINUTE, van, tot)',
-    regel_verloren BOOLEAN      NOT NULL COMMENT 'order_items.status = LOST',
+    regel_verloren BOOLEAN      NOT NULL COMMENT 'order_items.status lost of incorrect (regel inactief)',
     geladen_op     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (planning_sk),
     INDEX idx_van_datum (van_datum_sk),

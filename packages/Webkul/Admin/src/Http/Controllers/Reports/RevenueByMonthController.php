@@ -150,20 +150,37 @@ class RevenueByMonthController extends Controller
                 continue;
             }
 
+            // Verloren omzet comes from the LOST lines; a non-lost order's active lines count under its own group.
+            [$amount, $lostLines] = $order->revenueSplit($group === 'lost');
+            if ($group === 'lost') {
+                [$amount, $lostLines] = [$lostLines, 0.0];
+            }
+
             $inkoop = $order->totalPurchasePrice();
-            $monthlyRevenue[$key][$group] += (float) $order->total_price;
+            $monthlyRevenue[$key][$group] += $amount;
             $inkooByMonth[$key] += $inkoop;
 
-            $ordersByMonthGroup[$key][$group][] = [
+            $row = [
                 'id'           => $order->id,
                 'label'        => $order->order_number ?: $order->title ?: "Order #{$order->id}",
                 'url'          => route('admin.orders.view', $order->id),
                 'created_at'   => $order->created_at->toDateString(),
                 'stage'        => $stageLabelMap->get($order->pipeline_stage_id, '—'),
                 'group'        => $group,
-                'total_price'  => round((float) $order->total_price, 2),
+                'total_price'  => $amount,
                 'inkoop_price' => round($inkoop, 2),
             ];
+            $ordersByMonthGroup[$key][$group][] = $row;
+
+            if ($lostLines > 0) {
+                $monthlyRevenue[$key]['lost'] += $lostLines;
+                $ordersByMonthGroup[$key]['lost'][] = array_merge($row, [
+                    'label'        => $row['label'].' (verloren regels)',
+                    'group'        => 'lost',
+                    'total_price'  => $lostLines,
+                    'inkoop_price' => 0.0,
+                ]);
+            }
         }
 
         $datasets = [];

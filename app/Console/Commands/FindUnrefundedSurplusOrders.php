@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\OrderItemStatus;
 use App\Enums\PaymentType;
 use App\Models\Order;
 use Illuminate\Console\Command;
@@ -14,7 +15,7 @@ class FindUnrefundedSurplusOrders extends Command
 
     public function handle(): int
     {
-        $orders = Order::whereHas('orderItems', fn ($q) => $q->where('status', 'lost'))
+        $orders = Order::whereHas('orderItems', fn ($q) => $q->whereIn('status', OrderItemStatus::lostValues()))
             ->with('payments', 'orderItems')
             ->get();
 

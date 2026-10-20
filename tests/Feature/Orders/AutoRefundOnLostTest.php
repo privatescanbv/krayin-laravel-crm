@@ -265,14 +265,14 @@ test('verloren order van 809 die volledig betaald is krijgt status credit en een
     ]);
 });
 
-test('gewonnen order met alleen verloren regels houdt het bruto totaal en is credit bij betaling', function () {
+test('gewonnen order met alleen verloren regels heeft totaal 0 en is credit bij betaling', function () {
     [$order, $item] = makeOrderWithPayment(itemPrice: 750.00, paidAmount: 809.00);
     OrderItem::factory()->create(['order_id' => $order->id, 'total_price' => 59.00, 'status' => OrderItemStatus::LOST]);
     $item->update(['status' => OrderItemStatus::LOST]);
 
     $order = $order->fresh();
 
-    expect((float) $order->total_price)->toBe(809.0)
-        ->and($order->payableTotal())->toBe(0.0)
+    expect((float) $order->total_price)->toBe(0.0)
+        ->and($order->lostItemsTotal())->toBe(809.0)
         ->and($order->paymentStatus())->toBe(OrderPaymentStatus::CREDIT);
 });

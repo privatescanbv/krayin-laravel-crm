@@ -222,7 +222,7 @@ class OrderItem extends Model
 
     public function scopeNotLost(Builder $query): Builder
     {
-        return $query->where('status', '!=', OrderItemStatus::LOST->value);
+        return $query->whereNotIn('status', OrderItemStatus::lostValues());
     }
 
     public function scopeForOrderAndNotLost(Builder $query, string $orderId): Builder

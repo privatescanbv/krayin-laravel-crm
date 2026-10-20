@@ -2,6 +2,7 @@
 
 namespace App\DataGrids\Settings;
 
+use App\Enums\OrderItemStatus;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
@@ -80,19 +81,9 @@ class OrderItemDataGrid extends DataGrid
             'filterable' => true,
             'sortable'   => true,
             'closure'    => function ($row) {
-                $classes = match ($row->status) {
-                    'planned' => 'bg-green-100 text-green-800',
-                    'won'     => 'bg-blue-100 text-blue-800',
-                    'lost'    => 'bg-red-100 text-red-800',
-                    default   => 'bg-neutral-bg text-gray-800',
-                };
-                $labels = [
-                    'new'     => 'Nieuw',
-                    'planned' => 'Ingepland',
-                    'won'     => 'Gewonnen',
-                    'lost'    => 'Verloren',
-                ];
-                $label = $labels[$row->status] ?? ($row->status ?? '-');
+                $status = OrderItemStatus::tryFrom((string) $row->status);
+                $classes = $status?->badgeClass() ?? 'bg-neutral-bg text-gray-800';
+                $label = $status?->label() ?? ($row->status ?? '-');
 
                 return $row->status
                     ? "<span class=\"inline-flex items-center px-2 py-1 text-xs font-medium rounded-full {$classes}\">{$label}</span>"

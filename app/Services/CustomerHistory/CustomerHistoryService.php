@@ -132,7 +132,7 @@ class CustomerHistoryService
             ->join('lead_pipeline_stages as s', 's.id', '=', 'o.pipeline_stage_id')
             ->where('oi.person_id', $personId)
             ->where('s.is_won', true)
-            ->where(fn (QueryBuilder $q) => $q->whereNull('oi.status')->orWhere('oi.status', '!=', OrderItemStatus::LOST->value))
+            ->where(fn (QueryBuilder $q) => $q->whereNull('oi.status')->orWhereNotIn('oi.status', OrderItemStatus::lostValues()))
             ->when($asOf, fn (QueryBuilder $q) => $q->whereRaw('COALESCE(o.closed_at, o.created_at) < ?', [$asOf]));
     }
 

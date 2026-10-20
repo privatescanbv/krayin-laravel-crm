@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Reports;
 
+use App\Enums\OrderItemStatus;
 use App\Enums\PipelineStage;
 use App\Models\Order;
 use Carbon\Carbon;
@@ -49,7 +50,7 @@ class OrdersByInvestigationDateController extends Controller
             ->where(function ($q) use ($weekStart, $weekEnd) {
                 $q->whereBetween('first_examination_at', [$weekStart->toDateString(), $weekEnd->toDateString()])
                   ->orWhereHas('orderItems', function ($q) use ($weekStart, $weekEnd) {
-                      $q->where('status', '!=', 'lost')
+                      $q->whereNotIn('status', OrderItemStatus::lostValues())
                         ->whereHas('resourceOrderItems', function ($q) use ($weekStart, $weekEnd) {
                             $q->whereBetween('from', [
                                 $weekStart->copy()->startOfDay(),

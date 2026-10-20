@@ -51,7 +51,7 @@ class ClinicGuideController extends Controller
                 $q->whereNotNull('first_examination_at')
                     ->orWhereHas('orderItems', function ($orderItems) {
                         $orderItems
-                            ->where('status', '!=', OrderItemStatus::LOST->value)
+                            ->whereNotIn('status', OrderItemStatus::lostValues())
                             ->whereHas('resourceOrderItems', fn ($roi) => $roi->whereNotNull('from'));
                     });
             })
@@ -61,7 +61,7 @@ class ClinicGuideController extends Controller
                 'salesLead.lead',
                 'salesLead.contactPerson',
                 'orderItems' => function ($query) {
-                    $query->where('status', '!=', OrderItemStatus::LOST->value)
+                    $query->whereNotIn('status', OrderItemStatus::lostValues())
                         ->whereHas('product', function ($q) {
                             $q->whereHas('partnerProducts', function ($q) {
                                 $q->whereHas('clinics');

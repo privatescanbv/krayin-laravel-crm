@@ -107,7 +107,8 @@
       "Bash(xargs -I{} sh -c 'echo {}; cat {}')",
       "mcp__bugsink__get_issue",
       "mcp__bugsink__get_event",
-      "Read(//private/tmp/**)"
+      "Read(//private/tmp/**)",
+      "mcp__bugsink__get_stacktrace"
     ]
   }
 }

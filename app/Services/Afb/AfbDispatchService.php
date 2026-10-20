@@ -482,7 +482,7 @@ class AfbDispatchService
         // New active items linked to this department not covered by any previous dispatch document
         $hasNewItems = OrderItem::query()
             ->where('order_id', $orderId)
-            ->where('status', '!=', OrderItemStatus::LOST->value)
+            ->whereNotIn('status', OrderItemStatus::lostValues())
             ->whereHas('resourceOrderItems', fn ($q) => $q
                 ->whereHas('resource', fn ($q) => $q->where('clinic_department_id', $departmentId)))
             ->whereNotIn('id', $allSentItemIds)
@@ -495,7 +495,7 @@ class AfbDispatchService
         // Items that were in any previous dispatch document but are now LOST
         return OrderItem::query()
             ->whereIn('id', $allSentItemIds)
-            ->where('status', OrderItemStatus::LOST->value)
+            ->whereIn('status', OrderItemStatus::lostValues())
             ->exists();
     }
 

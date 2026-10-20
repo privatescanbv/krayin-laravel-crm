@@ -35,7 +35,7 @@
     ];
 
     foreach (($order->orderItems ?? collect()) as $item) {
-        if ($item->status === OrderItemStatus::LOST) {
+        if ($item->status?->isLost()) {
             continue;
         }
 

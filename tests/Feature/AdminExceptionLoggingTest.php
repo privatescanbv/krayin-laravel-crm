@@ -4,10 +4,11 @@ namespace Tests\Feature;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use RuntimeException;
 
 test('an admin exception is not logged again under a fixed catch-all message', function () {
     config(['app.debug' => false]);
-    Route::get('/_test/admin-boom', fn () => throw new \RuntimeException('boom'));
+    Route::get('/_test/admin-boom', fn () => throw new RuntimeException('boom'));
 
     Log::spy();
 

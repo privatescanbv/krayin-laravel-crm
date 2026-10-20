@@ -181,26 +181,27 @@ class RevenueByEmployeeController extends Controller
             $color = self::PALETTE[count($datasets) % count(self::PALETTE)];
             $data = array_fill(0, $dayCount, 0.0);
 
+            // Verloren omzet comes from the LOST lines; a non-lost order's active lines count under its own group.
+            $isLostOrder = fn ($o) => in_array($o->pipeline_stage_id, $lostStageIds, true);
+            $split = $userOrders->mapWithKeys(fn ($o) => [$o->id => $o->revenueSplit($isLostOrder($o))]);
+            $amount = fn ($o) => $split[$o->id][0];
+            $lostLines = fn ($o) => $split[$o->id][1];
+            $lostSelected = in_array('lost', $selectedGroups, true);
+
             // Chart bars follow selected groups only (lost series/visibility via filter).
             foreach ($userOrders as $order) {
-                if (! in_array($order->pipeline_stage_id, $selectedStageIds, true)) {
-                    continue;
-                }
+                $value = (in_array($order->pipeline_stage_id, $selectedStageIds, true) ? $amount($order) : 0.0)
+                    + ($lostSelected ? $lostLines($order) : 0.0);
 
                 $index = $dayIndex->get($order->created_at->toDateString());
 
-                if ($index !== null) {
-                    $data[$index] = round($data[$index] + (float) $order->total_price, 2);
+                if ($index !== null && $value != 0.0) {
+                    $data[$index] = round($data[$index] + $value, 2);
                 }
             }
 
             $name = $user?->name ?: 'Onbekende medewerker';
-            $verloren = round(
-                $userOrders
-                    ->filter(fn ($o) => in_array($o->pipeline_stage_id, $lostStageIds, true))
-                    ->sum(fn ($o) => (float) $o->total_price),
-                2
-            );
+            $verloren = round($userOrders->sum($lostLines), 2);
             $selectedNonLostTotal = round(
                 $userOrders
                     ->filter(function ($o) use ($stageToGroup, $selectedGroups) {
@@ -208,7 +209,7 @@ class RevenueByEmployeeController extends Controller
 
                         return $group !== null && $group !== 'lost' && in_array($group, $selectedGroups, true);
                     })
-                    ->sum(fn ($o) => (float) $o->total_price),
+                    ->sum($amount),
                 2
             );
             $bruto = round($selectedNonLostTotal + $verloren, 2);
@@ -233,17 +234,31 @@ class RevenueByEmployeeController extends Controller
                 ),
                 'netto'    => round($bruto - $verloren, 2),
                 'orders'   => $userOrders
-                    ->map(fn ($o) => [
-                        'id'           => $o->id,
-                        'label'        => $o->order_number ?: $o->title ?: "Order #{$o->id}",
-                        'url'          => route('admin.orders.view', $o->id),
-                        'created_at'   => $o->created_at->toDateString(),
-                        'stage'        => $stageLabelMap->get($o->pipeline_stage_id, '—'),
-                        'group'        => $stageToGroup[$o->pipeline_stage_id] ?? null,
-                        'is_lost'      => in_array($o->pipeline_stage_id, $lostStageIds, true),
-                        'total_price'  => round((float) $o->total_price, 2),
-                        'inkoop_price' => $o->totalPurchasePrice(),
-                    ])
+                    ->flatMap(function ($o) use ($stageLabelMap, $stageToGroup, $isLostOrder, $lostLines, $amount) {
+                        $row = [
+                            'id'           => $o->id,
+                            'label'        => $o->order_number ?: $o->title ?: "Order #{$o->id}",
+                            'url'          => route('admin.orders.view', $o->id),
+                            'created_at'   => $o->created_at->toDateString(),
+                            'stage'        => $stageLabelMap->get($o->pipeline_stage_id, '—'),
+                            'group'        => $stageToGroup[$o->pipeline_stage_id] ?? null,
+                            'is_lost'      => $isLostOrder($o),
+                            'total_price'  => $isLostOrder($o) ? $lostLines($o) : $amount($o),
+                            'inkoop_price' => $o->totalPurchasePrice(),
+                        ];
+
+                        if ($isLostOrder($o) || $lostLines($o) <= 0) {
+                            return [$row];
+                        }
+
+                        return [$row, array_merge($row, [
+                            'label'        => $row['label'].' (verloren regels)',
+                            'group'        => 'lost',
+                            'is_lost'      => true,
+                            'total_price'  => $lostLines($o),
+                            'inkoop_price' => 0.0,
+                        ])];
+                    })
                     ->values()
                     ->all(),
             ];

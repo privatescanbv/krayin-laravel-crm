@@ -98,7 +98,7 @@ BEGIN
     CREATE TEMPORARY TABLE tmp_slot (order_id BIGINT PRIMARY KEY, vroegste DATETIME) ENGINE=MEMORY
     SELECT oi.order_id, MIN(roi.`from`) AS vroegste
     FROM   privatescan.resource_orderitem roi
-    JOIN   privatescan.order_items oi ON oi.id = roi.orderitem_id AND oi.status <> 'LOST'
+    JOIN   privatescan.order_items oi ON oi.id = roi.orderitem_id AND oi.status NOT IN ('lost', 'incorrect')
     GROUP  BY oi.order_id;
 
     -- Betaalstatus-aggregaat: netto ontvangen bedrag per order.
@@ -140,15 +140,19 @@ BEGIN
     DROP TEMPORARY TABLE IF EXISTS tmp_order_regels;
     CREATE TEMPORARY TABLE tmp_order_regels (
         order_id  BIGINT PRIMARY KEY,
-        inkoop    DECIMAL(12,2),
-        n_totaal  INT,
-        n_actief  INT
+        inkoop         DECIMAL(12,2),
+        omzet_actief   DECIMAL(12,2),
+        omzet_verloren DECIMAL(12,2),
+        n_totaal       INT,
+        n_actief       INT
     ) ENGINE=MEMORY
     SELECT
         oi.order_id,
-        SUM(CASE WHEN oi.status <> 'LOST' THEN COALESCE(pp.purchase_price, 0) ELSE 0 END) AS inkoop,
-        COUNT(*)                                                                          AS n_totaal,
-        SUM(oi.status <> 'LOST')                                                          AS n_actief
+        SUM(CASE WHEN oi.status NOT IN ('lost', 'incorrect') THEN COALESCE(pp.purchase_price, 0) ELSE 0 END) AS inkoop,
+        SUM(CASE WHEN oi.status NOT IN ('lost', 'incorrect') THEN COALESCE(oi.total_price, 0) ELSE 0 END)    AS omzet_actief,
+        SUM(CASE WHEN oi.status = 'lost' THEN COALESCE(oi.total_price, 0) ELSE 0 END)                        AS omzet_verloren,
+        COUNT(*)                                                                                             AS n_totaal,
+        SUM(oi.status NOT IN ('lost', 'incorrect'))                                                          AS n_actief
     FROM privatescan.order_items oi
     LEFT JOIN privatescan.purchase_prices pp
         ON  pp.priceable_type = 'order_items'   -- morph-alias (Relation::morphMap), niet de FQCN
@@ -166,7 +170,7 @@ BEGIN
          afdeling, status_categorie, is_verloren, is_gewonnen, lost_reason,
          bron, campagne, landing_page, attribution_url, is_zakelijk, organisatie,
          verkoopdatum_sk, gesloten_datum_sk, verloren_at, doorloop_dagen, eerste_onderzoek_datum_sk, eerste_onderzoek_at,
-         verkoopprijs, inkoopprijs, marge, betaalstatus, aantal_regels, aantal_regels_actief, geladen_op)
+         verkoopprijs, verloren_regels_omzet, inkoopprijs, marge, betaalstatus, aantal_regels, aantal_regels_actief, geladen_op)
     SELECT
         o.id,
         o.order_number,
@@ -204,17 +208,16 @@ BEGIN
                  )
             ELSE NULL
         END,
-        COALESCE(o.total_price, 0),
+        x.verkoopprijs,
+        x.verloren_regels_omzet,
         COALESCE(r.inkoop, 0),
-        COALESCE(o.total_price, 0) - COALESCE(r.inkoop, 0),
+        x.verkoopprijs - COALESCE(r.inkoop, 0),
+        -- te betalen (Order::payableTotal): 0 bij een verloren order, anders verkoopprijs
         CASE
-            -- verloren order of alle regels verloren: te betalen = 0 (Order::payableTotal), total_price = verloren omzet
-            WHEN COALESCE(ds.is_verloren, 0) = 1 OR (COALESCE(r.n_totaal, 0) > 0 AND COALESCE(r.n_actief, 0) = 0)
-                                                            THEN IF(COALESCE(op.ontvangen, 0) > 0, 'credit', 'niet_van_toepassing')
-            WHEN COALESCE(o.total_price, 0) <= 0           THEN 'niet_van_toepassing'
-            WHEN COALESCE(op.ontvangen, 0) <= 0             THEN 'niet_betaald'
-            WHEN op.ontvangen > COALESCE(o.total_price, 0)  THEN 'credit'
-            WHEN op.ontvangen >= COALESCE(o.total_price, 0) THEN 'volledig_betaald'
+            WHEN x.te_betalen <= 0                     THEN IF(COALESCE(op.ontvangen, 0) > 0, 'credit', 'niet_van_toepassing')
+            WHEN COALESCE(op.ontvangen, 0) <= 0        THEN 'niet_betaald'
+            WHEN op.ontvangen > x.te_betalen           THEN 'credit'
+            WHEN op.ontvangen >= x.te_betalen          THEN 'volledig_betaald'
             ELSE 'gedeeltelijk_betaald'
         END,
         COALESCE(r.n_totaal, 0),
@@ -229,7 +232,22 @@ BEGIN
     LEFT JOIN tmp_slot                     sl_slot ON sl_slot.order_id = o.id
     LEFT JOIN tmp_order_regels             r       ON r.order_id  = o.id
     LEFT JOIN tmp_order_payments            op      ON op.order_id = o.id
-    LEFT JOIN tmp_lost_stage_at             lsa     ON lsa.order_id = o.id;
+    LEFT JOIN tmp_lost_stage_at             lsa     ON lsa.order_id = o.id
+    -- Order::revenueSplit(): verloren order → verloren regels; anders actieve regels + verloren regels apart
+    CROSS JOIN LATERAL (
+        SELECT
+            CASE
+                WHEN COALESCE(r.n_totaal, 0) = 0     THEN COALESCE(o.total_price, 0)
+                WHEN COALESCE(ds.is_verloren, 0) = 1 THEN COALESCE(r.omzet_verloren, 0)
+                ELSE COALESCE(r.omzet_actief, 0)
+            END AS verkoopprijs,
+            IF(COALESCE(ds.is_verloren, 0) = 1, 0, COALESCE(r.omzet_verloren, 0)) AS verloren_regels_omzet,
+            CASE
+                WHEN COALESCE(ds.is_verloren, 0) = 1 THEN 0
+                WHEN COALESCE(r.n_totaal, 0) = 0     THEN COALESCE(o.total_price, 0)
+                ELSE COALESCE(r.omzet_actief, 0)
+            END AS te_betalen
+    ) x;
 
     DELETE f FROM analytics.fact_orders f
     LEFT JOIN privatescan.orders o ON o.id = f.order_sk
@@ -286,7 +304,7 @@ BEGIN
     REPLACE INTO analytics.fact_order_items
         (order_item_sk, order_id, ordernummer, product_sk, user_sk, stage_sk,
          verkoopdatum_sk, gesloten_datum_sk, quantity, verkoopprijs, inkoopprijs,
-         is_verloren, geladen_op)
+         status, is_verloren, geladen_op)
     SELECT
         oi.id,
         o.id,
@@ -299,7 +317,8 @@ BEGIN
         COALESCE(oi.quantity, 1),
         COALESCE(oi.total_price, 0),
         pp.purchase_price,
-        oi.status = 'LOST',
+        oi.status,
+        oi.status = 'lost',
         NOW()
     FROM privatescan.order_items oi
     JOIN privatescan.orders o ON o.id = oi.order_id
@@ -331,7 +350,7 @@ BEGIN
         roi.`to`,
         DATE(roi.`from`),
         TIMESTAMPDIFF(MINUTE, roi.`from`, roi.`to`),
-        oi.status = 'LOST',
+        oi.status IN ('lost', 'incorrect'),
         NOW()
     FROM privatescan.resource_orderitem roi
     JOIN privatescan.order_items oi ON oi.id = roi.orderitem_id
@@ -408,7 +427,7 @@ BEGIN
                SUBSTRING_INDEX(GROUP_CONCAT(CASE WHEN dp.hoofd_groep = 'Behandelingen' THEN dp.product_groep END ORDER BY oi.id SEPARATOR '|'), '|', 1) AS behandeling_type,
                SUBSTRING_INDEX(GROUP_CONCAT(CASE WHEN dp.hoofd_groep = 'Behandelingen' THEN pg2.name END ORDER BY oi.id SEPARATOR '|'), '|', 1) AS behandeling_soort
         FROM privatescan.orders o
-        JOIN privatescan.order_items oi ON oi.order_id = o.id AND oi.status <> 'LOST'
+        JOIN privatescan.order_items oi ON oi.order_id = o.id AND oi.status NOT IN ('lost', 'incorrect')
         JOIN analytics.dim_product dp ON dp.product_sk = oi.product_id
         JOIN privatescan.products p ON p.id = oi.product_id
         LEFT JOIN privatescan.product_groups pg1 ON pg1.id = p.product_group_id

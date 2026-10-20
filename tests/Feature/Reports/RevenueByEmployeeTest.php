@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\Departments;
+use App\Enums\OrderItemStatus;
 use App\Enums\PipelineStage;
 use App\Models\Order;
+use App\Models\OrderItem;
 use Database\Seeders\TestSeeder;
 use Illuminate\Auth\Middleware\Authenticate;
 use Webkul\User\Models\Role;
@@ -289,4 +291,31 @@ test('migration grants metabase.crm-reports to all custom roles', function () {
 
     expect($medewerker->fresh()->permissions)->toBe(['dashboard', 'metabase.crm-reports'])
         ->and($alreadyHas->fresh()->permissions)->toBe(['metabase.crm-reports']);
+});
+
+test('revenue by employee takes verloren omzet from LOST lines and ignores Foutief lines', function () {
+    $weekStart = now()->startOfWeek();
+    $at = ['user_id' => $this->admin->id, 'created_at' => $weekStart->copy()->addDay(), 'updated_at' => $weekStart->copy()->addDay()];
+
+    $won = Order::factory()->create(['pipeline_stage_id' => PipelineStage::ORDER_GEWONNEN->id()] + $at);
+    OrderItem::factory()->create(['order_id' => $won->id, 'total_price' => 750, 'status' => OrderItemStatus::WON->value]);
+    OrderItem::factory()->create(['order_id' => $won->id, 'total_price' => 59, 'status' => OrderItemStatus::LOST->value]);
+    OrderItem::factory()->create(['order_id' => $won->id, 'total_price' => 300, 'status' => OrderItemStatus::INCORRECT->value]);
+
+    $lost = Order::factory()->create(['pipeline_stage_id' => PipelineStage::ORDER_VERLOREN->id()] + $at);
+    OrderItem::factory()->create(['order_id' => $lost->id, 'total_price' => 200, 'status' => OrderItemStatus::LOST->value]);
+    OrderItem::factory()->create(['order_id' => $lost->id, 'total_price' => 999, 'status' => OrderItemStatus::INCORRECT->value]);
+
+    $employee = collect($this->getJson(route('admin.reports.revenue-by-employee.data', [
+        'period'      => 'week',
+        'week'        => $weekStart->isoWeek(),
+        'year'        => $weekStart->isoWeekYear(),
+        'groups'      => ['option', 'nearly_won', 'won'],
+        'departments' => ['privatescan'],
+    ]))->assertOk()->json('employees'))->firstWhere('user_id', $this->admin->id);
+
+    expect($employee['bruto'])->toEqual(1009.0)
+        ->and($employee['verloren'])->toEqual(259.0)
+        ->and($employee['netto'])->toEqual(750.0)
+        ->and(collect($employee['orders'])->where('is_lost', true)->pluck('total_price')->sort()->values()->all())->toEqual([59.0, 200.0]);
 });

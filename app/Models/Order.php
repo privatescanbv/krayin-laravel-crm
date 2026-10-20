@@ -258,7 +258,7 @@ class Order extends Model
     public function displayableOrderItems(?int $personId = null): Collection
     {
         $items = $this->relationLoaded('orderItems')
-            ? $this->orderItems->filter(fn (OrderItem $item) => $item->status !== OrderItemStatus::LOST)
+            ? $this->orderItems->filter(fn (OrderItem $item) => ! $item->status?->isLost())
             : $this->activeOrderItems()->get();
 
         if ($personId !== null) {
@@ -282,7 +282,7 @@ class Order extends Model
         $this->loadMissing('orderItems.resourceOrderItems');
 
         $fromTimes = $this->orderItems
-            ->filter(fn (OrderItem $item) => $item->status !== OrderItemStatus::LOST)
+            ->filter(fn (OrderItem $item) => ! $item->status?->isLost())
             ->flatMap(fn (OrderItem $item) => $item->resourceOrderItems)
             ->pluck('from')
             ->filter()
@@ -318,7 +318,7 @@ class Order extends Model
         }
 
         $slotsByDate = $this->orderItems
-            ->filter(fn (OrderItem $item) => $item->status !== OrderItemStatus::LOST)
+            ->filter(fn (OrderItem $item) => ! $item->status?->isLost())
             ->flatMap(fn (OrderItem $item) => $item->resourceOrderItems)
             ->pluck('from')
             ->filter()
@@ -592,41 +592,73 @@ class Order extends Model
     }
 
     /**
-     * Herbereken total_price en sla op zonder observers: som van de niet-LOST orderregels.
-     * Een verloren order, of een order waarvan alle regels LOST zijn, krijgt de som van alle regels (verloren omzet).
+     * Herbereken total_price en sla op zonder observers: som van de actieve orderregels (niet LOST/INCORRECT).
+     * Een verloren order krijgt de som van de LOST regels (verloren omzet); INCORRECT telt nooit mee.
      * Wat de klant moet betalen staat in payableTotal().
      */
     public function recalculateTotalPrice(): void
     {
-        $items = $this->orderItems()->get(['id', 'status', 'total_price']);
-        $active = $items->filter(fn (OrderItem $item) => $item->status !== OrderItemStatus::LOST);
-
-        $newTotal = $this->stage()->value('is_lost') || $active->isEmpty()
-            ? $items->sum('total_price')
-            : $active->sum('total_price');
+        $newTotal = $this->stage()->value('is_lost')
+            ? $this->orderItems()->where('status', OrderItemStatus::LOST->value)->sum('total_price')
+            : $this->orderItems()->notLost()->sum('total_price');
 
         $this->total_price = $newTotal;
         DB::table('orders')->where('id', $this->id)->update(['total_price' => $newTotal]);
     }
 
     /**
-     * Bedrag dat de klant moet betalen: som van de niet-LOST orderregels, 0 voor een verloren order
-     * (alles wordt terugbetaald). Zonder orderregels geldt het handmatige total_price.
+     * Som van de actieve orderregels (niet LOST/INCORRECT). Zonder orderregels geldt het handmatige total_price.
      * Uses eager-loaded orderItems when present.
      */
-    public function payableTotal(): float
+    public function activeItemsTotal(): float
     {
-        if ($this->isLost()) {
-            return 0.0;
-        }
-
         $items = $this->relationLoaded('orderItems') ? $this->orderItems : $this->orderItems()->get(['id', 'order_id', 'status', 'total_price']);
 
         if ($items->isEmpty()) {
             return round((float) $this->total_price, 2);
         }
 
-        return round((float) $items->filter(fn (OrderItem $item) => $item->status !== OrderItemStatus::LOST)->sum('total_price'), 2);
+        return round((float) $items->reject(fn (OrderItem $item) => $item->status?->isLost())->sum('total_price'), 2);
+    }
+
+    /**
+     * Verloren omzet van deze order: som van de LOST orderregels (INCORRECT telt niet mee).
+     * Uses eager-loaded orderItems when present.
+     */
+    public function lostItemsTotal(): float
+    {
+        $total = $this->relationLoaded('orderItems')
+            ? $this->orderItems->filter(fn (OrderItem $item) => $item->status === OrderItemStatus::LOST)->sum('total_price')
+            : $this->orderItems()->where('status', OrderItemStatus::LOST->value)->sum('total_price');
+
+        return round((float) $total, 2);
+    }
+
+    /**
+     * Omzet gesplitst voor rapportage: [omzet onder de stage van de order, verloren omzet].
+     * Verloren order: alleen de LOST regels (zonder regels: total_price). Anders: actieve regels + LOST regels apart.
+     * INCORRECT telt nergens mee.
+     *
+     * @param  bool|null  $isLost  pass when the caller already knows the stage (avoids loading it per order)
+     * @return array{0: float, 1: float}
+     */
+    public function revenueSplit(?bool $isLost = null): array
+    {
+        if ($isLost ?? $this->isLost()) {
+            $hasItems = $this->relationLoaded('orderItems') ? $this->orderItems->isNotEmpty() : $this->orderItems()->exists();
+
+            return [0.0, $hasItems ? $this->lostItemsTotal() : round((float) $this->total_price, 2)];
+        }
+
+        return [$this->activeItemsTotal(), $this->lostItemsTotal()];
+    }
+
+    /**
+     * Bedrag dat de klant moet betalen: de actieve orderregels, 0 voor een verloren order (alles wordt terugbetaald).
+     */
+    public function payableTotal(): float
+    {
+        return $this->isLost() ? 0.0 : $this->activeItemsTotal();
     }
 
     /**
@@ -651,7 +683,7 @@ class Order extends Model
 
         return round(
             (float) $this->orderItems
-                ->reject(fn ($item) => $item->status === OrderItemStatus::LOST)
+                ->reject(fn ($item) => $item->status?->isLost())
                 ->sum(fn ($item) => (float) $item->resolvedPurchasePrice()->purchase_price),
             2
         );
@@ -665,7 +697,7 @@ class Order extends Model
         $purchaseTotal = $this->totalPurchasePrice();
         $invoiceTotal = round(
             (float) $this->orderItems
-                ->reject(fn ($item) => $item->status === OrderItemStatus::LOST)
+                ->reject(fn ($item) => $item->status?->isLost())
                 ->sum(function ($item) {
                     // Forced items tellen mee als volledig betaald zodat het aggregaat klopt
                     // zonder de opgeslagen factuurprijs te wijzigen.
@@ -754,7 +786,7 @@ class Order extends Model
                 $q->whereNotNull('first_examination_at')
                     ->orWhereHas('orderItems', function (Builder $orderItems) {
                         $orderItems
-                            ->where('status', '!=', OrderItemStatus::LOST->value)
+                            ->whereNotIn('status', OrderItemStatus::lostValues())
                             ->whereHas('resourceOrderItems', fn (Builder $roi) => $roi->whereNotNull('from'));
                     });
             });

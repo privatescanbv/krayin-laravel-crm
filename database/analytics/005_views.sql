@@ -47,7 +47,8 @@ SELECT
     f.verkoopprijs,
     f.inkoopprijs,
     f.verkoopprijs - COALESCE(f.inkoopprijs, 0) AS marge,
-    f.is_verloren    AS regel_verloren
+    f.status         AS regel_status,
+    f.status IN ('lost', 'incorrect') AS regel_verloren  -- regel telt niet als verkoop (verloren of foutief aangeboden)
 
 FROM      analytics.fact_order_items   f
 JOIN      analytics.dim_date           dd ON dd.date_sk    = f.verkoopdatum_sk
@@ -86,6 +87,7 @@ SELECT
     o.eerste_onderzoek_datum_sk AS eerste_onderzoek_datum,
     o.eerste_onderzoek_at,
     o.verkoopprijs,
+    o.verloren_regels_omzet,
     o.inkoopprijs,
     o.marge,
     o.aantal_regels,
@@ -99,6 +101,7 @@ LEFT JOIN analytics.dim_date             dd ON dd.date_sk  = o.verkoopdatum_sk;
 -- =========================================================
 -- Omzet per maand  (= /admin/reports/revenue-by-month)
 -- =========================================================
+-- Verloren omzet = verloren orders + verloren regels op niet-verloren orders (zonder het aantal orders op te hogen).
 CREATE OR REPLACE VIEW analytics.v_omzet_per_maand AS
 SELECT
     maand,
@@ -106,11 +109,18 @@ SELECT
     maand_nummer,
     afdeling,
     status_categorie,
-    COUNT(*)          AS aantal_orders,
-    SUM(verkoopprijs) AS omzet,
+    SUM(n_orders)     AS aantal_orders,
+    SUM(omzet)        AS omzet,
     SUM(inkoopprijs)  AS inkoop,
     SUM(marge)        AS marge
-FROM     analytics.v_orders
+FROM (
+    SELECT maand, jaar, maand_nummer, afdeling, status_categorie, 1 AS n_orders, verkoopprijs AS omzet, inkoopprijs, marge
+    FROM   analytics.v_orders
+    UNION ALL
+    SELECT maand, jaar, maand_nummer, afdeling, 'lost', 0, verloren_regels_omzet, 0, verloren_regels_omzet
+    FROM   analytics.v_orders
+    WHERE  verloren_regels_omzet <> 0 AND status_categorie IS NOT NULL
+) o
 WHERE    status_categorie IS NOT NULL          -- alleen order-pipeline fasen
 GROUP BY maand, jaar, maand_nummer, afdeling, status_categorie;
 
@@ -148,11 +158,20 @@ SELECT
     verkoper_sk,
     verkoper,
     status_categorie,
-    COUNT(*)          AS aantal_orders,
-    SUM(verkoopprijs) AS omzet,
+    SUM(n_orders)     AS aantal_orders,
+    SUM(omzet)        AS omzet,
     SUM(inkoopprijs)  AS inkoop,
     SUM(marge)        AS marge
-FROM     analytics.v_orders
+FROM (
+    SELECT verkoopdatum, jaar, jaar_week, week_nummer, maand_nummer, maand, afdeling, verkoper_sk, verkoper,
+           status_categorie, 1 AS n_orders, verkoopprijs AS omzet, inkoopprijs, marge
+    FROM   analytics.v_orders
+    UNION ALL
+    SELECT verkoopdatum, jaar, jaar_week, week_nummer, maand_nummer, maand, afdeling, verkoper_sk, verkoper,
+           'lost', 0, verloren_regels_omzet, 0, verloren_regels_omzet
+    FROM   analytics.v_orders
+    WHERE  verloren_regels_omzet <> 0 AND status_categorie IS NOT NULL
+) o
 WHERE    status_categorie IS NOT NULL
      AND verkoper_sk IS NOT NULL
 GROUP BY verkoopdatum, jaar, jaar_week, week_nummer, maand_nummer, maand,

@@ -52,6 +52,7 @@ class FixWonOrderItemStatuses extends Command
                 $q->whereNotIn('status', [
                     OrderItemStatus::WON->value,
                     OrderItemStatus::LOST->value,
+                    OrderItemStatus::INCORRECT->value,
                 ]);
             },
         ])->chunkById(self::CHUNK_SIZE, function (Collection $orders) use (&$tableRows, &$updatedItemCount, $dryRun, $bar) {
@@ -129,6 +130,7 @@ class FixWonOrderItemStatuses extends Command
                 $items->whereNotIn('status', [
                     OrderItemStatus::WON->value,
                     OrderItemStatus::LOST->value,
+                    OrderItemStatus::INCORRECT->value,
                 ]);
             })
             ->orderBy('id');

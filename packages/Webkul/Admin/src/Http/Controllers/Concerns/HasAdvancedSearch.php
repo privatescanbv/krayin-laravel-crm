@@ -41,13 +41,12 @@ trait HasAdvancedSearch
     /**
      * Perform advanced search with normalization.
      *
-     * @param mixed $repository Repository instance or query builder
-     * @param callable $getFieldsSearchable Callable that returns array of searchable fields
-     * @param array $eagerLoadRelations Relations to eager load
-     * @param callable $getResults Callable that returns the search results
-     * @param string $resourceClass Resource class to wrap results
-     * @param array $queryParams Query parameters array (e.g., ['search' => '...', 'searchFields' => '...', 'limit' => 10])
-     * @return AnonymousResourceCollection|JsonResponse
+     * @param  mixed  $repository  Repository instance or query builder
+     * @param  callable  $getFieldsSearchable  Callable that returns array of searchable fields
+     * @param  array  $eagerLoadRelations  Relations to eager load
+     * @param  callable  $getResults  Callable that returns the search results
+     * @param  string  $resourceClass  Resource class to wrap results
+     * @param  array  $queryParams  Query parameters array (e.g., ['search' => '...', 'searchFields' => '...', 'limit' => 10])
      */
     protected function performAdvancedSearch(
         mixed $repository,
@@ -67,7 +66,7 @@ trait HasAdvancedSearch
         $limit = isset($queryParams['limit']) ? (int) $queryParams['limit'] : 10;
 
         // Validate query length (Bad Request when > 25 characters)
-        if (!empty($query) && mb_strlen($query) > 50) {
+        if (! empty($query) && mb_strlen($query) > 50) {
             return response()->json([
                 'message' => __('messages.search.term_too_long'),
             ], 400);
@@ -86,12 +85,12 @@ trait HasAdvancedSearch
 
         // Handle simple query parameter (for backward compatibility and entity lookup)
         // Convert query parameter to search format if search/searchFields are not present
-        if ($query && !$search && !$searchFields) {
+        if ($query && ! $search && ! $searchFields) {
             // Get raw search term for multi-token handling
             $rawSearchTerm = trim((string) $query);
 
             // Handle multi-token search (AND-of-ORs) - only if not already fielded search
-            if (!str_contains($rawSearchTerm, ':')) {
+            if (! str_contains($rawSearchTerm, ':')) {
                 $tokens = preg_split('/\s+/', $rawSearchTerm, -1, PREG_SPLIT_NO_EMPTY);
                 if (count($tokens) > 1) {
                     // Multi-token: apply tokenized AND-of-ORs
@@ -106,12 +105,12 @@ trait HasAdvancedSearch
                     $searchFieldTokens = [];
 
                     foreach ($nameFields as $field) {
-                        $searchTokens[] = $field . ':' . $rawSearchTerm;
-                        $searchFieldTokens[] = $field . ':like';
+                        $searchTokens[] = $field.':'.$rawSearchTerm;
+                        $searchFieldTokens[] = $field.':like';
                     }
 
-                    $search = implode(';', $searchTokens) . ';';
-                    $searchFields = implode(';', $searchFieldTokens) . ';';
+                    $search = implode(';', $searchTokens).';';
+                    $searchFields = implode(';', $searchFieldTokens).';';
                     $searchJoin = 'or';
 
                     // Store for email/phone search (will be added in normalizeEmailPhoneSearch)
@@ -125,7 +124,7 @@ trait HasAdvancedSearch
 
         // Handle search parameter without searchFields (common case from frontend)
         // Convert plain text search to proper format if searchFields is missing
-        if ($search && !$searchFields && !str_contains($search, ':')) {
+        if ($search && ! $searchFields && ! str_contains($search, ':')) {
             // Plain text search without field tokens - convert to name search
             $rawSearchTerm = trim((string) $search);
             $tokens = preg_split('/\s+/', $rawSearchTerm, -1, PREG_SPLIT_NO_EMPTY);
@@ -143,12 +142,12 @@ trait HasAdvancedSearch
                 $searchFieldTokens = [];
 
                 foreach ($nameFields as $field) {
-                    $searchTokens[] = $field . ':' . $rawSearchTerm;
-                    $searchFieldTokens[] = $field . ':like';
+                    $searchTokens[] = $field.':'.$rawSearchTerm;
+                    $searchFieldTokens[] = $field.':like';
                 }
 
-                $search = implode(';', $searchTokens) . ';';
-                $searchFields = implode(';', $searchFieldTokens) . ';';
+                $search = implode(';', $searchTokens).';';
+                $searchFields = implode(';', $searchFieldTokens).';';
                 $searchJoin = 'or';
 
                 // Store for email/phone search (will be added in normalizeEmailPhoneSearch)
@@ -157,7 +156,7 @@ trait HasAdvancedSearch
         }
 
         // Normalize legacy search params: map `name` to configured name fields
-        [$search, $searchFields, $searchJoin] = $this->normalizeNameSearch($config['name_fields'], $search, $searchFields, $searchJoin);
+        [$search, $searchFields, $searchJoin] = $this->normalizeNameSearch($config['name_fields'], $search, $searchFields, $searchJoin, $repository);
 
         // Normalize user.name (compact UI token) to first_name/last_name
         if ($config['supports_user_name_search']) {
@@ -204,8 +203,10 @@ trait HasAdvancedSearch
         // Apply limit
         if (method_exists($repository, 'pushCriteria')) {
             // Apply limit via Criteria to compose with other filters
-            $limitCriteria = new class($limit) implements CriteriaInterface {
+            $limitCriteria = new class($limit) implements CriteriaInterface
+            {
                 public function __construct(private int $limit) {}
+
                 public function apply($model, RepositoryInterface $repository)
                 {
                     return $model->limit($this->limit);
@@ -234,9 +235,9 @@ trait HasAdvancedSearch
         }
 
         request()->query->replace(array_merge($originalQuery, [
-            'search' => $search,
+            'search'       => $search,
             'searchFields' => $searchFields, // Use normalized searchFields (phones:like removed if no phone token)
-            'searchJoin' => $searchJoin,
+            'searchJoin'   => $searchJoin,
         ]));
 
         try {
@@ -256,34 +257,69 @@ trait HasAdvancedSearch
 
     /**
      * Normalize legacy search params: map `name` to first/last/married_name, preserve other tokens.
+     * A multi-word name ("theo de man", "de Man, Theo") becomes an AND-of-ORs: every word must match some name field.
      *
      * @return array [search, searchFields, searchJoin]
      */
-    protected function normalizeNameSearch(array $nameFields, string $search, string $searchFields, string $searchJoin): array
+    protected function normalizeNameSearch(array $nameFields, string $search, string $searchFields, string $searchJoin, mixed $repository = null): array
     {
-        if ($search && str_contains($search, 'name:')) {
-            preg_match('/name:([^;]+);?/i', $search, $m);
-            $term = isset($m[1]) ? trim($m[1]) : '';
+        if ($search && preg_match('/(?:^|;)\s*name:([^;]+)/i', $search, $m)) {
+            $term = trim($m[1]);
             if ($term !== '') {
                 // Remove name:* from search tokens
                 $tokens = array_values(array_filter(array_map('trim', explode(';', $search))));
-                $tokens = array_values(array_filter($tokens, fn($t) => !str_starts_with($t, 'name:')));
+                $tokens = array_values(array_filter($tokens, fn ($t) => ! str_starts_with($t, 'name:')));
+
+                $words = preg_split('/[\s,]+/', $term, -1, PREG_SPLIT_NO_EMPTY);
+                if ($repository !== null) {
+                    $this->applyNameRelevanceOrder($repository, $words, $nameFields);
+                }
+
+                if ($repository !== null && count($words) > 1) {
+                    // Other fields searched with the same term (e.g. organization.name) must stay OR'ed with the name match,
+                    // so move them into the multi-token group instead of leaving them for RequestCriteria (which would AND them).
+                    // Email/phone tokens stay: normalizeEmailPhoneSearch already ORs those.
+                    $sameTermFields = [];
+                    $tokens = array_values(array_filter($tokens, function ($t) use ($term, &$sameTermFields) {
+                        [$field, $value] = array_pad(explode(':', $t, 2), 2, '');
+                        if (trim($value) !== $term || in_array($field, ['email', 'emails', 'phone', 'phones'], true)) {
+                            return true;
+                        }
+                        $sameTermFields[] = $field;
+
+                        return false;
+                    }));
+
+                    $this->applyMultiTokenSearch($repository, $words, $nameFields, $sameTermFields, $term);
+
+                    // Drop moved fields from searchFields, otherwise RequestCriteria matches them against the raw search string
+                    $dropFields = ['name', ...$nameFields, ...$sameTermFields];
+                    $sfParts = array_values(array_filter(array_map('trim', explode(';', (string) $searchFields))));
+                    $sfParts = array_values(array_filter($sfParts, fn ($p) => ! in_array(explode(':', $p)[0], $dropFields, true)));
+
+                    return [
+                        $tokens ? implode(';', $tokens).';' : '',
+                        $sfParts ? implode(';', $sfParts).';' : '',
+                        'or',
+                    ];
+                }
+
                 // Append expanded fields
                 foreach ($nameFields as $field) {
-                    $tokens[] = $field . ':' . $term;
+                    $tokens[] = $field.':'.$term;
                 }
-                $search = implode(';', $tokens) . ';';
+                $search = implode(';', $tokens).';';
 
                 // Build searchFields: remove name:like; ensure :like for expanded fields, keep others
                 $sfParts = array_values(array_filter(array_map('trim', explode(';', (string) $searchFields))));
-                $sfParts = array_values(array_filter($sfParts, fn($p) => !str_starts_with($p, 'name:')));
-                $existing = array_map(fn($p) => explode(':', $p)[0] ?? $p, $sfParts);
+                $sfParts = array_values(array_filter($sfParts, fn ($p) => ! str_starts_with($p, 'name:')));
+                $existing = array_map(fn ($p) => explode(':', $p)[0] ?? $p, $sfParts);
                 foreach ($nameFields as $nf) {
-                    if (!in_array($nf, $existing, true)) {
-                        $sfParts[] = $nf . ':like';
+                    if (! in_array($nf, $existing, true)) {
+                        $sfParts[] = $nf.':like';
                     }
                 }
-                $searchFields = implode(';', $sfParts) . ';';
+                $searchFields = implode(';', $sfParts).';';
 
                 // Force OR join so tokens are combined permissively
                 $searchJoin = 'or';
@@ -300,7 +336,7 @@ trait HasAdvancedSearch
      */
     protected function normalizeUserNameSearch(string $search, string $searchFields, string $searchJoin): array
     {
-        if (!str_contains($search, 'user.name:')) {
+        if (! str_contains($search, 'user.name:')) {
             return [$search, $searchFields, $searchJoin];
         }
 
@@ -311,26 +347,26 @@ trait HasAdvancedSearch
             if (str_starts_with($tok, 'user.name:')) {
                 $term = trim(substr($tok, strlen('user.name:')));
                 if ($term !== '') {
-                    $rebuilt[] = 'user.first_name:' . $term;
-                    $rebuilt[] = 'user.last_name:' . $term;
+                    $rebuilt[] = 'user.first_name:'.$term;
+                    $rebuilt[] = 'user.last_name:'.$term;
                 }
             } else {
                 $rebuilt[] = $tok;
             }
         }
-        $search = implode(';', $rebuilt) . ';';
+        $search = implode(';', $rebuilt).';';
 
         // Update searchFields: replace user.name with first_name/last_name like
         if ($searchFields) {
             $sfParts = array_values(array_filter(array_map('trim', explode(';', $searchFields))));
-            $sfParts = array_values(array_filter($sfParts, fn($p) => !str_starts_with($p, 'user.name:') && $p !== 'user.name'));
-            $existing = array_map(fn($p) => explode(':', $p)[0] ?? $p, $sfParts);
+            $sfParts = array_values(array_filter($sfParts, fn ($p) => ! str_starts_with($p, 'user.name:') && $p !== 'user.name'));
+            $existing = array_map(fn ($p) => explode(':', $p)[0] ?? $p, $sfParts);
             foreach (['user.first_name', 'user.last_name'] as $nf) {
-                if (!in_array($nf, $existing, true)) {
-                    $sfParts[] = $nf . ':like';
+                if (! in_array($nf, $existing, true)) {
+                    $sfParts[] = $nf.':like';
                 }
             }
-            $searchFields = implode(';', $sfParts) . ';';
+            $searchFields = implode(';', $sfParts).';';
         } else {
             $searchFields = 'user.first_name:like;user.last_name:like;';
         }
@@ -344,7 +380,7 @@ trait HasAdvancedSearch
     /**
      * Normalize convenience tokens for email/phone to underlying JSON columns.
      *
-     * @param string|null $simpleQueryTerm Optional simple query term to also search in emails/phones
+     * @param  string|null  $simpleQueryTerm  Optional simple query term to also search in emails/phones
      * @return array [search, searchFields, searchJoin, emailTerms, phoneTerms]
      */
     protected function normalizeEmailPhoneSearch(string $search, string $searchFields, string $searchJoin, ?string $simpleQueryTerm = null): array
@@ -356,7 +392,7 @@ trait HasAdvancedSearch
 
         // If we have a simple query term (no field tokens), also search in emails/phones
         // This allows simple queries to find results by email/phone even when name search is also applied
-        if ($simpleQueryTerm !== null && !$hasEmailToken && !$hasPhoneToken) {
+        if ($simpleQueryTerm !== null && ! $hasEmailToken && ! $hasPhoneToken) {
             $emailTerms[] = $simpleQueryTerm;
             $phoneTerms[] = $simpleQueryTerm;
         }
@@ -392,16 +428,15 @@ trait HasAdvancedSearch
             }
 
             // Rebuild search WITHOUT email/phone tokens (they'll be handled via scopeQuery)
-            $search = $normalized ? implode(';', $normalized) . ';' : '';
+            $search = $normalized ? implode(';', $normalized).';' : '';
 
             // Remove emails/phones from searchFields since we handle them via scopeQuery
             // Always remove them if we're processing email/phone tokens, even if only one is present
             if ($searchFields !== '') {
                 $parts = array_values(array_filter(array_map('trim', explode(';', $searchFields))));
-                $parts = array_values(array_filter($parts, fn($p) =>
-                    !str_starts_with($p, 'phones:') && !str_starts_with($p, 'emails:')
+                $parts = array_values(array_filter($parts, fn ($p) => ! str_starts_with($p, 'phones:') && ! str_starts_with($p, 'emails:')
                 ));
-                $searchFields = $parts ? implode(';', $parts) . ';' : '';
+                $searchFields = $parts ? implode(';', $parts).';' : '';
             }
 
             $searchJoin = 'or';
@@ -409,10 +444,9 @@ trait HasAdvancedSearch
             // Even if no email/phone tokens in search, remove emails/phones from searchFields
             // to prevent empty queries (e.g., phones like %%)
             $parts = array_values(array_filter(array_map('trim', explode(';', $searchFields))));
-            $parts = array_values(array_filter($parts, fn($p) =>
-                !str_starts_with($p, 'phones:') && !str_starts_with($p, 'emails:')
+            $parts = array_values(array_filter($parts, fn ($p) => ! str_starts_with($p, 'phones:') && ! str_starts_with($p, 'emails:')
             ));
-            $searchFields = $parts ? implode(';', $parts) . ';' : '';
+            $searchFields = $parts ? implode(';', $parts).';' : '';
         }
 
         return [$search, $searchFields, $searchJoin, $emailTerms, $phoneTerms];
@@ -427,23 +461,25 @@ trait HasAdvancedSearch
             // Repository pattern: use Criteria so it composes with other filters
             // Use orWhere to combine with name search (OR, not AND)
             // This ensures the email/phone search is combined with OR to the name search from RequestCriteria
-            $emailPhoneCriteria = new class($emailTerms, $phoneTerms) implements CriteriaInterface {
+            $emailPhoneCriteria = new class($emailTerms, $phoneTerms) implements CriteriaInterface
+            {
                 public function __construct(private array $emailTerms, private array $phoneTerms) {}
+
                 public function apply($model, RepositoryInterface $repository)
                 {
                     // Use orWhere to combine with name search from RequestCriteria
                     return $model->orWhere(function ($qb) {
                         foreach ($this->emailTerms as $term) {
                             $escaped = str_replace(['%', '_'], ['\\%', '\\_'], trim($term));
-                            $jsonLike = '%"value":"%' . $escaped . '%"%';
+                            $jsonLike = '%"value":"%'.$escaped.'%"%';
                             $qb->orWhere('emails', 'like', $jsonLike)
-                               ->orWhere('emails', 'like', '%' . trim($term) . '%');
+                                ->orWhere('emails', 'like', '%'.trim($term).'%');
                         }
                         foreach ($this->phoneTerms as $term) {
                             $escaped = str_replace(['%', '_'], ['\\%', '\\_'], trim($term));
-                            $jsonLike = '%"value":"%' . $escaped . '%"%';
+                            $jsonLike = '%"value":"%'.$escaped.'%"%';
                             $qb->orWhere('phones', 'like', $jsonLike)
-                               ->orWhere('phones', 'like', '%' . trim($term) . '%');
+                                ->orWhere('phones', 'like', '%'.trim($term).'%');
                         }
                     });
                 }
@@ -454,15 +490,15 @@ trait HasAdvancedSearch
             $repository->orWhere(function ($qb) use ($emailTerms, $phoneTerms) {
                 foreach ($emailTerms as $term) {
                     $escaped = str_replace(['%', '_'], ['\\%', '\\_'], trim($term));
-                    $jsonLike = '%"value":"%' . $escaped . '%"%';
+                    $jsonLike = '%"value":"%'.$escaped.'%"%';
                     $qb->orWhere('emails', 'like', $jsonLike)
-                       ->orWhere('emails', 'like', '%' . trim($term) . '%');
+                        ->orWhere('emails', 'like', '%'.trim($term).'%');
                 }
                 foreach ($phoneTerms as $term) {
                     $escaped = str_replace(['%', '_'], ['\\%', '\\_'], trim($term));
-                    $jsonLike = '%"value":"%' . $escaped . '%"%';
+                    $jsonLike = '%"value":"%'.$escaped.'%"%';
                     $qb->orWhere('phones', 'like', $jsonLike)
-                       ->orWhere('phones', 'like', '%' . trim($term) . '%');
+                        ->orWhere('phones', 'like', '%'.trim($term).'%');
                 }
             });
         }
@@ -472,25 +508,43 @@ trait HasAdvancedSearch
      * Apply permission filter to repository based on authorized user IDs.
      * This ensures that search results are filtered by user permissions.
      *
-     * @param mixed $repository Repository instance or query builder
-     * @return void
+     * @param  mixed  $repository  Repository instance or query builder
      */
     protected function applyPermissionFilter(mixed $repository): void
     {
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
+            // Search criteria add top-level orWhere's (email/phone), so a plain whereIn would yield
+            // `name OR email AND user_id IN (...)` and let name matches bypass permissions.
+            // Wrap all earlier conditions in one group first: `(name OR email) AND user_id IN (...)`.
+            $restrict = function ($query) use ($userIds) {
+                if ($query instanceof Builder && $query->getQuery()->wheres) {
+                    $base = $query->getQuery();
+                    $nested = $base->forNestedWhere();
+                    $nested->wheres = $base->wheres;
+                    $nested->bindings['where'] = $base->bindings['where'];
+                    $base->wheres = [];
+                    $base->bindings['where'] = [];
+                    $base->addNestedWhereQuery($nested);
+                }
+
+                return $query->whereIn('user_id', $userIds);
+            };
+
             if (method_exists($repository, 'pushCriteria')) {
                 // Repository pattern: use Criteria so it composes with other filters
-                $permissionCriteria = new class($userIds) implements CriteriaInterface {
-                    public function __construct(private array $userIds) {}
+                $permissionCriteria = new class($restrict) implements CriteriaInterface
+                {
+                    public function __construct(private \Closure $restrict) {}
+
                     public function apply($model, RepositoryInterface $repository)
                     {
-                        return $model->whereIn('user_id', $this->userIds);
+                        return ($this->restrict)($model);
                     }
                 };
                 $repository->pushCriteria($permissionCriteria);
             } elseif ($repository instanceof Builder) {
                 // Direct query builder
-                $repository->whereIn('user_id', $userIds);
+                $restrict($repository);
             }
         }
     }
@@ -502,7 +556,7 @@ trait HasAdvancedSearch
      */
     protected function sanitizeInvalidSearchFields(array $fieldsSearchable, string $search, string $searchFields): array
     {
-        if (empty($search) || !str_contains($search, ':')) {
+        if (empty($search) || ! str_contains($search, ':')) {
             return [$search, $searchFields];
         }
 
@@ -516,9 +570,10 @@ trait HasAdvancedSearch
         $invalidTerms = [];
 
         foreach ($tokens as $token) {
-            if (!str_contains($token, ':')) {
+            if (! str_contains($token, ':')) {
                 // Plain text token, keep as-is
                 $validTokens[] = $token;
+
                 continue;
             }
 
@@ -529,6 +584,7 @@ trait HasAdvancedSearch
             if ($field === '' || $value === '') {
                 // Invalid format, treat as plain text
                 $invalidTerms[] = $token;
+
                 continue;
             }
 
@@ -542,29 +598,29 @@ trait HasAdvancedSearch
         }
 
         // If we have invalid terms, add them as plain text search on name fields
-        if (!empty($invalidTerms)) {
+        if (! empty($invalidTerms)) {
             $nameFields = $this->getSearchConfig()['name_fields'] ?? ['first_name', 'last_name'];
             foreach ($invalidTerms as $term) {
                 foreach ($nameFields as $nameField) {
-                    $validTokens[] = $nameField . ':' . $term;
+                    $validTokens[] = $nameField.':'.$term;
                 }
             }
             // Update searchFields to include name fields if not already present
             if ($searchFields) {
                 $sfParts = array_filter(array_map('trim', explode(';', $searchFields)));
-                $existingFields = array_map(fn($p) => explode(':', $p)[0] ?? $p, $sfParts);
+                $existingFields = array_map(fn ($p) => explode(':', $p)[0] ?? $p, $sfParts);
                 foreach ($nameFields as $nf) {
-                    if (!in_array($nf, $existingFields, true)) {
-                        $sfParts[] = $nf . ':like';
+                    if (! in_array($nf, $existingFields, true)) {
+                        $sfParts[] = $nf.':like';
                     }
                 }
-                $searchFields = implode(';', $sfParts) . ';';
+                $searchFields = implode(';', $sfParts).';';
             } else {
-                $searchFields = implode(';', array_map(fn($nf) => $nf . ':like', $nameFields)) . ';';
+                $searchFields = implode(';', array_map(fn ($nf) => $nf.':like', $nameFields)).';';
             }
         }
 
-        $sanitizedSearch = !empty($validTokens) ? implode(';', $validTokens) . ';' : '';
+        $sanitizedSearch = ! empty($validTokens) ? implode(';', $validTokens).';' : '';
 
         return [$sanitizedSearch, $searchFields];
     }
@@ -581,6 +637,7 @@ trait HasAdvancedSearch
         $requestedFields = array_filter(explode(';', $searchFields));
         $requestedFieldNames = array_map(function ($f) {
             $parts = explode(':', $f);
+
             return $parts[0] ?? $f;
         }, $requestedFields);
 
@@ -593,50 +650,89 @@ trait HasAdvancedSearch
             if ($field === '') {
                 continue;
             }
-            if (!in_array($field, $allowed, true)) {
+            if (! in_array($field, $allowed, true)) {
                 return response()->json([
                     'message' => __('messages.search.invalid_field'),
-                    'field' => $field,
+                    'field'   => $field,
                 ], 400);
             }
         }
+
         return null;
     }
 
     /**
      * Apply multi-token search (AND-of-ORs) for space-separated terms.
      */
-    protected function applyMultiTokenSearch(mixed $repository, array $tokens, array $nameFields): void
+    protected function applyMultiTokenSearch(mixed $repository, array $tokens, array $nameFields, array $fullTermFields = [], string $fullTerm = ''): void
     {
-        if (method_exists($repository, 'pushCriteria')) {
-            $multiTokenCriteria = new class($tokens, $nameFields) implements CriteriaInterface {
-                public function __construct(private array $tokens, private array $nameFields) {}
-                public function apply($model, RepositoryInterface $repository)
-                {
-                    return $model->where(function ($qb) {
-                        foreach ($this->tokens as $token) {
-                            $like = '%' . $token . '%';
-                            $qb->where(function ($qq) use ($like) {
-                                foreach ($this->nameFields as $field) {
-                                    $qq->orWhere($field, 'like', $like);
-                                }
-                            });
-                        }
-                    });
-                }
-            };
-            $repository->pushCriteria($multiTokenCriteria);
-        } elseif ($repository instanceof Builder) {
-            $repository->where(function ($qb) use ($tokens, $nameFields) {
+        // Every token must match some name field; alternatively the full term matches one of $fullTermFields (dotted = relation)
+        $apply = function ($qb) use ($tokens, $nameFields, $fullTermFields, $fullTerm) {
+            $qb->where(function ($tokensQb) use ($tokens, $nameFields) {
                 foreach ($tokens as $token) {
-                    $like = '%' . $token . '%';
-                    $qb->where(function ($qq) use ($like, $nameFields) {
+                    $like = '%'.$token.'%';
+                    $tokensQb->where(function ($qq) use ($like, $nameFields) {
                         foreach ($nameFields as $field) {
                             $qq->orWhere($field, 'like', $like);
                         }
                     });
                 }
             });
+
+            foreach ($fullTermFields as $field) {
+                $like = '%'.$fullTerm.'%';
+                if (str_contains($field, '.')) {
+                    [$relation, $column] = [Str::beforeLast($field, '.'), Str::afterLast($field, '.')];
+                    $qb->orWhereHas($relation, fn ($rq) => $rq->where($column, 'like', $like));
+                } else {
+                    $qb->orWhere($field, 'like', $like);
+                }
+            }
+        };
+
+        if (method_exists($repository, 'pushCriteria')) {
+            $repository->pushCriteria(new class($apply) implements CriteriaInterface
+            {
+                public function __construct(private \Closure $apply) {}
+
+                public function apply($model, RepositoryInterface $repository)
+                {
+                    return $model->where($this->apply);
+                }
+            });
+        } elseif ($repository instanceof Builder) {
+            $repository->where($apply);
+        }
+    }
+
+    /**
+     * Order results so that whole-word name matches come first, then prefix matches, then substring matches
+     * ("theo" ranks Theo above Theodoor above Matheo). Uses LIKE without wildcards for case-insensitive equality.
+     */
+    protected function applyNameRelevanceOrder(mixed $repository, array $words, array $nameFields): void
+    {
+        $cases = [];
+        $bindings = [];
+        foreach ($words as $word) {
+            $exact = implode(' OR ', array_map(fn ($f) => "{$f} LIKE ?", $nameFields));
+            $cases[] = "CASE WHEN {$exact} THEN 0 WHEN {$exact} THEN 1 ELSE 2 END";
+            array_push($bindings, ...array_fill(0, count($nameFields), $word), ...array_fill(0, count($nameFields), $word.'%'));
+        }
+
+        $sql = implode(' + ', $cases);
+
+        if (method_exists($repository, 'pushCriteria')) {
+            $repository->pushCriteria(new class($sql, $bindings) implements CriteriaInterface
+            {
+                public function __construct(private string $sql, private array $bindings) {}
+
+                public function apply($model, RepositoryInterface $repository)
+                {
+                    return $model->orderByRaw($this->sql, $this->bindings);
+                }
+            });
+        } elseif ($repository instanceof Builder) {
+            $repository->orderByRaw($sql, $bindings);
         }
     }
 
@@ -665,7 +761,7 @@ trait HasAdvancedSearch
                     // Build a best-effort interpolated SQL for readability
                     $interpolated = @vsprintf(
                         str_replace('?', "'%s'", $query->sql),
-                        array_map(fn($b) => is_string($b) ? $b : (is_null($b) ? 'NULL' : (string) $b), $query->bindings)
+                        array_map(fn ($b) => is_string($b) ? $b : (is_null($b) ? 'NULL' : (string) $b), $query->bindings)
                     );
 
                     Log::debug('Search SQL', [
@@ -681,4 +777,3 @@ trait HasAdvancedSearch
         }
     }
 }
-

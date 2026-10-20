@@ -43,6 +43,8 @@ class LeadRepository extends Repository
         'first_name',
         'last_name',
         'married_name',
+        'lastname_prefix',
+        'married_name_prefix',
         'status',
         'user_id',
         // New explicit user fields for first/last name search

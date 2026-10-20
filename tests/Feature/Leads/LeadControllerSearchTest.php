@@ -172,3 +172,33 @@ test('lead search finds by email when only email token is provided', function ()
     expect($ids)->toContain($leadTarget->id)
         ->and($ids)->not->toContain($leadNoise->id);
 });
+
+test('mega search finds lead by multi-word name including prefix', function (string $term) {
+    $theo = Lead::factory()->create(['first_name' => 'Theo', 'lastname_prefix' => 'de', 'last_name' => 'Man', 'user_id' => $this->user->id, 'lead_pipeline_id' => $this->pipeline->id, 'lead_pipeline_stage_id' => $this->stage->id]);
+    $otherTheo = Lead::factory()->create(['first_name' => 'Theo', 'lastname_prefix' => null, 'last_name' => 'Jansen', 'user_id' => $this->user->id, 'lead_pipeline_id' => $this->pipeline->id, 'lead_pipeline_stage_id' => $this->stage->id]);
+
+    $response = $this->getJson(route('admin.leads.search', [
+        'search'       => "name:{$term};email:{$term};phone:{$term};",
+        'searchFields' => 'first_name:like;last_name:like;married_name:like;emails:like;phones:like;',
+        'limit'        => 15,
+    ]));
+
+    $ids = collect($response->assertOk()->json('data'))->pluck('id')->all();
+    expect($ids)->toContain($theo->id)->not->toContain($otherTheo->id);
+})->with(['theo de man', 'de Man, Theo']);
+
+test('lead search respects individual view permission for name matches', function () {
+    $this->user->update(['view_permission' => 'individual']);
+    $otherUser = User::factory()->create();
+    $attrs = ['first_name' => 'Theo', 'last_name' => 'Man', 'lead_pipeline_id' => $this->pipeline->id, 'lead_pipeline_stage_id' => $this->stage->id];
+
+    $own = Lead::factory()->create([...$attrs, 'user_id' => $this->user->id]);
+    $foreign = Lead::factory()->create([...$attrs, 'user_id' => $otherUser->id]);
+
+    $ids = collect($this->getJson(route('admin.leads.search', [
+        'search'       => 'name:theo;email:theo;phone:theo;',
+        'searchFields' => 'first_name:like;last_name:like;married_name:like;emails:like;phones:like;',
+    ]))->assertOk()->json('data'))->pluck('id')->all();
+
+    expect($ids)->toContain($own->id)->not->toContain($foreign->id);
+});

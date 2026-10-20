@@ -7,6 +7,7 @@ use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Models\Stage;
+use Webkul\User\Models\User;
 
 uses(ControllerSearchTestHelpers::class);
 
@@ -391,3 +392,57 @@ test('person search with lead_id calculates match scores', function () {
     rsort($sortedScores);
     expect($scores)->toBe($sortedScores);
 });
+
+function megaSearchPersons(string $term): array
+{
+    return [
+        'search'       => "name:{$term};organization.name:{$term};email:{$term};phone:{$term};",
+        'searchFields' => 'first_name:like;last_name:like;married_name:like;organization.name:like;emails:like;phones:like;',
+        'limit'        => 15,
+    ];
+}
+
+test('mega search finds person by multi-word name including prefix, in any order', function (string $term) {
+    $theo = Person::factory()->create(['first_name' => 'Theo', 'lastname_prefix' => 'de', 'last_name' => 'Man', 'user_id' => $this->user->id]);
+    $otherTheo = Person::factory()->create(['first_name' => 'Theo', 'lastname_prefix' => null, 'last_name' => 'Jansen', 'user_id' => $this->user->id]);
+    $otherMan = Person::factory()->create(['first_name' => 'Henk', 'lastname_prefix' => 'de', 'last_name' => 'Man', 'user_id' => $this->user->id]);
+
+    $resp = $this->performSearch('admin.contacts.persons.search', megaSearchPersons($term));
+
+    $resp->assertOk();
+    $this->assertEntityFound($resp, $theo->id);
+    $this->assertEntityNotFound($resp, $otherTheo->id);
+    $this->assertEntityNotFound($resp, $otherMan->id);
+})->with(['theo de man', 'de Man, Theo', 'theo man']);
+
+test('mega search ranks exact first name match above partial matches', function () {
+    $matheo = Person::factory()->create(['first_name' => 'Matheo', 'last_name' => 'Aa', 'user_id' => $this->user->id]);
+    $theodoor = Person::factory()->create(['first_name' => 'Theodoor', 'last_name' => 'Bb', 'user_id' => $this->user->id]);
+    $theo = Person::factory()->create(['first_name' => 'Theo', 'last_name' => 'Cc', 'user_id' => $this->user->id]);
+
+    $resp = $this->performSearch('admin.contacts.persons.search', megaSearchPersons('theo'));
+
+    expect($this->getSearchResultIds($resp))->toBe([$theo->id, $theodoor->id, $matheo->id]);
+});
+
+test('mega search with multi-word term still finds person via organization name', function () {
+    $org = Organization::factory()->create(['name' => 'Acme Zorg Groep']);
+    $p = Person::factory()->create(['first_name' => 'Kees', 'last_name' => 'Org', 'organization_id' => $org->id, 'user_id' => $this->user->id]);
+
+    $resp = $this->performSearch('admin.contacts.persons.search', megaSearchPersons('Zorg Groep'));
+
+    $this->assertEntityFound($resp, $p->id);
+});
+
+test('mega search respects individual view permission for name matches', function (string $term) {
+    $this->user->update(['view_permission' => 'individual']);
+    $otherUser = User::factory()->create();
+
+    $own = Person::factory()->create(['first_name' => 'Theo', 'lastname_prefix' => 'de', 'last_name' => 'Man', 'user_id' => $this->user->id]);
+    $foreign = Person::factory()->create(['first_name' => 'Theo', 'lastname_prefix' => 'de', 'last_name' => 'Man', 'user_id' => $otherUser->id]);
+
+    $resp = $this->performSearch('admin.contacts.persons.search', megaSearchPersons($term));
+
+    $this->assertEntityFound($resp, $own->id);
+    $this->assertEntityNotFound($resp, $foreign->id);
+})->with(['theo', 'theo de man']);

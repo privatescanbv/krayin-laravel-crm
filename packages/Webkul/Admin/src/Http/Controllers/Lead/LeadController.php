@@ -84,7 +84,7 @@ class LeadController extends Controller
     protected function getSearchConfig(): array
     {
         return [
-            'name_fields' => ['first_name', 'last_name', 'married_name'],
+            'name_fields' => ['first_name', 'last_name', 'married_name', 'lastname_prefix', 'married_name_prefix'],
             'supports_email_phone_search' => true,
             'supports_user_name_search' => false,
             'enable_debug_logging' => $this->enableDebugLogging,

@@ -10,6 +10,7 @@ use App\Models\OrderItem;
 use App\Models\OrderPayment;
 use App\Services\OrderRefundService;
 use Database\Seeders\TestSeeder;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\User\Models\User;
 
@@ -275,4 +276,160 @@ test('gewonnen order met alleen verloren regels heeft totaal 0 en is credit bij 
     expect((float) $order->total_price)->toBe(0.0)
         ->and($order->lostItemsTotal())->toBe(809.0)
         ->and($order->paymentStatus())->toBe(OrderPaymentStatus::CREDIT);
+});
+
+test('openstaande refund vervalt als er na het verliezen een regel met hetzelfde bedrag bijkomt', function () {
+    [$order, $item] = makeOrderWithPayment(itemPrice: 550.00, paidAmount: 1259.00);
+    OrderItem::factory()->create(['order_id' => $order->id, 'total_price' => 709.00, 'status' => OrderItemStatus::PLANNED]);
+
+    // Knie verloren → automatische refund van 550, daarna annuleringskosten van 550 toegevoegd.
+    $item->update(['status' => OrderItemStatus::LOST]);
+    expect($order->fresh()->payments->where('type', PaymentType::REFUND))->toHaveCount(1);
+
+    OrderItem::factory()->create(['order_id' => $order->id, 'total_price' => 550.00, 'status' => OrderItemStatus::NEW]);
+    app(OrderRefundService::class)->createRefundIfSurplus($order, $this->user->id);
+
+    $order = $order->fresh();
+    expect($order->payments->where('type', PaymentType::REFUND))->toHaveCount(0)
+        ->and($order->netPaidAmount())->toBe(1259.0)
+        ->and($order->paymentStatus())->toBe(OrderPaymentStatus::FULLY_PAID);
+    $this->assertDatabaseMissing('activities', ['order_id' => $order->id, 'title' => 'Klant terugbetalen', 'is_done' => false]);
+    $this->assertDatabaseHas('activities', [
+        'order_id' => $order->id,
+        'type'     => 'system',
+        'title'    => 'Automatische terugbetaling van € 550,00 vervallen',
+    ]);
+});
+
+test('openstaande refund wordt verlaagd als een deel van het surplus vervalt', function () {
+    [$order, $item] = makeOrderWithPayment(itemPrice: 550.00, paidAmount: 1259.00);
+    OrderItem::factory()->create(['order_id' => $order->id, 'total_price' => 709.00, 'status' => OrderItemStatus::PLANNED]);
+
+    $item->update(['status' => OrderItemStatus::LOST]);
+    OrderItem::factory()->create(['order_id' => $order->id, 'total_price' => 100.00, 'status' => OrderItemStatus::NEW]);
+    app(OrderRefundService::class)->createRefundIfSurplus($order, $this->user->id);
+
+    $refunds = $order->fresh()->payments->where('type', PaymentType::REFUND);
+    expect($refunds)->toHaveCount(1)
+        ->and((float) $refunds->first()->amount)->toBe(450.0);
+    $this->assertDatabaseHas('activities', [
+        'order_id' => $order->id,
+        'type'     => 'system',
+        'title'    => 'Automatische terugbetaling verlaagd: € 550,00 → € 450,00',
+    ]);
+});
+
+test('uitbetaalde refund wordt nooit aangepast', function () {
+    [$order, $item] = makeOrderWithPayment(itemPrice: 550.00, paidAmount: 1259.00);
+    OrderItem::factory()->create(['order_id' => $order->id, 'total_price' => 709.00, 'status' => OrderItemStatus::PLANNED]);
+
+    $item->update(['status' => OrderItemStatus::LOST]);
+    OrderPayment::where('order_id', $order->id)->where('type', PaymentType::REFUND->value)->update(['paid_at' => now()]);
+    OrderItem::factory()->create(['order_id' => $order->id, 'total_price' => 550.00, 'status' => OrderItemStatus::NEW]);
+    app(OrderRefundService::class)->createRefundIfSurplus($order, $this->user->id);
+
+    expect((float) $order->fresh()->payments->where('type', PaymentType::REFUND)->first()->amount)->toBe(550.0);
+});
+
+test('handmatig ingevoerde openstaande refund wordt nooit aangepast', function () {
+    [$order] = makeOrderWithPayment(itemPrice: 1259.00, paidAmount: 1259.00);
+    OrderPayment::create([
+        'order_id' => $order->id,
+        'amount'   => 100.00,
+        'type'     => PaymentType::REFUND,
+        'method'   => PaymentMethod::BANK,
+        'paid_at'  => null,
+        'currency' => 'EUR',
+    ]);
+
+    app(OrderRefundService::class)->createRefundIfSurplus($order, $this->user->id);
+
+    $refunds = $order->fresh()->payments->where('type', PaymentType::REFUND);
+    expect($refunds)->toHaveCount(1)
+        ->and((float) $refunds->first()->amount)->toBe(100.0)
+        ->and($refunds->first()->auto_created)->toBeFalse();
+    $this->assertDatabaseMissing('activities', ['order_id' => $order->id, 'type' => 'system']);
+});
+
+test('automatisch aangemaakte refund krijgt de auto_created vlag', function () {
+    [$order, $item] = makeOrderWithPayment(itemPrice: 200.00, paidAmount: 200.00);
+
+    $item->update(['status' => OrderItemStatus::LOST]);
+
+    expect($order->fresh()->payments->where('type', PaymentType::REFUND)->first()->auto_created)->toBeTrue();
+});
+
+// ── Auto-taak "Klant terugbetalen" sluit vanzelf ────────────────────────────
+
+function openRefundTaskCount(Order $order): int
+{
+    return $order->activities()->where('title', OrderRefundService::TASK_TITLE)->where('is_done', false)->count();
+}
+
+test('taak klant terugbetalen sluit en wordt gelogd zodra de refund een datum krijgt', function () {
+    $this->withoutMiddleware(Authenticate::class);
+    [$order, $item] = makeOrderWithPayment(itemPrice: 200.00, paidAmount: 200.00);
+    $item->update(['status' => OrderItemStatus::LOST]);
+    $refund = $order->payments()->where('type', PaymentType::REFUND->value)->first();
+    expect(openRefundTaskCount($order))->toBe(1);
+
+    $this->putJson(route('admin.orders.payments.update', ['orderId' => $order->id, 'paymentId' => $refund->id]), [
+        'amount'   => 200,
+        'type'     => PaymentType::REFUND->value,
+        'method'   => PaymentMethod::BANK->value,
+        'paid_at'  => now()->toDateString(),
+        'currency' => 'EUR',
+    ])->assertOk();
+
+    expect(openRefundTaskCount($order))->toBe(0);
+    $this->assertDatabaseHas('activities', [
+        'order_id' => $order->id,
+        'type'     => 'system',
+        'title'    => "Taak 'Klant terugbetalen' automatisch afgerond",
+    ]);
+});
+
+test('taak klant terugbetalen sluit als de refund verwijderd wordt', function () {
+    $this->withoutMiddleware(Authenticate::class);
+    [$order, $item] = makeOrderWithPayment(itemPrice: 200.00, paidAmount: 200.00);
+    $item->update(['status' => OrderItemStatus::LOST]);
+    $refund = $order->payments()->where('type', PaymentType::REFUND->value)->first();
+
+    $this->deleteJson(route('admin.orders.payments.destroy', ['orderId' => $order->id, 'paymentId' => $refund->id]))
+        ->assertOk();
+
+    expect(openRefundTaskCount($order))->toBe(0);
+});
+
+test('taak klant terugbetalen sluit als het totaal weer betaald is, ook met een handmatige openstaande refund', function () {
+    [$order, $item] = makeOrderWithPayment(itemPrice: 550.00, paidAmount: 1259.00);
+    OrderItem::factory()->create(['order_id' => $order->id, 'total_price' => 709.00, 'status' => OrderItemStatus::PLANNED]);
+    $item->update(['status' => OrderItemStatus::LOST]);
+
+    // Refund als handmatig behandelen: wordt niet automatisch verlaagd, maar de taak mag wel dicht.
+    OrderPayment::where('order_id', $order->id)->where('type', PaymentType::REFUND->value)->update(['auto_created' => false]);
+    expect(openRefundTaskCount($order))->toBe(1);
+
+    OrderItem::factory()->create(['order_id' => $order->id, 'total_price' => 550.00, 'status' => OrderItemStatus::NEW]);
+    app(OrderRefundService::class)->createRefundIfSurplus($order, $this->user->id);
+
+    expect(openRefundTaskCount($order))->toBe(0)
+        ->and($order->fresh()->payments->where('type', PaymentType::REFUND))->toHaveCount(1);
+});
+
+test('taak klant terugbetalen blijft open zolang er nog een refund openstaat', function () {
+    [$order, $item] = makeOrderWithPayment(itemPrice: 200.00, paidAmount: 300.00);
+    $second = OrderItem::factory()->create(['order_id' => $order->id, 'total_price' => 100.00, 'status' => OrderItemStatus::PLANNED]);
+    $item->update(['status' => OrderItemStatus::LOST]);
+    $second->update(['status' => OrderItemStatus::LOST]);
+
+    $refunds = $order->payments()->where('type', PaymentType::REFUND->value)->orderBy('id')->get();
+    expect($refunds)->toHaveCount(2)
+        ->and(openRefundTaskCount($order))->toBe(2);
+
+    $refunds->first()->update(['paid_at' => now()]);
+    expect(openRefundTaskCount($order))->toBe(2);
+
+    $refunds->last()->update(['paid_at' => now()]);
+    expect(openRefundTaskCount($order))->toBe(0);
 });

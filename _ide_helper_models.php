@@ -1211,6 +1211,7 @@ namespace App\Models{
  * @property \App\Enums\PaymentMethod $method
  * @property \Illuminate\Support\Carbon|null $paid_at
  * @property string $currency
+ * @property bool $auto_created
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property \Carbon\CarbonImmutable|null $created_at
@@ -1222,6 +1223,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment whereAmount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment whereAutoCreated($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment whereCreatedBy($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderPayment whereCurrency($value)

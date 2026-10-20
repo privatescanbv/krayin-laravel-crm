@@ -26,15 +26,17 @@ class OrderPayment extends Model
         'method',
         'paid_at',
         'currency',
+        'auto_created',
         'created_by',
         'updated_by',
     ];
 
     protected $casts = [
-        'amount'  => 'decimal:2',
-        'type'    => PaymentType::class,
-        'method'  => PaymentMethod::class,
-        'paid_at' => 'date',
+        'amount'       => 'decimal:2',
+        'type'         => PaymentType::class,
+        'method'       => PaymentMethod::class,
+        'paid_at'      => 'date',
+        'auto_created' => 'boolean',
     ];
 
     public function order(): BelongsTo

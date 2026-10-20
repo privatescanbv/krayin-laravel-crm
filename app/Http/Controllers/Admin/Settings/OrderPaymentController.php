@@ -10,6 +10,7 @@ use App\Models\OrderPayment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Webkul\Activity\Repositories\ActivityRepository;
 
 class OrderPaymentController extends Controller
 {
@@ -35,10 +36,28 @@ class OrderPaymentController extends Controller
         return response()->json($payment->fresh());
     }
 
-    public function destroy(int $orderId, int $paymentId): JsonResponse
+    public function destroy(int $orderId, int $paymentId, ActivityRepository $activityRepository): JsonResponse
     {
         $payment = OrderPayment::where('order_id', $orderId)->findOrFail($paymentId);
         $payment->delete();
+
+        $amount = '€ '.number_format((float) $payment->amount, 2, ',', '.');
+
+        $activityRepository->createSystem([
+            'title'      => sprintf('%s van %s verwijderd', $payment->type->label(), $amount),
+            'comment'    => sprintf(
+                'Methode: %s, datum: %s',
+                $payment->method->label(),
+                $payment->paid_at?->format('d-m-Y') ?? 'nog niet betaald',
+            ),
+            'user_id'    => auth()->guard('user')->id(),
+            'order_id'   => $orderId,
+            'additional' => [
+                'old'        => ['label' => $amount],
+                'new'        => ['label' => 'Verwijderd'],
+                'payment_id' => $payment->id,
+            ],
+        ]);
 
         return response()->json(['success' => true]);
     }

@@ -18,16 +18,6 @@
  */
 return [
     [
-        'key'          => 'metabase.productverkopen',
-        'group'        => 'Orders',
-        'name'         => 'Productverkopen',
-        'path'         => 'dashboards/productverkopen',
-        'dashboard_id' => (int) env('METABASE_DASHBOARD_PRODUCTVERKOPEN', 2),
-        'params'       => [],
-        'sort'         => 2,
-        'icon-class'   => 'icon-dashboard',
-    ],
-    [
         'key'          => 'metabase.leads-per-maand',
         'group'        => 'Leads',
         'name'         => 'Leads per maand',

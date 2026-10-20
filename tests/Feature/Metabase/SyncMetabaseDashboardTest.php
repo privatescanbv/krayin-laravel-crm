@@ -110,10 +110,125 @@ function seedMapping(): void
     ]));
 }
 
-it('requires --source, --target and --dashboard', function () {
-    $this->artisan('metabase:sync-dashboard --source=dev --target=prod')
+it('requires --source and --target', function () {
+    $this->artisan('metabase:sync-dashboard --source=dev')
         ->assertFailed()
-        ->expectsOutputToContain('are all required');
+        ->expectsOutputToContain('are both required');
+});
+
+/** Dashboard 13: a second dashboard on the source that reuses card 34. */
+function secondDashboardRoute(): array
+{
+    return ['GET '.MB_SOURCE.'/api/dashboard/13' => [
+        'id'         => 13,
+        'name'       => 'Omzet per maand',
+        'parameters' => [],
+        'tabs'       => [],
+        'dashcards'  => [[
+            'id'     => 2, 'card_id' => 34, 'row' => 0, 'col' => 0, 'size_x' => 12, 'size_y' => 8,
+            'series' => [], 'parameter_mappings' => [], 'visualization_settings' => [],
+        ]],
+    ]];
+}
+
+it('syncs every dashboard on the source when --dashboard is omitted', function () {
+    fakeMetabase(secondDashboardRoute() + [
+        'GET '.MB_SOURCE.'/api/dashboard' => [
+            ['id' => 12, 'name' => 'Omzetoverzicht'],
+            ['id' => 13, 'name' => 'Omzet per maand'],
+            ['id' => 99, 'name' => 'Oud', 'archived' => true],
+        ],
+    ]);
+
+    $this->artisan('metabase:sync-dashboard --source=dev --target=prod --force')
+        ->expectsOutputToContain('12 - Omzetoverzicht')
+        ->expectsOutputToContain('13 - Omzet per maand')
+        ->doesntExpectOutputToContain('99 - Oud')
+        ->assertSuccessful();
+
+    $mapping = json_decode(Storage::disk('local')->get('metabase-sync/dev__prod.json'), true);
+    expect($mapping)->toHaveKeys(['dashboard:12', 'dashboard:13'])
+        ->not->toHaveKey('dashboard:99');
+
+    // The shared card is created once and updated for the second dashboard.
+    expect(Http::recorded(fn ($r) => $r->method() === 'POST' && str_ends_with(strtok($r->url(), '?'), '/api/card')))->toHaveCount(1);
+});
+
+it('skips Metabase example dashboards when syncing all', function () {
+    fakeMetabase([
+        'GET '.MB_SOURCE.'/api/database'  => [['id' => 2, 'name' => 'Analytics'], ['id' => 1, 'name' => 'Sample Database', 'is_sample' => true]],
+        'GET '.MB_SOURCE.'/api/dashboard' => [
+            ['id' => 1, 'name' => 'E-commerce Insights'],
+            ['id' => 3, 'name' => 'Example in collection'],
+            ['id' => 12, 'name' => 'Omzetoverzicht'],
+        ],
+        // On the sample database.
+        'GET '.MB_SOURCE.'/api/dashboard/1' => ['id' => 1, 'name' => 'E-commerce Insights', 'dashcards' => [['id' => 9, 'card_id' => 90, 'card' => ['database_id' => 1]]]],
+        // In the sample "Examples" collection, without sample data.
+        'GET '.MB_SOURCE.'/api/dashboard/3' => ['id' => 3, 'name' => 'Example in collection', 'collection' => ['name' => 'Examples', 'is_sample' => true], 'dashcards' => []],
+    ]);
+
+    $this->artisan('metabase:sync-dashboard --source=dev --target=prod --force')
+        ->expectsOutputToContain('Skipping dashboard 1 - E-commerce Insights: Metabase example.')
+        ->expectsOutputToContain('Skipping dashboard 3 - Example in collection: Metabase example.')
+        ->expectsOutputToContain('Dashboard 12 - Omzetoverzicht')
+        ->assertSuccessful();
+
+    $mapping = json_decode(Storage::disk('local')->get('metabase-sync/dev__prod.json'), true);
+    expect($mapping)->toHaveKey('dashboard:12')
+        ->not->toHaveKeys(['dashboard:1', 'dashboard:3']);
+});
+
+it('skips dashboards named in services.metabase.sync_exclude when syncing all, but not when asked for explicitly', function () {
+    config()->set('services.metabase.sync_exclude', ['Omzet per maand']);
+    fakeMetabase(secondDashboardRoute() + [
+        'GET '.MB_SOURCE.'/api/dashboard' => [['id' => 12, 'name' => 'Omzetoverzicht'], ['id' => 13, 'name' => 'Omzet per maand']],
+    ]);
+
+    $this->artisan('metabase:sync-dashboard --source=dev --target=prod --force')
+        ->expectsOutputToContain('Skipping dashboard 13 - Omzet per maand: excluded in services.metabase.sync_exclude.')
+        ->doesntExpectOutputToContain('Dashboard 13 - Omzet per maand')
+        ->assertSuccessful();
+
+    $this->artisan('metabase:sync-dashboard --source=dev --target=prod --dashboard=13 --force')
+        ->expectsOutputToContain('Dashboard 13 - Omzet per maand')
+        ->assertSuccessful();
+});
+
+it('syncs several dashboards given as repeated or comma-separated ids', function () {
+    fakeMetabase(secondDashboardRoute());
+
+    $this->artisan('metabase:sync-dashboard --source=dev --target=prod --dashboard=12,13 --dashboard=12 --force')
+        ->expectsOutputToContain('Dashboard 12 - Omzetoverzicht')
+        ->expectsOutputToContain('Dashboard 13 - Omzet per maand')
+        ->assertSuccessful();
+
+    Http::assertNotSent(fn ($r) => $r->method() === 'GET' && strtok($r->url(), '?') === MB_SOURCE.'/api/dashboard');
+});
+
+it('aborts before writing when a requested dashboard cannot be read', function () {
+    fakeMetabase(secondDashboardRoute() + [
+        'GET '.MB_SOURCE.'/api/dashboard/12' => Http::response(['message' => 'boom'], 500),
+    ]);
+
+    $this->artisan('metabase:sync-dashboard --source=dev --target=prod --dashboard=13 --dashboard=12 --force')
+        ->assertFailed();
+
+    Http::assertNotSent(fn ($r) => in_array($r->method(), ['POST', 'PUT'], true));
+});
+
+it('continues with the next dashboard when one fails to sync and reports it', function () {
+    $broken = secondDashboardRoute();
+    $broken['GET '.MB_SOURCE.'/api/dashboard/13']['dashcards'][0]['card_id'] = 35;
+    fakeMetabase($broken + ['GET '.MB_SOURCE.'/api/card/35' => Http::response(['message' => 'boom'], 500)]);
+
+    $this->artisan('metabase:sync-dashboard --source=dev --target=prod --dashboard=13 --dashboard=12 --force')
+        ->expectsOutputToContain('Failed dashboards: 13 - Omzet per maand')
+        ->assertFailed();
+
+    $mapping = json_decode(Storage::disk('local')->get('metabase-sync/dev__prod.json'), true);
+    expect($mapping)->toHaveKey('dashboard:12')
+        ->not->toHaveKey('dashboard:13');
 });
 
 it('rejects a non-numeric dashboard id', function () {

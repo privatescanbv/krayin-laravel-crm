@@ -315,6 +315,13 @@ class DashboardSyncService
             $payload['tabs'] = $tabsPayload;
         }
 
+        // Neem embedding mee: zonder dit toont de CRM-iframe een nieuw gesynct dashboard niet,
+        // en worden filters die alleen in de bron 'enabled' staan in de embed genegeerd.
+        if (! empty($dashboard['enable_embedding'])) {
+            $payload['enable_embedding'] = true;
+            $payload['embedding_params'] = $this->asMap($dashboard['embedding_params'] ?? []);
+        }
+
         if ($this->dryRun) {
             return;
         }

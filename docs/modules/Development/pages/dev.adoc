@@ -181,6 +181,8 @@ Los dit op door de sync met `--sync-schema` te draaien: dit triggert een schema-
 docker exec crm php artisan metabase:sync-dashboard --source dev --target prod --dashboard 5 --sync-schema --force
 ----
 
+`--dashboard` mag herhaald of komma-gescheiden worden (`--dashboard=5,7`). Zonder `--dashboard` worden alle (niet-gearchiveerde) dashboards van de bron gesynchroniseerd. Mislukt één dashboard, dan gaat de sync door met de rest en eindigt het commando met een foutcode en een lijst van de mislukte dashboards.
+
 Blijft de fout, ook met `--sync-schema`? Controleer dan of Metabase op de doelomgeving wel bij de analytics-database kan (Admin → Databases → `crm_analytics` → Save test de verbinding). Bij `Access denied for user 'privatescan-analytics'` kan Metabase niet rescannen en houdt het de oude kolommen. Het wachtwoord moet gelijk zijn aan `DB_ANALYTICS_PASSWORD`; `.docker/mysql/init-forms.sh` zet het bij elke MySQL-init opnieuw naar die waarde.
 
 ==== Metabase-dashboards in het CRM (embeds)

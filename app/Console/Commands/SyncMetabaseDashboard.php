@@ -11,6 +11,7 @@ use App\Services\Metabase\MetabaseSyncException;
 use App\Services\Metabase\SyncMapping;
 use App\Services\Metabase\SyncReport;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Sleep;
 
 class SyncMetabaseDashboard extends Command
@@ -18,34 +19,40 @@ class SyncMetabaseDashboard extends Command
     protected $signature = 'metabase:sync-dashboard
         {--source= : Source environment name (or full URL matching a configured environment)}
         {--target= : Target environment name (or full URL matching a configured environment)}
-        {--dashboard= : Numeric id of the dashboard in the source instance}
+        {--dashboard=* : Numeric id of a dashboard in the source instance; repeat or comma-separate for several. Omit to sync all dashboards on the source}
         {--dry-run : Show what would change without writing to the target}
         {--force : Skip the confirmation prompt and continue on a version mismatch (for CI/CD)}
         {--sync-schema : Trigger a Metabase schema rescan on the target databases first, and retry while it catches up on new/changed columns (use after an analytics DB reset)}';
 
-    protected $description = 'Synchroniseer een Metabase-dashboard (incl. gekoppelde vragen) van de ene omgeving naar de andere via de HTTP API.';
+    protected $description = 'Synchroniseer Metabase-dashboards (incl. gekoppelde vragen) van de ene omgeving naar de andere via de HTTP API. Zonder --dashboard: alle dashboards van de bron.';
 
     public function handle(MetabaseEnvironments $environments, MetabaseDashboardRegistry $registry): int
     {
         $source = (string) $this->option('source');
         $target = (string) $this->option('target');
-        $dashboardOption = $this->option('dashboard');
 
-        if ($source === '' || $target === '' || $dashboardOption === null || $dashboardOption === '') {
-            $this->error('--source, --target and --dashboard are all required.');
+        if ($source === '' || $target === '') {
+            $this->error('--source and --target are both required.');
 
             return self::FAILURE;
         }
 
-        if (! ctype_digit((string) $dashboardOption)) {
+        $dashboardIds = collect($this->option('dashboard'))
+            ->flatMap(fn ($value) => explode(',', (string) $value))
+            ->map(fn (string $id) => trim($id))
+            ->filter(fn (string $id) => $id !== '')
+            ->unique()
+            ->values();
+
+        if ($dashboardIds->contains(fn (string $id) => ! ctype_digit($id))) {
             $this->error('--dashboard must be a numeric Metabase dashboard id.');
 
             return self::FAILURE;
         }
 
-        $dashboardId = (int) $dashboardOption;
         $dryRun = (bool) $this->option('dry-run');
         $force = (bool) $this->option('force');
+        $failed = [];
 
         try {
             $sourceClient = $environments->resolve($source);
@@ -57,13 +64,23 @@ class SyncMetabaseDashboard extends Command
                 return self::FAILURE;
             }
 
-            $dashboard = $sourceClient->getDashboard($dashboardId);
+            // id => name; without --dashboard every dashboard on the source, except Metabase's sample content.
+            $dashboards = $dashboardIds->isEmpty()
+                ? $this->allSourceDashboards($sourceClient)
+                : $dashboardIds->mapWithKeys(fn (string $id) => [(int) $id => $sourceClient->getDashboard((int) $id)['name'] ?? '(no name)']);
 
             $this->line('');
-            $this->line("Source:    {$sourceClient->label} ({$sourceClient->baseUrl()})");
-            $this->line("Target:    {$targetClient->label} ({$targetClient->baseUrl()})");
-            $this->line("Dashboard: {$dashboardId} - ".($dashboard['name'] ?? '(no name)'));
+            $this->line("Source:     {$sourceClient->label} ({$sourceClient->baseUrl()})");
+            $this->line("Target:     {$targetClient->label} ({$targetClient->baseUrl()})");
+            $this->line('Dashboards: '.($dashboards->isEmpty() ? '(none found on source)' : ''));
+            foreach ($dashboards as $id => $name) {
+                $this->line("  {$id} - {$name}");
+            }
             $this->line('');
+
+            if ($dashboards->isEmpty()) {
+                return self::SUCCESS;
+            }
 
             if ($dryRun) {
                 $this->comment('Dry run — no changes will be written to the target.');
@@ -80,10 +97,6 @@ class SyncMetabaseDashboard extends Command
             if ($syncSchema) {
                 $this->triggerTargetSchemaSync($targetClient);
             }
-
-            $mapping = new SyncMapping($sourceClient->label, $targetClient->label, readOnly: $dryRun);
-
-            $report = $this->syncWithRetry($sourceClient, $targetClient, $mapping, $dryRun, $force, $dashboardId, $syncSchema);
         } catch (MetabaseSyncException|MetabaseApiException $e) {
             $this->line('');
             $this->error($e->getMessage());
@@ -91,10 +104,74 @@ class SyncMetabaseDashboard extends Command
             return self::FAILURE;
         }
 
-        $this->renderReport($report);
-        $this->renderEnvHint($registry, $mapping->get('dashboard', $dashboardId), $dashboardId, $targetClient->label);
+        // One mapping for all dashboards: a card shared by several dashboards is created once on the target.
+        $mapping = new SyncMapping($sourceClient->label, $targetClient->label, readOnly: $dryRun);
+
+        foreach ($dashboards as $dashboardId => $name) {
+            $this->line('');
+            $this->info("Dashboard {$dashboardId} - {$name}");
+
+            try {
+                $report = $this->syncWithRetry($sourceClient, $targetClient, $mapping, $dryRun, $force, $dashboardId, $syncSchema);
+            } catch (MetabaseSyncException|MetabaseApiException $e) {
+                $this->error($e->getMessage());
+                $failed[$dashboardId] = $name;
+
+                continue;
+            }
+
+            $this->renderReport($report);
+            $this->renderEnvHint($registry, $mapping->get('dashboard', $dashboardId), $dashboardId, $targetClient->label);
+        }
+
+        if ($failed !== []) {
+            $this->line('');
+            $this->error('Failed dashboards: '.collect($failed)->map(fn ($name, $id) => "{$id} - {$name}")->implode(', '));
+
+            return self::FAILURE;
+        }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * All dashboards on the source as id => name, skipping those named in services.metabase.sync_exclude
+     * and Metabase's bundled examples: dashboards in the sample "Examples" collection or built on the
+     * Sample Database (e.g. "E-commerce Insights").
+     */
+    private function allSourceDashboards(MetabaseClient $source): Collection
+    {
+        $sampleDbIds = collect($source->listDatabases())
+            ->filter(fn (array $db) => ! empty($db['is_sample']))
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id);
+
+        $excluded = config('services.metabase.sync_exclude', []);
+
+        return collect($source->listDashboards())
+            ->reject(function (array $summary) use ($excluded) {
+                $isExcluded = in_array($summary['name'] ?? null, $excluded, true);
+
+                if ($isExcluded) {
+                    $this->comment("Skipping dashboard {$summary['id']} - {$summary['name']}: excluded in services.metabase.sync_exclude.");
+                }
+
+                return $isExcluded;
+            })
+            ->reject(function (array $summary) use ($source, $sampleDbIds) {
+                $dashboard = $source->getDashboard((int) $summary['id']);
+
+                $isExample = ! empty($dashboard['collection']['is_sample'])
+                    || collect($dashboard['dashcards'] ?? [])
+                        ->contains(fn (array $dc) => $sampleDbIds->contains((int) ($dc['card']['database_id'] ?? 0)));
+
+                if ($isExample) {
+                    $this->comment("Skipping dashboard {$summary['id']} - {$summary['name']}: Metabase example.");
+                }
+
+                return $isExample;
+            })
+            ->mapWithKeys(fn (array $d) => [(int) $d['id'] => $d['name'] ?? '(no name)']);
     }
 
     /**

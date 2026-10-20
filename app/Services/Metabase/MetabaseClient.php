@@ -36,6 +36,14 @@ class MetabaseClient
         return $this->get("/dashboard/{$id}");
     }
 
+    /** All non-archived dashboards (summary rows: id, name, ...). */
+    public function listDashboards(): array
+    {
+        $response = $this->get('/dashboard');
+
+        return array_values(array_filter($response['data'] ?? $response, fn (array $d) => empty($d['archived'])));
+    }
+
     public function createDashboard(array $payload): array
     {
         return $this->post('/dashboard', $payload);

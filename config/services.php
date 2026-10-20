@@ -61,6 +61,12 @@ return [
 
         'timeout' => (int) env('METABASE_SYNC_TIMEOUT', 30),
 
+        // Dashboard names left out when syncing all dashboards (no --dashboard). Names, not ids:
+        // ids differ per environment, the sync keeps names.
+        'sync_exclude' => [
+            'A look at Orders',
+        ],
+
         /*
          * Signed static embeds shown in the CRM admin. site_url is the
          * browser-facing Metabase host (not the Docker-internal API URL).

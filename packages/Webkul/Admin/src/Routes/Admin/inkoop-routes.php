@@ -39,6 +39,9 @@ Route::prefix('inkoop')->group(function () {
     Route::put('{invoice}/mark-as-processed', [InkoopStep3Controller::class, 'markAsProcessed'])
         ->name('admin.inkoop.mark-as-processed');
 
+    Route::get('{invoice}/download', [InkoopController::class, 'download'])
+        ->name('admin.inkoop.download');
+
     Route::delete('{invoice}', [InkoopController::class, 'destroy'])
         ->name('admin.inkoop.delete');
 });

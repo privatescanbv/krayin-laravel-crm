@@ -90,6 +90,13 @@ class InkoopController extends Controller
             ->with('success', 'Factuur is succesvol geupload.');
     }
 
+    public function download(InkoopInvoice $invoice)
+    {
+        abort_unless($invoice->pdf_path && Storage::disk('public')->exists($invoice->pdf_path), 404);
+
+        return Storage::disk('public')->download($invoice->pdf_path, $invoice->name ?? $invoice->filename);
+    }
+
     public function destroy(InkoopInvoice $invoice)
     {
         $clinicId = $invoice->clinic_id;

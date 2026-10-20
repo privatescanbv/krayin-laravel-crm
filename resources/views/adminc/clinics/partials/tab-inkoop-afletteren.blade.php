@@ -141,6 +141,14 @@
                                             </a>
                                         @endif
 
+                                        @if ($invoice->pdf_path)
+                                            <a
+                                                href="{{ route('admin.inkoop.download', $invoice->id) }}"
+                                                class="cursor-pointer rounded-md p-1.5 text-xl text-gray-500 transition-all hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-800 icon-download"
+                                                title="PDF downloaden"
+                                            ></a>
+                                        @endif
+
                                         <form
                                             method="POST"
                                             action="{{ route('admin.inkoop.delete', $invoice->id) }}"

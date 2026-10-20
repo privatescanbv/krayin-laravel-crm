@@ -76,3 +76,35 @@ test('clinic view hides the Inkoop afletteren tab unless permitted', function ()
         ->assertOk()
         ->assertSee('Inkoop afletteren');
 });
+
+test('inkoop invoice pdf can be downloaded with permission', function () {
+    \Illuminate\Support\Facades\Storage::fake('public');
+    \Illuminate\Support\Facades\Storage::disk('public')->put('inkoop/test.pdf', '%PDF-1.4 test');
+    $this->invoice->update(['name' => 'Factuur maart.pdf']);
+
+    actingAs(makeRoleUser('custom', ['settings.clinics.view', 'inkoop-afletteren']), 'user')
+        ->get(route('admin.inkoop.download', $this->invoice->id))
+        ->assertOk()
+        ->assertDownload('Factuur maart.pdf');
+});
+
+test('inkoop invoice pdf download is blocked without permission', function () {
+    actingAs(makeRoleUser('custom', ['settings.clinics', 'settings.clinics.view']), 'user')
+        ->get(route('admin.inkoop.download', $this->invoice->id))
+        ->assertStatus(401);
+});
+
+test('inkoop invoice pdf download returns 404 when file is missing', function () {
+    \Illuminate\Support\Facades\Storage::fake('public');
+
+    actingAs(makeRoleUser('all'), 'user')
+        ->get(route('admin.inkoop.download', $this->invoice->id))
+        ->assertNotFound();
+});
+
+test('clinic view shows the pdf download action', function () {
+    actingAs(makeRoleUser('all'), 'user')
+        ->get(route('admin.clinics.view', $this->clinic->id))
+        ->assertOk()
+        ->assertSee(route('admin.inkoop.download', $this->invoice->id));
+});

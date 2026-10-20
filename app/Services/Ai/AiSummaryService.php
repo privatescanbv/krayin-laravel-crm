@@ -182,7 +182,7 @@ class AiSummaryService
                     ->where('subject_id', $summary->subject_id)
                     ->where('id', '!=', $generation->id)
                     ->delete();
-            });
+            }, 3); // Locks the subject before its citations; deadlocks with writers locking the other way, so retry.
 
             Log::info('AI summary generated', $logContext + [
                 'duration_ms' => $durationMs,

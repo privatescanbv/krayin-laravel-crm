@@ -12,7 +12,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -26,6 +25,11 @@ class GenerateAiSummaryJob implements ShouldBeUnique, ShouldQueue
     // rethrown by the service so the job fails and gets retried here; keep
     // retrying for a while since recovery (e.g. an IP whitelist change) can
     // take longer than a normal backoff window.
+    // Counted in attempts, not retryUntil(): that deadline starts at dispatch, so daily-refresh
+    // jobs waiting hours on the bulk queue expired before they ever ran.
+    // 10 tries with the backoff below spans ~1h50m of retrying.
+    public int $tries = 10;
+
     public int $uniqueFor = 7200;
 
     public function __construct(
@@ -40,15 +44,7 @@ class GenerateAiSummaryJob implements ShouldBeUnique, ShouldQueue
     }
 
     /**
-     * Stop retrying after this window (covers slow-to-propagate fixes, e.g. an IP whitelist).
-     */
-    public function retryUntil(): Carbon
-    {
-        return now()->addHours(2);
-    }
-
-    /**
-     * Backoff in seconds between retries: 1m, 5m, then every 15m until retryUntil().
+     * Backoff in seconds between retries: 1m, 5m, then every 15m until $tries runs out.
      */
     public function backoff(): array
     {
@@ -90,7 +86,7 @@ class GenerateAiSummaryJob implements ShouldBeUnique, ShouldQueue
 
     public function failed(Throwable $exception): void
     {
-        // Called once the queue gives up for good (retries exhausted or retryUntil() passed).
+        // Called once the queue gives up for good (retries exhausted).
         $morphClass = app(AiSubjectRegistry::class)->find($this->subjectKey)?->morphClass();
 
         if ($morphClass) {

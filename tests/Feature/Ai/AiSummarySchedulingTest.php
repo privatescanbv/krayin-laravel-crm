@@ -140,3 +140,14 @@ test('ai summary jobs are unique per subject record', function () {
         ->and($job->uniqueId())->toBe('orders:42')
         ->and((new GenerateAiSummaryJob('leads', 42))->uniqueId())->toBe('leads:42');
 });
+
+test('ai summary jobs retry by attempts so a long bulk queue wait does not expire them', function () {
+    Queue::fake();
+
+    GenerateAiSummaryJob::dispatch('leads', 42, 'daily_refresh')->onQueue('ai-summary-scheduled');
+
+    Queue::assertPushed(GenerateAiSummaryJob::class, function (GenerateAiSummaryJob $job) {
+        // retryUntil() starts counting at dispatch: jobs still queued after it fail unrun.
+        return ! method_exists($job, 'retryUntil') && $job->tries === 10;
+    });
+});

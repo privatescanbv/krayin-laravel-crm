@@ -9,13 +9,16 @@ use App\Models\PurchasePrice;
 
 class OrderItemPurchasePriceService
 {
-    public function linkPartnerProduct(OrderItem $orderItem, PartnerProduct $partnerProduct): void
+    public function linkPartnerProduct(OrderItem $orderItem, PartnerProduct $partnerProduct, bool $force = false): void
     {
-        $orderItem->update(['partner_product_id' => $partnerProduct->id]);
+        // Quiet: avoids re-entering OrderItemObserver::updated() while it may still be handling
+        // the triggering save (e.g. a product_id change), which would otherwise recurse forever
+        // because the outer save hasn't synced its original attributes yet.
+        $orderItem->updateQuietly(['partner_product_id' => $partnerProduct->id]);
 
         $orderItem->unsetRelation('purchasePrice');
 
-        if ($orderItem->hasEnteredPurchasePrice()) {
+        if (! $force && $orderItem->hasEnteredPurchasePrice()) {
             return;
         }
 
@@ -44,7 +47,44 @@ class OrderItemPurchasePriceService
             return;
         }
 
-        $orderItem->update(['partner_product_id' => null]);
+        $orderItem->updateQuietly(['partner_product_id' => null]);
+    }
+
+    /**
+     * Re-resolve the partner-product link (and MAIN purchase price) for an order item that is
+     * already booked, after its product changed. Without this, an order item keeps the
+     * partner_product_id/purchase price copied from its *previous* product (set when the
+     * booking was first created), so the old test's purchase price silently lingers while the
+     * sale price already reflects the new product.
+     */
+    public function resyncPartnerProductForCurrentProduct(OrderItem $orderItem): void
+    {
+        $resourceOrderItem = $orderItem->relationLoaded('resourceOrderItem')
+            ? $orderItem->resourceOrderItem
+            : $orderItem->resourceOrderItem()->with('resource.clinicDepartment')->first();
+
+        if ($resourceOrderItem === null) {
+            // Not booked to a resource: no clinic context to resync the partner link against.
+            return;
+        }
+
+        $clinicId = $resourceOrderItem->resource?->clinicDepartment?->clinic_id;
+
+        if ($clinicId === null) {
+            return;
+        }
+
+        $partnerProduct = PartnerProduct::forClinicAndProduct($clinicId, $orderItem->product_id)
+            ->with('purchasePrice')
+            ->first();
+
+        if ($partnerProduct === null) {
+            $this->clearPartnerProductLink($orderItem);
+
+            return;
+        }
+
+        $this->linkPartnerProduct($orderItem, $partnerProduct, force: true);
     }
 
     /**

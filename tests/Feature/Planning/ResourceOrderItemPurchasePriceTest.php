@@ -136,6 +136,105 @@ test('planning overschrijft geen handmatige purchase price op het order item', f
         ->and($orderItem->purchasePrice()->count())->toBe(1);
 });
 
+test('wijzigen van product op een geboekt order item herkoppelt inkoopprijs naar het nieuwe product', function () {
+    $clinic = Clinic::factory()->create();
+    $dept = ClinicDepartment::factory()->create(['clinic_id' => $clinic->id]);
+    $resourceType = ResourceType::firstOrCreate(['name' => 'MRI scanner'], ['description' => null]);
+    $resource = Resource::factory()->create([
+        'clinic_department_id' => $dept->id,
+        'resource_type_id'     => $resourceType->id,
+    ]);
+
+    $oldProduct = Product::factory()->create(['resource_type_id' => $resourceType->id]);
+    $oldPartnerProduct = PartnerProduct::factory()->create(['product_id' => $oldProduct->id]);
+    $oldPartnerProduct->clinics()->sync([$clinic->id]);
+    $oldPartnerProduct->purchasePrice()->update([
+        'purchase_price_misc'       => 10.00,
+        'purchase_price_doctor'     => 0,
+        'purchase_price_cardiology' => 0,
+        'purchase_price_clinic'     => 0,
+        'purchase_price_radiology'  => 0,
+        'purchase_price'            => 10.00,
+    ]);
+
+    $newProduct = Product::factory()->create(['resource_type_id' => $resourceType->id]);
+    $newPartnerProduct = PartnerProduct::factory()->create(['product_id' => $newProduct->id]);
+    $newPartnerProduct->clinics()->sync([$clinic->id]);
+    $newPartnerProduct->purchasePrice()->update([
+        'purchase_price_misc'       => 99.00,
+        'purchase_price_doctor'     => 0,
+        'purchase_price_cardiology' => 0,
+        'purchase_price_clinic'     => 0,
+        'purchase_price_radiology'  => 0,
+        'purchase_price'            => 99.00,
+    ]);
+
+    $orderItem = OrderItem::factory()->create(['product_id' => $oldProduct->id]);
+
+    ResourceOrderItem::create([
+        'resource_id'  => $resource->id,
+        'orderitem_id' => $orderItem->id,
+        'from'         => Carbon::tomorrow()->setTime(10, 0),
+        'to'           => Carbon::tomorrow()->setTime(11, 0),
+    ]);
+
+    $orderItem->refresh();
+    expect($orderItem->partner_product_id)->toBe($oldPartnerProduct->id)
+        ->and((float) $orderItem->purchasePrice->purchase_price)->toBe(10.00);
+
+    // Orderregel wordt herpland naar een ander product (test), zoals vanuit de order edit pagina.
+    $orderItem->update(['product_id' => $newProduct->id]);
+    $orderItem->refresh();
+
+    expect($orderItem->partner_product_id)->toBe($newPartnerProduct->id)
+        ->and((float) $orderItem->purchasePrice->purchase_price)->toBe(99.00)
+        ->and((float) $orderItem->purchasePrice->purchase_price_misc)->toBe(99.00)
+        ->and($orderItem->purchasePrice()->count())->toBe(1)
+        ->and($orderItem->getProductName())->toBe($newPartnerProduct->name);
+});
+
+test('wijzigen van product op een geboekt order item zonder matching partner product ontkoppelt het oude partner product', function () {
+    $clinic = Clinic::factory()->create();
+    $dept = ClinicDepartment::factory()->create(['clinic_id' => $clinic->id]);
+    $resourceType = ResourceType::firstOrCreate(['name' => 'MRI scanner'], ['description' => null]);
+    $resource = Resource::factory()->create([
+        'clinic_department_id' => $dept->id,
+        'resource_type_id'     => $resourceType->id,
+    ]);
+
+    $oldProduct = Product::factory()->create(['resource_type_id' => $resourceType->id]);
+    $oldPartnerProduct = PartnerProduct::factory()->create(['product_id' => $oldProduct->id]);
+    $oldPartnerProduct->clinics()->sync([$clinic->id]);
+    $oldPartnerProduct->purchasePrice()->update([
+        'purchase_price_misc'       => 10.00,
+        'purchase_price_doctor'     => 0,
+        'purchase_price_cardiology' => 0,
+        'purchase_price_clinic'     => 0,
+        'purchase_price_radiology'  => 0,
+        'purchase_price'            => 10.00,
+    ]);
+
+    // Geen partner product gekoppeld aan deze kliniek voor het nieuwe product.
+    $newProduct = Product::factory()->create(['resource_type_id' => $resourceType->id]);
+
+    $orderItem = OrderItem::factory()->create(['product_id' => $oldProduct->id]);
+
+    ResourceOrderItem::create([
+        'resource_id'  => $resource->id,
+        'orderitem_id' => $orderItem->id,
+        'from'         => Carbon::tomorrow()->setTime(10, 0),
+        'to'           => Carbon::tomorrow()->setTime(11, 0),
+    ]);
+
+    $orderItem->refresh();
+    expect($orderItem->partner_product_id)->toBe($oldPartnerProduct->id);
+
+    $orderItem->update(['product_id' => $newProduct->id]);
+    $orderItem->refresh();
+
+    expect($orderItem->partner_product_id)->toBeNull();
+});
+
 test('planning zonder clinicDepartment op resource maakt geen purchase price aan en geeft geen error', function () {
     $resourceType = ResourceType::firstOrCreate(['name' => 'MRI scanner'], ['description' => null]);
 

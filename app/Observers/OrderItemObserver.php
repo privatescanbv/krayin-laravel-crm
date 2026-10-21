@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Enums\OrderItemStatus;
 use App\Models\OrderItem;
 use App\Services\OrderCheckService;
+use App\Services\OrderItemPurchasePriceService;
 use App\Services\OrderRefundService;
 use Illuminate\Support\Facades\DB;
 use Webkul\Activity\Repositories\ActivityRepository;
@@ -17,6 +18,7 @@ class OrderItemObserver
         protected OrderCheckService $orderCheckService,
         private readonly ActivityRepository $activityRepository,
         private readonly OrderRefundService $orderRefundService,
+        private readonly OrderItemPurchasePriceService $orderItemPurchasePriceService,
     ) {}
 
     /**
@@ -45,6 +47,7 @@ class OrderItemObserver
         if ($orderItem->wasChanged('product_id')) {
             $this->updateOrderItemStatus($orderItem);
             $this->updatePartnerProductChecks($orderItem);
+            $this->orderItemPurchasePriceService->resyncPartnerProductForCurrentProduct($orderItem);
         }
 
         if ($orderItem->wasChanged('status') || $orderItem->wasChanged('total_price')) {

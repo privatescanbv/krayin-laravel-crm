@@ -117,9 +117,9 @@ class KeycloakConfigService
             $results['errors'] = array_merge($results['errors'], $rolesResult['errors']);
         }
 
-        $webhookSyncError = $this->syncWebhookListener($accessToken);
-        if ($webhookSyncError) {
-            $results['errors'][] = $webhookSyncError;
+        $listenerError = $this->removeHttpEventsListener($accessToken);
+        if ($listenerError) {
+            $results['errors'][] = $listenerError;
         }
 
         return $results;
@@ -468,39 +468,33 @@ class KeycloakConfigService
     }
 
     /**
-     * Configure ext-event-webhook listener and webhook endpoint.
+     * Remove the experimental "http-events" listener from the realm. Its provider jar is gone and it
+     * never had an endpoint (KC_HTTP_EVENTS_ENDPOINT), so it logged an error for every event.
      */
-    protected function syncWebhookListener(string $accessToken): ?string
+    protected function removeHttpEventsListener(string $accessToken): ?string
     {
         $eventsConfig = $this->keycloakService->getRealmEventsConfig($accessToken);
         if (! is_array($eventsConfig)) {
-            Log::warning('Unable to fetch Keycloak events config; skipping webhook listener sync');
+            Log::warning('Unable to fetch Keycloak events config; skipping http-events listener cleanup');
 
-            return 'Kon Keycloak events config niet ophalen om ext-event-webhook te activeren.';
+            return 'Kon Keycloak events config niet ophalen om de http-events listener te verwijderen.';
         }
 
-        $listeners = $eventsConfig['eventsListeners'] ?? [];
-        $eventListeners = ['http-events']; // ['ext-event-webhook'];
-        $updatedListeners = array_values(array_unique(array_merge((array) $listeners, $eventListeners)));
-        $needsEventsUpdate = ($eventsConfig['eventsEnabled'] ?? false) !== true
-            || $listeners !== $updatedListeners;
+        $listeners = (array) ($eventsConfig['eventsListeners'] ?? []);
 
-        if ($needsEventsUpdate) {
-            $payload = [
-                'eventsEnabled'     => true,
-                'eventsExpiration'  => $eventsConfig['eventsExpiration'] ?? 0,
-                'eventsListeners'   => $updatedListeners,
-                'enabledEventTypes' => $eventsConfig['enabledEventTypes'] ?? [],
-            ];
-
-            if (! $this->keycloakService->updateRealmEventsConfig($payload, $accessToken)) {
-                return 'Kon Keycloak events listener configuratie niet bijwerken.';
-            }
-
-            Log::info('Enabled ext-event-webhook listener for realm', [
-                'listeners' => $updatedListeners,
-            ]);
+        if (! in_array('http-events', $listeners, true)) {
+            return null;
         }
+
+        $payload = array_merge($eventsConfig, [
+            'eventsListeners' => array_values(array_diff($listeners, ['http-events'])),
+        ]);
+
+        if (! $this->keycloakService->updateRealmEventsConfig($payload, $accessToken)) {
+            return 'Kon Keycloak events listener configuratie niet bijwerken.';
+        }
+
+        Log::info('Removed http-events listener from realm', ['listeners' => $payload['eventsListeners']]);
 
         return null;
     }

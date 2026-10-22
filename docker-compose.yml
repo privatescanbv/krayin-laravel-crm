@@ -339,7 +339,6 @@ services:
       public:
       backend:
     volumes:
-      - ./.docker/keycloak/providers:/opt/keycloak/providers
       - ./.docker/keycloak/themes:/opt/keycloak/themes-src:ro
       - ./.docker/keycloak/docker-entrypoint.sh:/opt/keycloak/docker-entrypoint.sh:ro
     depends_on:

@@ -6,8 +6,10 @@ use App\Models\User as modelUser;
 use App\Support\KeycloakConfig;
 use Exception;
 use GuzzleHttp\Exception\ClientException;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Contracts\User;
@@ -21,6 +23,14 @@ class KeycloakService
      * Keycloak does not handle an empty firstName/lastName well.
      */
     public const EMPTY_NAME_PLACEHOLDER = 'empty';
+
+    /**
+     * Set for a minute once Keycloak turns out to be unreachable (e.g. while it restarts on a
+     * deploy), so every request in that window skips the call instead of logging an error.
+     */
+    private const UNAVAILABLE_CACHE_KEY = 'keycloak:admin-unavailable';
+
+    private const UNAVAILABLE_SECONDS = 60;
 
     /**
      * Get the base URL for browser redirects (external).
@@ -68,6 +78,10 @@ class KeycloakService
             return null;
         }
 
+        if (Cache::has(self::UNAVAILABLE_CACHE_KEY)) {
+            return null;
+        }
+
         $tokenUrl = $this->resolveKeycloakUrl('/realms/master/protocol/openid-connect/token');
 
         try {
@@ -80,6 +94,14 @@ class KeycloakService
 
             if ($response->successful()) {
                 return $response->json('access_token');
+            }
+
+            // 404 is Traefik's "no route" while the Keycloak container isn't healthy; 5xx is a
+            // proxy or Keycloak still starting. Both pass by themselves, unlike a 401.
+            if ($response->status() === 404 || $response->serverError()) {
+                $this->markUnavailable($tokenUrl, 'HTTP '.$response->status());
+
+                return null;
             }
 
             Log::error('Failed to get Keycloak admin token', [
@@ -109,6 +131,10 @@ class KeycloakService
             ]);
 
             return null;
+        } catch (ConnectionException $e) {
+            $this->markUnavailable($tokenUrl, $e->getMessage());
+
+            return null;
         } catch (Exception $e) {
             Log::warning('Keycloak admin authentication error', [
                 'error'          => $e->getMessage(),
@@ -118,6 +144,27 @@ class KeycloakService
             ]);
 
             return null;
+        }
+    }
+
+    private function markUnavailable(string $tokenUrl, string $reason): void
+    {
+        Cache::put(self::UNAVAILABLE_CACHE_KEY, true, self::UNAVAILABLE_SECONDS);
+
+        Log::warning('Keycloak niet bereikbaar, admin-aanroepen worden '.self::UNAVAILABLE_SECONDS.'s overgeslagen', [
+            'token_url' => $tokenUrl,
+            'reason'    => $reason,
+        ]);
+    }
+
+    /**
+     * The cause is already logged by getAdminToken(); while Keycloak is known to be unreachable
+     * that is enough, don't repeat it for every request.
+     */
+    private function logMissingAdminToken(string $message): void
+    {
+        if (! Cache::has(self::UNAVAILABLE_CACHE_KEY)) {
+            Log::error($message);
         }
     }
 
@@ -550,7 +597,7 @@ class KeycloakService
         $token = $this->getOrResolveToken($accessToken);
 
         if (! $token) {
-            Log::error('Kon geen admin token verkrijgen om rol te zoeken.');
+            $this->logMissingAdminToken('Kon geen admin token verkrijgen om rol te zoeken.');
 
             return null;
         }
@@ -581,7 +628,7 @@ class KeycloakService
         $token = $this->getOrResolveToken($accessToken);
 
         if (! $token) {
-            Log::error('Kon geen admin token verkrijgen om rol aan te maken.');
+            $this->logMissingAdminToken('Kon geen admin token verkrijgen om rol aan te maken.');
 
             return false;
         }
@@ -619,7 +666,7 @@ class KeycloakService
         $token = $this->getOrResolveToken($accessToken);
 
         if (! $token) {
-            Log::error('Kon geen admin token verkrijgen om rol toe te wijzen.');
+            $this->logMissingAdminToken('Kon geen admin token verkrijgen om rol toe te wijzen.');
 
             return false;
         }
@@ -672,7 +719,7 @@ class KeycloakService
         $token = $this->getOrResolveToken($accessToken);
 
         if (! $token) {
-            Log::error('Kon geen admin token verkrijgen om user rollen op te halen.');
+            $this->logMissingAdminToken('Kon geen admin token verkrijgen om user rollen op te halen.');
 
             return [];
         }

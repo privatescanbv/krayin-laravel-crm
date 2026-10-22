@@ -3,7 +3,9 @@
 namespace Tests\Feature\Keycloak;
 
 use App\Services\Keycloak\KeycloakService;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Tests\Feature\Keycloak\Helpers\KeycloakHttpHelpers;
 
 beforeEach(function () {
@@ -216,4 +218,44 @@ it('can get logout URL', function () {
     $logoutUrl = $service->getLogoutUrl();
 
     expect($logoutUrl)->toBe('http://test-keycloak.local:9999/realms/crm/protocol/openid-connect/logout');
+});
+
+it('skips admin calls for a minute while keycloak is unreachable and logs that once', function (\Closure $unreachable) {
+    Log::spy();
+    $calls = 0;
+    Http::fake(['*' => function () use (&$calls, $unreachable) {
+        $calls++;
+
+        return $unreachable();
+    }]);
+
+    $service = app(KeycloakService::class);
+
+    expect($service->getUserRoles('user-1'))->toBe([])
+        ->and($service->getUserRoles('user-1'))->toBe([])
+        ->and($calls)->toBe(1);
+
+    Log::shouldHaveReceived('warning')->once();
+    Log::shouldNotHaveReceived('error');
+
+    $this->travel(61)->seconds();
+
+    $service->getAdminToken();
+
+    expect($calls)->toBe(2);
+})->with([
+    'traefik has no route yet' => fn () => fn () => Http::response('404 page not found', 404),
+    'connection refused'       => fn () => fn () => throw new ConnectionException('Connection refused'),
+]);
+
+it('keeps reporting invalid admin credentials as an error on every call', function () {
+    Log::spy();
+    KeycloakHttpHelpers::fakeAdminToken('', 401);
+
+    $service = app(KeycloakService::class);
+    $service->getAdminToken();
+    $service->getAdminToken();
+
+    Http::assertSentCount(2);
+    Log::shouldHaveReceived('error')->twice();
 });

@@ -112,6 +112,10 @@ class DuplicateController extends Controller
             'leadData' => $leadData,
             'duplicatesData' => $duplicatesData,
             'preselectedLeadIds' => $preselectedLeadIds,
+            // Across every candidate; the screen narrows it down to the leads actually selected.
+            'anamnesisConflicts' => $this->leadRepository->anamnesisConflicts(
+                array_merge([$lead->id], $duplicates->pluck('id')->all())
+            ),
         ]);
     }
 
@@ -186,6 +190,8 @@ class DuplicateController extends Controller
             'duplicate_lead_ids' => 'required|array|min:1',
             'duplicate_lead_ids.*' => 'exists:leads,id',
             'field_mappings' => 'nullable|array',
+            'anamnesis_choices' => 'nullable|array',
+            'anamnesis_choices.*' => 'string',
         ]);
 
         if ($id !== (int) request('primary_lead_id')) {
@@ -200,7 +206,12 @@ class DuplicateController extends Controller
         $fieldMappings = request('field_mappings', []);
 
         try {
-            $mergedLead = $this->leadRepository->mergeLeads($primaryLeadId, $duplicateLeadIds, $fieldMappings);
+            $mergedLead = $this->leadRepository->mergeLeads(
+                $primaryLeadId,
+                $duplicateLeadIds,
+                $fieldMappings,
+                request('anamnesis_choices', [])
+            );
 
             // Shown on the page the client redirects to (no JS alert).
             session()->flash('success', __('messages.lead.merge_success'));

@@ -25,6 +25,7 @@
                 :primary-lead="{{ json_encode($leadData) }}"
                 :duplicates="{{ json_encode($duplicatesData) }}"
                 :preselected-lead-ids="{{ json_encode($preselectedLeadIds ?? []) }}"
+                :anamnesis-conflicts="{{ json_encode($anamnesisConflicts ?? []) }}"
                 merge-url="{{ route('admin.leads.duplicates.merge', $lead->id) }}"
                 false-positive-url="{{ route('admin.leads.duplicates.false_positive', $lead->id) }}"
                 redirect-url="{{ route('admin.leads.view', $lead->id) }}"
@@ -139,6 +140,54 @@
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Anamnesis Choice Block: only one anamnesis per person can survive the merge -->
+                <div v-if="activeAnamnesisConflicts.length > 0" class="rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
+                    <div class="border-b border-gray-200 p-4 dark:border-gray-800">
+                        <h3 class="text-lg font-semibold text-red-600">Anamnese kiezen</h3>
+                        <p class="text-sm text-gray-600">
+                            Meerdere leads hebben een ingevulde anamnese voor dezelfde persoon. Kies per persoon welke anamnese behouden blijft.
+                            De andere anamnese wordt verwijderd, inclusief de gekoppelde GVL-formulieren. Lege anamneses vallen automatisch weg.
+                        </p>
+                    </div>
+
+                    <div class="flex flex-col gap-4 p-4">
+                        <div v-for="conflict in activeAnamnesisConflicts" :key="'anamnesis-' + conflict.person_id">
+                            <div class="mb-2 text-sm font-medium">@{{ conflict.person_name || ('Persoon #' + conflict.person_id) }}</div>
+
+                            <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                <label
+                                    v-for="option in conflict.options"
+                                    :key="option.id"
+                                    class="flex cursor-pointer gap-3 rounded border p-3 dark:border-gray-700"
+                                    :class="anamnesisChoices[conflict.person_id] === option.id ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200'"
+                                >
+                                    <input
+                                        type="radio"
+                                        :name="'anamnesis-' + conflict.person_id"
+                                        :value="option.id"
+                                        v-model="anamnesisChoices[conflict.person_id]"
+                                        class="mt-0.5 !h-4 !w-4 shrink-0 !rounded-full !p-0"
+                                    />
+                                    <div class="min-w-0 flex-1 text-xs">
+                                        <div class="text-sm font-medium">
+                                            Lead #@{{ option.lead_id }}
+                                            <span v-if="option.lead_id === primaryLead.id" class="text-gray-500">(primair)</span>
+                                        </div>
+                                        <div>Laatst gewijzigd: @{{ option.updated_at || '-' }}</div>
+                                        <div>Ingevulde velden: @{{ option.filled_fields }}</div>
+                                        <div :class="option.gvl_forms.length ? 'font-medium' : 'text-gray-500'">
+                                            GVL-formulieren: @{{ option.gvl_forms.length }}
+                                        </div>
+                                        <div v-for="form in option.gvl_forms" :key="form.gvl_form_id" :class="form.completed ? 'text-status-active-text' : 'text-gray-500'">
+                                            • @{{ form.type_label }}: @{{ formStatusLabel(form.status) }}
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -322,6 +371,9 @@
                                     <div v-if="selectedLeads.length < 2" class="mt-1 text-xs text-orange-600">
                                         Selecteer ten minste één duplicaat om samen te voegen
                                     </div>
+                                    <div v-else-if="missingAnamnesisChoices" class="mt-1 text-xs text-orange-600">
+                                        Kies eerst welke anamnese behouden blijft
+                                    </div>
                                 </div>
                                 <div class="flex gap-3">
                                     <a
@@ -339,7 +391,7 @@
                                     </button>
                                     <button
                                         @click="mergeLeads"
-                                        :disabled="selectedLeads.length < 2 || isLoading"
+                                        :disabled="selectedLeads.length < 2 || missingAnamnesisChoices || isLoading"
                                         class="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                     >
                                         <span v-if="isLoading" class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
@@ -364,6 +416,7 @@
                     falsePositiveUrl: { type: String, required: true },
                     redirectUrl: { type: String, required: true },
                     preselectedLeadIds: { type: Array, default: () => [] },
+                    anamnesisConflicts: { type: Array, default: () => [] },
                 },
                 data() {
                     const initialSelected = [this.primaryLead.id];
@@ -379,6 +432,8 @@
                     return {
                         selectedLeads: initialSelected, // Primary lead is always selected
                         fieldMappings: {},
+                        // person_id => anamnesis id; deliberately no default, the user has to choose.
+                        anamnesisChoices: {},
                         isLoading: false,
                         showIdenticalFields: false, // Control visibility of identical fields
                         fieldConfigurations: [
@@ -426,6 +481,21 @@
                     };
                 },
                 computed: {
+                    // Conflicts only exist between the leads that are actually selected; empty
+                    // anamneses are dropped by the merge itself, so only those with content count.
+                    activeAnamnesisConflicts() {
+                        return this.anamnesisConflicts
+                            .map(conflict => ({
+                                ...conflict,
+                                options: conflict.options.filter(option => this.selectedLeads.includes(option.lead_id) && ! option.is_empty),
+                            }))
+                            .filter(conflict => conflict.options.length > 1);
+                    },
+                    missingAnamnesisChoices() {
+                        return this.activeAnamnesisConflicts.some(conflict =>
+                            ! conflict.options.some(option => option.id === this.anamnesisChoices[conflict.person_id])
+                        );
+                    },
                     fieldsWithDifferences() {
                         return this.fieldConfigurations.filter(config => {
                             return this.hasFieldDifferences(config);
@@ -470,6 +540,16 @@
                         }
 
                         return this.primaryLead.id;
+                    },
+
+                    formStatusLabel(status) {
+                        return {
+                            new: 'nieuw',
+                            step1: 'stap 1 ingevuld',
+                            step2: 'stap 2 ingevuld',
+                            step3: 'stap 3 ingevuld',
+                            completed: 'afgerond',
+                        }[status] || 'onbekend';
                     },
 
                     hasMeaningfulValue(value) {
@@ -635,6 +715,9 @@
                                     primary_lead_id: this.primaryLead.id,
                                     duplicate_lead_ids: duplicateIds,
                                     field_mappings: this.fieldMappings,
+                                    anamnesis_choices: Object.fromEntries(
+                                        this.activeAnamnesisConflicts.map(conflict => [conflict.person_id, this.anamnesisChoices[conflict.person_id]])
+                                    ),
                                 },
                                 {
                                     successMessage: 'Leads succesvol samengevoegd!',

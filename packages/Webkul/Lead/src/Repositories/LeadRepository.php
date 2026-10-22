@@ -4,10 +4,13 @@ namespace Webkul\Lead\Repositories;
 
 use App\Actions\Leads\SnapshotLeadCustomerTypeAction;
 use App\Enums\Departments;
+use App\Enums\FormStatus;
 use App\Enums\DuplicateEntityType;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Exceptions\CannotDeleteLeadWithSalesException;
+use App\Models\Anamnesis;
+use App\Models\AnamnesisGvlForm;
 use App\Models\Department;
 use App\Repositories\AddressRepository;
 use App\Services\LeadDuplicateCacheService;
@@ -18,6 +21,8 @@ use Illuminate\Container\Container;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
+use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Repositories\PersonRepository;
@@ -482,7 +487,11 @@ class LeadRepository extends Repository
      * @param array $fieldMappings
      * @return Lead
      */
-    public function mergeLeads($primaryLeadId, $duplicateLeadIds, $fieldMappings = [])
+    /**
+     * @param  array<int, string>  $anamnesisChoices  person_id => id of the anamnesis to keep, required for
+     *                                                 every conflict in {@see anamnesisConflicts()}
+     */
+    public function mergeLeads($primaryLeadId, $duplicateLeadIds, $fieldMappings = [], array $anamnesisChoices = [])
     {
         $primaryLead = $this->findOrFail($primaryLeadId);
 
@@ -558,6 +567,8 @@ class LeadRepository extends Repository
             if ($marketingCampaignSourceLeadId !== null && (int) $marketingCampaignSourceLeadId !== (int) $primaryLeadId) {
                 $this->replaceMarketingData($primaryLead, $duplicateLeads->firstWhere('id', $marketingCampaignSourceLeadId));
             }
+
+            $this->applyAnamnesisChoices($primaryLead, array_merge([(int) $primaryLeadId], array_map('intval', $duplicateLeadIds)), $anamnesisChoices);
 
             foreach ($duplicateLeads as $duplicateLead) {
                 // The audit activities are written first and without a try/catch: they are the only
@@ -721,7 +732,11 @@ class LeadRepository extends Repository
 
         $this->transferActivitiesSkippingDuplicates('lead_id', $primaryLeadId, $duplicateLeadId);
 
-        $this->resolveAnamnesisConflictsBeforeLeadReassign($primaryLeadId, $duplicateLeadId);
+        // mergeLeads() resolves these through applyAnamnesisChoices() first; any conflict left here
+        // (e.g. from leads:repair-merge-orphans) needs a user to choose, so refuse instead of guessing.
+        if ($this->anamnesisConflicts([$primaryLeadId, $duplicateLeadId]) !== []) {
+            throw new Exception('Beide leads hebben een anamnese voor dezelfde persoon; voeg ze samen via het samenvoegscherm om te kiezen welke behouden blijft.');
+        }
 
         DB::table('anamnesis')->where('lead_id', $duplicateLeadId)->update(['lead_id' => $primaryLeadId]);
 
@@ -806,33 +821,114 @@ class LeadRepository extends Repository
     }
 
     /**
-     * Before re-pointing anamnesis rows, drop the ones that would violate unique(lead_id, person_id).
-     * Newest row wins, mirroring PersonRepository::resolveAnamnesisConflictsBeforePersonReassign().
+     * Lead-level anamnesis rows that collide on unique(lead_id, person_id) once the given leads are
+     * merged, grouped per person, with a summary of each so the user can pick which one to keep.
+     *
+     * @param  array<int>  $leadIds
+     * @return array<int, array{person_id: int, person_name: ?string, options: array<int, array<string, mixed>>}>
      */
-    private function resolveAnamnesisConflictsBeforeLeadReassign(int $primaryLeadId, int $duplicateLeadId): void
+    public function anamnesisConflicts(array $leadIds): array
     {
-        $conflictPersonIds = DB::table('anamnesis as d')
-            ->where('d.lead_id', $duplicateLeadId)
-            ->whereNotNull('d.person_id')
-            ->whereExists(function ($query) use ($primaryLeadId) {
-                $query->selectRaw('1')
-                    ->from('anamnesis as p')
-                    ->whereColumn('p.person_id', 'd.person_id')
-                    ->where('p.lead_id', $primaryLeadId);
-            })
-            ->pluck('d.person_id');
+        $contentFields = array_diff(array_keys(Anamnesis::getFieldsToCompare()), ['name', 'active']);
 
-        foreach ($conflictPersonIds->unique()->all() as $personId) {
-            $rows = DB::table('anamnesis')
-                ->where('person_id', $personId)
-                ->whereIn('lead_id', [$primaryLeadId, $duplicateLeadId])
-                ->orderByDesc('updated_at')
-                ->orderByDesc('created_at')
-                ->orderByDesc('id')
-                ->get();
+        // A value equal to the column default was never entered: an anamnesis created on linking a
+        // person only holds these (e.g. back_problems=1, spijsverteringsklachten=0).
+        $columnDefaults = collect(Schema::getColumns('anamnesis'))
+            ->whereNotNull('default')
+            ->mapWithKeys(fn (array $column) => [$column['name'] => trim($column['default'], "'\"")]);
 
-            foreach ($rows->skip(1) as $row) {
-                DB::table('anamnesis')->where('id', $row->id)->delete();
+        return Anamnesis::query()
+            ->with(['person', 'gvlForms'])
+            ->whereIn('lead_id', $leadIds)
+            ->whereNotNull('person_id')
+            ->orderByDesc('updated_at')
+            ->get()
+            ->groupBy('person_id')
+            ->filter(fn (Collection $rows) => $rows->count() > 1)
+            ->map(fn (Collection $rows, $personId) => [
+                'person_id'   => (int) $personId,
+                'person_name' => $rows->first()->person?->name,
+                'options'     => $rows->map(fn (Anamnesis $anamnesis) => [
+                    'id'            => $anamnesis->id,
+                    'lead_id'       => $anamnesis->lead_id,
+                    'updated_at'    => $anamnesis->updated_at?->format('d-m-Y H:i'),
+                    'filled_fields' => $filled = collect($contentFields)
+                        ->reject(fn (string $field) => in_array($anamnesis->getRawOriginal($field), [null, ''], true)
+                            || (string) $anamnesis->getRawOriginal($field) === $columnDefaults->get($field))
+                        ->count(),
+                    'is_empty'      => $filled === 0 && $anamnesis->gvlForms->isEmpty(),
+                    'gvl_forms'     => $anamnesis->gvlForms->map(fn (AnamnesisGvlForm $form) => [
+                        'gvl_form_id' => $form->gvl_form_id,
+                        'type'        => $form->gvl_form_type?->value,
+                        'type_label'  => $form->gvl_form_type?->label() ?? 'GVL-formulier',
+                        'status'      => $form->gvl_form_status?->value,
+                        'completed'   => $form->gvl_form_status === FormStatus::Completed,
+                    ])->values()->all(),
+                ])->values()->all(),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Empty anamneses (nothing entered, no GVL forms) are dropped without asking. When more than one
+     * with content remains, the merge screen must say which one to keep; the code never picks one.
+     * The rows not chosen are deleted together with their GVL forms (cascade), and logged on the
+     * primary lead with the forms they held so they can be traced afterwards.
+     *
+     * @param  array<int>  $leadIds
+     * @param  array<int|string, string>  $choices
+     */
+    private function applyAnamnesisChoices($primaryLead, array $leadIds, array $choices): void
+    {
+        foreach ($this->anamnesisConflicts($leadIds) as $conflict) {
+            $personName = $conflict['person_name'] ?? 'persoon #'.$conflict['person_id'];
+            $withContent = array_values(array_filter($conflict['options'], fn (array $option) => ! $option['is_empty']));
+
+            if (count($withContent) > 1) {
+                $keepId = $choices[$conflict['person_id']] ?? null;
+
+                if (! in_array($keepId, array_column($withContent, 'id'), true)) {
+                    throw new Exception("Kies welke anamnese van {$personName} behouden moet blijven.");
+                }
+            } else {
+                // All empty: they are interchangeable, so keep the primary's.
+                $keepId = $withContent[0]['id']
+                    ?? collect($conflict['options'])->firstWhere('lead_id', $primaryLead->id)['id']
+                    ?? $conflict['options'][0]['id'];
+            }
+
+            foreach ($conflict['options'] as $option) {
+                if ($option['id'] === $keepId) {
+                    continue;
+                }
+
+                if ($option['is_empty']) {
+                    DB::table('anamnesis')->where('id', $option['id'])->delete();
+
+                    continue;
+                }
+
+                app(ActivityRepository::class)->createSystem([
+                    'lead_id'    => $primaryLead->id,
+                    'title'      => "Anamnese verwijderd bij samenvoegen: {$personName}",
+                    'comment'    => sprintf(
+                        'Anamnese van lead #%d verwijderd (%d GVL-formulier(en)); anamnese van lead #%d behouden.',
+                        $option['lead_id'],
+                        count($option['gvl_forms']),
+                        collect($conflict['options'])->firstWhere('id', $keepId)['lead_id'],
+                    ),
+                    'user_id'    => auth()->id(),
+                    'additional' => [
+                        'anamnesis_id'      => $option['id'],
+                        'kept_anamnesis_id' => $keepId,
+                        'person_id'         => $conflict['person_id'],
+                        'source_lead_id'    => $option['lead_id'],
+                        'gvl_forms'         => $option['gvl_forms'],
+                    ],
+                ]);
+
+                DB::table('anamnesis')->where('id', $option['id'])->delete();
             }
         }
     }

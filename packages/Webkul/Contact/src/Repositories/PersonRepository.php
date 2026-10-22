@@ -714,6 +714,8 @@ class PersonRepository extends Repository
                 ->get();
 
             foreach ($rows->skip(1) as $row) {
+                // GVL forms cascade on delete; keep them on the surviving anamnesis.
+                DB::table('anamnesis_gvl_forms')->where('anamnesis_id', $row->id)->update(['anamnesis_id' => $rows->first()->id]);
                 DB::table('anamnesis')->where('id', $row->id)->delete();
             }
         }

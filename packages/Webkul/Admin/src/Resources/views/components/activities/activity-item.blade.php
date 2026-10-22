@@ -276,8 +276,8 @@
                     <span class="icon-user text-sm"></span>
                     @{{ activity.user.name }}
                 </div>
-                <span class="ml-auto shrink-0 text-[10.5px] text-gray-400 dark:text-gray-500">
-                    Aangemaakt @{{ $admin.formatDate(activity.created_at, 'd MMM', timezone) }}
+                <span class="ml-auto shrink-0 text-[10.5px] text-gray-400 dark:text-gray-500" title="Aangemaakt">
+                    @{{ $admin.formatDate(activity.created_at, 'DD-MM-yyyy HH:mm', timezone) }}
                 </span>
             </div>
 

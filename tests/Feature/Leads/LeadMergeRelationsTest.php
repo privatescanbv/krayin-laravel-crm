@@ -2,6 +2,7 @@
 
 use App\Models\Address;
 use App\Models\Anamnesis;
+use App\Models\AnamnesisGvlForm;
 use App\Models\SalesLead;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -62,6 +63,7 @@ test('it merges linked persons without violating the unique index', function () 
     $primaryLead->attachPersons([$shared->id]);
     $duplicateLead->attachPersons([$shared->id, $onlyOnDuplicate->id]);
 
+    // Both leads got an empty anamnesis for $shared on linking: dropped without asking.
     $this->leadRepository->mergeLeads($primaryLead->id, [$duplicateLead->id]);
 
     expect($primaryLead->persons()->pluck('persons.id')->sort()->values()->all())
@@ -69,20 +71,21 @@ test('it merges linked persons without violating the unique index', function () 
         ->and(DB::table('lead_persons')->where('lead_id', $duplicateLead->id)->count())->toBe(0);
 });
 
-test('it keeps the newest anamnesis when both leads have one for the same person', function () {
+test('it keeps the anamnesis the user chose when both leads have one for the same person', function () {
     $primaryLead = Lead::factory()->create();
     $duplicateLead = Lead::factory()->create();
 
     $shared = Person::factory()->create();
     $onlyOnDuplicate = Person::factory()->create();
 
-    $old = Anamnesis::factory()->create([
+    $withGvl = Anamnesis::factory()->create([
         'lead_id'    => $primaryLead->id,
         'person_id'  => $shared->id,
         'updated_at' => now()->subYear(),
     ]);
+    AnamnesisGvlForm::create(['anamnesis_id' => $withGvl->id, 'gvl_form_id' => '123', 'gvl_form_status' => 'completed']);
 
-    $new = Anamnesis::factory()->create([
+    $newerEmpty = Anamnesis::factory()->create([
         'lead_id'    => $duplicateLead->id,
         'person_id'  => $shared->id,
         'updated_at' => now(),
@@ -93,13 +96,84 @@ test('it keeps the newest anamnesis when both leads have one for the same person
         'person_id' => $onlyOnDuplicate->id,
     ]);
 
-    $this->leadRepository->mergeLeads($primaryLead->id, [$duplicateLead->id]);
+    $this->leadRepository->mergeLeads($primaryLead->id, [$duplicateLead->id], [], [$shared->id => $withGvl->id]);
+
+    $log = Activity::where('lead_id', $primaryLead->id)->where('title', 'like', 'Anamnese verwijderd%')->sole();
 
     expect(Anamnesis::where('lead_id', $primaryLead->id)->where('person_id', $shared->id)->pluck('id')->all())
-        ->toBe([$new->id])
-        ->and(Anamnesis::find($old->id))->toBeNull()
+        ->toBe([$withGvl->id])
+        ->and(AnamnesisGvlForm::where('anamnesis_id', $withGvl->id)->count())->toBe(1)
+        ->and(Anamnesis::find($newerEmpty->id))->toBeNull()
+        ->and($log->additional['anamnesis_id'])->toBe($newerEmpty->id)
         ->and($other->fresh()->lead_id)->toBe($primaryLead->id);
 });
+
+test('it drops an empty anamnesis without asking and keeps the one with content', function () {
+    $primaryLead = Lead::factory()->create();
+    $duplicateLead = Lead::factory()->create();
+    $person = Person::factory()->create();
+
+    // Only column defaults, like the anamnesis created when a person is linked to a lead.
+    $empty = Anamnesis::factory()->create(array_merge(
+        array_fill_keys(array_keys(Anamnesis::getFieldsToCompare()), null),
+        ['lead_id' => $primaryLead->id, 'person_id' => $person->id, 'name' => 'Leeg', 'back_problems' => 1, 'spijsverteringsklachten' => 0],
+    ));
+
+    $filled = Anamnesis::factory()->create(['lead_id' => $duplicateLead->id, 'person_id' => $person->id]);
+
+    $this->leadRepository->mergeLeads($primaryLead->id, [$duplicateLead->id]);
+
+    expect($empty->fresh())->toBeNull()
+        ->and($filled->fresh()->lead_id)->toBe($primaryLead->id)
+        ->and(Activity::where('title', 'like', 'Anamnese verwijderd%')->count())->toBe(0);
+});
+
+test('it resolves each shared person separately when both leads have the same two persons', function () {
+    $primaryLead = Lead::factory()->create();
+    $duplicateLead = Lead::factory()->create();
+    $personA = Person::factory()->create();
+    $personB = Person::factory()->create();
+
+    $primaryLead->attachPersons([$personA->id, $personB->id]);
+    $duplicateLead->attachPersons([$personA->id, $personB->id]);
+
+    // A: content on both leads, so the user has to choose. B: both still empty from linking.
+    $keepA = Anamnesis::where('lead_id', $duplicateLead->id)->where('person_id', $personA->id)->sole();
+    $keepA->update(['height' => 180]);
+    Anamnesis::where('lead_id', $primaryLead->id)->where('person_id', $personA->id)->update(['weight' => 80]);
+
+    expect(fn () => $this->leadRepository->mergeLeads($primaryLead->id, [$duplicateLead->id]))
+        ->toThrow(Exception::class, 'Kies welke anamnese');
+
+    $this->leadRepository->mergeLeads($primaryLead->id, [$duplicateLead->id], [], [$personA->id => $keepA->id]);
+
+    expect(Anamnesis::where('lead_id', $primaryLead->id)->where('person_id', $personA->id)->pluck('id')->all())->toBe([$keepA->id])
+        ->and(Anamnesis::where('lead_id', $primaryLead->id)->where('person_id', $personB->id)->count())->toBe(1)
+        ->and(Anamnesis::where('lead_id', $duplicateLead->id)->count())->toBe(0)
+        ->and(DB::table('lead_persons')->where('lead_id', $primaryLead->id)->count())->toBe(2)
+        ->and(Activity::where('lead_id', $primaryLead->id)->where('title', 'like', 'Anamnese verwijderd%')->count())->toBe(1);
+});
+
+test('it refuses to merge when an anamnesis conflict has no choice', function (?string $choice) {
+    $primaryLead = Lead::factory()->create();
+    $duplicateLead = Lead::factory()->create();
+    $person = Person::factory()->create();
+
+    $primaryAnamnesis = Anamnesis::factory()->create(['lead_id' => $primaryLead->id, 'person_id' => $person->id]);
+    $duplicateAnamnesis = Anamnesis::factory()->create(['lead_id' => $duplicateLead->id, 'person_id' => $person->id]);
+
+    $choices = $choice === null ? [] : [$person->id => $choice];
+
+    expect(fn () => $this->leadRepository->mergeLeads($primaryLead->id, [$duplicateLead->id], [], $choices))
+        ->toThrow(Exception::class, 'Kies welke anamnese');
+
+    expect($primaryAnamnesis->fresh())->not->toBeNull()
+        ->and($duplicateAnamnesis->fresh())->not->toBeNull()
+        ->and(Lead::find($duplicateLead->id))->not->toBeNull();
+})->with([
+    'no choice'      => [null],
+    'unknown choice' => [(string) Str::uuid()],
+]);
 
 test('it refuses to merge a duplicate that already has a sales lead', function () {
     $primaryLead = Lead::factory()->create();

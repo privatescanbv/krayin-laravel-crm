@@ -70,14 +70,25 @@
                 @include('adminc.components.product-selector')
 
                 <x-adminc::components.selector-field label="Product" :required="true" name="product_id">
-                    <v-product-selector
-                        name="product_id"
-                        placeholder="Zoek product..."
-                        :current-value="{{ $order_items->product_id ?? 'null' }}"
-                        current-label=""
-                        :can-add-new="false"
-                        :multiple="false"
-                    />
+                    @if ($order_items->hasPlanning())
+                        <input type="hidden" name="product_id" value="{{ $order_items->product_id }}">
+                        <div
+                            class="flex cursor-not-allowed items-center gap-2 rounded-md border bg-gray-100 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-400"
+                            title="{{ \App\Models\OrderItem::PRODUCT_LOCKED_MESSAGE }}"
+                        >
+                            <i class="icon-info text-base"></i>
+                            <span>{{ $order_items->product?->name }}</span>
+                        </div>
+                    @else
+                        <v-product-selector
+                            name="product_id"
+                            placeholder="Zoek product..."
+                            :current-value="{{ $order_items->product_id ?? 'null' }}"
+                            current-label=""
+                            :can-add-new="false"
+                            :multiple="false"
+                        />
+                    @endif
                 </x-adminc::components.selector-field>
 
                 <x-adminc::components.field

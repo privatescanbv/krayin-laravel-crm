@@ -239,7 +239,7 @@ class Order extends Model
 
     public function orderItems(): HasMany
     {
-        return $this->hasMany(OrderItem::class);
+        return $this->hasMany(OrderItem::class)->orderBy('sort_order')->orderBy('id');
     }
 
     /**
@@ -247,7 +247,7 @@ class Order extends Model
      */
     public function activeOrderItems(): HasMany
     {
-        return $this->hasMany(OrderItem::class)->notLost();
+        return $this->hasMany(OrderItem::class)->notLost()->orderBy('sort_order')->orderBy('id');
     }
 
     /**

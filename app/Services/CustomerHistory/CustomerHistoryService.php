@@ -2,6 +2,7 @@
 
 namespace App\Services\CustomerHistory;
 
+use App\Enums\ActivityActionType;
 use App\Enums\ActivityType;
 use App\Enums\CallStatus;
 use App\Enums\CustomerType;
@@ -101,9 +102,11 @@ class CustomerHistoryService
         $spokenCall = DB::table('activities')
             ->where('type', ActivityType::CALL->value)
             ->where(fn (QueryBuilder $q) => $this->onLeadsOrSalesLeads($q, $leadIds, $salesLeadIds))
-            ->whereExists(fn (QueryBuilder $q) => $q->from('call_statuses')
-                ->whereColumn('call_statuses.activity_id', 'activities.id')
-                ->where('call_statuses.status', CallStatus::SPOKEN->value))
+            ->whereExists(fn (QueryBuilder $q) => $q->from('activity_actions')
+                ->whereColumn('activity_actions.activity_id', 'activities.id')
+                ->where('activity_actions.type', ActivityActionType::Belstatus->value)
+                // A left voicemail counts too: the person was reached by our message.
+                ->whereIn('activity_actions.call_status', [CallStatus::SPOKEN->value, CallStatus::VOICEMAIL_LEFT->value]))
             ->exists();
 
         return $spokenCall || DB::table('emails')

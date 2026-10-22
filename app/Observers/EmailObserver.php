@@ -2,6 +2,8 @@
 
 namespace App\Observers;
 
+use App\Actions\Leads\RecordLeadContactAction;
+use Throwable;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Email\Models\Email;
 
@@ -40,11 +42,32 @@ class EmailObserver
     public function created(Email $email): void
     {
         $this->logManualLinkChanges($email, atCreation: true);
+        $this->recordLeadContact($email);
     }
 
     public function updated(Email $email): void
     {
         $this->logManualLinkChanges($email, atCreation: false);
+
+        if ($email->wasChanged(['lead_id', 'sales_lead_id', 'user_type'])) {
+            $this->recordLeadContact($email);
+        }
+    }
+
+    /**
+     * A person's email linked after the lead was lost still counts as contact.
+     */
+    private function recordLeadContact(Email $email): void
+    {
+        if ($email->user_type !== 'person' || (! $email->lead_id && ! $email->sales_lead_id)) {
+            return;
+        }
+
+        try {
+            app(RecordLeadContactAction::class)->executeFor($email->lead_id, $email->sales_lead_id);
+        } catch (Throwable $e) {
+            report($e);
+        }
     }
 
     private function logManualLinkChanges(Email $email, bool $atCreation): void

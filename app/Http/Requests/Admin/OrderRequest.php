@@ -54,6 +54,7 @@ class OrderRequest extends FormRequest
                 'integer',
                 'exists:persons,id',
             ],
+            'items.*.sort_order'            => ['nullable', 'integer'],
             'items.*.quantity'              => ['nullable', 'integer', 'min:1'],
             'items.*.total_price'           => ['nullable', 'numeric', 'min:0'],
             'items.*.status'                => ['nullable', new Enum(OrderItemStatus::class)],
@@ -117,6 +118,9 @@ class OrderRequest extends FormRequest
             $item['person_id'] = (int) $item['person_id'];
             if (isset($item['quantity']) && $item['quantity'] !== null && $item['quantity'] !== '') {
                 $item['quantity'] = (int) $item['quantity'];
+            }
+            if (isset($item['sort_order']) && is_numeric($item['sort_order'])) {
+                $item['sort_order'] = (int) $item['sort_order'];
             }
 
             $normalizedKey = is_numeric($key) ? (int) $key : $nextNewKey++;

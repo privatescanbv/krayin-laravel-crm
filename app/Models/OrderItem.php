@@ -24,12 +24,15 @@ class OrderItem extends Model
 {
     use HasAuditTrail, HasFactory;
 
+    public const PRODUCT_LOCKED_MESSAGE = 'Product kan niet worden aangepast: deze orderregel is ingepland. Zet de regel op Foutief en voeg een correctieregel toe, of haal de regel eerst uit de planning.';
+
     protected $table = 'order_items';
 
     protected $appends = ['can_plan'];
 
     protected $fillable = [
         'order_id',
+        'sort_order',
         'external_id',
         'product_id',
         'partner_product_id',
@@ -48,6 +51,7 @@ class OrderItem extends Model
 
     protected $casts = [
         'order_id'           => 'integer',
+        'sort_order'         => 'integer',
         'product_id'         => 'integer',
         'partner_product_id' => 'integer',
         'resource_type_id'   => 'integer',
@@ -135,6 +139,16 @@ class OrderItem extends Model
     public function isPlannable(): bool
     {
         return $this->resolvedResourceType()?->isPlannable() ?: false;
+    }
+
+    /**
+     * Planned lines (with resource bookings) may not change product; uses eager-loaded bookings when present.
+     */
+    public function hasPlanning(): bool
+    {
+        return $this->relationLoaded('resourceOrderItems')
+            ? $this->resourceOrderItems->isNotEmpty()
+            : $this->resourceOrderItems()->exists();
     }
 
     public function person(): BelongsTo

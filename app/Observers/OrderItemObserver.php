@@ -22,6 +22,16 @@ class OrderItemObserver
     ) {}
 
     /**
+     * Every line gets a sort number: append to the end of its order when none was given.
+     */
+    public function creating(OrderItem $orderItem): void
+    {
+        if ($orderItem->sort_order === null) {
+            $orderItem->sort_order = (int) OrderItem::where('order_id', $orderItem->order_id)->max('sort_order') + 1;
+        }
+    }
+
+    /**
      * Handle the OrderItem "created" event.
      */
     public function created(OrderItem $orderItem): void

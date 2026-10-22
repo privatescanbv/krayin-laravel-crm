@@ -33,6 +33,7 @@
             <x-admin::table>
                 <x-admin::table.thead>
                     <x-admin::table.thead.tr>
+                        <x-admin::table.th class="text-center">Volgorde</x-admin::table.th>
                         <x-admin::table.th class="min-w-[300px] w-2/5">Product</x-admin::table.th>
                         <x-admin::table.th class="min-w-[150px] w-1/5">Persoon</x-admin::table.th>
                         <x-admin::table.th class="text-center">Aantal</x-admin::table.th>
@@ -72,9 +73,31 @@
 
     <script type="text/x-template" id="v-order-item-template">
         <x-admin::table.thead.tr>
+            <x-admin::table.td class="!px-2 text-center">
+                <input
+                    type="number"
+                    step="1"
+                    required
+                    :name="`${inputName}[sort_order]`"
+                    v-model="item.sort_order"
+                    aria-label="Volgorde"
+                    class="w-16 rounded-md border bg-white px-2 py-1.5 text-center text-sm text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                >
+            </x-admin::table.td>
             <x-admin::table.td class="min-w-[300px] w-2/5">
                 @include('adminc.components.product-selector')
+                <template v-if="item.id && item.planning_summary">
+                    <input type="hidden" :name="`${inputName}[product_id]`" :value="item.product_id">
+                    <div
+                        class="flex cursor-not-allowed items-center gap-2 rounded-md border bg-gray-100 px-2 py-1.5 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-400"
+                        title="{{ \App\Models\OrderItem::PRODUCT_LOCKED_MESSAGE }}"
+                    >
+                        <i class="icon-info text-base"></i>
+                        <span class="truncate">@{{ item.product_name || (item.product && (item.product.name_with_path || item.product.name)) || '' }}</span>
+                    </div>
+                </template>
                 <v-product-selector
+                    v-else
                     :name="`${inputName}[product_id]`"
                     label=""
                     placeholder="Zoek product..."
@@ -186,7 +209,7 @@
                     personsData,
                     resetKey: 0,
                     removedItemIds: [],
-                    items: this.data && this.data.length ? this.data.map(r => {
+                    items: this.data && this.data.length ? this.data.map((r, index) => {
                         // Get product name with path if available
                         const productName = (r.product && r.product.name_with_path)
                             || (r.product && r.product.name)
@@ -197,6 +220,7 @@
                             : null;
                         return {
                             id: Number.isFinite(persistedId) ? persistedId : null,
+                            sort_order: r.sort_order ?? index + 1,
                             product_id: r.product_id ?? null,
                             product_name: productName,
                             person_id: r.person_id ?? null,
@@ -209,7 +233,7 @@
                             planning_summary: this.formatPlanningSummary(r.resource_order_items || []),
                             canPlan: r.can_plan === '1' || r.can_plan === true || false,
                         };
-                    }) : [{ id: null, product_id: null, product_name: null, person_id: firstPersonId, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false }],
+                    }) : [{ id: null, sort_order: 1, product_id: null, product_name: null, person_id: firstPersonId, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false }],
                 };
             },
             watch: {
@@ -238,7 +262,8 @@
                 addItem() {
                     const keys = Object.keys(this.personsData || {});
                     const defaultPersonId = keys.length ? keys[0] : null;
-                    this.items.push({ id: null, product_id: null, product_name: null, person_id: defaultPersonId, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false});
+                    const nextSortOrder = Math.max(0, ...this.items.map(i => Number(i.sort_order) || 0)) + 1;
+                    this.items.push({ id: null, sort_order: nextSortOrder, product_id: null, product_name: null, person_id: defaultPersonId, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null, canPlan: false});
                 },
                 restoreItem(itemId) {
                     const index = this.removedItemIds.indexOf(itemId);

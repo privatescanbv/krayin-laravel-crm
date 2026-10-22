@@ -160,6 +160,11 @@ class OrderItemController extends SimpleEntityController
     {
         $this->validateStore($request);
 
+        $current = OrderItem::findOrFail($id);
+        if ((int) $request->input('product_id') !== $current->product_id && $current->hasPlanning()) {
+            throw ValidationException::withMessages(['product_id' => OrderItem::PRODUCT_LOCKED_MESSAGE]);
+        }
+
         if ($request->input('status') === OrderItemStatus::WON->value) {
             $item = OrderItem::with('order')->findOrFail($id);
             $allowedStageIds = PipelineStage::getStageIdsAfterExecutionExLost();
@@ -238,6 +243,7 @@ class OrderItemController extends SimpleEntityController
             'person',
             'resourceType',
             'product',
+            'resourceOrderItems',
         ]);
 
         return [

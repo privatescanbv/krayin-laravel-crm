@@ -14,6 +14,9 @@ services:
       - --entrypoints.https.address=:443/tcp
       - --entrypoints.http.http.redirections.entryPoint.to=https
       - --entrypoints.http.http.redirections.entryPoint.scheme=https
+      # Access log naar stdout → promtail → Loki (headers worden standaard niet gelogd)
+      - --accesslog=true
+      - --accesslog.format=json
     environment:
       - NO_PROXY=localhost,127.0.0.1,127.0.0.0/8,::1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,*.orb.internal,*.orb.local,*.local.privatescan.nl
       - no_proxy=localhost,127.0.0.1,127.0.0.0/8,::1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,*.orb.internal,*.orb.local,*.local.privatescan.nl

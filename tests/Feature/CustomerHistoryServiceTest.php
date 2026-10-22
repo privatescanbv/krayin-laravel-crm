@@ -1,10 +1,11 @@
 <?php
 
+use App\Enums\ActivityActionType;
 use App\Enums\ActivityType;
 use App\Enums\CallStatus as CallStatusEnum;
 use App\Enums\CustomerType;
 use App\Enums\OrderItemStatus;
-use App\Models\CallStatus;
+use App\Models\ActivityAction;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\SalesLead;
@@ -145,19 +146,22 @@ test('sales activities on prior leads and their sales leads are counted', functi
     expect(chHistory($person)->salesActivityCount)->toBe(3);
 });
 
-test('a lead only had contact when a call was spoken or the person e-mailed', function () {
+test('a lead only had contact when a call was spoken, a voicemail left or the person e-mailed', function () {
     $service = app(CustomerHistoryService::class);
     $lead = Lead::factory()->create();
     $salesLead = SalesLead::factory()->create(['lead_id' => $lead->id]);
 
     $call = Activity::create(['type' => ActivityType::CALL->value, 'title' => 'Bellen', 'lead_id' => $lead->id]);
-    CallStatus::create(['activity_id' => $call->id, 'status' => CallStatusEnum::NOT_REACHABLE->value]);
-    CallStatus::create(['activity_id' => $call->id, 'status' => CallStatusEnum::VOICEMAIL_LEFT->value]);
+    ActivityAction::create(['activity_id' => $call->id, 'type' => ActivityActionType::Belstatus, 'call_status' => CallStatusEnum::NOT_REACHABLE->value]);
 
     expect($service->hadContact($lead))->toBeFalse();
 
+    ActivityAction::create(['activity_id' => $call->id, 'type' => ActivityActionType::Belstatus, 'call_status' => CallStatusEnum::VOICEMAIL_LEFT->value]);
+
+    expect($service->hadContact($lead))->toBeTrue();
+
     $spoken = Activity::create(['type' => ActivityType::CALL->value, 'title' => 'Bellen', 'sales_lead_id' => $salesLead->id]);
-    CallStatus::create(['activity_id' => $spoken->id, 'status' => CallStatusEnum::SPOKEN->value]);
+    ActivityAction::create(['activity_id' => $spoken->id, 'type' => ActivityActionType::Belstatus, 'call_status' => CallStatusEnum::SPOKEN->value]);
 
     expect($service->hadContact($lead))->toBeTrue();
 });

@@ -18,6 +18,7 @@ use App\Http\Requests\Admin\OrderRequest;
 use App\Models\Anamnesis;
 use App\Models\Order;
 use App\Models\OrderCheck;
+use App\Models\OrderItem;
 use App\Models\OrderPayment;
 use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
@@ -363,6 +364,7 @@ class OrderController extends SimpleEntityController
                 }
 
                 $order->orderItems()->create([
+                    'sort_order'  => isset($item['sort_order']) ? (int) $item['sort_order'] : null,
                     'product_id'  => $productId,
                     'person_id'   => ! empty($item['person_id']) ? (int) $item['person_id'] : null,
                     'quantity'    => $quantity,
@@ -500,7 +502,6 @@ class OrderController extends SimpleEntityController
             $updatedItemIds = [];
 
             if (is_array($items) && ! empty($items)) {
-                $sortCounter = 0;
                 foreach ($items as $normalizedKey => $item) {
                     // Skip invalid rows
                     if (empty($item['product_id']) || empty($item['quantity'])) {
@@ -534,8 +535,12 @@ class OrderController extends SimpleEntityController
                         'person_id'   => ! empty($item['person_id']) ? (int) $item['person_id'] : null,
                         'quantity'    => $quantity,
                         'total_price' => $totalPrice,
-                        'sort_order'  => $sortCounter++,
                     ];
+
+                    // Missing number: keep the existing one (or let the observer append a new line).
+                    if (isset($item['sort_order']) && $item['sort_order'] !== '') {
+                        $attributes['sort_order'] = (int) $item['sort_order'];
+                    }
 
                     if (! empty($item['status'])) {
                         $attributes['status'] = OrderItemStatus::from((string) $item['status']);
@@ -1283,6 +1288,8 @@ class OrderController extends SimpleEntityController
     {
         $this->validateStore($request);
 
+        $this->validatePlannedProductsUnchanged($request, $id);
+
         // Validate stage transition
         if ($request->has('pipeline_stage_id')) {
             /** @var Order $order */
@@ -1383,6 +1390,29 @@ class OrderController extends SimpleEntityController
             'enable_debug_logging'        => false,
             'table_name'                  => 'orders',
         ];
+    }
+
+    /**
+     * Existing order items that are planned may not switch product (see OrderItem::hasPlanning()).
+     */
+    private function validatePlannedProductsUnchanged(Request $request, int $orderId): void
+    {
+        $originalKeys = $request->input('_items_original_keys', []);
+        $currentItems = OrderItem::with('resourceOrderItems')->where('order_id', $orderId)->get()->keyBy('id');
+        $errors = [];
+
+        foreach ($request->input('items', []) as $normalizedKey => $item) {
+            $key = $originalKeys[$normalizedKey] ?? $normalizedKey;
+            $current = is_numeric($key) ? $currentItems->get((int) $key) : null;
+
+            if ($current && (int) ($item['product_id'] ?? 0) !== $current->product_id && $current->hasPlanning()) {
+                $errors["items.{$normalizedKey}.product_id"] = OrderItem::PRODUCT_LOCKED_MESSAGE;
+            }
+        }
+
+        if ($errors) {
+            throw ValidationException::withMessages($errors);
+        }
     }
 
     private function mergeInlineOrganizationFromRequest(Request $request): RedirectResponse|JsonResponse|null

@@ -26,4 +26,17 @@ class RecordLeadContactAction
             'had_contact' => $isLost ? $this->customerHistory->hadContact($lead) : null,
         ]);
     }
+
+    /**
+     * Re-derive after contact evidence (call status, person email) changed on a lead that may already be lost.
+     */
+    public function executeFor(?int $leadId, ?int $salesLeadId = null): void
+    {
+        $leadId ??= $salesLeadId ? DB::table('salesleads')->where('id', $salesLeadId)->value('lead_id') : null;
+        $lead = $leadId ? Lead::query()->select(['id', 'lead_pipeline_stage_id'])->find($leadId) : null;
+
+        if ($lead) {
+            $this->execute($lead);
+        }
+    }
 }

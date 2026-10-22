@@ -1139,6 +1139,7 @@ namespace App\Models{
  * @property int $id
  * @property string|null $external_id
  * @property int $order_id
+ * @property int $sort_order
  * @property int $product_id
  * @property int|null $partner_product_id
  * @property int|null $resource_type_id
@@ -1189,6 +1190,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereProductId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereQuantity($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereResourceTypeId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereSortOrder($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereTotalPrice($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|OrderItem whereUpdatedAt($value)

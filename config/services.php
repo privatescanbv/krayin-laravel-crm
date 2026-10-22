@@ -48,6 +48,25 @@ return [
     | to --source/--target also works as long as that URL matches one listed here
     | (so the API key can be looked up).
     */
+    /*
+    | Grafana environments for `php artisan grafana:sync-dashboard`. Each name reads
+    | GRAFANA_<NAME>_URL plus either GRAFANA_<NAME>_TOKEN (service account) or
+    | GRAFANA_<NAME>_USER / GRAFANA_<NAME>_PASSWORD; only names with a URL show up.
+    */
+    'grafana' => [
+        'environments' => collect(['local', 'acc', 'prod'])
+            ->mapWithKeys(fn (string $name): array => [$name => [
+                'url'      => env('GRAFANA_'.strtoupper($name).'_URL'),
+                'token'    => env('GRAFANA_'.strtoupper($name).'_TOKEN'),
+                'user'     => env('GRAFANA_'.strtoupper($name).'_USER'),
+                'password' => env('GRAFANA_'.strtoupper($name).'_PASSWORD'),
+            ]])
+            ->filter(fn (array $env): bool => ! empty($env['url']))
+            ->all(),
+
+        'timeout' => (int) env('GRAFANA_SYNC_TIMEOUT', 30),
+    ],
+
     'metabase' => [
         'environments' => collect(['local', 'dev', 'test', 'acc', 'staging', 'prod'])
             ->mapWithKeys(fn (string $name): array => [$name => [

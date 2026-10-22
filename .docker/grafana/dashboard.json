@@ -18,13 +18,13 @@
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
-    "id": 1,
-    "links": [],
+    "id": 2,
+    "liveNow": false,
     "panels": [
         {
             "datasource": {
                 "type": "loki",
-                "uid": "bf3x3qa3mhgjkf"
+                "uid": "bfl5b4hoh064gb"
             },
             "fieldConfig": {
                 "defaults": {
@@ -65,7 +65,6 @@
                             "mode": "off"
                         }
                     },
-                    "mappings": [],
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
@@ -80,8 +79,7 @@
                         ]
                     },
                     "unit": "short"
-                },
-                "overrides": []
+                }
             },
             "gridPos": {
                 "h": 8,
@@ -104,28 +102,33 @@
                     "sort": "none"
                 }
             },
-            "pluginVersion": "12.2.1",
+            "pluginVersion": "13.2.2",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "bfl5b4hoh064gb"
+                    },
                     "direction": "backward",
                     "editorMode": "code",
-                    "expr": "sum by (container)(\n  count_over_time(\n    {container!=\"\"} \n    | json \n    | level_name=\"ERROR\" \n    [1m]\n  )\n)\n",
-                    "legendFormat": "{{app}}",
+                    "expr": "sum by (service)(count_over_time({service!=\"\"} | json | __error__=\"\" | level_name=~\"ERROR|CRITICAL|ALERT|EMERGENCY\" [$__auto]))",
+                    "legendFormat": "{{service}}",
                     "queryType": "range",
                     "refId": "A"
                 }
             ],
-            "title": "🔥 Error count per service (hourly)",
+            "title": "🔥 Errors per service",
             "type": "timeseries"
         },
         {
             "datasource": {
                 "type": "loki",
-                "uid": "bf3x3qa3mhgjkf"
+                "uid": "bfl5b4hoh064gb"
             },
             "fieldConfig": {
                 "defaults": {
                     "color": {
+                        "fixedColor": "#73BF69",
                         "mode": "palette-classic"
                     },
                     "custom": {
@@ -134,10 +137,8 @@
                             "tooltip": false,
                             "viz": false
                         }
-                    },
-                    "mappings": []
-                },
-                "overrides": []
+                    }
+                }
             },
             "gridPos": {
                 "h": 8,
@@ -167,46 +168,46 @@
                     "sort": "none"
                 }
             },
-            "pluginVersion": "12.2.1",
+            "pluginVersion": "13.2.2",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "bfl5b4hoh064gb"
+                    },
                     "direction": "backward",
                     "editorMode": "code",
-                    "expr": "sum by (service)(\n  count_over_time(\n    {service!=\"\"}\n    | json\n    | level_name=\"ERROR\"\n    [6h]\n  )\n)\n",
-                    "queryType": "range",
+                    "expr": "sum by (service)(count_over_time({service!=\"\"} | json | __error__=\"\" | level_name=~\"ERROR|CRITICAL|ALERT|EMERGENCY\" [$__range]))",
+                    "legendFormat": "{{service}}",
+                    "queryType": "instant",
                     "refId": "A"
                 }
             ],
-            "title": "📊 Error distribution by service (last 6h)",
+            "title": "📊 Error distribution by service",
             "type": "piechart"
         },
         {
+            "datasource": {
+                "type": "loki",
+                "uid": "bfl5b4hoh064gb"
+            },
             "fieldConfig": {
                 "defaults": {
                     "color": {
-                        "mode": "thresholds"
+                        "fixedColor": "blue",
+                        "mode": "fixed"
                     },
-                    "mappings": [],
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
-                                "value": 0
-                            },
-                            {
-                                "color": "orange",
-                                "value": 100
-                            },
-                            {
-                                "color": "red",
-                                "value": 500
+                                "color": "blue",
+                                "value": null
                             }
                         ]
                     },
                     "unit": "short"
-                },
-                "overrides": []
+                }
             },
             "gridPos": {
                 "h": 8,
@@ -217,7 +218,7 @@
             "id": 3,
             "options": {
                 "colorMode": "value",
-                "graphMode": "area",
+                "graphMode": "none",
                 "justifyMode": "center",
                 "orientation": "auto",
                 "percentChangeColorMode": "standard",
@@ -232,23 +233,189 @@
                 "textMode": "auto",
                 "wideLayout": true
             },
-            "pluginVersion": "12.2.1",
+            "pluginVersion": "13.2.2",
             "targets": [
                 {
-                    "expr": "sum(count_over_time({app!=\"\"}[1h])) by (app)",
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "bfl5b4hoh064gb"
+                    },
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "sum by (app)(count_over_time({app!=\"\"}[$__range]))",
+                    "legendFormat": "{{app}}",
+                    "queryType": "instant",
                     "refId": "A"
                 }
             ],
-            "title": "⚙️ Total logs per service (last hour)",
+            "title": "⚙️ Logs per service",
             "type": "stat"
         },
         {
             "datasource": {
-                "type": "loki"
+                "type": "loki",
+                "uid": "bfl5b4hoh064gb"
             },
             "fieldConfig": {
-                "defaults": {},
-                "overrides": []
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "bars",
+                        "fillOpacity": 80,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "showValues": false,
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "normal"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "short"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "2xx"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "green",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "3xx"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "blue",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "4xx"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "orange",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "5xx"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "red",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 16,
+                "y": 8
+            },
+            "id": 12,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "showPoints": "never",
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "13.2.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "bfl5b4hoh064gb"
+                    },
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "sum by (status)(count_over_time({service=\"traefik\"} | json | __error__=\"\" | label_format status=`{{ substr 0 1 .DownstreamStatus }}xx` [$__auto]))",
+                    "legendFormat": "{{status}}",
+                    "queryType": "range",
+                    "refId": "A"
+                }
+            ],
+            "title": "🚦 Traefik requests per status",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "bfl5b4hoh064gb"
             },
             "gridPos": {
                 "h": 8,
@@ -263,17 +430,26 @@
                 "enableLogDetails": true,
                 "prettifyLogMessage": false,
                 "showCommonLabels": false,
+                "showControls": false,
+                "showFieldSelector": false,
                 "showLabels": false,
-                "showTime": false,
+                "showLevel": true,
+                "showTime": true,
                 "sortOrder": "Descending",
+                "timestampResolution": "ms",
+                "unwrappedColumns": false,
                 "wrapLogMessage": false
             },
-            "pluginVersion": "12.2.1",
+            "pluginVersion": "13.2.2",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "bfl5b4hoh064gb"
+                    },
                     "direction": "backward",
                     "editorMode": "code",
-                    "expr": "{service=\"crm\"}\n| json\n| json context\n| channel=\"php-fpm\" OR channel=\"local\" OR channel=\"production\"\n| line_format \"{{.datetime}} {{.level_name}} {{.message}} template={{ .context_template | default \\\"\\\" }} lead={{ .context_lead_id | default \\\"\\\" }} vars={{ .context_variables_keys | default \\\"\\\" }}\"\n",
+                    "expr": "{service=\"crm\"}\n| json\n| json context\n| channel=~\"php-fpm|local|staging|production\"\n| label_format level=`{{ $l := or .level_name .level }}{{ if eq $l \"SEVERE\" }}error{{ else }}{{ $l }}{{ end }}`\n| line_format \"{{.datetime}} {{.level_name}} {{.message}} template={{ .context_template | default \\\"\\\" }} lead={{ .context_lead_id | default \\\"\\\" }} vars={{ .context_variables_keys | default \\\"\\\" }}\"\n",
                     "queryType": "range",
                     "refId": "A"
                 }
@@ -284,56 +460,12 @@
         {
             "datasource": {
                 "type": "loki",
-                "uid": "bf3x3qa3mhgjkf"
-            },
-            "fieldConfig": {
-                "defaults": {},
-                "overrides": []
+                "uid": "bfl5b4hoh064gb"
             },
             "gridPos": {
-                "h": 8,
-                "w": 12,
+                "h": 7,
+                "w": 24,
                 "x": 0,
-                "y": 24
-            },
-            "id": 6,
-            "options": {
-                "dedupStrategy": "none",
-                "enableInfiniteScrolling": false,
-                "enableLogDetails": true,
-                "prettifyLogMessage": false,
-                "showCommonLabels": false,
-                "showLabels": false,
-                "showTime": false,
-                "sortOrder": "Descending",
-                "wrapLogMessage": false
-            },
-            "pluginVersion": "12.2.1",
-            "targets": [
-                {
-                    "direction": "backward",
-                    "editorMode": "code",
-                    "expr": "{service=\"n8n\"}\n",
-                    "queryType": "range",
-                    "refId": "A"
-                }
-            ],
-            "title": "N8N Logs",
-            "type": "logs"
-        },
-        {
-            "datasource": {
-                "type": "loki",
-                "uid": "bf3x3qa3mhgjkf"
-            },
-            "fieldConfig": {
-                "defaults": {},
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 12,
                 "y": 24
             },
             "id": 5,
@@ -343,17 +475,26 @@
                 "enableLogDetails": true,
                 "prettifyLogMessage": false,
                 "showCommonLabels": false,
+                "showControls": false,
+                "showFieldSelector": false,
                 "showLabels": false,
-                "showTime": false,
+                "showLevel": true,
+                "showTime": true,
                 "sortOrder": "Descending",
+                "timestampResolution": "ms",
+                "unwrappedColumns": false,
                 "wrapLogMessage": false
             },
-            "pluginVersion": "12.2.1",
+            "pluginVersion": "13.2.2",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "bfl5b4hoh064gb"
+                    },
                     "direction": "backward",
                     "editorMode": "code",
-                    "expr": "{service=\"forms\"}\n| json\n| json context\n| channel=\"php-fpm\" OR channel=\"local\" OR channel=\"production\"\n| line_format \"{{.datetime}} {{.level_name}} {{.message}} template={{ .context_template | default \\\"\\\" }} lead={{ .context_lead_id | default \\\"\\\" }} vars={{ .context_variables_keys | default \\\"\\\" }}\"",
+                    "expr": "{service=\"forms\"}\n| json\n| json context\n| channel=~\"php-fpm|local|staging|production\"\n| label_format level=`{{ $l := or .level_name .level }}{{ if eq $l \"SEVERE\" }}error{{ else }}{{ $l }}{{ end }}`\n| line_format \"{{.datetime}} {{.level_name}} {{.message}} template={{ .context_template | default \\\"\\\" }} lead={{ .context_lead_id | default \\\"\\\" }} vars={{ .context_variables_keys | default \\\"\\\" }}\"\n",
                     "queryType": "range",
                     "refId": "A"
                 }
@@ -363,17 +504,104 @@
         },
         {
             "datasource": {
-                "type": "loki"
-            },
-            "fieldConfig": {
-                "defaults": {},
-                "overrides": []
+                "type": "loki",
+                "uid": "bfl5b4hoh064gb"
             },
             "gridPos": {
                 "h": 8,
                 "w": 24,
                 "x": 0,
-                "y": 32
+                "y": 31
+            },
+            "id": 11,
+            "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": false,
+                "showCommonLabels": false,
+                "showControls": false,
+                "showFieldSelector": false,
+                "showLabels": false,
+                "showLevel": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "timestampResolution": "ms",
+                "unwrappedColumns": false,
+                "wrapLogMessage": false
+            },
+            "pluginVersion": "13.2.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "bfl5b4hoh064gb"
+                    },
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{service=\"traefik\"}\n| json\n| __error__=\"\"\n| label_format level=`{{ if hasPrefix \"5\" .DownstreamStatus }}error{{ else if hasPrefix \"4\" .DownstreamStatus }}warning{{ else }}info{{ end }}`\n| line_format \"{{.DownstreamStatus}} {{.RequestMethod}} {{.RequestHost}}{{.RequestPath}} {{div .Duration 1000000}}ms {{.ClientHost}}\"\n",
+                    "queryType": "range",
+                    "refId": "A"
+                }
+            ],
+            "title": "Traefik access log",
+            "type": "logs"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "bfl5b4hoh064gb"
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 39
+            },
+            "id": 13,
+            "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": false,
+                "showCommonLabels": false,
+                "showControls": false,
+                "showFieldSelector": false,
+                "showLabels": false,
+                "showLevel": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "timestampResolution": "ms",
+                "unwrappedColumns": false,
+                "wrapLogMessage": false
+            },
+            "pluginVersion": "13.2.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "bfl5b4hoh064gb"
+                    },
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{service=\"traefik\"}\n| json\n| __error__=\"\"\n| Duration > 1000000000\n| label_format level=`{{ if hasPrefix \"5\" .DownstreamStatus }}error{{ else if hasPrefix \"4\" .DownstreamStatus }}warning{{ else }}info{{ end }}`\n| line_format \"{{div .Duration 1000000}}ms {{.DownstreamStatus}} {{.RequestMethod}} {{.RequestHost}}{{.RequestPath}}\"\n",
+                    "queryType": "range",
+                    "refId": "A"
+                }
+            ],
+            "title": "🐢 Traefik slow requests (>1s)",
+            "type": "logs"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "bfl5b4hoh064gb"
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 47
             },
             "id": 4,
             "options": {
@@ -382,17 +610,26 @@
                 "enableLogDetails": true,
                 "prettifyLogMessage": false,
                 "showCommonLabels": false,
+                "showControls": false,
+                "showFieldSelector": false,
                 "showLabels": false,
-                "showTime": false,
+                "showLevel": true,
+                "showTime": true,
                 "sortOrder": "Descending",
+                "timestampResolution": "ms",
+                "unwrappedColumns": false,
                 "wrapLogMessage": false
             },
-            "pluginVersion": "12.2.1",
+            "pluginVersion": "13.2.2",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "bfl5b4hoh064gb"
+                    },
                     "direction": "backward",
                     "editorMode": "code",
-                    "expr": "{service=\"crm\"}\n| json\n| channel=`laravel-scheduler`\n| line_format \"{{.datetime}} {{.level_name}} {{.message}}\"\n",
+                    "expr": "{service=\"crm\"}\n| json\n| channel=`laravel-scheduler`\n| label_format level=`{{ $l := or .level_name .level }}{{ if eq $l \"SEVERE\" }}error{{ else }}{{ $l }}{{ end }}`\n| line_format \"{{.datetime}} {{.level_name}} {{.message}}\"\n",
                     "queryType": "range",
                     "refId": "A"
                 }
@@ -402,57 +639,14 @@
         },
         {
             "datasource": {
-                "type": "loki"
-            },
-            "fieldConfig": {
-                "defaults": {},
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 24,
-                "x": 0,
-                "y": 40
-            },
-            "id": 9,
-            "options": {
-                "dedupStrategy": "none",
-                "enableInfiniteScrolling": false,
-                "enableLogDetails": true,
-                "prettifyLogMessage": false,
-                "showCommonLabels": false,
-                "showLabels": false,
-                "showTime": false,
-                "sortOrder": "Descending",
-                "wrapLogMessage": false
-            },
-            "pluginVersion": "12.2.1",
-            "targets": [
-                {
-                    "direction": "backward",
-                    "editorMode": "code",
-                    "expr": "{service=\"crm\"}\n| json\n| channel!=`laravel-scheduler` and channel!=`php-fpm` and channel!=`local`\n| channel!=`php-fpm`\n",
-                    "queryType": "range",
-                    "refId": "A"
-                }
-            ],
-            "title": "CRM rest",
-            "type": "logs"
-        },
-        {
-            "datasource": {
                 "type": "loki",
-                "uid": "af5rseqd45kowf"
-            },
-            "fieldConfig": {
-                "defaults": {},
-                "overrides": []
+                "uid": "bfl5b4hoh064gb"
             },
             "gridPos": {
                 "h": 8,
                 "w": 24,
                 "x": 0,
-                "y": 48
+                "y": 55
             },
             "id": 10,
             "options": {
@@ -461,17 +655,26 @@
                 "enableLogDetails": true,
                 "prettifyLogMessage": false,
                 "showCommonLabels": false,
+                "showControls": false,
+                "showFieldSelector": false,
                 "showLabels": false,
-                "showTime": false,
+                "showLevel": true,
+                "showTime": true,
                 "sortOrder": "Descending",
+                "timestampResolution": "ms",
+                "unwrappedColumns": false,
                 "wrapLogMessage": false
             },
-            "pluginVersion": "12.2.1",
+            "pluginVersion": "13.2.2",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "bfl5b4hoh064gb"
+                    },
                     "direction": "backward",
                     "editorMode": "code",
-                    "expr": "{app=\"keycloak\"}",
+                    "expr": "{app=\"keycloak\"}\n| regexp `^\\S+ \\S+ (?P<level_name>[A-Z]+)\\s`\n| label_format level=`{{ $l := or .level_name .level }}{{ if eq $l \"SEVERE\" }}error{{ else }}{{ $l }}{{ end }}`\n",
                     "queryType": "range",
                     "refId": "A"
                 }
@@ -482,79 +685,185 @@
         {
             "datasource": {
                 "type": "loki",
-                "uid": "af3xcqn2k6io0a"
-            },
-            "fieldConfig": {
-                "defaults": {},
-                "overrides": []
+                "uid": "bfl5b4hoh064gb"
             },
             "gridPos": {
                 "h": 8,
                 "w": 24,
                 "x": 0,
-                "y": 56
+                "y": 63
             },
-            "id": 7,
+            "id": 9,
             "options": {
                 "dedupStrategy": "none",
                 "enableInfiniteScrolling": false,
                 "enableLogDetails": true,
                 "prettifyLogMessage": false,
                 "showCommonLabels": false,
+                "showControls": false,
+                "showFieldSelector": false,
                 "showLabels": false,
-                "showTime": false,
+                "showLevel": true,
+                "showTime": true,
                 "sortOrder": "Descending",
+                "timestampResolution": "ms",
+                "unwrappedColumns": false,
                 "wrapLogMessage": false
             },
-            "pluginVersion": "12.2.1",
+            "pluginVersion": "13.2.2",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "bfl5b4hoh064gb"
+                    },
                     "direction": "backward",
                     "editorMode": "code",
-                    "expr": "{app=\"suitecrm\"}",
+                    "expr": "{service=\"crm\"}\n| json\n| channel!~\"laravel-scheduler|php-fpm|local|staging|production\"\n| label_format level=`{{ $l := or .level_name .level }}{{ if eq $l \"SEVERE\" }}error{{ else }}{{ $l }}{{ end }}`\n",
                     "queryType": "range",
                     "refId": "A"
                 }
             ],
-            "title": "SuiteCRM Logs",
+            "title": "CRM rest",
+            "type": "logs"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "bfl5b4hoh064gb"
+            },
+            "gridPos": {
+                "h": 10,
+                "w": 24,
+                "x": 0,
+                "y": 71
+            },
+            "id": 14,
+            "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": false,
+                "showCommonLabels": false,
+                "showControls": false,
+                "showFieldSelector": false,
+                "showLabels": false,
+                "showLevel": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "timestampResolution": "ms",
+                "unwrappedColumns": false,
+                "wrapLogMessage": false
+            },
+            "pluginVersion": "13.2.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "bfl5b4hoh064gb"
+                    },
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{app=\"$service\"} | json | level_name=~\"$level\"\n| label_format level=`{{ $l := or .level_name .level }}{{ if eq $l \"SEVERE\" }}error{{ else }}{{ $l }}{{ end }}`\n",
+                    "queryType": "range",
+                    "refId": "A"
+                }
+            ],
+            "title": "🔎 Logs: $service ($level)",
             "type": "logs"
         }
     ],
     "preload": false,
     "refresh": "30s",
     "schemaVersion": 42,
-    "tags": [],
     "templating": {
         "list": [
             {
+                "allowCustomValue": true,
                 "current": {
                     "text": "crm",
                     "value": "crm"
                 },
                 "datasource": {
                     "type": "loki",
-                    "uid": "af3tuk16v9m9sa"
+                    "uid": "bfl5b4hoh064gb"
                 },
+                "hide": 0,
+                "includeAll": false,
+                "multi": false,
                 "name": "service",
                 "options": [],
                 "query": "label_values(app)",
                 "refresh": 1,
+                "regex": "",
+                "regexApplyTo": "value",
+                "skipUrlSync": false,
+                "sort": 0,
                 "type": "query"
             },
             {
+                "allValue": ".*",
+                "allowCustomValue": true,
                 "current": {
-                    "text": "",
-                    "value": ""
+                    "text": "All",
+                    "value": "$__all"
                 },
-                "datasource": {
-                    "type": "loki",
-                    "uid": "af3tuk16v9m9sa"
-                },
+                "hide": 0,
+                "includeAll": true,
+                "multi": false,
                 "name": "level",
-                "options": [],
-                "query": "label_values(level_name)",
-                "refresh": 1,
-                "type": "query"
+                "options": [
+                    {
+                        "selected": true,
+                        "text": "All",
+                        "value": "$__all"
+                    },
+                    {
+                        "selected": false,
+                        "text": "DEBUG",
+                        "value": "DEBUG"
+                    },
+                    {
+                        "selected": false,
+                        "text": "INFO",
+                        "value": "INFO"
+                    },
+                    {
+                        "selected": false,
+                        "text": "NOTICE",
+                        "value": "NOTICE"
+                    },
+                    {
+                        "selected": false,
+                        "text": "WARNING",
+                        "value": "WARNING"
+                    },
+                    {
+                        "selected": false,
+                        "text": "ERROR",
+                        "value": "ERROR"
+                    },
+                    {
+                        "selected": false,
+                        "text": "CRITICAL",
+                        "value": "CRITICAL"
+                    },
+                    {
+                        "selected": false,
+                        "text": "ALERT",
+                        "value": "ALERT"
+                    },
+                    {
+                        "selected": false,
+                        "text": "EMERGENCY",
+                        "value": "EMERGENCY"
+                    }
+                ],
+                "query": "DEBUG,INFO,NOTICE,WARNING,ERROR,CRITICAL,ALERT,EMERGENCY",
+                "refresh": 2,
+                "skipUrlSync": false,
+                "sort": 0,
+                "type": "custom"
             }
         ]
     },
@@ -562,9 +871,22 @@
         "from": "now-3h",
         "to": "now"
     },
-    "timepicker": {},
-    "timezone": "",
+    "timepicker": {
+        "refresh_intervals": [
+            "5s",
+            "10s",
+            "30s",
+            "1m",
+            "5m",
+            "15m",
+            "30m",
+            "1h",
+            "2h",
+            "1d"
+        ]
+    },
+    "timezone": "browser",
     "title": "Stack Monitoring Overview",
     "uid": "stack-monitor",
-    "version": 4
+    "version": 10
 }

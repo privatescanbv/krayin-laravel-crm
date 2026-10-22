@@ -185,6 +185,21 @@ docker exec crm php artisan metabase:sync-dashboard --source dev --target prod -
 
 Blijft de fout, ook met `--sync-schema`? Controleer dan of Metabase op de doelomgeving wel bij de analytics-database kan (Admin → Databases → `crm_analytics` → Save test de verbinding). Bij `Access denied for user 'privatescan-analytics'` kan Metabase niet rescannen en houdt het de oude kolommen. Het wachtwoord moet gelijk zijn aan `DB_ANALYTICS_PASSWORD`; `.docker/mysql/init-forms.sh` zet het bij elke MySQL-init opnieuw naar die waarde.
 
+==== Grafana-dashboards synchroniseren
+
+`grafana:sync-dashboard` kopieert Grafana-dashboards (bv. `stack-monitor`) via de HTTP API van de ene omgeving naar de andere. Het dashboard op het doel wordt overschreven.
+
+[source,bash]
+----
+docker exec crm php artisan grafana:sync-dashboard --source local --target acc --dashboard stack-monitor --dry-run
+docker exec crm php artisan grafana:sync-dashboard --source local --target prod --dashboard stack-monitor
+----
+
+* Per omgeving in `.env`: `GRAFANA_<NAAM>_URL` plus `GRAFANA_<NAAM>_TOKEN` (service account, Grafana → Administration → Service accounts, rol Admin) of `GRAFANA_<NAAM>_USER` / `GRAFANA_<NAAM>_PASSWORD`. Namen: `local`, `acc`, `prod`.
+* De uid van een dashboard is overal gelijk. Datasource-uid's verschillen per omgeving: de sync zoekt op het doel een datasource met dezelfde naam, anders de enige van hetzelfde type (bv. Loki). Is er geen match, dan wordt dat dashboard overgeslagen.
+* Een map (folder) die op het doel ontbreekt, wordt aangemaakt.
+* Zonder `--dashboard` worden alle dashboards van de bron gesynchroniseerd. `--dry-run` toont welke versie op het doel overschreven wordt.
+
 ==== Metabase-dashboards in het CRM (embeds)
 
 Per omgeving nodig in `.env`:

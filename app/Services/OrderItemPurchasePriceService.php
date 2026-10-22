@@ -38,6 +38,25 @@ class OrderItemPurchasePriceService
         ]);
     }
 
+    /**
+     * Re-resolve the partner product for the planned clinic, e.g. after the order item's product changed.
+     */
+    public function relinkPartnerProduct(OrderItem $orderItem): void
+    {
+        $clinicId = $orderItem->resourceOrderItem()->with('resource.clinicDepartment')->first()
+            ?->resource
+            ?->clinicDepartment
+            ?->clinic_id;
+
+        $partnerProduct = $clinicId && $orderItem->product_id
+            ? PartnerProduct::forClinicAndProduct($clinicId, $orderItem->product_id)->with('purchasePrice')->first()
+            : null;
+
+        $partnerProduct
+            ? $this->linkPartnerProduct($orderItem, $partnerProduct)
+            : $this->clearPartnerProductLink($orderItem);
+    }
+
     public function clearPartnerProductLink(OrderItem $orderItem): void
     {
         if ($orderItem->partner_product_id === null) {

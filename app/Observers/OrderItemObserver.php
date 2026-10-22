@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Enums\OrderItemStatus;
 use App\Models\OrderItem;
 use App\Services\OrderCheckService;
+use App\Services\OrderItemPurchasePriceService;
 use App\Services\OrderRefundService;
 use Illuminate\Support\Facades\DB;
 use Webkul\Activity\Repositories\ActivityRepository;
@@ -17,6 +18,7 @@ class OrderItemObserver
         protected OrderCheckService $orderCheckService,
         private readonly ActivityRepository $activityRepository,
         private readonly OrderRefundService $orderRefundService,
+        private readonly OrderItemPurchasePriceService $orderItemPurchasePriceService,
     ) {}
 
     /**
@@ -61,6 +63,11 @@ class OrderItemObserver
         $this->updateParentOrderStatus($orderItem);
 
         $this->logFieldChanges($orderItem);
+
+        // Fresh instance: original isn't synced yet inside updated(), so saving $orderItem would see product_id dirty again and recurse.
+        if ($orderItem->wasChanged('product_id') && ($fresh = $orderItem->fresh())) {
+            $this->orderItemPurchasePriceService->relinkPartnerProduct($fresh);
+        }
     }
 
     /**

@@ -157,3 +157,56 @@ test('planning zonder clinicDepartment op resource maakt geen purchase price aan
 
     expect($orderItem->fresh()->purchasePrice()->exists())->toBeFalse();
 });
+
+function plannedOrderItemWithPartnerProduct(): array
+{
+    $clinic = Clinic::factory()->create();
+    $dept = ClinicDepartment::factory()->create(['clinic_id' => $clinic->id]);
+    $resourceType = ResourceType::firstOrCreate(['name' => 'MRI scanner'], ['description' => null]);
+    $resource = Resource::factory()->create([
+        'clinic_department_id' => $dept->id,
+        'resource_type_id'     => $resourceType->id,
+    ]);
+
+    $product = Product::factory()->create(['name' => 'Oud product', 'resource_type_id' => $resourceType->id]);
+    $partnerProduct = PartnerProduct::factory()->create(['product_id' => $product->id, 'name' => 'Oud partner product']);
+    $partnerProduct->clinics()->sync([$clinic->id]);
+
+    $orderItem = OrderItem::factory()->create(['product_id' => $product->id]);
+
+    ResourceOrderItem::create([
+        'resource_id'  => $resource->id,
+        'orderitem_id' => $orderItem->id,
+        'from'         => Carbon::tomorrow()->setTime(10, 0),
+        'to'           => Carbon::tomorrow()->setTime(11, 0),
+    ]);
+
+    return [$clinic, $orderItem->fresh(), $partnerProduct];
+}
+
+test('product wijzigen op ingeplande orderregel koppelt het partner product van het nieuwe product', function () {
+    [$clinic, $orderItem, $oldPartnerProduct] = plannedOrderItemWithPartnerProduct();
+    expect($orderItem->partner_product_id)->toBe($oldPartnerProduct->id);
+
+    $newProduct = Product::factory()->create(['name' => 'Nieuw product']);
+    $newPartnerProduct = PartnerProduct::factory()->create(['product_id' => $newProduct->id, 'name' => 'Nieuw partner product']);
+    $newPartnerProduct->clinics()->sync([$clinic->id]);
+
+    $orderItem->update(['product_id' => $newProduct->id]);
+
+    $orderItem = $orderItem->fresh();
+    expect($orderItem->partner_product_id)->toBe($newPartnerProduct->id)
+        ->and($orderItem->getProductName())->toBe('Nieuw partner product');
+});
+
+test('product wijzigen zonder partner product voor de kliniek wist de oude koppeling', function () {
+    [, $orderItem] = plannedOrderItemWithPartnerProduct();
+
+    $newProduct = Product::factory()->create(['name' => 'Nieuw product']);
+
+    $orderItem->update(['product_id' => $newProduct->id]);
+
+    $orderItem = $orderItem->fresh();
+    expect($orderItem->partner_product_id)->toBeNull()
+        ->and($orderItem->getProductName())->toBe('Nieuw product');
+});

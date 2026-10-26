@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\EventWebhookController;
+use App\Http\Controllers\Api\FailedJobsAlertController;
 use App\Http\Controllers\Api\KeycloakUserController;
 use App\Http\Controllers\Api\KeycloakWebhookController;
 use App\Http\Controllers\Api\LeadFormController;
@@ -90,6 +91,10 @@ $registerAuthenticatedApiRoutes = function () {
     Route::post('patient/forgot-password', [PatientForgotPasswordController::class, 'store'])
         ->middleware('throttle:patient-forgot-password')
         ->name('api.patient.forgot-password');
+
+    // Failed-jobs alert mail for other apps (API-key only; recipients come from this app's FAILED_JOBS_ALERT_EMAIL)
+    Route::post('failed-jobs/alert', FailedJobsAlertController::class)
+        ->name('api.failed-jobs.alert');
 
     // Patient routes (Keycloak Bearer token must match {id}; API key callers are service-to-service)
     Route::prefix('patient/{id}')

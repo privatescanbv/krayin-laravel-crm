@@ -12,9 +12,9 @@ class FailedJobsCriticalAlert extends Mailable
 
     public readonly string $timestamp;
 
-    public function __construct(public readonly int $failedJobCount)
+    public function __construct(public readonly int $failedJobCount, ?string $appName = null)
     {
-        $this->appName = config('app.name');
+        $this->appName = $appName ?? config('app.name');
         $this->environment = app()->environment();
         $this->timestamp = now()->format('d-m-Y H:i:s');
     }

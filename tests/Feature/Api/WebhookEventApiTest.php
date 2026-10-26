@@ -57,3 +57,39 @@ test('webhooks event endpoint logs payload and returns ok', function () {
         ->atLeast()
         ->once();
 });
+
+test('api key callers are not limited by the per-ip api throttle', function () {
+    $person = Person::factory()->create([
+        'emails' => [['value' => 'test@example.com', 'is_default' => true]],
+    ]);
+
+    $payload = [
+        'entity_type' => 'forms',
+        'id'          => 123,
+        'action'      => 'STATUS_UPDATE',
+        'status'      => 'completed',
+        'url'         => 'https://example.test/forms/123',
+        'person_id'   => $person->id,
+        'form_type'   => FormType::PrivateScan->value,
+    ];
+
+    foreach (range(1, 61) as $attempt) {
+        $response = $this->withHeaders([
+            'X-API-KEY' => 'valid-api-key-123',
+            'Accept'    => 'application/json',
+        ])->putJson(route('api.webhooks.event'), $payload);
+    }
+
+    $response->assertOk();
+});
+
+test('requests without a valid api key keep the per-ip api throttle', function () {
+    foreach (range(1, 61) as $attempt) {
+        $response = $this->withHeaders([
+            'X-API-KEY' => 'invalid-key',
+            'Accept'    => 'application/json',
+        ])->putJson(route('api.webhooks.event'), []);
+    }
+
+    $response->assertTooManyRequests();
+});

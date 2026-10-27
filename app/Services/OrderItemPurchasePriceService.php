@@ -52,6 +52,13 @@ class OrderItemPurchasePriceService
             ? PartnerProduct::forClinicAndProduct($clinicId, $orderItem->product_id)->with('purchasePrice')->first()
             : null;
 
+        $previous = $orderItem->partnerProduct()->withTrashed()->with('purchasePrice')->first();
+
+        // Price copied from the previous partner product is stale; a manually entered price is kept.
+        if ($previous && $previous->id !== $partnerProduct?->id && $this->hasPriceCopiedFrom($orderItem, $previous)) {
+            $orderItem->purchasePrice()->delete();
+        }
+
         $partnerProduct
             ? $this->linkPartnerProduct($orderItem, $partnerProduct)
             : $this->clearPartnerProductLink($orderItem);
@@ -91,5 +98,18 @@ class OrderItemPurchasePriceService
         }
 
         $orderItem->purchasePrice()->updateOrCreate([], $payload);
+    }
+
+    private function hasPriceCopiedFrom(OrderItem $orderItem, PartnerProduct $partnerProduct): bool
+    {
+        $itemPrice = $orderItem->purchasePrice()->first();
+        $partnerPrice = $partnerProduct->purchasePrice;
+
+        if ($itemPrice === null || $partnerPrice === null) {
+            return false;
+        }
+
+        return collect(['purchase_price', ...PurchasePrice::priceableFieldNames()])
+            ->every(fn (string $field) => (float) $itemPrice->{$field} === (float) $partnerPrice->{$field});
     }
 }

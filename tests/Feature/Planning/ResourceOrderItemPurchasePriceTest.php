@@ -210,3 +210,86 @@ test('product wijzigen zonder partner product voor de kliniek wist de oude koppe
     expect($orderItem->partner_product_id)->toBeNull()
         ->and($orderItem->getProductName())->toBe('Nieuw product');
 });
+
+test('relink command herstelt orderregels met partner product van een oud product', function () {
+    [$clinic, $orderItem] = plannedOrderItemWithPartnerProduct();
+
+    $newProduct = Product::factory()->create(['name' => 'Nieuw product']);
+    $newPartnerProduct = PartnerProduct::factory()->create(['product_id' => $newProduct->id, 'name' => 'Nieuw partner product']);
+    $newPartnerProduct->clinics()->sync([$clinic->id]);
+
+    // Simulate pre-fix data: product changed without the observer relinking.
+    OrderItem::query()->whereKey($orderItem->id)->update(['product_id' => $newProduct->id]);
+
+    $this->artisan('orders:relink-stale-partner-products', ['--dry-run' => true])->assertSuccessful();
+    expect($orderItem->fresh()->getProductName())->toBe('Oud partner product');
+
+    $this->artisan('orders:relink-stale-partner-products')->assertSuccessful();
+    expect($orderItem->fresh()->partner_product_id)->toBe($newPartnerProduct->id)
+        ->and($orderItem->fresh()->getProductName())->toBe('Nieuw partner product');
+});
+
+function setRadiologyPrice(PartnerProduct $partnerProduct, float $price): void
+{
+    $partnerProduct->purchasePrice()->update([
+        'purchase_price_misc'       => 0,
+        'purchase_price_doctor'     => 0,
+        'purchase_price_cardiology' => 0,
+        'purchase_price_clinic'     => 0,
+        'purchase_price_radiology'  => $price,
+        'purchase_price'            => $price,
+    ]);
+}
+
+test('product wijzigen vervangt inkoopprijs die van het oude partner product was overgenomen', function () {
+    $clinic = Clinic::factory()->create();
+    $dept = ClinicDepartment::factory()->create(['clinic_id' => $clinic->id]);
+    $resourceType = ResourceType::firstOrCreate(['name' => 'MRI scanner'], ['description' => null]);
+    $resource = Resource::factory()->create(['clinic_department_id' => $dept->id, 'resource_type_id' => $resourceType->id]);
+
+    $oldProduct = Product::factory()->create(['resource_type_id' => $resourceType->id]);
+    $oldPartnerProduct = PartnerProduct::factory()->create(['product_id' => $oldProduct->id]);
+    $oldPartnerProduct->clinics()->sync([$clinic->id]);
+    setRadiologyPrice($oldPartnerProduct, 344);
+
+    $newProduct = Product::factory()->create();
+    $newPartnerProduct = PartnerProduct::factory()->create(['product_id' => $newProduct->id]);
+    $newPartnerProduct->clinics()->sync([$clinic->id]);
+    setRadiologyPrice($newPartnerProduct, 516);
+
+    $orderItem = OrderItem::factory()->create(['product_id' => $oldProduct->id]);
+    ResourceOrderItem::create([
+        'resource_id'  => $resource->id,
+        'orderitem_id' => $orderItem->id,
+        'from'         => Carbon::tomorrow()->setTime(10, 0),
+        'to'           => Carbon::tomorrow()->setTime(11, 0),
+    ]);
+    expect((float) $orderItem->purchasePrice()->value('purchase_price'))->toBe(344.00);
+
+    $orderItem->fresh()->update(['product_id' => $newProduct->id]);
+
+    expect((float) $orderItem->purchasePrice()->value('purchase_price_radiology'))->toBe(516.00)
+        ->and($orderItem->purchasePrice()->count())->toBe(1);
+});
+
+test('product wijzigen behoudt handmatig afwijkende inkoopprijs', function () {
+    [$clinic, $orderItem] = plannedOrderItemWithPartnerProduct();
+    $orderItem->purchasePrice()->updateOrCreate([], [
+        'type'                      => PurchasePriceType::MAIN,
+        'purchase_price_misc'       => 42,
+        'purchase_price_doctor'     => 0,
+        'purchase_price_cardiology' => 0,
+        'purchase_price_clinic'     => 0,
+        'purchase_price_radiology'  => 0,
+        'purchase_price'            => 42,
+    ]);
+
+    $newProduct = Product::factory()->create();
+    $newPartnerProduct = PartnerProduct::factory()->create(['product_id' => $newProduct->id]);
+    $newPartnerProduct->clinics()->sync([$clinic->id]);
+    setRadiologyPrice($newPartnerProduct, 516);
+
+    $orderItem->update(['product_id' => $newProduct->id]);
+
+    expect((float) $orderItem->purchasePrice()->value('purchase_price'))->toBe(42.00);
+});

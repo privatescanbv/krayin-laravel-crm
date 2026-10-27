@@ -111,7 +111,7 @@
                     },
                     "direction": "backward",
                     "editorMode": "code",
-                    "expr": "sum by (service)(count_over_time({service!=\"\"} | json | __error__=\"\" | level_name=~\"ERROR|CRITICAL|ALERT|EMERGENCY\" [$__auto]))",
+                    "expr": "sum by (service)(count_over_time({service!=\"\"} |~ `\"level_name\":\"(ERROR|CRITICAL|ALERT|EMERGENCY)\"|^\\S+ \\S+ (ERROR|FATAL) \\[` [$__auto]))",
                     "legendFormat": "{{service}}",
                     "queryType": "range",
                     "refId": "A"
@@ -177,7 +177,7 @@
                     },
                     "direction": "backward",
                     "editorMode": "code",
-                    "expr": "sum by (service)(count_over_time({service!=\"\"} | json | __error__=\"\" | level_name=~\"ERROR|CRITICAL|ALERT|EMERGENCY\" [$__range]))",
+                    "expr": "sum by (service)(count_over_time({service!=\"\"} |~ `\"level_name\":\"(ERROR|CRITICAL|ALERT|EMERGENCY)\"|^\\S+ \\S+ (ERROR|FATAL) \\[` [$__range]))",
                     "legendFormat": "{{service}}",
                     "queryType": "instant",
                     "refId": "A"

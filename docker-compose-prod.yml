@@ -135,7 +135,7 @@ services:
       WWWGROUP: '${WWWGROUP}'
       APP_NAME: 'PrivateForms'
       APP_ENV: "${APP_ENV:-production}"
-      APP_KEY: "base64:i8u5O+j9QB823zOyqJFjsqr2iINU9Z1cFdr5HTfKNOg="
+      APP_KEY: "${FORMS_APP_KEY:?FORMS_APP_KEY ontbreekt in .env}"
       API_KEY_1: "${FORMS_API_KEY}"
       APP_DEBUG: 'false'
       APP_URL: "$PATIENT_PORTAL_URL"

@@ -19,6 +19,7 @@
 # KEYS
 #   DB_PASSWORD, DB_ANALYTICS_PASSWORD     MySQL-wachtwoord van de user + .env
 #   API_KEY_1                              CRM API key; forms krijgt hem als CRM_API_KEY
+#   FORMS_API_KEY                          forms API key; CRM gebruikt hem, forms krijgt hem als API_KEY_1
 #   PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET  door Keycloak geregenereerd (client patient-app) + .env;
 #                                          forms krijgt hem als KEYCLOAK_CLIENT_SECRET
 #   FORMS_APP_KEY                          Laravel APP_KEY van forms; wordt toegevoegd als hij ontbreekt.
@@ -27,7 +28,7 @@ set -euo pipefail
 
 ENV_FILE="${ENV_FILE:-.env}"
 CRM_CONTAINER="${CRM_CONTAINER:-crm}"
-ALL_KEYS=(DB_PASSWORD DB_ANALYTICS_PASSWORD API_KEY_1 PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET FORMS_APP_KEY)
+ALL_KEYS=(DB_PASSWORD DB_ANALYTICS_PASSWORD API_KEY_1 FORMS_API_KEY PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET FORMS_APP_KEY)
 
 if [ $# -gt 0 ]; then KEYS=("$@"); else KEYS=("${ALL_KEYS[@]}"); fi
 
@@ -115,7 +116,7 @@ for key in "${KEYS[@]}"; do
     case "$key" in
         DB_PASSWORD) rotate_db_password "$key" DB_USERNAME ;;
         DB_ANALYTICS_PASSWORD) rotate_db_password "$key" DB_ANALYTICS_USERNAME ;;
-        API_KEY_1) rotate_env_value "$key" "$(generate 40)" ;;
+        API_KEY_1 | FORMS_API_KEY) rotate_env_value "$key" "$(generate 40)" ;;
         PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET) rotate_keycloak_secret "$key" patient-app ;;
         FORMS_APP_KEY) rotate_env_value "$key" "base64:$(openssl rand -base64 32)" ;;
     esac
@@ -132,6 +133,9 @@ if rotated DB_PASSWORD || rotated DB_ANALYTICS_PASSWORD; then
 fi
 if rotated API_KEY_1; then
     echo "- API_KEY_1: werk externe aanroepers van de CRM API bij (forms gaat automatisch via CRM_API_KEY)."
+fi
+if rotated FORMS_API_KEY; then
+    echo "- FORMS_API_KEY: werk externe aanroepers van de forms API bij (CRM gaat automatisch)."
 fi
 if rotated PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET; then
     echo "- Keycloak: het oude secret werkt al niet meer; patiëntportaal-login faalt tot forms is gerecreate."

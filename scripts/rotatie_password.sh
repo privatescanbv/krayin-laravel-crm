@@ -22,13 +22,14 @@
 #   FORMS_API_KEY                          forms API key; CRM gebruikt hem, forms krijgt hem als API_KEY_1
 #   PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET  door Keycloak geregenereerd (client patient-app) + .env;
 #                                          forms krijgt hem als KEYCLOAK_CLIENT_SECRET
+#   CRM_KEYCLOAK_CLIENT_SECRET             door Keycloak geregenereerd (client crm-app) + .env; SSO-login CRM
 #   FORMS_APP_KEY                          Laravel APP_KEY van forms; wordt toegevoegd als hij ontbreekt.
 #                                          Patiënten worden één keer uitgelogd.
 set -euo pipefail
 
 ENV_FILE="${ENV_FILE:-.env}"
 CRM_CONTAINER="${CRM_CONTAINER:-crm}"
-ALL_KEYS=(DB_PASSWORD DB_ANALYTICS_PASSWORD API_KEY_1 FORMS_API_KEY PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET FORMS_APP_KEY)
+ALL_KEYS=(DB_PASSWORD DB_ANALYTICS_PASSWORD API_KEY_1 FORMS_API_KEY PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET CRM_KEYCLOAK_CLIENT_SECRET FORMS_APP_KEY)
 
 if [ $# -gt 0 ]; then KEYS=("$@"); else KEYS=("${ALL_KEYS[@]}"); fi
 
@@ -118,6 +119,7 @@ for key in "${KEYS[@]}"; do
         DB_ANALYTICS_PASSWORD) rotate_db_password "$key" DB_ANALYTICS_USERNAME ;;
         API_KEY_1 | FORMS_API_KEY) rotate_env_value "$key" "$(generate 40)" ;;
         PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET) rotate_keycloak_secret "$key" patient-app ;;
+        CRM_KEYCLOAK_CLIENT_SECRET) rotate_keycloak_secret "$key" crm-app ;;
         FORMS_APP_KEY) rotate_env_value "$key" "base64:$(openssl rand -base64 32)" ;;
     esac
 done
@@ -139,6 +141,9 @@ if rotated FORMS_API_KEY; then
 fi
 if rotated PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET; then
     echo "- Keycloak: het oude secret werkt al niet meer; patiëntportaal-login faalt tot forms is gerecreate."
+fi
+if rotated CRM_KEYCLOAK_CLIENT_SECRET; then
+    echo "- Keycloak: het oude CRM-secret werkt al niet meer; SSO-login op de CRM faalt tot crm is gerecreate."
 fi
 if rotated FORMS_APP_KEY; then
     echo "- FORMS_APP_KEY: ingelogde patiënten moeten na de recreate opnieuw inloggen."

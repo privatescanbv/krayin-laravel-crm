@@ -20,7 +20,7 @@ class EmailTemplateSeeder extends Seeder
      * Available variables per template are listed in a comment above each entry.
      * See EmailTemplateRenderingService::SUPPORTED_VARIABLES for the full reference.
      */
-    private static function templates(): array
+    public static function templates(): array
     {
         $nl = EmailTemplateLanguage::NEDERLANDS->value;
         $de = EmailTemplateLanguage::DUITS->value;
@@ -230,6 +230,24 @@ HTML,
 <p>Klik op de onderstaande link om een nieuw wachtwoord in te stellen:</p>
 <p><a href="{{ reset_url }}">Wachtwoord resetten</a></p>
 <p>Deze link is <strong>1 uur</strong> geldig. Heeft u geen verzoek ingediend? Dan kunt u deze e-mail negeren.</p>
+<p>Met vriendelijke groet,<br>Privatescan</p>
+HTML,
+            ],
+
+            // ── 2FA verificatiecode (patiënt, kliniek, medewerker) ─────────────────
+            // Variables: code
+            [
+                'name'        => '2FA verificatiecode',
+                'code'        => EmailTemplateCode::TWO_FACTOR_CODE->value,
+                'type'        => $algemeen,
+                'language'    => $nl,
+                'departments' => $allDepartments,
+                'subject'     => 'Uw verificatiecode',
+                'content'     => <<<'HTML'
+<p>Beste,</p>
+<p>Uw verificatiecode om in te loggen is:</p>
+<p style="font-size: 24px; font-weight: bold; letter-spacing: 4px;">{{ code }}</p>
+<p>Deze code is <strong>10 minuten</strong> geldig. Heeft u niet geprobeerd in te loggen? Dan kunt u deze e-mail negeren.</p>
 <p>Met vriendelijke groet,<br>Privatescan</p>
 HTML,
             ],

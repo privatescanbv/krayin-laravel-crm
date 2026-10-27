@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\PatientPasswordController;
 use App\Http\Controllers\Api\PatientPreferenceController;
 use App\Http\Controllers\Api\PersonActivityController;
 use App\Http\Controllers\Api\SalesLeadController;
+use App\Http\Controllers\Api\TwoFactorCodeController;
 use App\Http\Controllers\LeadNoteController;
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Lead\ActivityController;
@@ -91,6 +92,11 @@ $registerAuthenticatedApiRoutes = function () {
     Route::post('patient/forgot-password', [PatientForgotPasswordController::class, 'store'])
         ->middleware('throttle:patient-forgot-password')
         ->name('api.patient.forgot-password');
+
+    // 2FA verification code mail (API-key only; used by the forms/patient portal for all user types)
+    Route::post('two-factor/code', TwoFactorCodeController::class)
+        ->middleware('throttle:two-factor-code')
+        ->name('api.two-factor.code');
 
     // Failed-jobs alert mail for other apps (API-key only; recipients come from this app's FAILED_JOBS_ALERT_EMAIL)
     Route::post('failed-jobs/alert', FailedJobsAlertController::class)

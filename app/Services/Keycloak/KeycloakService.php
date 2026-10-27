@@ -147,27 +147,6 @@ class KeycloakService
         }
     }
 
-    private function markUnavailable(string $tokenUrl, string $reason): void
-    {
-        Cache::put(self::UNAVAILABLE_CACHE_KEY, true, self::UNAVAILABLE_SECONDS);
-
-        Log::warning('Keycloak niet bereikbaar, admin-aanroepen worden '.self::UNAVAILABLE_SECONDS.'s overgeslagen', [
-            'token_url' => $tokenUrl,
-            'reason'    => $reason,
-        ]);
-    }
-
-    /**
-     * The cause is already logged by getAdminToken(); while Keycloak is known to be unreachable
-     * that is enough, don't repeat it for every request.
-     */
-    private function logMissingAdminToken(string $message): void
-    {
-        if (! Cache::has(self::UNAVAILABLE_CACHE_KEY)) {
-            Log::error($message);
-        }
-    }
-
     /**
      * Get realm admin API URL.
      */
@@ -762,6 +741,27 @@ class KeycloakService
         }
 
         return [$person, $user];
+    }
+
+    private function markUnavailable(string $tokenUrl, string $reason): void
+    {
+        Cache::put(self::UNAVAILABLE_CACHE_KEY, true, self::UNAVAILABLE_SECONDS);
+
+        Log::warning('Keycloak niet bereikbaar, admin-aanroepen worden '.self::UNAVAILABLE_SECONDS.'s overgeslagen', [
+            'token_url' => $tokenUrl,
+            'reason'    => $reason,
+        ]);
+    }
+
+    /**
+     * The cause is already logged by getAdminToken(); while Keycloak is known to be unreachable
+     * that is enough, don't repeat it for every request.
+     */
+    private function logMissingAdminToken(string $message): void
+    {
+        if (! Cache::has(self::UNAVAILABLE_CACHE_KEY)) {
+            Log::error($message);
+        }
     }
 
     /**

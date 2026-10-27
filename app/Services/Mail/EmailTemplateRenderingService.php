@@ -51,6 +51,7 @@ class EmailTemplateRenderingService
     public const SUPPORTED_VARIABLES = [
         'auth' => [
             'reset_url' => 'Tijdelijk gesigneerde URL voor wachtwoord-reset (forgot-password flow)',
+            'code'      => 'Eenmalige 2FA-verificatiecode (two-factor flow)',
         ],
         'user' => [
             'user.first_name' => 'Voornaam van de gebruiker',

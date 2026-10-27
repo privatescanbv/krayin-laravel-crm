@@ -36,5 +36,9 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('patient-forgot-password', function (Request $request) {
             return Limit::perMinute(5)->by($request->ip());
         });
+
+        RateLimiter::for('two-factor-code', function (Request $request) {
+            return Limit::perMinute(10)->by((string) $request->input('email'));
+        });
     }
 }

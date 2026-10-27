@@ -22,9 +22,10 @@ class InkoopPdfParser
      */
     public function parse(InkoopInvoice $invoice, string $fileName): array
     {
+        $pdfPath = Storage::disk('public')->path("inkoop_invoices/$fileName");
+
         try {
             // Parse PDF and extract order lines
-            $pdfPath = Storage::disk('public')->path("inkoop_invoices/$fileName");
 
             // Check if file exists
             if (! file_exists($pdfPath)) {

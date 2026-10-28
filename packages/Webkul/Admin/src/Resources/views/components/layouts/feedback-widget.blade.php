@@ -3,7 +3,7 @@
 
 @if (! empty($feedbackWidgetKey))
     <script
-        src="https://orchestrator.mbsoftware.nl/widget/feedback.js?v=1.2.0"
+        src="https://orchestrator.mbsoftware.nl/widget/feedback.js?v=2.0.0"
         data-key="{{ $feedbackWidgetKey }}"
         async
     ></script>

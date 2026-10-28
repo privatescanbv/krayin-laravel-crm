@@ -84,6 +84,10 @@ Core functionality is organized as independent packages in `packages/Webkul/`:
 Each package contains Controllers, Models, Routes, Migrations, and Config in its `src/` directory.
 
 ### Frontend Architecture
+Admin UI is volledig Vue 3: `createApp` mount over de hele pagina (`#app`). Interactie bouw je als
+Vue-component: `<script type="text/x-template" id="v-...-template">` + `app.component('v-...')` binnen
+`@pushOnce('scripts')`. Geen plain JS/Blade-interactie of Alpine binnen `#app`.
+
 Er is **één** Vite build: `packages/Webkul/Admin/vite.config.js` (port 5174).
 Output gaat naar `public/admin/build/`.
 

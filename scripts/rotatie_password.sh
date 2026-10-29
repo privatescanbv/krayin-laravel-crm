@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # Rotatie van secrets in .env (en waar nodig in MySQL / Keycloak).
+# VERGEET NIET
+# - Websites gebruiken api key om leads in te schieten. Daar is nu een api_key_2 voor aangemaakt, dus zou goed moeten gaan zonder deze aan te passen
+# - Metabase db connectie opnieuw het nieuwe wachtwoord met de handzetten.
 #
 # HANDLEIDING
 #   1. Ga naar de map met de .env van de stack (acc/prod: waar docker-compose staat):

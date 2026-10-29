@@ -98,6 +98,29 @@ LEFT JOIN analytics.dim_pipeline_stage   ds ON ds.stage_sk = o.stage_sk
 LEFT JOIN analytics.dim_date             dd ON dd.date_sk  = o.verkoopdatum_sk;
 
 
+-- ---- order-grain per datumtype: elke order op verkoopdatum én op uitvoerdatum ----
+--   Verkocht   = verkoopdatum (DATE(orders.created_at))
+--   Uitgevoerd = eerste onderzoeksdatum (Order::firstExaminationCarbon()); orders zonder onderzoek ontbreken
+-- Filter altijd op één datumtype, anders telt elke order dubbel (dashboards "Omzet per maand" en "Omzet per medewerker").
+CREATE OR REPLACE VIEW analytics.v_orders_datum AS
+SELECT 'Verkocht' AS datumtype, verkoopdatum_sk AS datum,
+       YEAR(verkoopdatum_sk) AS jaar, MONTH(verkoopdatum_sk) AS maand_nummer, DATE_FORMAT(verkoopdatum_sk, '%Y-%m') AS maand,
+       order_sk, ordernummer, order_titel, naam, afdeling, status_categorie,
+       verkoopdatum_sk AS verkoopdatum, eerste_onderzoek_datum_sk AS eerste_onderzoek_datum,
+       verkoopprijs, verloren_regels_omzet, inkoopprijs, marge,
+       verkoper_sk, (SELECT du.naam FROM analytics.dim_user du WHERE du.user_sk = verkoper_sk) AS verkoper
+FROM   analytics.fact_orders
+UNION ALL
+SELECT 'Uitgevoerd', eerste_onderzoek_datum_sk,
+       YEAR(eerste_onderzoek_datum_sk), MONTH(eerste_onderzoek_datum_sk), DATE_FORMAT(eerste_onderzoek_datum_sk, '%Y-%m'),
+       order_sk, ordernummer, order_titel, naam, afdeling, status_categorie,
+       verkoopdatum_sk, eerste_onderzoek_datum_sk,
+       verkoopprijs, verloren_regels_omzet, inkoopprijs, marge,
+       verkoper_sk, (SELECT du.naam FROM analytics.dim_user du WHERE du.user_sk = verkoper_sk) AS verkoper
+FROM   analytics.fact_orders
+WHERE  eerste_onderzoek_datum_sk IS NOT NULL;
+
+
 -- =========================================================
 -- Omzet per maand  (= /admin/reports/revenue-by-month)
 -- =========================================================
@@ -176,6 +199,34 @@ WHERE    status_categorie IS NOT NULL
      AND verkoper_sk IS NOT NULL
 GROUP BY verkoopdatum, jaar, jaar_week, week_nummer, maand_nummer, maand,
          afdeling, verkoper_sk, verkoper, status_categorie;
+
+
+-- Idem per datumtype (Verkocht/Uitgevoerd, zie v_orders_datum); filter altijd op één datumtype.
+CREATE OR REPLACE VIEW analytics.v_omzet_per_medewerker_datum AS
+SELECT
+    datumtype,
+    datum,
+    afdeling,
+    verkoper_sk,
+    verkoper,
+    status_categorie,
+    SUM(n_orders)     AS aantal_orders,
+    SUM(omzet)        AS omzet,
+    SUM(inkoopprijs)  AS inkoop,
+    SUM(marge)        AS marge
+FROM (
+    SELECT datumtype, datum, afdeling, verkoper_sk, verkoper,
+           status_categorie, 1 AS n_orders, verkoopprijs AS omzet, inkoopprijs, marge
+    FROM   analytics.v_orders_datum
+    UNION ALL
+    SELECT datumtype, datum, afdeling, verkoper_sk, verkoper,
+           'lost', 0, verloren_regels_omzet, 0, verloren_regels_omzet
+    FROM   analytics.v_orders_datum
+    WHERE  verloren_regels_omzet <> 0 AND status_categorie IS NOT NULL
+) o
+WHERE    status_categorie IS NOT NULL
+     AND verkoper_sk IS NOT NULL
+GROUP BY datumtype, datum, afdeling, verkoper_sk, verkoper, status_categorie;
 
 
 -- =========================================================

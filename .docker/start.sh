@@ -26,13 +26,16 @@ mkdir -p \
     storage/framework/testing \
     storage/logs \
     bootstrap/cache
-chown -R www-data:www-data storage/framework storage/logs bootstrap/cache
-chmod -R 775 storage/framework storage/logs bootstrap/cache
-
 php artisan config:clear
 php artisan optimize:clear
 php artisan config:cache
 php artisan storage:link || true
+
+# chown after the artisan calls above: they run as root, and anything they
+# write to the file cache (e.g. data/10/) would otherwise stay root-owned, so
+# www-data can't create sibling dirs like data/10/f5 (file_put_contents ENOENT).
+chown -R www-data:www-data storage/framework storage/logs bootstrap/cache
+chmod -R 775 storage/framework storage/logs bootstrap/cache
 # migrate database by supervisord
 
 echo "Starting Supervisor..."

@@ -349,8 +349,8 @@ test('can get template products for selection', function () {
     $response->assertOk();
 
     $data = $response->json('data');
-    expect($data)->toHaveCount(2)
-        ->and(collect($data)->pluck('name'))->toContain('Product 1', 'Product 2')
+    // Not an exact count: migrations seed products of their own (e.g. Korting).
+    expect(collect($data)->pluck('name'))->toContain('Product 1', 'Product 2')
         ->and(collect($data)->pluck('name'))->not->toContain('Product 3')
         ->and(collect($data)->pluck('name_with_path'))->toContain('Product 1', 'Product 2'); // Only active products
 

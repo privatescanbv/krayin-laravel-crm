@@ -82,7 +82,7 @@ class Order extends Model
     {
         return [
             'title'                         => 'required|string|max:255',
-            'total_price'                   => 'required|numeric|min:0',
+            'total_price'                   => 'required|numeric',
             'pipeline_stage_id'             => 'nullable|integer|exists:lead_pipeline_stages,id',
             'first_examination_at'          => 'nullable|date',
             'sales_lead_id'                 => 'required|integer|exists:salesleads,id',

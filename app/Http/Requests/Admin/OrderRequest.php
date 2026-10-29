@@ -23,7 +23,7 @@ class OrderRequest extends FormRequest
     {
         return [
             'title'                           => ['required', 'string', 'max:255'],
-            'total_price'                     => ['nullable', 'numeric', 'min:0'],
+            'total_price'                     => ['nullable', 'numeric'],
             'sales_lead_id'                   => ['required', 'integer', 'exists:salesleads,id'],
             'user_id'                         => ['nullable', 'integer', 'exists:users,id'],
             'clinic_coordinator_user_id'      => ['nullable', 'integer', 'exists:users,id'],
@@ -56,7 +56,7 @@ class OrderRequest extends FormRequest
             ],
             'items.*.sort_order'            => ['nullable', 'integer'],
             'items.*.quantity'              => ['nullable', 'integer', 'min:1'],
-            'items.*.total_price'           => ['nullable', 'numeric', 'min:0'],
+            'items.*.total_price'           => ['nullable', 'numeric'],
             'items.*.status'                => ['nullable', new Enum(OrderItemStatus::class)],
             'removed_order_item_ids'        => ['nullable', 'array'],
             'removed_order_item_ids.*'      => ['integer', 'exists:order_items,id'],

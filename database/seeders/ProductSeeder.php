@@ -1475,7 +1475,7 @@ class ProductSeeder extends BaseSeeder
                 'omschrijving'  => 'Korting',
                 'valuta'        => 'EUR',
                 'inkoopprijs'   => '0,00',
-                'verkoopprijs'  => '1,00',
+                'verkoopprijs'  => '-50,00',
                 'producttype'   => ProductTypeEnum::DIENSTEN,
                 'resourcetype'  => ResourceTypeEnum::OTHER,
                 'productgroep'  => 'Administratief',

@@ -375,7 +375,7 @@ class ProductController extends SimpleEntityController
             'active'            => 'required|boolean',
             'currency'          => 'required|in:'.implode(',', Currency::codes()),
             'description'       => 'nullable|string',
-            'price'             => 'nullable|numeric|min:0',
+            'price'             => 'nullable|numeric',
             'product_group_id'  => 'required|integer|exists:product_groups,id',
             'product_type_id'   => 'nullable|integer|exists:product_types,id',
             'resource_type_id'  => 'nullable|integer|exists:resource_types,id',

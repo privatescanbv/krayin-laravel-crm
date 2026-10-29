@@ -146,7 +146,7 @@ class OrderItemController extends SimpleEntityController
             'afb_description'  => ['nullable', 'string'],
             'person_id'        => ['required', 'integer', 'exists:persons,id'],
             'quantity'         => ['required', 'integer', 'min:1'],
-            'total_price'      => ['nullable', 'numeric', 'min:0'],
+            'total_price'      => ['nullable', 'numeric'],
             'currency'         => ['nullable', 'string', 'in:'.implode(',', Currency::codes())],
             'status'           => ['nullable', 'string', 'in:'.implode(',', array_column(OrderItemStatus::cases(), 'value'))],
         ];

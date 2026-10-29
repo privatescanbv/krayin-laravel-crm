@@ -103,6 +103,8 @@ test('a sales lead takes the customer history of its lead', function () {
 });
 
 test('an order knows which purchase it is and how long ago the previous one was', function () {
+    // Fixed date: subMonths() from e.g. Oct 29 overflows Feb 29 into Mar 1 and shifts the month diff.
+    $this->travelTo('2026-06-15');
     $person = Person::factory()->create();
     $first = aiHistoryPurchase($person, now()->subMonths(20)->toDateString());
     $second = aiHistoryPurchase($person, now()->subMonths(8)->toDateString());

@@ -36,5 +36,8 @@
         "vue-cal": "^4.9",
         "vue-flatpickr": "^2.3",
         "vuedraggable": "^4.1"
+    },
+    "overrides": {
+        "minimatch": "^11.0.1"
     }
 }

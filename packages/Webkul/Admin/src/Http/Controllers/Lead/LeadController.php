@@ -815,7 +815,7 @@ class LeadController extends Controller
                     redirectRoute: $redirectRoute,
                     redirectParams: [$lead->id],
                 );
-            });
+            }, 3); // retry on MySQL deadlock (1213)
         } catch (InvalidArgumentException $e) {
             if (request()->ajax()) {
                 throw new ValidationException(

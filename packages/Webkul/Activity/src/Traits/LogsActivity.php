@@ -4,6 +4,7 @@ namespace Webkul\Activity\Traits;
 
 use App\Models\Department;
 use Exception;
+use Illuminate\Support\Facades\DB;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Attribute\Contracts\AttributeValue;
 use Webkul\Attribute\Repositories\AttributeRepository;
@@ -142,13 +143,14 @@ trait LogsActivity
                 }
             }
 
-            $activity = app(ActivityRepository::class)->createSystem($activityData);
+            // Write after the surrounding transaction commits: the INSERT (with FK shared locks on
+            // leads/groups/users) otherwise extends the lead-update lock window and deadlocks (MySQL 1213).
+            // Runs immediately without an open transaction; dropped on rollback.
+            DB::afterCommit(function () use ($activityData, $model) {
+                $activity = app(ActivityRepository::class)->createSystem($activityData);
 
-            if ($model instanceof AttributeValue) {
-                static::linkActivityToEntity($activity, $model->entity);
-            } else {
-                static::linkActivityToEntity($activity, $model);
-            }
+                static::linkActivityToEntity($activity, $model instanceof AttributeValue ? $model->entity : $model);
+            });
         }
     }
 

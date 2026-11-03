@@ -363,6 +363,9 @@ class LeadController extends Controller
                             'id' => $person->organization->id,
                             'name' => $person->organization->name,
                         ] : null,
+                        'address' => $person->address?->only([
+                            'street', 'house_number', 'house_number_suffix', 'postal_code', 'city', 'state', 'country',
+                        ]),
                     ];
 
                     // Prefill full personal fields for step 2

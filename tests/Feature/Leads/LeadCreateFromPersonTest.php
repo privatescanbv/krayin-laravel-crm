@@ -53,3 +53,15 @@ test('a person from person_id is linked immediately without picking a suggestion
         ->assertSee('this.selectedPersonId = p.id;', false)
         ->assertSee('Lead wordt gekoppeld aan:', false);
 });
+
+test('the address of the person from person_id is passed to the form', function () {
+    $person = Person::factory()->create();
+    $person->address()->associate(\App\Models\Address::create([
+        'street' => 'Teststraat', 'house_number' => '12', 'postal_code' => '1234AB', 'city' => 'Utrecht',
+    ]))->save();
+
+    $this->get(route('admin.leads.create', ['person_id' => $person->id]))
+        ->assertOk()
+        ->assertSee('Teststraat', false)
+        ->assertSee('1234AB', false);
+});

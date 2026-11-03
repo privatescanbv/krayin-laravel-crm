@@ -613,6 +613,7 @@ $userDefaultsForJs = (object) ($userDefaults ?? []);
                         this.updateSelectedPersonsSummary();
                         this.$nextTick(() => {
                             this.syncPersonalFieldsToForm();
+                            if (p.address) this.populateAddressFields(p.address);
                             // Trigger suggestions immediately when phone is present
                             if (!this.suggestionsDisabled && this.formData.phone && String(this.formData.phone).trim().length > 0) {
                                 this.fetchSuggestions();

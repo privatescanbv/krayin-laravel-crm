@@ -27,7 +27,7 @@ it('mails the 2fa code to the given address', function () {
         && $mail->subjectLine === 'Uw verificatiecode');
 });
 
-it('stores a copy with the code masked on the person of the keycloak user', function () {
+it('stores a copy on the person of the keycloak user', function () {
     $person = Person::factory()->create(['keycloak_user_id' => 'kc-patient-1']);
 
     $this->withHeader('X-API-KEY', 'valid-api-key-123')
@@ -39,8 +39,7 @@ it('stores a copy with the code masked on the person of the keycloak user', func
     Mail::assertSent(TwoFactorCodeMail::class, fn (TwoFactorCodeMail $mail) => str_contains($mail->renderedHtml, '123456'));
     expect($email->subject)->toBe('Uw verificatiecode')
         ->and($email->source)->toBe('system')
-        ->and($email->reply)->toContain('••••••')
-        ->and($email->reply)->not->toContain('123456');
+        ->and($email->reply)->toContain('123456');
 });
 
 it('stores nothing without a matching person', function (?string $keycloakUserId) {

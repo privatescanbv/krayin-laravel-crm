@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privatescan · CRM prototype</title>
+  <link rel="stylesheet" href="prototype.css">
+  <script src="prototype.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a href="#orders" class="brand"><img src="assets/privatescan-logo.svg" alt="Privatescan"></a>
+    <label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Zoeken op naam, nummer of onderzoek" aria-label="Zoeken"></label>
+    <span class="prototype">Prototype · voorbeelddata</span><span class="avatar" title="Demo gebruiker">M</span>
+  </header>
+  <aside class="sidebar">
+    <div class="workspace">CRM <span>Werkruimte</span></div>
+    <nav aria-label="Hoofdnavigatie">
+      <a href="#sales" data-nav="sales" aria-label="Sales"><span aria-hidden="true">◇</span> Sales</a>
+      <a href="#orders" data-nav="orders" aria-label="Orders"><span aria-hidden="true">▤</span> Orders</a>
+    </nav>
+    <div class="sidebar-note">Designomgeving<p>Een eerste versie om samen verder te ontwikkelen.</p></div>
+    <button id="reset" class="reset">Voorbeelddata herstellen</button>
+  </aside>
+  <main id="main">
+    <div id="overview">
+    <div class="breadcrumb">CRM <span>/</span> <span id="crumb">Orders</span></div>
+    <div class="heading"><div><h1 id="title">Orders</h1><p id="subtitle">Van bevestiging tot rapportage.</p></div><button id="create" class="primary">＋ Nieuwe order</button></div>
+    <section class="toolbar" aria-label="Filters">
+      <div id="pipelines" class="tabs"></div>
+      <div class="controls"><label class="toggle"><input type="checkbox" id="closed"> Win/Lost</label><select id="owner" aria-label="Filter op medewerker"><option value="">Alle medewerkers</option><option>Marieke</option><option>Thomas</option><option>Sanne</option></select><div class="view-switch"><button id="board-view" aria-label="Kanbanweergave" title="Kanbanweergave">▥</button><button id="list-view" aria-label="Lijstweergave" title="Lijstweergave">☷</button></div></div>
+    </section>
+    <div class="board-caption"><span id="count"></span><span>Klik op een kaart om de gegevens te bekijken</span></div>
+    <section id="content" aria-label="Overzicht"></section>
+    </div>
+    <section id="record-page" hidden aria-label="Detailpagina"></section>
+    <section id="editor-page" hidden aria-label="Bewerkpagina">
+      <form id="record-form">
+        <div class="editor-heading"><div><div id="record-number" class="eyebrow"></div><h1 id="dialog-title"></h1></div><div class="editor-actions"><button type="button" data-close>Annuleren</button><button type="submit" id="save" class="primary">Opslaan</button></div></div>
+        <div id="fields" class="panel"></div>
+      </form>
+    </section>
+    <footer><span>© 2026 Privatescan</span><span>Wijzigingen worden in deze browser bewaard</span></footer>
+  </main>
+  <dialog id="confirm-dialog" aria-labelledby="confirm-title"><div class="confirm-body"><h2 id="confirm-title">Verwijderen?</h2><p id="confirm-text"></p><div class="confirm-actions"><button id="cancel-delete">Annuleren</button><button id="confirm-delete" class="danger solid">Verwijderen</button></div></div></dialog>
+  <div id="toast" role="status" hidden></div>
+</body>
+</html>

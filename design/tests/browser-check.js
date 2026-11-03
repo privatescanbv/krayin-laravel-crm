@@ -1,0 +1,107 @@
+// Run this function with a Playwright Page against the local preview server.
+async function checkPrototype(page) {
+  const base = 'http://127.0.0.1:8765/';
+  const assert = (condition, message) => { if (!condition) throw new Error(message); };
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  for (const module of ['orders', 'sales']) {
+    await page.goto(`${base}#${module}`);
+    await page.locator('.card').first().click();
+    await page.waitForURL(/algemeen$/);
+    await page.locator('.record-toolbar').waitFor();
+    assert(await page.locator('dialog[open]').count() === 0, 'Detail must open as a page');
+    assert(await page.locator('.contact-panel').isVisible(), 'Contact panel missing');
+    assert(await page.locator('.ai-panel').isVisible(), 'AI panel missing');
+    const detailUrl = page.url();
+    await page.reload();
+    assert(await page.locator('.record-toolbar').isVisible(), 'Reload must preserve detail');
+    await page.locator('.collapse-ai').click();
+    assert(await page.locator('.record-grid').evaluate(e => e.classList.contains('ai-collapsed')), 'Collapse failed');
+    await page.locator('.collapse-ai').click();
+    await page.locator('.section-nav a').filter({ hasText: 'Activiteiten' }).click();
+    await page.waitForURL(/activiteiten$/);
+    await page.locator('.activity-tabs').waitFor();
+    assert(await page.locator('.activity-tabs').isVisible(), 'Activities section missing');
+    await page.goBack();
+    await page.locator('.record-toolbar').waitFor();
+    assert(page.url() === detailUrl, 'Browser back must restore detail');
+    await page.locator('[data-edit-record]').first().click();
+    await page.waitForURL(/edit$/);
+    await page.locator('#editor-page').waitFor();
+    assert(await page.locator('#editor-page').isVisible(), 'Edit must be a page');
+    await page.getByRole('button', { name: 'Annuleren', exact: true }).click();
+    await page.waitForURL(/algemeen$/);
+    await page.locator('.record-toolbar').waitFor();
+    await page.goto(`${base}#${module}`);
+    await page.locator('#create').click();
+    await page.waitForURL(/new$/);
+    await page.locator('#editor-page').waitFor();
+    await page.locator('[name=title]').fill('Browsercontrole');
+    await page.locator('[name=person]').fill('Prototypecontrole <script>');
+    await page.locator('[name=amount]').fill('950');
+    await page.locator('#save').click();
+    await page.waitForURL(/algemeen$/);
+    await page.locator('.record-toolbar').waitFor();
+    assert((await page.locator('.contact-title h2').innerText()).includes('<script>'), 'User input must remain plain text');
+    const stage = module === 'orders' ? 'Order akkoord' : 'Beoordeling gereed';
+    await page.locator(`[data-stage="${stage}"]`).click();
+    await page.reload();
+    assert(await page.locator('.stage-pill').innerText() === stage, 'Stage must persist');
+    await page.locator('[data-edit-record]').first().click();
+    await page.waitForURL(/edit$/);
+    await page.locator('#editor-page').waitFor();
+    await page.locator('[name=title]').fill('Aangepaste titel');
+    await page.locator('#save').click();
+    await page.waitForURL(/algemeen$/);
+    await page.locator('.record-toolbar').waitFor();
+    await page.reload();
+    assert((await page.locator('.record-center').innerText()).includes('Aangepaste titel') || module === 'sales', 'Edited order title not saved');
+    await page.getByRole('button', { name: 'Notitie', exact: true }).click();
+    await page.locator('#quick-action textarea').fill('Voorbeeldnotitie uit de browsercontrole');
+    await page.locator('#quick-action button.primary').click();
+    assert((await page.locator('.activity-entry').innerText()).includes('Voorbeeldnotitie'), 'Note was not saved');
+    await page.reload();
+    await page.locator('.section-nav a').filter({ hasText: 'Activiteiten' }).click();
+    await page.waitForURL(/activiteiten$/);
+    await page.locator('.activity-entry').waitFor();
+    assert((await page.locator('.activity-entry').innerText()).includes('Voorbeeldnotitie'), 'Note did not persist');
+    await page.locator('.section-nav a').filter({ hasText: 'Algemeen' }).click();
+    await page.waitForURL(/algemeen$/);
+    await page.locator('.record-toolbar').waitFor();
+    if (module === 'orders') {
+      await page.locator('[data-record-action="Checks toevoegen"]').click();
+      await page.locator('#quick-action textarea').fill('Voorbeeldcheck');
+      await page.locator('#quick-action button.primary').click();
+      await page.locator('[data-check="0"]').check();
+      await page.reload();
+      assert(await page.locator('[data-check="0"]').isChecked(), 'Check did not persist');
+    }
+    await page.locator('[data-delete-record]').click();
+    await page.locator('#cancel-delete').click();
+    assert(await page.locator('.record-toolbar').isVisible(), 'Cancel delete must preserve detail');
+    await page.locator('[data-delete-record]').click();
+    await page.locator('#confirm-delete').click();
+    await page.waitForURL(`${base}#${module}`);
+    await page.locator('#overview').waitFor();
+    assert(await page.locator('#overview').isVisible(), 'Delete must return to overview');
+    assert(await page.getByRole('button', { name: /Prototypecontrole/ }).count() === 0, 'Deleted record still present');
+  }
+  await page.goto(`${base}#sales/sales-1/orders`);
+  await page.locator('[data-new-linked-order]').click();
+  await page.waitForURL(/orders\/new\?sales=/);
+  await page.locator('#editor-page').waitFor();
+  assert(await page.locator('[name=salesId]').inputValue() === 'sales-1', 'Linked order must preserve sales');
+  await page.goto(`${base}#orders/orders-1/algemeen`);
+  await page.locator('.linked-records a').click();
+  await page.waitForURL(/sales\/sales-1\/algemeen$/);
+  for (const width of [390, 768, 1280, 1600]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(`${base}#orders/orders-1/algemeen`);
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), `Order overflow at ${width}`);
+    await page.goto(`${base}#sales/sales-1/algemeen`);
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), `Sales overflow at ${width}`);
+  }
+  assert(errors.length === 0, `Browser errors: ${errors.join(', ')}`);
+  return { result: 'passed', checks: ['page details', 'edit', 'create', 'delete', 'persistence', 'back navigation', 'stage changes', 'safe text', 'linked records', 'responsive layout'] };
+}

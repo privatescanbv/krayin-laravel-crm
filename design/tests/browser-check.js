@@ -44,7 +44,7 @@ async function checkPrototype(page) {
     await page.waitForURL(/algemeen$/);
     await page.locator('.record-toolbar').waitFor();
     assert((await page.locator('.contact-title h2').innerText()).includes('<script>'), 'User input must remain plain text');
-    const stage = module === 'orders' ? 'Order akkoord' : 'Beoordeling gereed';
+    const stage = module === 'orders' ? 'Order akkoord' : 'In behandeling';
     await page.locator(`[data-stage="${stage}"]`).click();
     await page.reload();
     assert(await page.locator('.stage-pill').innerText() === stage, 'Stage must persist');

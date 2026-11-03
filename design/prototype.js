@@ -1,27 +1,49 @@
 'use strict';
 
 const stages = {
-  orders: ['Order bevestigen', 'Ingepland, wacht op akkoord', 'Order akkoord', 'Wachten op uitvoering', 'Uitgevoerd, wachten op rapporten', 'Rapporten vertalen', 'Gewonnen', 'Verloren'],
-  sales: ['Onderzoek via Privatescan', 'Casus bij arts ter beoordeling', 'Beoordeling gereed', 'Patient bedenktijd', 'Gepland voor aanvullend onderzoek', 'Wachten op zorgverzekeraar', 'Behandeling bevestigen', 'Behandeling gepland', '1e Nazorg', '2e Nazorg', 'Gepland voor fysieke nacontrole', 'Gewonnen', 'Verloren'],
+  orders: {
+    Privatescan: ['Order bevestigen', 'Ingepland, wacht op akkoord', 'Order akkoord', 'Wachten op uitvoering', 'Uitgevoerd, wachten op rapporten', 'Rapporten vertalen', 'Gewonnen', 'Verloren'],
+    Herniapoli: ['Order bevestigen', 'Ingepland', 'Order akkoord', 'Wachten op uitvoering', 'Uitgevoerd, wachten op operatieverslag', 'Rapporten vertalen', 'Gewonnen', 'Verloren'],
+  },
+  sales: {
+    Privatescan: ['In behandeling', 'Met succes afgerond', 'Niet succesvol afgerond'],
+    Herniapoli: ['Onderzoek via Privatescan', 'Casus bij arts ter beoordeling', 'Beoordeling gereed', 'Patient bedenktijd', 'Gepland voor aanvullend onderzoek', 'Wachten op zorgverzekeraar', 'Behandeling bevestigen', 'Behandeling gepland', '1e Nazorg', '2e Nazorg', 'Gepland voor fysieke nacontrole', 'Met succes afgerond', 'Niet succesvol afgerond'],
+  },
 };
+const closedStages = ['Gewonnen', 'Verloren', 'Met succes afgerond', 'Niet succesvol afgerond'];
 const storageKey = 'privatescan-design-v1';
 const names = ['Emma de Vries', 'Lucas Jansen', 'Sophie van Dijk', 'Daan Bakker', 'Julia Visser', 'Lars Smit', 'Sara Meijer', 'Thomas de Boer', 'Eva Mulder', 'Milan Bos', 'Noor Vos', 'Bram Peters'];
 const owners = ['Marieke', 'Thomas', 'Sanne'];
 const examinations = ['MRI total body', 'MRI rug', 'Preventief gezondheidsonderzoek', 'MRI knie', 'MRI hoofd', 'MRI nek'];
 function seed() {
-  return ['orders', 'sales'].flatMap(type => Array.from({ length: type === 'orders' ? 19 : 25 }, (_, i) => ({
-    id: `${type}-${i + 1}`, type, number: `${type === 'orders' ? '20260' : 'S-2026-'}${1903 - i}`,
-    title: examinations[i % 6], person: names[i % names.length], email: `voorbeeld${i + 1}@example.com`,
-    phone: '06 1234 5678', pipeline: i % 6 === 5 ? 'Herniapoli' : 'Privatescan',
-    stage: stages[type][i % stages[type].length], owner: owners[i % 3], amount: 695 + (i % 5) * 300,
-    payment: i % 3 === 0 ? 'Volledig betaald' : i % 3 === 1 ? 'Niet betaald' : 'Gedeeltelijk betaald',
-    date: `2026-11-${String(3 + i % 20).padStart(2, '0')}`, organization: '', salesId: type === 'orders' ? `sales-${i % 25 + 1}` : '',
-    combine: true, description: 'Voorbeeldcasus voor het ontwerp. De klant wil graag meer informatie over het onderzoek.',
-  })));
+  return ['orders', 'sales'].flatMap(type => Array.from({ length: type === 'orders' ? 19 : 25 }, (_, i) => {
+    const pipeline = i % 6 === 5 ? 'Herniapoli' : 'Privatescan';
+    const pipelineStages = stages[type][pipeline];
+    return {
+      id: `${type}-${i + 1}`, type, number: `${type === 'orders' ? '20260' : 'S-2026-'}${1903 - i}`,
+      title: examinations[i % 6], person: names[i % names.length], email: `voorbeeld${i + 1}@example.com`,
+      phone: '06 1234 5678', pipeline,
+      stage: pipelineStages[i % pipelineStages.length], owner: owners[i % 3], amount: 695 + (i % 5) * 300,
+      payment: i % 3 === 0 ? 'Volledig betaald' : i % 3 === 1 ? 'Niet betaald' : 'Gedeeltelijk betaald',
+      date: `2026-11-${String(3 + i % 20).padStart(2, '0')}`, organization: '', salesId: type === 'orders' ? `sales-${i % 25 + 1}` : '',
+      combine: true, description: 'Voorbeeldcasus voor het ontwerp. De klant wil graag meer informatie over het onderzoek.',
+    };
+  }));
 }
 let records;
-try { const saved = JSON.parse(localStorage.getItem(storageKey)); records = Array.isArray(saved) && saved.every(r => r && stages[r.type]?.includes(r.stage) && typeof r.id === 'string') ? saved : seed(); }
+try { const saved = JSON.parse(localStorage.getItem(storageKey)); records = Array.isArray(saved) && saved.every(r => r && stages[r.type]?.[r.pipeline] && typeof r.id === 'string') ? saved : seed(); }
 catch { records = seed(); }
+// Preserve locally edited records while correcting stages from the earlier prototype.
+for (const r of records) {
+  if (r.type === 'sales') {
+    if (r.stage === 'Gewonnen') r.stage = 'Met succes afgerond';
+    if (r.stage === 'Verloren') r.stage = 'Niet succesvol afgerond';
+  } else if (r.pipeline === 'Herniapoli') {
+    if (r.stage === 'Ingepland, wacht op akkoord') r.stage = 'Ingepland';
+    if (r.stage === 'Uitgevoerd, wachten op rapporten') r.stage = 'Uitgevoerd, wachten op operatieverslag';
+  }
+  if (!stages[r.type][r.pipeline].includes(r.stage)) r.stage = stages[r.type][r.pipeline][0];
+}
 let type = location.hash.startsWith('#sales') ? 'sales' : 'orders';
 let pipeline = 'Privatescan';
 let view = 'board';
@@ -39,7 +61,7 @@ function persist() {
 }
 function filtered() {
   const query = $('#search').value.toLocaleLowerCase('nl');
-  return records.filter(r => r.type === type && r.pipeline === pipeline && ($('#closed').checked || !['Gewonnen', 'Verloren'].includes(r.stage)) && (!$('#owner').value || r.owner === $('#owner').value) && `${r.person} ${r.title} ${r.number}`.toLocaleLowerCase('nl').includes(query));
+  return records.filter(r => r.type === type && r.pipeline === pipeline && ($('#closed').checked || !closedStages.includes(r.stage)) && (!$('#owner').value || r.owner === $('#owner').value) && `${r.person} ${r.title} ${r.number}`.toLocaleLowerCase('nl').includes(query));
 }
 function render() {
   const title = type === 'orders' ? 'Orders' : 'Sales';
@@ -54,7 +76,7 @@ function render() {
   const rows = filtered();
   $('#count').textContent = `${rows.length} ${type === 'orders' ? 'orders' : 'sales'} · ${euro(rows.reduce((sum, r) => sum + Number(r.amount), 0))}`;
   if (view === 'board') {
-    $('#content').innerHTML = `<div class="board">${stages[type].filter(s => $('#closed').checked || !['Gewonnen', 'Verloren'].includes(s)).map(stage => {
+    $('#content').innerHTML = `<div class="board">${stages[type][pipeline].filter(s => $('#closed').checked || !closedStages.includes(s)).map(stage => {
       const items = rows.filter(r => r.stage === stage);
       return `<section class="column"><header class="column-head"><div class="column-title"><strong>${esc(stage)}</strong><span class="badge-count">${items.length}</span></div><small>${euro(items.reduce((sum, r) => sum + Number(r.amount), 0))}</small></header><div class="cards">${items.length ? items.map(card).join('') : '<div class="empty">Geen resultaten in deze fase</div>'}</div></section>`;
     }).join('')}</div>`;
@@ -76,10 +98,10 @@ function openRecord(id, editing = false) {
 }
 function renderEditor(id) {
   currentId = id;
-  const r = records.find(r => r.id === id) || { title: '', person: '', email: '', phone: '', stage: stages[type][0], pipeline, owner: 'Marieke', amount: '', payment: 'Niet betaald', date: '', description: '', organization: '', salesId: '', combine: true };
+  const r = records.find(r => r.id === id) || { title: '', person: '', email: '', phone: '', stage: stages[type][pipeline][0], pipeline, owner: 'Marieke', amount: '', payment: 'Niet betaald', date: '', description: '', organization: '', salesId: '', combine: true };
   $('#record-number').innerHTML = `<a href="#${type}">${type === 'orders' ? 'Orders' : 'Sales'}</a> / ${id ? esc(r.number) + ' / Bewerken' : 'Aanmaken'}`;
   $('#dialog-title').textContent = `${type === 'orders' ? 'Order' : 'Sales'} ${id ? 'bewerken' : 'aanmaken'}`;
-  $('#fields').innerHTML = `<div class="form-grid">${input('Titel / onderzoek', 'title', r.title, 'text', true, true)}${input('Contactpersoon', 'person', r.person, 'text', true)}${select('Toegewezen medewerker', 'owner', owners, r.owner)}${input('E-mailadres', 'email', r.email, 'email')}${input('Telefoon', 'phone', r.phone, 'tel')}<h3 class="form-section">Traject</h3>${select('Pipeline', 'pipeline', ['Privatescan', 'Herniapoli'], r.pipeline)}${select('Fase', 'stage', stages[type], r.stage)}${input('Waarde (€)', 'amount', r.amount, 'number', true)}${input('Onderzoeksdatum', 'date', r.date, 'date')}${type === 'orders' ? `${select('Betaling', 'payment', ['Niet betaald', 'Gedeeltelijk betaald', 'Volledig betaald', 'Niet van toepassing'], r.payment)}<label>Gekoppelde sales<select name="salesId"><option value="">Geen sales gekoppeld</option>${records.filter(item => item.type === 'sales').map(item => `<option value="${esc(item.id)}" ${item.id === r.salesId ? 'selected' : ''}>${esc(item.number)} · ${esc(item.person)}</option>`).join('')}</select></label>${input('Organisatie (optioneel)', 'organization', r.organization)}${select('Orders combineren', 'combine', ['Ja', 'Nee'], r.combine ? 'Ja' : 'Nee')}` : ''}<label class="wide">Omschrijving<textarea name="description" rows="4" maxlength="5000">${esc(r.description)}</textarea></label></div>`;
+  $('#fields').innerHTML = `<div class="form-grid">${input('Titel / onderzoek', 'title', r.title, 'text', true, true)}${input('Contactpersoon', 'person', r.person, 'text', true)}${select('Toegewezen medewerker', 'owner', owners, r.owner)}${input('E-mailadres', 'email', r.email, 'email')}${input('Telefoon', 'phone', r.phone, 'tel')}<h3 class="form-section">Traject</h3>${select('Pipeline', 'pipeline', ['Privatescan', 'Herniapoli'], r.pipeline)}${select('Fase', 'stage', stages[type][r.pipeline], r.stage)}${input('Waarde (€)', 'amount', r.amount, 'number', true)}${input('Onderzoeksdatum', 'date', r.date, 'date')}${type === 'orders' ? `${select('Betaling', 'payment', ['Niet betaald', 'Gedeeltelijk betaald', 'Volledig betaald', 'Niet van toepassing'], r.payment)}<label>Gekoppelde sales<select name="salesId"><option value="">Geen sales gekoppeld</option>${records.filter(item => item.type === 'sales').map(item => `<option value="${esc(item.id)}" ${item.id === r.salesId ? 'selected' : ''}>${esc(item.number)} · ${esc(item.person)}</option>`).join('')}</select></label>${input('Organisatie (optioneel)', 'organization', r.organization)}${select('Orders combineren', 'combine', ['Ja', 'Nee'], r.combine ? 'Ja' : 'Nee')}` : ''}<label class="wide">Omschrijving<textarea name="description" rows="4" maxlength="5000">${esc(r.description)}</textarea></label></div>`;
   if (type === 'orders') {
     $('#fields .form-grid').insertAdjacentHTML('beforeend', input('Factuurnummer', 'invoice', r.invoice || '') + input('Tijd eerste onderzoek', 'time', r.time || '', 'time'));
     $('#fields').insertAdjacentHTML('afterbegin', '<div class="editor-tabs"><button type="button" class="active" data-editor-tab="details">Details</button><button type="button" data-editor-tab="checks">Checks</button></div>');
@@ -90,6 +112,7 @@ function renderEditor(id) {
   if (!id && type === 'orders' && linked) {
     for (const name of ['person', 'email', 'phone', 'pipeline']) $('#record-form').elements[name].value = linked[name];
     $('#record-form').elements.salesId.value = linked.id;
+    updateEditorStages();
   }
 }
 
@@ -101,16 +124,31 @@ $('#record-form').addEventListener('submit', event => {
     if (!field.reportValidity()) return;
   }
   const values = Object.fromEntries(new FormData(form));
+  if (!stages[type][values.pipeline]?.includes(values.stage)) {
+    form.elements.stage.setCustomValidity('Kies een fase uit deze pipeline.');
+    form.elements.stage.reportValidity();
+    return;
+  }
   values.title = values.title.trim(); values.person = values.person.trim(); values.amount = Number(values.amount); values.combine = values.combine === 'Ja';
   const existing = records.find(r => r.id === currentId);
   if (existing) Object.assign(existing, values);
   else records.unshift({ ...values, type, id: `${type}-${crypto.randomUUID ? crypto.randomUUID() : Date.now()}`, number: `${type === 'orders' ? 'O' : 'S'}-${Date.now().toString().slice(-7)}` });
   pipeline = values.pipeline;
-  if (['Gewonnen', 'Verloren'].includes(values.stage)) $('#closed').checked = true;
+  if (closedStages.includes(values.stage)) $('#closed').checked = true;
   $('#search').value = ''; $('#owner').value = '';
   const saved = persist(); openRecord(existing?.id || records[0].id); if (saved) notify(existing ? 'Wijzigingen opgeslagen' : `${type === 'orders' ? 'Order' : 'Sales'} aangemaakt`);
 });
 $('#record-form').addEventListener('input', event => event.target.setCustomValidity?.(''));
+function updateEditorStages() {
+  const form = $('#record-form');
+  const available = stages[type][form.elements.pipeline.value];
+  const selected = available.includes(form.elements.stage.value) ? form.elements.stage.value : available[0];
+  form.elements.stage.innerHTML = options(available, selected);
+  form.elements.stage.setCustomValidity('');
+}
+$('#record-form').addEventListener('change', event => {
+  if (event.target.name === 'pipeline') updateEditorStages();
+});
 document.querySelectorAll('[data-close]').forEach(button => { button.onclick = () => { location.hash = currentId ? `${type}/${currentId}/algemeen` : type; }; });
 function askDelete(id) {
   pendingDelete = id;
@@ -202,8 +240,8 @@ function generalDetail(r) {
   const order = r.type === 'orders';
   const label = order ? 'Order' : 'Sales';
   const toolbar = `<div class="record-actions">${order ? '<button disabled title="Bevestiging en planning vallen buiten dit prototype">Afspraak bevestigen</button><button data-record-action="Resource Planner">Resource Planner</button>' : ''}<button data-edit-record>${icon('edit')} Bewerk ${label.toLowerCase()}</button><button data-delete-record class="danger">${icon('trash')} ${label} verwijderen</button></div>`;
-  const steps = stages[type].filter(s => s !== 'Gewonnen' && s !== 'Verloren');
-  let html = `<section class="panel record-toolbar"><h3>Algemene informatie ${label}</h3>${toolbar}</section><nav class="stage-navigation" aria-label="Fase wijzigen">${steps.map(stage => `<button data-stage="${esc(stage)}" class="${r.stage === stage ? 'active' : ''}" ${r.stage === stage ? 'aria-current="step"' : ''}>${esc(stage)}</button>`).join('')}<label class="terminal-stage"><select aria-label="Gewonnen of verloren" data-terminal-stage><option value="">Gewonnen/Verloren</option>${options(['Gewonnen', 'Verloren'], r.stage)}</select></label></nav>`;
+  const steps = stages[r.type][r.pipeline].filter(s => !closedStages.includes(s));
+  let html = `<section class="panel record-toolbar"><h3>Algemene informatie ${label}</h3>${toolbar}</section><nav class="stage-navigation" aria-label="Fase wijzigen">${steps.map(stage => `<button data-stage="${esc(stage)}" class="${r.stage === stage ? 'active' : ''}" ${r.stage === stage ? 'aria-current="step"' : ''}>${esc(stage)}</button>`).join('')}<label class="terminal-stage"><select aria-label="Gewonnen of verloren" data-terminal-stage><option value="">Gewonnen/Verloren</option>${options(stages[r.type][r.pipeline].filter(s => closedStages.includes(s)), r.stage)}</select></label></nav>`;
   if (order) {
     html += panel('Checks', (r.checks || []).length ? `<div class="checks-list">${r.checks.map((c, i) => `<label><input type="checkbox" data-check="${i}" ${c.done ? 'checked' : ''}> ${esc(c.name)}</label>`).join('')}</div>` : '<p class="muted">Geen checks toegevoegd aan deze order.</p>', '<button data-record-action="Checks toevoegen">'+icon('edit')+' Checks toevoegen</button>');
     html += panel('≡ &nbsp; Order gegevens', `<dl class="order-data">${[['Ordernummer', r.number], ['Titel', r.title], ['Totaalprijs', euro(r.amount)], ['Betaling klant', r.payment], ['Totale inkoopprijs', euro(0)], ['Inkoop status', 'Geen inkoopprijs'], ['Eerste onderzoek', date(r.date)], ['Gecombineerde order', r.combine ? 'Ja' : 'Nee'], ['Factuurnummer', r.invoice || '—'], ['Zakelijk', r.organization ? 'Ja' : 'Nee']].map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`, '<span class="updated">▧ &nbsp; Laatst bijgewerkt: 03 Nov 2026</span>');
@@ -223,7 +261,7 @@ function generalDetail(r) {
 function sectionDetail(r, section) {
   if (section === 'orders') {
     const orders = records.filter(item => item.salesId === r.id);
-    const orderTable = closed => `<div class="table-wrap"><table><thead><tr><th>Ordernummer</th><th>Titel</th><th>Fase</th><th>Totaalprijs</th></tr></thead><tbody>${orders.filter(item => ['Gewonnen', 'Verloren'].includes(item.stage) === closed).map(item => `<tr><td><a href="#orders/${esc(item.id)}/algemeen">${esc(item.number)}</a></td><td>${esc(item.title)}</td><td>${esc(item.stage)}</td><td>${euro(item.amount)}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">Geen orders gevonden</td></tr>'}</tbody></table></div>`;
+    const orderTable = closed => `<div class="table-wrap"><table><thead><tr><th>Ordernummer</th><th>Titel</th><th>Fase</th><th>Totaalprijs</th></tr></thead><tbody>${orders.filter(item => closedStages.includes(item.stage) === closed).map(item => `<tr><td><a href="#orders/${esc(item.id)}/algemeen">${esc(item.number)}</a></td><td>${esc(item.title)}</td><td>${esc(item.stage)}</td><td>${euro(item.amount)}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">Geen orders gevonden</td></tr>'}</tbody></table></div>`;
     return panel('Orders', '<p class="muted">Openstaande orders staan bovenaan. Afgeronde orders staan onder “Afgerond”.</p>', '<button data-new-linked-order class="primary">Nieuwe Order</button>') + panel('Open / lopend', orderTable(false)) + `<details class="panel record-disclosure"><summary>Afgerond</summary>${orderTable(true)}</details>`;
   }
   if (section === 'activiteiten') return panel('Activiteiten', `<div class="activity-tabs"><strong>Alles</strong><span>Notities</span><span>Activiteiten</span><span>Bestanden</span><span>E-mails</span></div>${(r.activities || []).length ? r.activities.map(a => `<article class="activity-entry">${icon('note')}<div><strong>${esc(a.kind)}</strong><p>${esc(a.text)}</p><small>03 november 2026 · ${esc(r.owner)}</small></div></article>`).join('') : '<p class="empty">Geen activiteiten beschikbaar.</p>'}`, '<button data-record-action="Notitie">＋ Notitie toevoegen</button>');

@@ -90,12 +90,14 @@ class GraphMailService extends AbstractEmailProcessor
 
                 return is_numeric($retryAfter) ? min(30, (int) $retryAfter) * 1000 : $attempt * 5000;
             }, function ($e) {
-                // Retry transient failures only: connection blips, and Exchange Online's
+                // Retry transient failures only: connection blips, Exchange Online's
                 // per-mailbox concurrency limit (CommandConcurrencyLimitReached, HTTP
-                // 429/503), which clears within seconds. A 4xx is permanent — let it through.
+                // 429/503), and Graph-side server errors (500/502/504), which clear
+                // within seconds per Microsoft's own retry guidance. A 4xx other than
+                // 429 is permanent — let it through.
                 return $e instanceof ConnectionException
                     || ($e instanceof RequestException && (
-                        in_array($e->response->status(), [429, 503, 504], true)
+                        in_array($e->response->status(), [429, 500, 502, 503, 504], true)
                         || str_contains($e->response->body(), 'ConcurrencyLimit')
                     ));
             }, throw: false)

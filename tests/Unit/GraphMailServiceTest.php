@@ -205,6 +205,43 @@ class GraphMailServiceTest extends TestCase
         $this->assertEquals(2, $attempts);
     }
 
+    public function test_fetch_messages_retries_on_transient_graph_server_error()
+    {
+        // Reproduces the "UnknownError" shape Graph returns for a transient
+        // internal error: empty message, only tracing info in innerError.
+        $unknownError = [
+            'error' => [
+                'code'       => 'UnknownError',
+                'message'    => '',
+                'innerError' => [
+                    'date'              => '2026-11-03T10:04:31',
+                    'request-id'        => '253ddcc0-5c84-4f5a-82e0-0f1a9855d5a0',
+                    'client-request-id' => '253ddcc0-5c84-4f5a-82e0-0f1a9855d5a0',
+                ],
+            ],
+        ];
+
+        Http::fake([
+            'login.microsoftonline.com/*' => Http::response([
+                'access_token' => 'test-token',
+                'token_type'   => 'Bearer',
+                'expires_in'   => 3600,
+            ], 200),
+            'graph.microsoft.com/*' => Http::sequence()
+                ->push($unknownError, 500)
+                ->push(['value' => [['id' => 'msg-1', 'subject' => 'Recovered']]], 200),
+        ]);
+
+        $method = (new ReflectionClass($this->service))->getMethod('fetchMessages');
+        $method->setAccessible(true);
+
+        $messages = $method->invoke($this->service);
+
+        $this->assertCount(1, $messages);
+        $this->assertEquals('msg-1', $messages[0]['id']);
+        Sleep::assertSleptTimes(1);
+    }
+
     public function test_fetch_messages_throws_after_exhausting_retries()
     {
         Http::fake([

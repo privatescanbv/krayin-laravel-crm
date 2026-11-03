@@ -101,7 +101,7 @@ class Bouncer
     /**
      * Check if user has the employee role (oftewel: is GEEN patiënt).
      * Rollen worden opgehaald uit sessie (gezet bij login), niet uit database.
-     * 
+     *
      * Logica:
      * - Als gebruiker GEEN keycloak_user_id heeft → toegang (normale CRM gebruiker)
      * - Als gebruiker WEL keycloak_user_id heeft maar GEEN 'patient' rol → toegang (normale CRM gebruiker)
@@ -119,9 +119,14 @@ class Bouncer
 
         // Check of gebruiker de 'patient' rol heeft → dan GEEN toegang
         $patientRole = KeycloakRoles::Patient->value;
-        
+
         // Als gebruiker patient rol heeft, blokkeren
         if (in_array($patientRole, $roles, true)) {
+            return false;
+        }
+
+        // Arts (alleen 'clinic', geen 'employee') hoort in de clinic-portal, niet in de CRM-admin
+        if (in_array(KeycloakRoles::Clinic->value, $roles, true) && ! in_array(KeycloakRoles::Employee->value, $roles, true)) {
             return false;
         }
 

@@ -7,8 +7,8 @@ use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
 use App\Enums\PreferredLanguage;
 use App\Models\Address;
-use App\Models\Concerns\HasAiSummary;
 use App\Models\Anamnesis;
+use App\Models\Concerns\HasAiSummary;
 use App\Models\PatientMessage;
 use App\Models\SalesLead;
 use App\Traits\HasDefaultContactInfo;
@@ -137,6 +137,12 @@ class Person extends Model implements PersonContract
         'onboarding_completed_at',
         'patient_portal_notify_scheduled_at',
         'patient_portal_last_notify_email_at',
+        'general_practitioner_name',
+        'general_practitioner_practice',
+        'general_practitioner_phone',
+        'emergency_contact_name',
+        'emergency_contact_relationship',
+        'emergency_contact_phone',
     ];
 
     /**
@@ -330,7 +336,7 @@ class Person extends Model implements PersonContract
     /**
      * Get the organization that owns the person.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function organization()
     {

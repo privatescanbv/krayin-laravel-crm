@@ -27,6 +27,8 @@ class User extends Authenticatable implements UserContract
         'password',
         'api_token',
         'role_id',
+        'resource_id',
+        'clinic_id',
         'status',
         'external_id',
         'keycloak_user_id',
@@ -192,6 +194,22 @@ class User extends Authenticatable implements UserContract
     public function role()
     {
         return $this->belongsTo(RoleProxy::modelClass());
+    }
+
+    /**
+     * ARTSEN resource of a user with the Arts role; clinic via $user->resource->clinic.
+     */
+    public function resource()
+    {
+        return $this->belongsTo(\App\Models\Resource::class);
+    }
+
+    /**
+     * Clinic of a user with the Kliniek medewerker role.
+     */
+    public function clinic()
+    {
+        return $this->belongsTo(\App\Models\Clinic::class);
     }
 
     /**

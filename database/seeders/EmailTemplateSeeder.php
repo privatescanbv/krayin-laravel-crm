@@ -234,6 +234,25 @@ HTML,
 HTML,
             ],
 
+            // ── Kliniekportaal: wachtwoord vergeten ───────────────────────────────
+            // Variables: user.first_name, reset_url
+            [
+                'name'        => 'Kliniekportaal wachtwoord vergeten',
+                'code'        => EmailTemplateCode::CLINIC_FORGOT_PASSWORD->value,
+                'type'        => $algemeen,
+                'language'    => $nl,
+                'departments' => $allDepartments,
+                'subject'     => 'Wachtwoord resetten voor het kliniekportaal',
+                'content'     => <<<'HTML'
+<p>Beste {{ user.first_name }},</p>
+<p>U heeft een verzoek ingediend om uw wachtwoord voor het Privatescan kliniekportaal te resetten.</p>
+<p>Klik op de onderstaande link om een nieuw wachtwoord in te stellen:</p>
+<p><a href="{{ reset_url }}">Wachtwoord resetten</a></p>
+<p>Deze link is <strong>1 uur</strong> geldig. Heeft u geen verzoek ingediend? Dan kunt u deze e-mail negeren.</p>
+<p>Met vriendelijke groet,<br>Privatescan</p>
+HTML,
+            ],
+
             // ── 2FA verificatiecode (patiënt, kliniek, medewerker) ─────────────────
             // Variables: code
             [

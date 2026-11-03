@@ -199,3 +199,31 @@ it('shows error message when patient tries to access admin panel', function () {
     // Check that error message is in session
     $response->assertSessionHas('error', 'U heeft geen toegang tot het admin panel. Alleen medewerkers hebben toegang.');
 });
+
+it('blocks access for Keycloak users with only the clinic role (Arts)', function () {
+    $user = User::factory()->create([
+        'status'           => 1,
+        'role_id'          => $this->role->id,
+        'keycloak_user_id' => 'test-keycloak-arts',
+    ]);
+
+    Session::put('keycloak_roles_'.$user->id, [KeycloakRoles::Clinic->value]);
+
+    $this->actingAs($user, 'user')
+        ->get(route('admin.dashboard.index'))
+        ->assertStatus(401);
+});
+
+it('allows access for Keycloak users with clinic and employee role', function () {
+    $user = User::factory()->create([
+        'status'           => 1,
+        'role_id'          => $this->role->id,
+        'keycloak_user_id' => 'test-keycloak-arts-employee',
+    ]);
+
+    Session::put('keycloak_roles_'.$user->id, [KeycloakRoles::Clinic->value, KeycloakRoles::Employee->value]);
+
+    $this->actingAs($user, 'user')
+        ->get(route('admin.dashboard.index'))
+        ->assertStatus(200);
+});

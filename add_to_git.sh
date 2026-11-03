@@ -3,6 +3,7 @@
 set -e
 
 DIRS="
+design
 .claude
 .cursor
 .docker

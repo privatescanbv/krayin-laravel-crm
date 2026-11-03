@@ -40,6 +40,13 @@ trait NormalizesContactFields
             $incoming['contact_numbers'] = $this->normalizePhonesArray($incoming['contact_numbers']);
         }
 
+        // Single phone fields (huisarts, noodcontact) to E.164
+        foreach (['general_practitioner_phone', 'emergency_contact_phone'] as $field) {
+            if (is_string($incoming[$field] ?? null) && trim($incoming[$field]) !== '') {
+                $incoming[$field] = PhoneNormalizer::toE164(trim($incoming[$field])) ?? trim($incoming[$field]);
+            }
+        }
+
         // Replace request data
         $request->replace($incoming);
 

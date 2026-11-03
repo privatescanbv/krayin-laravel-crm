@@ -29,6 +29,14 @@ class PersonValidationService
                 'contact_numbers.*.value' => ['nullable', new PhoneValidator],
                 'contact_numbers.*.label' => 'nullable|string|max:50',
 
+                // Huisarts en noodcontact (optioneel)
+                'general_practitioner_name'      => 'nullable|string|max:255',
+                'general_practitioner_practice'  => 'nullable|string|max:255',
+                'general_practitioner_phone'     => ['nullable', 'string', 'max:255', new PhoneValidator],
+                'emergency_contact_name'         => 'nullable|string|max:255',
+                'emergency_contact_relationship' => 'nullable|string|max:255',
+                'emergency_contact_phone'        => ['nullable', 'string', 'max:255', new PhoneValidator],
+
                 // Relationships
                 'user_id'         => 'nullable|numeric|exists:users,id',
                 'organization_id' => 'nullable|numeric|exists:organizations,id',

@@ -3,6 +3,7 @@
 namespace App\Actions\Keycloak;
 
 use App\Enums\KeycloakRoles;
+use App\Observers\UserObserver;
 use App\Services\Keycloak\KeycloakService;
 use Database\Seeders\UserSeeder;
 use Illuminate\Support\Facades\Log;
@@ -67,9 +68,9 @@ class SyncUsersToKeycloakAction
                     }
                 }
 
-                // Assign default role "employee" to existing user
+                // Assign the user's Keycloak role (employee, or clinic for Arts) to existing user
                 if (! $dryRun) {
-                    $this->assignDefaultRole($keycloakUser['id'], $accessToken);
+                    $this->assignDefaultRole($keycloakUser['id'], $accessToken, UserObserver::keycloakRoleFor($user->role_id));
                 }
 
                 $synced++;
@@ -110,7 +111,7 @@ class SyncUsersToKeycloakAction
             }
 
             // Use AddKeycloakUserAction to create user with password from seeder
-            $result = $this->addKeycloakUserAction->execute($userData, $password, false);
+            $result = $this->addKeycloakUserAction->execute($userData, $password, false, UserObserver::keycloakRoleFor($user->role_id));
 
             if (! $result['success']) {
                 Log::error('Failed to sync user to Keycloak', [
@@ -125,10 +126,6 @@ class SyncUsersToKeycloakAction
 
             // Update keycloak_user_id in CRM
             $this->userRepository->update(['keycloak_user_id' => $result['keycloak_user_id']], $user->id);
-
-            // Assign default role "employee" to new user
-            // Note: AddKeycloakUserAction already assigns the role, but we ensure it here too
-            $this->assignDefaultRole($result['keycloak_user_id'], $accessToken);
 
             Log::info('User synced to Keycloak', [
                 'user_id'     => $user->id,
@@ -158,10 +155,11 @@ class SyncUsersToKeycloakAction
     /**
      * Assign default role "employee" to a Keycloak user.
      */
-    protected function assignDefaultRole(string $keycloakUserId, ?string $accessToken = null): void
+    protected function assignDefaultRole(string $keycloakUserId, ?string $accessToken = null, ?string $roleName = null): void
     {
+        $roleName ??= KeycloakRoles::Employee->value;
+
         try {
-            $roleName = KeycloakRoles::Employee->value;
             $roleAssigned = $this->keycloakService->assignRoleToUser($keycloakUserId, $roleName, $accessToken);
 
             if (! $roleAssigned) {
@@ -173,7 +171,7 @@ class SyncUsersToKeycloakAction
         } catch (\Exception $e) {
             Log::error('Exception while assigning role to user in Keycloak during sync', [
                 'keycloak_user_id' => $keycloakUserId,
-                'role'             => KeycloakRoles::Employee->value,
+                'role'             => $roleName,
                 'error'            => $e->getMessage(),
             ]);
         }

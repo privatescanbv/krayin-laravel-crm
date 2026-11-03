@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 use Webkul\Activity\Repositories\ActivityRepository;
+use Webkul\User\Models\User;
 
 class ClinicController extends SimpleEntityController
 {
@@ -118,8 +119,19 @@ class ClinicController extends SimpleEntityController
         ])->findOrFail($id);
         $activitiesCount = $this->activityRepository->countOpen($clinic)->getData()->data;
 
+        // Portal users: Kliniek medewerkers link to the clinic, artsen via their ARTSEN resource.
+        $staff = User::query()
+            ->with(['role', 'resource.clinicDepartment'])
+            ->where(fn ($q) => $q
+                ->where('clinic_id', $clinic->id)
+                ->orWhereHas('resource.clinicDepartment', fn ($q) => $q->where('clinic_id', $clinic->id)))
+            ->get()
+            ->sortBy('name')
+            ->values();
+
         return view('adminc.clinics.view', [
             'clinic'          => $clinic,
+            'staff'           => $staff,
             'activitiesCount' => $activitiesCount,
         ]);
     }

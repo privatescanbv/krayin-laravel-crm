@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\RoleCode;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -142,5 +143,17 @@ class RoleSeeder extends Seeder
                 'documentation',
             ]),
         ]);
+
+        // Clinic-portal roles (Keycloak role "clinic"): 4 = Arts, 5 = Kliniek medewerker
+        foreach ([4 => RoleCode::ARTS, 5 => RoleCode::KLINIEK_MEDEWERKER] as $id => $code) {
+            DB::table('roles')->insert([
+                'id'              => $id,
+                'name'            => $code->label(),
+                'description'     => $code->description(),
+                'permission_type' => 'custom',
+                'permissions'     => json_encode([]),
+                'code'            => $code->value,
+            ]);
+        }
     }
 }

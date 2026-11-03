@@ -125,6 +125,50 @@
                 </x-adminc::components.field>
             </div>
 
+            @php
+                $roleIdsFor = fn (\App\Enums\RoleCode $code) => $roles->filter(fn ($role) => $role->code === $code)->pluck('id')->values();
+                $resourceId = old('resource_id', $user?->resource_id);
+                $clinicId = old('clinic_id', $user?->clinic_id);
+            @endphp
+
+            <!-- Arts resource: only for the Arts role, links the user to a clinic -->
+            <div v-if="{{ json_encode($roleIdsFor(\App\Enums\RoleCode::ARTS)) }}.includes(Number(values.role_id))">
+                <x-adminc::components.field
+                    type="select"
+                    name="resource_id"
+                    id="resource_id"
+                    label="Arts-resource"
+                    value="{{ $resourceId }}"
+                    rules="required"
+                >
+                    <option value="">—</option>
+                    @foreach ($artsResources as $resource)
+                        <option value="{{ $resource->id }}" @selected((int) $resourceId === (int) $resource->id)>
+                            {{ $resource->name }}{{ $resource->clinicDepartment?->clinic ? ' | '.$resource->clinicDepartment->clinic->name : '' }}
+                        </option>
+                    @endforeach
+                </x-adminc::components.field>
+            </div>
+
+            <!-- Clinic: only for the Kliniek medewerker role -->
+            <div v-if="{{ json_encode($roleIdsFor(\App\Enums\RoleCode::KLINIEK_MEDEWERKER)) }}.includes(Number(values.role_id))">
+                <x-adminc::components.field
+                    type="select"
+                    name="clinic_id"
+                    id="clinic_id"
+                    label="Kliniek"
+                    value="{{ $clinicId }}"
+                    rules="required"
+                >
+                    <option value="">—</option>
+                    @foreach ($clinics as $clinic)
+                        <option value="{{ $clinic->id }}" @selected((int) $clinicId === (int) $clinic->id)>
+                            {{ $clinic->name }}
+                        </option>
+                    @endforeach
+                </x-adminc::components.field>
+            </div>
+
             <!-- Signature -->
             @if($user === null)
                 {{-- Create mode: signature is auto-generated, show read-only placeholder --}}

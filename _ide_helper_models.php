@@ -1546,6 +1546,7 @@ namespace App\Models{
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Shift> $shifts
  * @property-read int|null $shifts_count
  * @property-read \Webkul\User\Models\User|null $updater
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Resource artsen()
  * @method static \Database\Factories\ResourceFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Resource newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Resource newQuery()
@@ -1801,6 +1802,8 @@ namespace App\Models{
  * @property string|null $view_permission
  * @property string|null $signature
  * @property int $role_id
+ * @property int|null $resource_id
+ * @property int|null $clinic_id
  * @property string|null $remember_token
  * @property \Illuminate\Support\Carbon|null $last_login_at
  * @property \Carbon\CarbonImmutable|null $created_at
@@ -1818,6 +1821,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereClinicId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereCreatedBy($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmail($value)
@@ -1830,6 +1834,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLastName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePassword($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRememberToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereResourceId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRoleId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereSignature($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereStatus($value)

@@ -12,6 +12,7 @@ use Database\Seeders\UserSeeder;
 use Exception;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
+use Webkul\User\Models\Role;
 use Webkul\User\Models\User;
 
 /**
@@ -42,6 +43,14 @@ class UserObserver
         protected DeleteKeycloakUserAction $deleteKeycloakUserAction,
         protected KeycloakService $keycloakService
     ) {}
+
+    /**
+     * Keycloak realm role for a CRM role: clinic for the portal roles (RoleCode), otherwise employee.
+     */
+    public static function keycloakRoleFor(?int $roleId): string
+    {
+        return (($roleId ? Role::find($roleId)?->code : null)?->keycloakRole() ?? KeycloakRoles::Employee)->value;
+    }
 
     /**
      * Handle the User "saving" event.
@@ -141,7 +150,7 @@ class UserObserver
         }
 
         // Check if relevant fields changed
-        $relevantFields = ['email', 'first_name', 'last_name', 'status', 'password'];
+        $relevantFields = ['email', 'first_name', 'last_name', 'status', 'password', 'role_id'];
         $changedFields = array_intersect($relevantFields, array_keys($user->getDirty()));
 
         if (empty($changedFields)) {
@@ -164,13 +173,22 @@ class UserObserver
                 return;
             }
 
+            if (in_array('role_id', $changedFields, true)) {
+                $this->syncRoleChange($user);
+                $changedFields = array_values(array_diff($changedFields, ['role_id']));
+
+                if (empty($changedFields)) {
+                    return;
+                }
+            }
+
             // Update user data in Keycloak
             $this->updateUserInKeycloak($user, $changedFields);
         } else {
-            // User doesn't have keycloak_user_id yet
-            // If status changed to active (1), create in Keycloak
-            if ($user->wasChanged('status') && $user->status == 1) {
-                $this->syncUserToKeycloak($user, 'activated');
+            // User doesn't have keycloak_user_id yet (never synced, e.g. Keycloak was down on create):
+            // create it on any relevant change of an active user, so re-saving (with a password) repairs it
+            if ($user->status == 1) {
+                $this->syncUserToKeycloak($user, $user->wasChanged('status') ? 'activated' : 'resync');
             }
         }
     }
@@ -210,6 +228,18 @@ class UserObserver
     }
 
     /**
+     * Persist keycloak_user_id without firing model events. A nested update() inside a running save
+     * re-enters updated() with the password still dirty, while its plaintext is already consumed,
+     * which made the observer overwrite the Keycloak password with a random one.
+     */
+    protected function storeKeycloakUserId(User $user, ?string $keycloakUserId): void
+    {
+        $user->newQuery()->whereKey($user->getKey())->update(['keycloak_user_id' => $keycloakUserId]);
+        $user->keycloak_user_id = $keycloakUserId;
+        $user->syncOriginalAttribute('keycloak_user_id');
+    }
+
+    /**
      * Check if Keycloak is configured.
      */
     protected function isKeycloakConfigured(): bool
@@ -233,7 +263,8 @@ class UserObserver
             ];
 
             // Get password - try plaintext from temporary storage first
-            $passwordKey = $user->id ?? 'new';
+            // saving() stores a new user's password under 'new' (no id yet); created() runs with the id
+            $passwordKey = isset(self::$plaintextPasswords[$user->id]) ? $user->id : 'new';
             $password = self::$plaintextPasswords[$passwordKey] ?? null;
 
             // If not found, try to get from UserSeeder (for seeded users)
@@ -251,14 +282,11 @@ class UserObserver
 
             $temporary = empty($user->password) && empty($password); // Temporary if no password was set
 
-            $result = $this->addKeycloakUserAction->execute($userData, $password, $temporary);
+            $result = $this->addKeycloakUserAction->execute($userData, $password, $temporary, self::keycloakRoleFor($user->role_id));
 
             if ($result['success']) {
                 // Update keycloak_user_id in CRM
-                $user->update(['keycloak_user_id' => $result['keycloak_user_id']]);
-
-                // Assign default role "employee" to user
-                $this->assignDefaultRole($result['keycloak_user_id']);
+                $this->storeKeycloakUserId($user, $result['keycloak_user_id']);
 
                 Log::info('User synced to Keycloak via observer', [
                     'user_id'     => $user->id,
@@ -368,7 +396,7 @@ class UserObserver
             $keycloakUserId = $user->keycloak_user_id;
             $result = $this->deleteKeycloakUserAction->execute($keycloakUserId);
             // always remote the relation, even when user could not be found in Keycloak, to prevent orphaned keycloak_user_id references
-            $user->update(['keycloak_user_id' => null]);
+            $this->storeKeycloakUserId($user, null);
             if ($result['success']) {
                 Log::info('User deleted from Keycloak via observer', [
                     'user_id'     => $user->id,
@@ -423,40 +451,28 @@ class UserObserver
     }
 
     /**
-     * Assign default role "employee" to a Keycloak user.
+     * Swap the Keycloak realm role when the CRM role changes.
      */
-    protected function assignDefaultRole(string $keycloakUserId): void
+    protected function syncRoleChange(User $user): void
     {
+        $oldRole = self::keycloakRoleFor($user->getRawOriginal('role_id'));
+        $newRole = self::keycloakRoleFor($user->role_id);
+
+        if ($oldRole === $newRole) {
+            return;
+        }
+
         try {
-            $accessToken = $this->keycloakService->getAdminToken();
+            $token = $this->keycloakService->getAdminToken();
 
-            if (! $accessToken) {
-                Log::warning('Failed to assign role to user - could not get admin token', [
-                    'keycloak_user_id' => $keycloakUserId,
-                ]);
-
-                return;
-            }
-
-            $roleName = KeycloakRoles::Employee->value;
-            $roleAssigned = $this->keycloakService->assignRoleToUser($keycloakUserId, $roleName, $accessToken);
-
-            if (! $roleAssigned) {
-                Log::warning('Failed to assign role to user in Keycloak via observer', [
-                    'keycloak_user_id' => $keycloakUserId,
-                    'role'             => $roleName,
-                ]);
-            } else {
-                Log::info('Employee role assigned to user in Keycloak via observer', [
-                    'keycloak_user_id' => $keycloakUserId,
-                    'role'             => $roleName,
-                ]);
-            }
+            $this->keycloakService->assignRoleToUser($user->keycloak_user_id, $newRole, $token);
+            $this->keycloakService->removeRoleFromUser($user->keycloak_user_id, $oldRole, $token);
         } catch (Exception $e) {
-            Log::error('Exception while assigning role to user in Keycloak via observer', [
-                'keycloak_user_id' => $keycloakUserId,
-                'role'             => KeycloakRoles::Employee->value,
-                'error'            => $e->getMessage(),
+            Log::error('Exception while syncing role change to Keycloak via observer', [
+                'user_id'  => $user->id,
+                'old_role' => $oldRole,
+                'new_role' => $newRole,
+                'error'    => $e->getMessage(),
             ]);
         }
     }

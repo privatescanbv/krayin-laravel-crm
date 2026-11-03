@@ -7,6 +7,8 @@
     'showResources' => false,
     'showAfbDispatches' => false,
     'showDepartments' => false,
+    'showStaff' => false,
+    'staffCount' => null,
     'showInkoopAfletteren' => false,
     'showLeads' => false,
     'showSales' => false,
@@ -122,7 +124,7 @@
                                 : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
                     @click="setSection('afb-verzendingen')"
             >
-                <span class="icon-document text-xl"></span>
+                <span class="icon-file text-xl"></span>
                 AFB verzendingen
             </button>
         @endif
@@ -139,6 +141,18 @@
             </button>
         @endif
 
+        @if ($showStaff)
+            <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
+                    :class="leadDetailSection === 'personeel'
+                                ? 'bg-brandColor text-white dark:bg-brandColor'
+                                : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
+                    @click="setSection('personeel')"
+            >
+                <span class="icon-settings-user text-xl"></span>
+                Personeel{{ $staffCount !== null ? " ($staffCount)" : '' }}
+            </button>
+        @endif
+
         @if ($showInkoopAfletteren)
             <button type="button" class="flex items-center gap-2 rounded-md px-3 py-2 text-left transition"
                     :class="leadDetailSection === 'inkoop-afletteren'
@@ -146,7 +160,7 @@
                                 : 'text-gray-700 hover:bg-neutral-bg dark:text-gray-200 dark:hover:bg-gray-800'"
                     @click="setSection('inkoop-afletteren')"
             >
-                <span class="icon-upload text-xl"></span>
+                <span class="icon-dollar text-xl"></span>
                 Inkoop afletteren
             </button>
         @endif

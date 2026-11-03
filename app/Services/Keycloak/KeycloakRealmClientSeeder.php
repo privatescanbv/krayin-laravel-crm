@@ -65,11 +65,13 @@ class KeycloakRealmClientSeeder
     {
         return [$clientKey => [
             'base_url'      => $url,
-            'redirect_uris' => [
+            'redirect_uris' => array_values(array_filter([
                 $url.'/*',
                 $url.'/auth/callback',
-                $url.':444/auth/callback',
-            ],
+                // Local privateforms Traefik listens on host port 444 for port-less URLs;
+                // a URL that already has a port (clinic-portal :445) must not get a second one.
+                parse_url($url, PHP_URL_PORT) === null ? $url.':444/auth/callback' : null,
+            ])),
             'post_logout_redirect_uris' => [
                 $url.'/*',
             ],

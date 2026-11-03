@@ -1968,7 +1968,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: abe676c1-95d5-45a9-b6da-f25b37e4676f
+x-request-id: 337dad64-f4b6-406f-95ac-6d818ad63668
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 59
  </code></pre></details>         <pre>
@@ -2995,7 +2995,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: fc5bd95c-c5c5-4e75-8745-bab262d053c8
+x-request-id: 3415ee3c-367e-415a-af26-ba1c2851b834
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 58
  </code></pre></details>         <pre>
@@ -3153,7 +3153,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 62b87cf1-db92-492d-8e9a-f03425f5b62a
+x-request-id: 1f675129-3720-43ef-9230-08ff0de8b605
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 57
  </code></pre></details>         <pre>
@@ -3522,7 +3522,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: ba71c545-cbb4-4160-9a5a-b377356cf8f6
+x-request-id: 7e086e6f-7274-47c6-ba7a-2c6baf260242
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 56
  </code></pre></details>         <pre>
@@ -3650,11 +3650,11 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"type\": \"note\",
+    \"type\": \"call\",
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_to\": \"2026-11-03 12:34:13\"
+    \"schedule_to\": \"2026-11-03 16:24:19\"
 }"
 </code></pre></div>
 
@@ -3671,11 +3671,11 @@ const headers = {
 };
 
 let body = {
-    "type": "note",
+    "type": "call",
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_to": "2026-11-03 12:34:13"
+    "schedule_to": "2026-11-03 16:24:19"
 };
 
 fetch(url, {
@@ -3792,10 +3792,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="type"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="note"
+               value="call"
                data-component="body">
     <br>
-<p>Example: <code>note</code></p>
+<p>Example: <code>call</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>task</code></li> <li><code>meeting</code></li> <li><code>call</code></li> <li><code>note</code></li> <li><code>file</code></li></ul>
         </div>
@@ -3854,10 +3854,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-11-03 12:34:13"
+               value="2026-11-03 16:24:19"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-11-03 12:34:13</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-11-03 16:24:19</code></p>
         </div>
         </form>
 
@@ -4333,7 +4333,7 @@ addresses or content.</p>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"level\": \"critical\",
+    \"level\": \"warning\",
     \"count\": 27,
     \"app\": \"n\"
 }"
@@ -4352,7 +4352,7 @@ const headers = {
 };
 
 let body = {
-    "level": "critical",
+    "level": "warning",
     "count": 27,
     "app": "n"
 };
@@ -4458,10 +4458,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="level"                data-endpoint="POSTapi-failed-jobs-alert"
-               value="critical"
+               value="warning"
                data-component="body">
     <br>
-<p>Example: <code>critical</code></p>
+<p>Example: <code>warning</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>warning</code></li> <li><code>critical</code></li></ul>
         </div>
@@ -6946,7 +6946,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --form "name=Bloeduitslag"\
     --form "description=Resultaten van het bloedonderzoek."\
-    --form "file=@/tmp/phpie4uefp8sua0e1f2Xbi" </code></pre></div>
+    --form "file=@/tmp/phpv98mo21vo7a46a0663v" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -7135,7 +7135,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The file to upload (max 20 MB). Example: <code>/tmp/phpie4uefp8sua0e1f2Xbi</code></p>
+<p>The file to upload (max 20 MB). Example: <code>/tmp/phpv98mo21vo7a46a0663v</code></p>
         </div>
         </form>
 
@@ -7188,7 +7188,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 0d7968ff-5315-4d80-917c-cf159197ee6e
+x-request-id: 149b015d-b0d5-44c5-b9c2-e1217610bd50
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 55
  </code></pre></details>         <pre>
@@ -7763,7 +7763,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 1405acb3-255a-43f4-b9fc-4630b1b8f854
+x-request-id: f6e30212-9893-480e-ac45-4bbac0682945
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 54
  </code></pre></details>         <pre>
@@ -8251,7 +8251,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 322f72c2-b306-4c6a-af1d-32133a38454e
+x-request-id: 7fa3c724-8955-4e5e-9977-5ddb5a04e08c
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 53
  </code></pre></details>         <pre>
@@ -8432,7 +8432,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"preferences\": {
         \"email_notifications_enabled\": true,
         \"language\": \"architecto\",
-        \"onboarding_completed_at\": \"2026-11-03T12:34:13\"
+        \"onboarding_completed_at\": \"2026-11-03T16:24:19\"
     }
 }"
 </code></pre></div>
@@ -8453,7 +8453,7 @@ let body = {
     "preferences": {
         "email_notifications_enabled": true,
         "language": "architecto",
-        "onboarding_completed_at": "2026-11-03T12:34:13"
+        "onboarding_completed_at": "2026-11-03T16:24:19"
     }
 };
 
@@ -8625,10 +8625,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="preferences.onboarding_completed_at"                data-endpoint="PUTapi-patient--id--preferences"
-               value="2026-11-03T12:34:13"
+               value="2026-11-03T16:24:19"
                data-component="body">
     <br>
-<p>Het veld value is geen geldige datum. Example: <code>2026-11-03T12:34:13</code></p>
+<p>Het veld value is geen geldige datum. Example: <code>2026-11-03T16:24:19</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>email_notifications_enabled</code></b>&nbsp;&nbsp;

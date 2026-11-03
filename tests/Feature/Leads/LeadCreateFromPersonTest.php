@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Address;
 use App\Models\Order;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -56,7 +57,7 @@ test('a person from person_id is linked immediately without picking a suggestion
 
 test('the address of the person from person_id is passed to the form', function () {
     $person = Person::factory()->create();
-    $person->address()->associate(\App\Models\Address::create([
+    $person->address()->associate(Address::create([
         'street' => 'Teststraat', 'house_number' => '12', 'postal_code' => '1234AB', 'city' => 'Utrecht',
     ]))->save();
 

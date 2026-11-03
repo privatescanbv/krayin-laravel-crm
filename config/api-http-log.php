@@ -47,6 +47,7 @@ return [
         'password_confirmation',
         'current_password',
         'token',
+        'reset_token',
         'access_token',
         'refresh_token',
         'secret',

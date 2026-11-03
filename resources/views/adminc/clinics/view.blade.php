@@ -58,6 +58,8 @@
                 :showResources="true"
                 :showAfbDispatches="true"
                 :showDepartments="true"
+                :showStaff="true"
+                :staffCount="$staff->count()"
             />
 
             <!-- Footer with creation and modification dates -->
@@ -103,6 +105,10 @@
 
             <div v-else-if="leadDetailSection === 'afdelingen'" class="flex w-full flex-col gap-4 rounded-lg">
                 <x-adminc::clinics.partials.departments :clinic="$clinic"/>
+            </div>
+
+            <div v-else-if="leadDetailSection === 'personeel'" class="flex w-full flex-col gap-4 rounded-lg">
+                @include('adminc::clinics.partials.tab-staff', ['staff' => $staff])
             </div>
 
             @if (bouncer()->hasPermission('inkoop-afletteren'))
@@ -252,7 +258,7 @@
                                 let hash = window.location.hash.substring(1); // Remove '#'
 
                                 // Valid sections
-                                const validSections = ['algemeen', 'activiteiten', 'partner-products', 'resources', 'afb-verzendingen', 'afdelingen', 'inkoop-afletteren'];
+                                const validSections = ['algemeen', 'activiteiten', 'partner-products', 'resources', 'afb-verzendingen', 'afdelingen', 'personeel', 'inkoop-afletteren'];
 
                                 if (validSections.includes(hash)) {
                                     this.leadDetailSection = hash;

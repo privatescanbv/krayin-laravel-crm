@@ -689,6 +689,47 @@ class KeycloakService
     }
 
     /**
+     * Remove a realm role from a user.
+     */
+    public function removeRoleFromUser(string $userId, string $roleName, ?string $accessToken = null): bool
+    {
+        $token = $this->getOrResolveToken($accessToken);
+
+        if (! $token) {
+            $this->logMissingAdminToken('Kon geen admin token verkrijgen om rol te verwijderen.');
+
+            return false;
+        }
+
+        $role = $this->getRoleByName($roleName, $token);
+
+        if (! $role) {
+            return false;
+        }
+
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/users/'.$userId.'/role-mappings/realm');
+        $response = $this->makeRequest('DELETE', $url, $token, [[
+            'id'   => $role['id'] ?? null,
+            'name' => $role['name'] ?? $roleName,
+        ]], true);
+
+        if ($response?->successful()) {
+            return true;
+        }
+
+        if ($response) {
+            Log::error('Failed to remove role from user in Keycloak', [
+                'role_name' => $roleName,
+                'user_id'   => $userId,
+                'status'    => $response->status(),
+                'body'      => $response->body(),
+            ]);
+        }
+
+        return false;
+    }
+
+    /**
      * Get realm roles assigned to a user.
      *
      * @return array<int, string> Array of role names
@@ -817,7 +858,7 @@ class KeycloakService
                 'GET'    => $request->get($url),
                 'POST'   => $request->post($url, $data),
                 'PUT'    => $request->put($url, $data),
-                'DELETE' => $request->delete($url),
+                'DELETE' => $request->delete($url, $data),
                 default  => null,
             };
         } catch (Exception $e) {

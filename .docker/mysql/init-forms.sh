@@ -21,3 +21,14 @@ mysql -u root -p"${MYSQL_ROOT_PASSWORD}" <<-EOSQL
 
     FLUSH PRIVILEGES;
 EOSQL
+
+# Clinic portal database (privatescanbv/clinic-portal); optional so existing setups without it keep working.
+if [ -n "${CLINIC_DB_PASSWORD:-}" ]; then
+mysql -u root -p"${MYSQL_ROOT_PASSWORD}" <<-EOSQL
+    CREATE DATABASE IF NOT EXISTS \`clinic\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE USER IF NOT EXISTS 'clinicadmin'@'%' IDENTIFIED BY '${CLINIC_DB_PASSWORD}';
+    ALTER USER 'clinicadmin'@'%' IDENTIFIED BY '${CLINIC_DB_PASSWORD}';
+    GRANT ALL PRIVILEGES ON \`clinic\`.* TO 'clinicadmin'@'%';
+    FLUSH PRIVILEGES;
+EOSQL
+fi

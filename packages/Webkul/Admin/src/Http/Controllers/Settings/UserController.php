@@ -2,6 +2,11 @@
 
 namespace Webkul\Admin\Http\Controllers\Settings;
 
+use App\Enums\RoleCode;
+use App\Models\Clinic;
+use App\Models\Department as DepartmentModel;
+use App\Models\Resource;
+use App\Support\UserSignature;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -11,8 +16,6 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
-use App\Models\Department as DepartmentModel;
-use App\Support\UserSignature;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Admin\DataGrids\Settings\UserDataGrid;
@@ -24,10 +27,11 @@ use Webkul\Admin\Notifications\User\Create as UserCreatedNotification;
 use Webkul\Lead\Models\Channel;
 use Webkul\Lead\Models\Source;
 use Webkul\Lead\Models\Type as LeadType;
+use Webkul\User\Models\Role;
+use Webkul\User\Models\UserDefaultValue;
 use Webkul\User\Repositories\GroupRepository;
 use Webkul\User\Repositories\RoleRepository;
 use Webkul\User\Repositories\UserRepository;
-use Webkul\User\Models\UserDefaultValue;
 
 class UserController extends Controller
 {
@@ -59,24 +63,25 @@ class UserController extends Controller
      */
     public function create(): View
     {
-        $roles  = $this->roleRepository->all();
+        $roles = $this->roleRepository->all();
         $groups = $this->groupRepository->all();
 
         return view('admin::settings.users.create', array_merge(
             compact('roles', 'groups'),
-            $this->getDefaultValueOptions()
+            $this->getDefaultValueOptions(),
+            $this->getPortalRoleOptions()
         ));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(): View|JsonResponse | RedirectResponse
+    public function store(): View|JsonResponse|RedirectResponse
     {
         $this->nullifyEmptyUserDefaultValues();
 
         try {
-             $this->validate(request(), $this->getRequestValidationRules(), [], $this->getRequestValidationAttributes());
+            $this->validate(request(), $this->getRequestValidationRules(), [], $this->getRequestValidationAttributes());
         } catch (ValidationException $e) {
             // For web requests, redirect back with errors so tests can assert 302 + session errors
             if (! request()->expectsJson() && ! request()->ajax()) {
@@ -90,6 +95,9 @@ class UserController extends Controller
         $data['name'] = trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? ''));
 
         $data['status'] = array_key_exists('status', $data) ? $data['status'] : 0;
+
+        $data['resource_id'] = $this->roleHasCode($data['role_id'], RoleCode::ARTS) ? ($data['resource_id'] ?? null) : null;
+        $data['clinic_id'] = $this->roleHasCode($data['role_id'], RoleCode::KLINIEK_MEDEWERKER) ? ($data['clinic_id'] ?? null) : null;
 
         // Always auto-generate the signature for new users
         $data['signature'] = UserSignature::generate(
@@ -109,7 +117,9 @@ class UserController extends Controller
         // Normalize groups from payload (supports array of ids or array of objects with id)
         $groupInput = request()->input('groups', []);
         $groupIds = collect(is_array($groupInput) ? $groupInput : [])
-            ->map(function ($g) { return is_array($g) ? ($g['id'] ?? null) : $g; })
+            ->map(function ($g) {
+                return is_array($g) ? ($g['id'] ?? null) : $g;
+            })
             ->filter()
             ->values()
             ->all();
@@ -157,6 +167,16 @@ class UserController extends Controller
     }
 
     /**
+     * Read-only overview of a user.
+     */
+    public function view(int $id): View
+    {
+        $user = $this->userRepository->with(['role', 'groups', 'resource.clinicDepartment', 'clinic'])->findOrFail($id);
+
+        return view('adminc::users.view', ['user' => $user]);
+    }
+
+    /**
      * Show the form for editing the specified resource.
      */
     public function edit(int $id): View|JsonResponse
@@ -178,7 +198,7 @@ class UserController extends Controller
             ]);
         }
 
-        $roles  = $this->roleRepository->all();
+        $roles = $this->roleRepository->all();
         $groups = $this->groupRepository->all();
 
         return view('admin::settings.users.edit', array_merge(
@@ -188,7 +208,8 @@ class UserController extends Controller
                 'groups'      => $groups,
                 'settingsMap' => $settingsMap,
             ],
-            $this->getDefaultValueOptions()
+            $this->getDefaultValueOptions(),
+            $this->getPortalRoleOptions()
         ));
     }
 
@@ -225,6 +246,9 @@ class UserController extends Controller
             $data['status'] = $data['status'] ? 1 : 0;
         }
 
+        $data['resource_id'] = $this->roleHasCode($data['role_id'], RoleCode::ARTS) ? ($data['resource_id'] ?? null) : null;
+        $data['clinic_id'] = $this->roleHasCode($data['role_id'], RoleCode::KLINIEK_MEDEWERKER) ? ($data['clinic_id'] ?? null) : null;
+
         Event::dispatch('settings.user.update.before', $id);
 
         $admin = $this->userRepository->update($data, $id);
@@ -236,7 +260,9 @@ class UserController extends Controller
         // Normalize groups from payload (supports array of ids or array of objects with id)
         $groupInput = request()->input('groups', []);
         $groupIds = collect(is_array($groupInput) ? $groupInput : [])
-            ->map(function ($g) { return is_array($g) ? ($g['id'] ?? null) : $g; })
+            ->map(function ($g) {
+                return is_array($g) ? ($g['id'] ?? null) : $g;
+            })
             ->filter()
             ->values()
             ->all();
@@ -417,14 +443,30 @@ class UserController extends Controller
             'password'                                     => 'wachtwoord',
             'password_confirmation'                        => 'wachtwoordbevestiging',
             'role_id'                                      => 'rol',
-            'user_default_values.lead.department_id'      => 'standaard afdeling',
-            'user_default_values.lead.type_id'            => 'standaard type',
-            'user_default_values.lead.lead_channel_id'    => 'standaard kanaal',
-            'user_default_values.lead.lead_source_id'     => 'standaard bron',
+            'resource_id'                                  => 'arts-resource',
+            'clinic_id'                                    => 'kliniek',
+            'user_default_values.lead.department_id'       => 'standaard afdeling',
+            'user_default_values.lead.type_id'             => 'standaard type',
+            'user_default_values.lead.lead_channel_id'     => 'standaard kanaal',
+            'user_default_values.lead.lead_source_id'      => 'standaard bron',
         ];
     }
 
-    private function getRequestValidationRules(?int $userId = null): array {
+    private function roleHasCode(mixed $roleId, RoleCode $code): bool
+    {
+        return $roleId && Role::find((int) $roleId)?->code === $code;
+    }
+
+    private function getPortalRoleOptions(): array
+    {
+        return [
+            'artsResources' => Resource::artsen()->activeWithActiveClinic()->with('clinicDepartment.clinic')->orderBy('name')->get(),
+            'clinics'       => Clinic::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+        ];
+    }
+
+    private function getRequestValidationRules(?int $userId = null): array
+    {
 
         return [
             'email'            => 'required|email|unique:users,email,'.$userId ?? '',
@@ -433,10 +475,23 @@ class UserController extends Controller
             'password'         => ['nullable', Password::defaults()],
             'confirm_password' => 'nullable|required_with:password|same:password',
             'role_id'          => 'required',
-            'signature'        => 'nullable|string|max:50000',
-            'groups'           => 'nullable|array',
-            'groups.*'         => 'nullable|integer|exists:groups,id',
-            'groups.*.id'      => 'nullable|integer|exists:groups,id',
+            'resource_id'      => [
+                Rule::requiredIf(fn () => $this->roleHasCode(request('role_id'), RoleCode::ARTS)),
+                'nullable',
+                'integer',
+                Rule::in(Resource::artsen()->activeWithActiveClinic()->pluck('id')->all()),
+                Rule::unique('users', 'resource_id')->ignore($userId),
+            ],
+            'clinic_id'        => [
+                Rule::requiredIf(fn () => $this->roleHasCode(request('role_id'), RoleCode::KLINIEK_MEDEWERKER)),
+                'nullable',
+                'integer',
+                Rule::exists('clinics', 'id')->where('is_active', true),
+            ],
+            'signature'                                => 'nullable|string|max:50000',
+            'groups'                                   => 'nullable|array',
+            'groups.*'                                 => 'nullable|integer|exists:groups,id',
+            'groups.*.id'                              => 'nullable|integer|exists:groups,id',
             'user_default_values.lead\\.department_id' => [
                 'nullable',
                 'integer',

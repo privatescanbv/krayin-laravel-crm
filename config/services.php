@@ -127,8 +127,10 @@ return [
             'notify_email_interval_minutes' => (int) env('PATIENT_PORTAL_NOTIFY_EMAIL_INTERVAL_MINUTES', 120),
         ],
         'clinic' => [
-            'web_url' => env('CLINIC_PORTAL_URL', 'https://clinic.local.privatescan.nl'),
-            'secret'  => env(KeyCloakClient::CLINIC->envKeySecret()),
+            'web_url'   => env('CLINIC_PORTAL_URL', 'https://clinic.local.privatescan.nl'),
+            'api_url'   => env('CLINIC_PORTAL_API_URL', env('CLINIC_PORTAL_URL')),
+            'api_token' => env('CLINIC_API_KEY'),
+            'secret'    => env(KeyCloakClient::CLINIC->envKeySecret()),
         ],
         'employee' => [
             'web_url' => env('EMPLOYEE_PORTAL_URL', 'https://employee.local.privatescan.nl'),

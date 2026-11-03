@@ -93,11 +93,13 @@ services:
       - "clinicdev.local.privatescan.nl:host-gateway"
       - "patientdev.local.privatescan.nl:host-gateway"
       - "formsdev.local.privatescan.nl:host-gateway"
+      - "clinic.local.privatescan.nl:host-gateway"
       - "sso.local.privatescan.nl:host-gateway"
     networks:
       public:
       backend:
       privateforms_form_traefik:
+      clinic_portal_traefik:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/up"]
       interval: 30s
@@ -124,6 +126,7 @@ services:
       MYSQL_PASSWORD: '${DB_PASSWORD}'
       MYSQL_ALLOW_EMPTY_PASSWORD: 1
       FORMS_DB_PASSWORD: '${FORMS_DB_PASSWORD}'
+      CLINIC_DB_PASSWORD: '${CLINIC_DB_PASSWORD:-}'
     volumes:
       - 'crm-mysql:/var/lib/mysql'
       # note: in prod, these are copies by update-and-run.sh
@@ -443,6 +446,10 @@ networks:
   privateforms_form_traefik:
     external: ${USE_EXTERNAL_TRAEFIK_NETWORK:-false}
     name: ${TRAEFIK_NETWORK_NAME:-privateforms_form_traefik}
+  # Traefik network of the separately started clinic portal (clinic-portal/docker-compose.yml)
+  clinic_portal_traefik:
+    external: ${USE_EXTERNAL_TRAEFIK_NETWORK:-false}
+    name: ${CLINIC_TRAEFIK_NETWORK_NAME:-clinic-portal_traefik}
 
 volumes:
   crm-mysql:

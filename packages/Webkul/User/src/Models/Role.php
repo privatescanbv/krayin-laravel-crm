@@ -2,6 +2,7 @@
 
 namespace Webkul\User\Models;
 
+use App\Enums\RoleCode;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Webkul\User\Contracts\Role as RoleContract;
@@ -19,10 +20,12 @@ class Role extends Model implements RoleContract
         'description',
         'permission_type',
         'permissions',
+        'code',
     ];
 
     protected $casts = [
         'permissions' => 'array',
+        'code'        => RoleCode::class,
     ];
 
     /**

@@ -292,6 +292,8 @@ Route::prefix('settings')->group(function () {
     Route::controller(UserController::class)->prefix('users')->group(function () {
         Route::get('', 'index')->name('admin.settings.users.index');
 
+        Route::get('view/{id}', 'view')->name('admin.settings.users.view');
+
         Route::get('create', 'create')->name('admin.settings.users.create');
 
         Route::post('create', 'store')->name('admin.settings.users.store');

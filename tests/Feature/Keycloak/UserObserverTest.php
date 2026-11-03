@@ -336,6 +336,54 @@ describe('UserObserver - Update', function () {
         expect($user->keycloak_user_id)->toBe('keycloak-user-105');
     });
 
+    it('creates an active but never synced user in Keycloak when it is saved again', function () {
+        // Keycloak unavailable at creation time: user stays without keycloak_user_id
+        KeycloakHttpHelpers::isolateTest();
+        $user = User::factory()->create([
+            'email'   => 'resync@example.com',
+            'status'  => 1,
+            'role_id' => $this->role->id,
+        ]);
+        KeycloakHttpHelpers::enableKeycloak();
+        expect($user->fresh()->keycloak_user_id)->toBeNull();
+
+        KeycloakHttpHelpers::fakeAdminToken();
+        KeycloakHttpHelpers::fakeUserOperations([
+            'email_checks'     => ['resync@example.com' => null],
+            'create_responses' => ['keycloak-user-resync'],
+        ]);
+
+        $user->update(['password' => 'NewSecret123!']);
+
+        expect($user->fresh()->keycloak_user_id)->toBe('keycloak-user-resync');
+
+        // The chosen password must be the only one set (no random overwrite afterwards)
+        $passwordResets = collect(Http::recorded())
+            ->filter(fn ($pair) => str_contains($pair[0]->url(), '/reset-password'))
+            ->map(fn ($pair) => $pair[0]->data()['value'] ?? null);
+        expect($passwordResets->values()->all())->toBe(['NewSecret123!']);
+    });
+
+    it('keeps the chosen password when a new active user is created', function () {
+        KeycloakHttpHelpers::fakeAdminToken();
+        KeycloakHttpHelpers::fakeUserOperations([
+            'email_checks'     => ['chosen@example.com' => null],
+            'create_responses' => ['keycloak-user-chosen'],
+        ]);
+
+        User::factory()->create([
+            'email'    => 'chosen@example.com',
+            'status'   => 1,
+            'role_id'  => $this->role->id,
+            'password' => 'Chosen123!',
+        ]);
+
+        $passwordResets = collect(Http::recorded())
+            ->filter(fn ($pair) => str_contains($pair[0]->url(), '/reset-password'))
+            ->map(fn ($pair) => $pair[0]->data()['value'] ?? null);
+        expect($passwordResets->values()->all())->toBe(['Chosen123!']);
+    });
+
     it('does not update Keycloak when irrelevant fields change', function () {
         $user = User::factory()->create([
             'email'            => 'irrelevant@example.com',
@@ -452,5 +500,58 @@ describe('UserObserver - Edge Cases', function () {
         // keycloak_user_id should remain unchanged
         $user->refresh();
         expect($user->keycloak_user_id)->toBe('keycloak-user-109');
+    });
+});
+
+describe('UserObserver - Arts role (Keycloak clinic)', function () {
+    beforeEach(function () {
+        KeycloakHttpHelpers::fakeAdminToken();
+        Http::fake([
+            '*/admin/realms/crm/roles/*' => fn ($request) => Http::response([
+                'id'   => 'role-'.basename($request->url()),
+                'name' => basename($request->url()),
+            ]),
+        ]);
+
+        $this->artsRole = Role::where('code', 'arts')->firstOrFail();
+        $this->kliniekRole = Role::where('code', 'kliniek_medewerker')->firstOrFail();
+    });
+
+    $roleMappingSent = fn (string $method, string $role) => fn ($request) => $request->method() === $method
+        && str_contains($request->url(), '/role-mappings/realm')
+        && ($request->data()[0]['name'] ?? null) === $role;
+
+    it('assigns only the clinic role when an arts user is created', function () use ($roleMappingSent) {
+        KeycloakHttpHelpers::fakeUserOperations([
+            'email_checks'     => ['arts@example.com' => null],
+            'create_responses' => ['keycloak-arts-1'],
+        ]);
+
+        User::factory()->create(['email' => 'arts@example.com', 'status' => 1, 'role_id' => $this->artsRole->id]);
+
+        Http::assertSent($roleMappingSent('POST', 'clinic'));
+        Http::assertNotSent($roleMappingSent('POST', 'employee'));
+    });
+
+    it('assigns the clinic role when a kliniek medewerker is created', function () use ($roleMappingSent) {
+        KeycloakHttpHelpers::fakeUserOperations([
+            'email_checks'     => ['kliniek@example.com' => null],
+            'create_responses' => ['keycloak-kliniek-1'],
+        ]);
+
+        User::factory()->create(['email' => 'kliniek@example.com', 'status' => 1, 'role_id' => $this->kliniekRole->id]);
+
+        Http::assertSent($roleMappingSent('POST', 'clinic'));
+        Http::assertNotSent($roleMappingSent('POST', 'employee'));
+    });
+
+    it('swaps employee for clinic when the role changes to arts', function () use ($roleMappingSent) {
+        KeycloakHttpHelpers::fakeUserOperations();
+
+        $user = User::factory()->create(['status' => 1, 'role_id' => $this->role->id, 'keycloak_user_id' => 'kc-1']);
+        $user->update(['role_id' => $this->artsRole->id]);
+
+        Http::assertSent($roleMappingSent('POST', 'clinic'));
+        Http::assertSent($roleMappingSent('DELETE', 'employee'));
     });
 });

@@ -1,4 +1,5 @@
 <#import "template.ftl" as layout>
+<#assign isClinic = ((client.clientId)!'') == 'clinic-app'>
 <@layout.registrationLayout displayMessage=!messagesPerField.existsError('username','password'); section>
 
 <#if section = "header">
@@ -13,8 +14,13 @@
             </div>
 
             <div class="form_h">
-                <h1>Inloggen</h1>
-                <span>Login op jouw persoonlijke account</span>
+                <#if isClinic>
+                    <h1>Inloggen kliniekportaal</h1>
+                    <span>Login op het kliniekportaal met je kliniekaccount</span>
+                <#else>
+                    <h1>Inloggen</h1>
+                    <span>Login op jouw persoonlijke account</span>
+                </#if>
             </div>
 
             <#if messagesPerField.existsError('username','password')>
@@ -74,7 +80,8 @@
                         <strong>Onthoud mij</strong>
                     </label>
 
-                    <a href="${properties['patient.forgot.password.url']!''}">
+                    <#-- Each portal hosts its own forgot-password flow; the clinic-app base URL is CLINIC_PORTAL_URL. -->
+                    <a href="<#if isClinic>${client.baseUrl}/forgot-password<#else>${properties['patient.forgot.password.url']!''}</#if>">
                         Wachtwoord vergeten?
                     </a>
                 </div>

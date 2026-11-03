@@ -109,6 +109,8 @@
             </div>
 
             {!! view_render_event('admin.contacts.persons.edit.address.after', ['lead' => $person]) !!}
+
+            @include('admin::contacts.persons.partials.care-contacts', ['entity' => $person])
         </div>
     </x-admin::form>
 

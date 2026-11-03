@@ -5,7 +5,7 @@
 
 /**
  * A helper file for Laravel, to provide autocomplete information to your IDE
- * Generated for Laravel 13.32.0.
+ * Generated for Laravel 13.39.0.
  *
  * This file should not be included in your code, only analyzed by your IDE!
  *
@@ -445,7 +445,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Get or check the current application environment.
          *
-         * @param string|array $environments
+         * @param \UnitEnum|string|array $environments
          * @return string|bool
          * @static
          */
@@ -1781,7 +1781,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Get the name of the binding the container is currently resolving.
          *
-         * @return class-string|string|null
+         * @return class-string|string|int|null
          * @static
          */
         public static function currentlyResolving()
@@ -1876,7 +1876,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Set the callback which determines the current container environment.
          *
-         * @param (callable(array<int, string>|string): bool|string)|null $callback
+         * @param (callable(array<int, string>|string): (bool|string))|null $callback
          * @return void
          * @static
          */
@@ -1916,7 +1916,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Set the shared instance of the container.
          *
-         * @return \Illuminate\Contracts\Container\Container|static
+         * @return \Illuminate\Contracts\Container\Container|static|null
          * @static
          */
         public static function setInstance($container = null)
@@ -2601,7 +2601,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Create a HMAC of the password hash for storage in cookies.
          *
-         * @param string $passwordHash
+         * @param string|null $passwordHash
          * @return string
          * @static
          */
@@ -2643,14 +2643,14 @@ namespace Illuminate\Support\Facades {
          * The application must be using the AuthenticateSession middleware.
          *
          * @param string $password
-         * @return \Webkul\User\Models\User|null
+         * @return void
          * @throws \Illuminate\Auth\AuthenticationException
          * @static
          */
         public static function logoutOtherDevices($password)
         {
             /** @var \Illuminate\Auth\SessionGuard $instance */
-            return $instance->logoutOtherDevices($password);
+            $instance->logoutOtherDevices($password);
         }
 
         /**
@@ -2669,7 +2669,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Get the last user we attempted to authenticate.
          *
-         * @return \Webkul\User\Models\User
+         * @return \Webkul\User\Models\User|null
          * @static
          */
         public static function getLastAttempted()
@@ -2756,7 +2756,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Get the event dispatcher instance.
          *
-         * @return \Illuminate\Contracts\Events\Dispatcher
+         * @return \Illuminate\Contracts\Events\Dispatcher|null
          * @static
          */
         public static function getDispatcher()
@@ -3368,6 +3368,19 @@ namespace Illuminate\Support\Facades {
         }
 
         /**
+         * Get the path to the compiled version of a view.
+         *
+         * @param string $path
+         * @return string
+         * @static
+         */
+        public static function getCompiledPath($path)
+        {
+            /** @var \Illuminate\View\Compilers\BladeCompiler $instance */
+            return $instance->getCompiledPath($path);
+        }
+
+        /**
          * Execute the given callback using a custom echo format.
          *
          * @param string $format
@@ -3531,20 +3544,6 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\View\Compilers\BladeCompiler $instance */
             return $instance->applyEchoHandler($value);
-        }
-
-        /**
-         * Get the path to the compiled version of a view.
-         *
-         * @param string $path
-         * @return string
-         * @static
-         */
-        public static function getCompiledPath($path)
-        {
-            //Method inherited from \Illuminate\View\Compilers\Compiler 
-            /** @var \Illuminate\View\Compilers\BladeCompiler $instance */
-            return $instance->getCompiledPath($path);
         }
 
         /**
@@ -4114,7 +4113,7 @@ namespace Illuminate\Support\Facades {
          * Assert if a job was dispatched based on a truth-test callback.
          *
          * @param string|\Closure $command
-         * @param callable|int|null $callback
+         * @param callable|array<string, mixed>|int|null $callback
          * @return void
          * @static
          */
@@ -4155,7 +4154,7 @@ namespace Illuminate\Support\Facades {
          * Determine if a job was dispatched based on a truth-test callback.
          *
          * @param string|\Closure $command
-         * @param callable|null $callback
+         * @param callable|array<string, mixed>|null $callback
          * @return void
          * @static
          */
@@ -4367,7 +4366,7 @@ namespace Illuminate\Support\Facades {
          * Get all of the jobs matching a truth-test callback.
          *
          * @param string $command
-         * @param callable|null $callback
+         * @param callable|array<string, mixed>|null $callback
          * @return \Illuminate\Support\Collection
          * @static
          */
@@ -4381,7 +4380,7 @@ namespace Illuminate\Support\Facades {
          * Get all of the jobs dispatched synchronously matching a truth-test callback.
          *
          * @param string $command
-         * @param callable|null $callback
+         * @param callable|array<string, mixed>|null $callback
          * @return \Illuminate\Support\Collection
          * @static
          */
@@ -4395,7 +4394,7 @@ namespace Illuminate\Support\Facades {
          * Get all of the jobs dispatched after the response was sent matching a truth-test callback.
          *
          * @param string $command
-         * @param callable|null $callback
+         * @param callable|array<string, mixed>|null $callback
          * @return \Illuminate\Support\Collection
          * @static
          */
@@ -7284,7 +7283,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Set the default connection name.
          *
-         * @param string $name
+         * @param \UnitEnum|string $name
          * @return void
          * @static
          */
@@ -7477,6 +7476,20 @@ namespace Illuminate\Support\Facades {
         }
 
         /**
+         * Execute the given callback using OLAP workload.
+         *
+         * @template TReturn
+         * @param (\Closure($this): TReturn) $callback
+         * @return TReturn
+         * @static
+         */
+        public static function olap($callback)
+        {
+            /** @var \Illuminate\Database\MySqlConnection $instance */
+            return $instance->olap($callback);
+        }
+
+        /**
          * Get the connection's last insert ID.
          *
          * @return string|int|null
@@ -7498,6 +7511,18 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Database\MySqlConnection $instance */
             return $instance->isMaria();
+        }
+
+        /**
+         * Determine if the connected database is a Vitess database.
+         *
+         * @return bool
+         * @static
+         */
+        public static function isVitess()
+        {
+            /** @var \Illuminate\Database\MySqlConnection $instance */
+            return $instance->isVitess();
         }
 
         /**
@@ -7963,7 +7988,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Register a database query listener with the connection.
          *
-         * @param \Closure(\Illuminate\Database\Events\QueryExecuted) $callback
+         * @param \Closure(\Illuminate\Database\Events\QueryExecuted):  mixed  $callback
          * @return void
          * @static
          */
@@ -8070,6 +8095,21 @@ namespace Illuminate\Support\Facades {
             //Method inherited from \Illuminate\Database\Connection 
             /** @var \Illuminate\Database\MySqlConnection $instance */
             return $instance->useWriteConnectionWhenReading($value);
+        }
+
+        /**
+         * Execute the given callback using the write PDO connection for reads.
+         *
+         * @template TReturn
+         * @param (\Closure($this): TReturn) $callback
+         * @return TReturn
+         * @static
+         */
+        public static function usingWritePdo($callback)
+        {
+            //Method inherited from \Illuminate\Database\Connection 
+            /** @var \Illuminate\Database\MySqlConnection $instance */
+            return $instance->usingWritePdo($callback);
         }
 
         /**
@@ -9093,7 +9133,7 @@ namespace Illuminate\Support\Facades {
          * Assert if an event was dispatched based on a truth-test callback.
          *
          * @param string|\Closure $event
-         * @param callable|int|null $callback
+         * @param callable|array<string, mixed>|int|null $callback
          * @return void
          * @static
          */
@@ -9134,7 +9174,7 @@ namespace Illuminate\Support\Facades {
          * Determine if an event was dispatched based on a truth-test callback.
          *
          * @param string|\Closure $event
-         * @param callable|null $callback
+         * @param callable|array<string, mixed>|null $callback
          * @return void
          * @static
          */
@@ -9160,7 +9200,7 @@ namespace Illuminate\Support\Facades {
          * Get all of the events matching a truth-test callback.
          *
          * @param string $event
-         * @param callable|null $callback
+         * @param callable|array<string, mixed>|null $callback
          * @return \Illuminate\Support\Collection
          * @static
          */
@@ -10918,7 +10958,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Get a collection of the request / response pairs matching the given truth test.
          *
-         * @param (\Closure(\Illuminate\Http\Client\Request, \Illuminate\Http\Client\Response|null): bool)|callable $callback
+         * @param (\Closure(\Illuminate\Http\Client\Request, \Illuminate\Http\Client\Response|null): bool)|callable|null $callback
          * @return \Illuminate\Support\Collection<int, array{0: \Illuminate\Http\Client\Request, 1: \Illuminate\Http\Client\Response|null}>
          * @static
          */
@@ -11963,8 +12003,6 @@ namespace Illuminate\Support\Facades {
      * @method static void alwaysReplyTo(string $address, string|null $name = null)
      * @method static void alwaysReturnPath(string $address)
      * @method static void alwaysTo(string $address, string|null $name = null)
-     * @method static \Illuminate\Mail\SentMessage|null html(string $html, mixed $callback)
-     * @method static \Illuminate\Mail\SentMessage|null plain(string $view, array $data, mixed $callback)
      * @method static string render(string|array $view, array $data = [])
      * @method static \Symfony\Component\Mailer\Transport\TransportInterface getSymfonyTransport()
      * @method static \Illuminate\Contracts\View\Factory getViewFactory()
@@ -12413,6 +12451,20 @@ namespace Illuminate\Support\Facades {
         }
 
         /**
+         * Send a new message with only an HTML part.
+         *
+         * @param string $html
+         * @param \Closure|string $callback
+         * @return void
+         * @static
+         */
+        public static function html($html, $callback)
+        {
+            /** @var \Illuminate\Support\Testing\Fakes\MailFake $instance */
+            $instance->html($html, $callback);
+        }
+
+        /**
          * Send a new message with only a raw text part.
          *
          * @param string $text
@@ -12424,6 +12476,21 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Support\Testing\Fakes\MailFake $instance */
             $instance->raw($text, $callback);
+        }
+
+        /**
+         * Send a new message with only a plain part.
+         *
+         * @param string $view
+         * @param array $data
+         * @param \Closure|string $callback
+         * @return void
+         * @static
+         */
+        public static function plain($view, $data, $callback)
+        {
+            /** @var \Illuminate\Support\Testing\Fakes\MailFake $instance */
+            $instance->plain($view, $data, $callback);
         }
 
         /**
@@ -12804,7 +12871,7 @@ namespace Illuminate\Support\Facades {
          *
          * @param mixed $notifiable
          * @param string|\Closure $notification
-         * @param callable|null $callback
+         * @param callable|array<string, mixed>|null $callback
          * @return void
          * @throws \Exception
          * @static
@@ -12876,7 +12943,7 @@ namespace Illuminate\Support\Facades {
          *
          * @param mixed $notifiable
          * @param string|\Closure $notification
-         * @param callable|null $callback
+         * @param callable|array<string, mixed>|null $callback
          * @return void
          * @throws \Exception
          * @static
@@ -12945,7 +13012,7 @@ namespace Illuminate\Support\Facades {
          *
          * @param mixed $notifiable
          * @param string $notification
-         * @param callable|null $callback
+         * @param callable|array<string, mixed>|null $callback
          * @return \Illuminate\Support\Collection
          * @static
          */
@@ -13059,7 +13126,7 @@ namespace Illuminate\Support\Facades {
      * @method static \Illuminate\Process\PendingProcess tty(bool $tty = true)
      * @method static \Illuminate\Process\PendingProcess options(array $options)
      * @method static \Illuminate\Contracts\Process\ProcessResult run(array|string|null $command = null, callable|null $output = null)
-     * @method static \Illuminate\Process\InvokedProcess start(array|string|null $command = null, callable|null $output = null)
+     * @method static \Illuminate\Process\InvokedProcess|\Illuminate\Process\FakeInvokedProcess start(array|string|null $command = null, callable|null $output = null)
      * @method static bool supportsTty()
      * @method static \Illuminate\Process\PendingProcess withFakeHandlers(array $fakeHandlers)
      * @method static \Illuminate\Process\PendingProcess|mixed when(\Closure|mixed|null $value = null, callable|null $callback = null, callable|null $default = null)
@@ -13608,8 +13675,8 @@ namespace Illuminate\Support\Facades {
         /**
          * Determine if a queue is paused.
          *
-         * @param string $connection
-         * @param string $queue
+         * @param \UnitEnum|string $connection
+         * @param \UnitEnum|string $queue
          * @return bool
          * @static
          */
@@ -13794,7 +13861,7 @@ namespace Illuminate\Support\Facades {
          * Assert if a job was pushed based on a truth-test callback.
          *
          * @param string|\Closure $job
-         * @param callable|int|null $callback
+         * @param callable|array<string, mixed>|int|null $callback
          * @return void
          * @static
          */
@@ -13836,7 +13903,7 @@ namespace Illuminate\Support\Facades {
          *
          * @param \UnitEnum|string $queue
          * @param string|\Closure $job
-         * @param callable|null $callback
+         * @param callable|array<string, mixed>|null $callback
          * @return void
          * @static
          */
@@ -13905,7 +13972,7 @@ namespace Illuminate\Support\Facades {
          * Determine if a job was pushed based on a truth-test callback.
          *
          * @param string|\Closure $job
-         * @param callable|null $callback
+         * @param callable|array<string, mixed>|null $callback
          * @return void
          * @static
          */
@@ -13944,7 +14011,7 @@ namespace Illuminate\Support\Facades {
          * Get all of the jobs matching a truth-test callback.
          *
          * @param string $job
-         * @param callable|null $callback
+         * @param callable|array<string, mixed>|null $callback
          * @return \Illuminate\Support\Collection
          * @static
          */
@@ -15596,7 +15663,7 @@ namespace Illuminate\Support\Facades {
          *
          * @param string|null $param
          * @param mixed $default
-         * @return ($param is null ? \Illuminate\Routing\Route : object|string|null)
+         * @return ($param is null ? \Illuminate\Routing\Route|null : object|string|null)
          * @static
          */
         public static function route($param = null, $default = null)
@@ -17834,6 +17901,21 @@ namespace Illuminate\Support\Facades {
         }
 
         /**
+         * Create a new Markdown response instance.
+         *
+         * @param string $content
+         * @param int $status
+         * @param array $headers
+         * @return \Illuminate\Http\Response
+         * @static
+         */
+        public static function markdown($content = '', $status = 200, $headers = [])
+        {
+            /** @var \Illuminate\Routing\ResponseFactory $instance */
+            return $instance->markdown($content, $status, $headers);
+        }
+
+        /**
          * Create a new event stream response.
          *
          * @param \Closure $callback
@@ -18165,6 +18247,20 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Routing\Router $instance */
             return $instance->options($uri, $action);
+        }
+
+        /**
+         * Register a new QUERY route with the router.
+         *
+         * @param string $uri
+         * @param array|string|callable|null $action
+         * @return \Illuminate\Routing\Route
+         * @static
+         */
+        public static function query($uri, $action = null)
+        {
+            /** @var \Illuminate\Routing\Router $instance */
+            return $instance->query($uri, $action);
         }
 
         /**
@@ -19194,7 +19290,7 @@ namespace Illuminate\Support\Facades {
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes withoutOverlapping(int $expiresAt = 1440, bool $releaseOnTerminationSignals = true)
      * @method static void mergeAttributes(\Illuminate\Console\Scheduling\Event $event)
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes user(string $user)
-     * @method static \Illuminate\Console\Scheduling\PendingEventAttributes environments(mixed $environments)
+     * @method static \Illuminate\Console\Scheduling\PendingEventAttributes environments(\UnitEnum|string|array $environments)
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes evenInMaintenanceMode()
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes evenWhenPaused()
      * @method static \Illuminate\Console\Scheduling\PendingEventAttributes onOneServer()
@@ -19420,6 +19516,31 @@ namespace Illuminate\Support\Facades {
         public static function withoutInterruptionPolling()
         {
             \Illuminate\Console\Scheduling\Schedule::withoutInterruptionPolling();
+        }
+
+        /**
+         * Determine if the schedule has been interrupted since the given time.
+         *
+         * @param \DateTimeInterface $time
+         * @return bool
+         * @static
+         */
+        public static function hasBeenInterruptedSince($time)
+        {
+            /** @var \Illuminate\Console\Scheduling\Schedule $instance */
+            return $instance->hasBeenInterruptedSince($time);
+        }
+
+        /**
+         * Indicate that every event on the schedule should only run on one server for each cron expression.
+         *
+         * @param bool $value
+         * @return void
+         * @static
+         */
+        public static function alwaysOnOneServer($value = true)
+        {
+            \Illuminate\Console\Scheduling\Schedule::alwaysOnOneServer($value);
         }
 
         /**
@@ -19842,6 +19963,21 @@ namespace Illuminate\Support\Facades {
             //Method inherited from \Illuminate\Database\Schema\Builder 
             /** @var \Illuminate\Database\Schema\MySqlBuilder $instance */
             return $instance->getColumnListing($table);
+        }
+
+        /**
+         * Get the column for a given table.
+         *
+         * @param string $table
+         * @param string $column
+         * @return \Illuminate\Database\Schema\array{name: string, type: string, type_name: string, collation: string|null, nullable: bool, default: mixed, auto_increment: bool, comment: string|null, generation: array{type: string, expression: string|null}|null}
+         * @static
+         */
+        public static function getColumn($table, $column)
+        {
+            //Method inherited from \Illuminate\Database\Schema\Builder 
+            /** @var \Illuminate\Database\Schema\MySqlBuilder $instance */
+            return $instance->getColumn($table, $column);
         }
 
         /**
@@ -21265,7 +21401,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Set the given disk instance.
          *
-         * @param string $name
+         * @param \UnitEnum|string $name
          * @param mixed $disk
          * @return \Illuminate\Filesystem\FilesystemManager
          * @static
@@ -21303,7 +21439,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Unset the given disk instances.
          *
-         * @param array|string $disk
+         * @param array<\UnitEnum|string>|\UnitEnum|string $disk
          * @return \Illuminate\Filesystem\FilesystemManager
          * @static
          */
@@ -21316,7 +21452,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Disconnect the given disk and remove from local cache.
          *
-         * @param string|null $name
+         * @param \UnitEnum|string|null $name
          * @return void
          * @static
          */
@@ -21894,7 +22030,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Copy a file to another disk.
          *
-         * @param string|\Illuminate\Contracts\Filesystem\Filesystem $disk
+         * @param \UnitEnum|string|\Illuminate\Contracts\Filesystem\Filesystem $disk
          * @param string $from
          * @param string|null $to
          * @return bool
@@ -21910,7 +22046,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Move a file to another disk.
          *
-         * @param string|\Illuminate\Contracts\Filesystem\Filesystem $disk
+         * @param \UnitEnum|string|\Illuminate\Contracts\Filesystem\Filesystem $disk
          * @param string $from
          * @param string|null $to
          * @return bool
@@ -26166,10 +26302,10 @@ namespace Laravel\Mcp\Facades {
         /**
          * @static
          */
-        public static function oauthRoutes($oauthPrefix = 'oauth')
+        public static function oauthRoutes($oauthPrefix = 'oauth', $registration = true)
         {
             /** @var \Laravel\Mcp\Server\Registrar $instance */
-            return $instance->oauthRoutes($oauthPrefix);
+            return $instance->oauthRoutes($oauthPrefix, $registration);
         }
 
         /**
@@ -26381,12 +26517,9 @@ namespace Maatwebsite\Excel\Facades {
      */
     class Excel {
         /**
-         * @param object $export
-         * @param string|null $fileName
-         * @param string $writerType
-         * @param array $headers
-         * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
-         * @throws \PhpOffice\PhpSpreadsheet\Exception
+         * @param array<string, string> $headers
+         * @param array<string, string> $headers
+         * @throws Exception
          * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
          * @static
          */
@@ -26398,13 +26531,7 @@ namespace Maatwebsite\Excel\Facades {
 
         /**
          * @param string|null $disk Fallback for usage with named properties
-         * @param object $export
-         * @param string $filePath
-         * @param string|null $diskName
-         * @param string $writerType
-         * @param mixed $diskOptions
-         * @return bool
-         * @throws \PhpOffice\PhpSpreadsheet\Exception
+         * @throws Exception
          * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
          * @static
          */
@@ -26415,12 +26542,6 @@ namespace Maatwebsite\Excel\Facades {
         }
 
         /**
-         * @param object $export
-         * @param string $filePath
-         * @param string|null $disk
-         * @param string $writerType
-         * @param mixed $diskOptions
-         * @return \Illuminate\Foundation\Bus\PendingDispatch
          * @static
          */
         public static function queue($export, $filePath, $disk = null, $writerType = null, $diskOptions = [])
@@ -26430,9 +26551,6 @@ namespace Maatwebsite\Excel\Facades {
         }
 
         /**
-         * @param object $export
-         * @param string $writerType
-         * @return string
          * @static
          */
         public static function raw($export, $writerType)
@@ -26442,11 +26560,7 @@ namespace Maatwebsite\Excel\Facades {
         }
 
         /**
-         * @param object $import
-         * @param string|\Symfony\Component\HttpFoundation\File\UploadedFile $filePath
-         * @param string|null $disk
-         * @param string|null $readerType
-         * @return \Maatwebsite\Excel\Reader|\Illuminate\Foundation\Bus\PendingDispatch
+         * @throws ValidationException
          * @static
          */
         public static function import($import, $filePath, $disk = null, $readerType = null)
@@ -26456,11 +26570,7 @@ namespace Maatwebsite\Excel\Facades {
         }
 
         /**
-         * @param object $import
-         * @param string|\Symfony\Component\HttpFoundation\File\UploadedFile $filePath
-         * @param string|null $disk
-         * @param string|null $readerType
-         * @return array
+         * @return array<array-key, array<int, array<array-key, mixed>>>
          * @static
          */
         public static function toArray($import, $filePath, $disk = null, $readerType = null)
@@ -26470,11 +26580,7 @@ namespace Maatwebsite\Excel\Facades {
         }
 
         /**
-         * @param object $import
-         * @param string|\Symfony\Component\HttpFoundation\File\UploadedFile $filePath
-         * @param string|null $disk
-         * @param string|null $readerType
-         * @return \Illuminate\Support\Collection
+         * @return Collection<array-key, Collection<int, Collection<array-key, mixed>>>
          * @static
          */
         public static function toCollection($import, $filePath, $disk = null, $readerType = null)
@@ -26484,17 +26590,28 @@ namespace Maatwebsite\Excel\Facades {
         }
 
         /**
-         * @param \Illuminate\Contracts\Queue\ShouldQueue $import
-         * @param string|\Symfony\Component\HttpFoundation\File\UploadedFile $filePath
-         * @param string|null $disk
-         * @param string $readerType
-         * @return \Illuminate\Foundation\Bus\PendingDispatch
          * @static
          */
         public static function queueImport($import, $filePath, $disk = null, $readerType = null)
         {
             /** @var \Maatwebsite\Excel\Excel $instance */
             return $instance->queueImport($import, $filePath, $disk, $readerType);
+        }
+
+        /**
+         * Register a custom export source handler.
+         *
+         * The handler may implement SheetSourceHandler (sync), QueuedSheetSourceHandler
+         * (queued), or both. Pass a class name to have it resolved lazily from the
+         * service container, or pass an instance directly.
+         *
+         * @param \Maatwebsite\Excel\Contracts\SheetSourceHandler|\Maatwebsite\Excel\Contracts\QueuedSheetSourceHandler|class-string $handlers
+         * @static
+         */
+        public static function registerSourceHandler(...$handlers)
+        {
+            /** @var \Maatwebsite\Excel\Excel $instance */
+            return $instance->registerSourceHandler(...$handlers);
         }
 
         /**
@@ -26549,9 +26666,6 @@ namespace Maatwebsite\Excel\Facades {
         }
 
         /**
-         * @param string $concern
-         * @param callable $handler
-         * @param string $event
          * @static
          */
         public static function extend($concern, $handler, $event = 'Maatwebsite\\Excel\\Events\\BeforeWriting')
@@ -26560,34 +26674,80 @@ namespace Maatwebsite\Excel\Facades {
         }
 
         /**
+         * Register local event listeners.
+         *
+         * @param array<string, callable> $listeners
+         * @static
+         */
+        public static function registerListeners($listeners)
+        {
+            /** @var \Maatwebsite\Excel\Excel $instance */
+            return $instance->registerListeners($listeners);
+        }
+
+        /**
+         * @static
+         */
+        public static function clearListeners()
+        {
+            /** @var \Maatwebsite\Excel\Excel $instance */
+            return $instance->clearListeners();
+        }
+
+        /**
+         * Register a global event listener.
+         *
+         * @static
+         */
+        public static function listen($event, $listener)
+        {
+            return \Maatwebsite\Excel\Excel::listen($event, $listener);
+        }
+
+        /**
+         * @static
+         */
+        public static function raise($event)
+        {
+            /** @var \Maatwebsite\Excel\Excel $instance */
+            return $instance->raise($event);
+        }
+
+        /**
+         * @return callable[]
+         * @static
+         */
+        public static function listeners($event)
+        {
+            /** @var \Maatwebsite\Excel\Excel $instance */
+            return $instance->listeners($event);
+        }
+
+        /**
          * When asserting downloaded, stored, queued or imported, use regular expression
          * to look for a matching file path.
          *
-         * @return void
          * @static
          */
         public static function matchByRegex()
         {
             /** @var \Maatwebsite\Excel\Fakes\ExcelFake $instance */
-            $instance->matchByRegex();
+            return $instance->matchByRegex();
         }
 
         /**
          * When asserting downloaded, stored, queued or imported, use regular string
          * comparison for matching file path.
          *
-         * @return void
          * @static
          */
         public static function doNotMatchByRegex()
         {
             /** @var \Maatwebsite\Excel\Fakes\ExcelFake $instance */
-            $instance->doNotMatchByRegex();
+            return $instance->doNotMatchByRegex();
         }
 
         /**
-         * @param string $fileName
-         * @param callable|null $callback
          * @static
          */
         public static function assertDownloaded($fileName, $callback = null)
@@ -26597,9 +26757,6 @@ namespace Maatwebsite\Excel\Facades {
         }
 
         /**
-         * @param string $filePath
-         * @param string|callable|null $disk
-         * @param callable|null $callback
          * @static
          */
         public static function assertStored($filePath, $disk = null, $callback = null)
@@ -26609,9 +26766,6 @@ namespace Maatwebsite\Excel\Facades {
         }
 
         /**
-         * @param string $filePath
-         * @param string|callable|null $disk
-         * @param callable|null $callback
          * @static
          */
         public static function assertQueued($filePath, $disk = null, $callback = null)
@@ -26621,6 +26775,7 @@ namespace Maatwebsite\Excel\Facades {
         }
 
         /**
+         * @param array<int, object> $chain
          * @static
          */
         public static function assertQueuedWithChain($chain)
@@ -26630,8 +26785,6 @@ namespace Maatwebsite\Excel\Facades {
         }
 
         /**
-         * @param string $classname
-         * @param callable|null $callback
          * @static
          */
         public static function assertExportedInRaw($classname, $callback = null)
@@ -26641,9 +26794,6 @@ namespace Maatwebsite\Excel\Facades {
         }
 
         /**
-         * @param string $filePath
-         * @param string|callable|null $disk
-         * @param callable|null $callback
          * @static
          */
         public static function assertImported($filePath, $disk = null, $callback = null)
@@ -26818,6 +26968,15 @@ namespace Sentry\Laravel {
         {
             /** @var \Sentry\State\Hub $instance */
             return $instance->addBreadcrumb($breadcrumb);
+        }
+
+        /**
+         * @static
+         */
+        public static function addAttachment($attachment)
+        {
+            /** @var \Sentry\State\Hub $instance */
+            return $instance->addAttachment($attachment);
         }
 
         /**
@@ -27385,6 +27544,7 @@ namespace Illuminate\Support {
          * @param string|null $writerType
          * @param mixed $withHeadings
          * @param array $responseHeaders
+         * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
          * @static
          */
         public static function downloadExcel($fileName, $writerType = null, $withHeadings = false, $responseHeaders = [])
@@ -27398,6 +27558,7 @@ namespace Illuminate\Support {
          * @param string|null $disk
          * @param string|null $writerType
          * @param mixed $withHeadings
+         * @return \Illuminate\Foundation\Bus\PendingDispatch|bool
          * @static
          */
         public static function storeExcel($filePath, $disk = null, $writerType = null, $withHeadings = false)
@@ -27551,7 +27712,7 @@ namespace Illuminate\Database\Query {
      */
     class Builder {
         /**
-         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:74$a4::creator()
+         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:74$a6::creator()
          * @static
          */
         public static function creator()
@@ -27560,7 +27721,7 @@ namespace Illuminate\Database\Query {
         }
 
         /**
-         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:74$a4::updater()
+         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:74$a6::updater()
          * @static
          */
         public static function updater()
@@ -27569,7 +27730,7 @@ namespace Illuminate\Database\Query {
         }
 
         /**
-         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:148$a6::getFillable()
+         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:148$a8::getFillable()
          * @static
          */
         public static function getFillable()
@@ -27826,7 +27987,7 @@ namespace  {
         /**
          * Add an "order by" clause for a timestamp to the query.
          *
-         * @param string|\Illuminate\Contracts\Database\Query\Expression $column
+         * @param string|\Illuminate\Contracts\Database\Query\Expression|null $column
          * @return \Illuminate\Database\Eloquent\Builder<static>
          * @static
          */
@@ -27839,7 +28000,7 @@ namespace  {
         /**
          * Add an "order by" clause for a timestamp to the query.
          *
-         * @param string|\Illuminate\Contracts\Database\Query\Expression $column
+         * @param string|\Illuminate\Contracts\Database\Query\Expression|null $column
          * @return \Illuminate\Database\Eloquent\Builder<static>
          * @static
          */
@@ -29446,6 +29607,7 @@ namespace  {
          *
          * @param \Illuminate\Database\Eloquent\Relations\MorphTo<*, *>|string $relation
          * @param \Illuminate\Database\Eloquent\Model|iterable<int, \Illuminate\Database\Eloquent\Model>|string|null $model
+         * @param string $boolean
          * @return \Illuminate\Database\Eloquent\Builder<static>
          * @throws \InvalidArgumentException
          * @static
@@ -29461,6 +29623,7 @@ namespace  {
          *
          * @param \Illuminate\Database\Eloquent\Relations\MorphTo<*, *>|string $relation
          * @param \Illuminate\Database\Eloquent\Model|iterable<int, \Illuminate\Database\Eloquent\Model>|string $model
+         * @param string $boolean
          * @return \Illuminate\Database\Eloquent\Builder<static>
          * @throws \InvalidArgumentException
          * @static
@@ -29502,7 +29665,7 @@ namespace  {
         /**
          * Add a "belongs to" relationship where clause to the query.
          *
-         * @param \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Collection<int, \Illuminate\Database\Eloquent\Model> $related
+         * @param \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Collection<int, covariant \Illuminate\Database\Eloquent\Model> $related
          * @param string|null $relationshipName
          * @param string $boolean
          * @return \Illuminate\Database\Eloquent\Builder<static>
@@ -29519,7 +29682,7 @@ namespace  {
         /**
          * Add a "BelongsTo" relationship with an "or where" clause to the query.
          *
-         * @param \Illuminate\Database\Eloquent\Model $related
+         * @param \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Collection<int, covariant \Illuminate\Database\Eloquent\Model> $related
          * @param string|null $relationshipName
          * @return \Illuminate\Database\Eloquent\Builder<static>
          * @static
@@ -29533,7 +29696,7 @@ namespace  {
         /**
          * Add a "belongs to many" relationship where clause to the query.
          *
-         * @param \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Collection<int, \Illuminate\Database\Eloquent\Model> $related
+         * @param \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Collection<int, covariant \Illuminate\Database\Eloquent\Model> $related
          * @param string|null $relationshipName
          * @param string $boolean
          * @return \Illuminate\Database\Eloquent\Builder<static>
@@ -29550,7 +29713,7 @@ namespace  {
         /**
          * Add a "belongs to many" relationship with an "or where" clause to the query.
          *
-         * @param \Illuminate\Database\Eloquent\Model $related
+         * @param \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Collection<int, covariant \Illuminate\Database\Eloquent\Model> $related
          * @param string|null $relationshipName
          * @return \Illuminate\Database\Eloquent\Builder<static>
          * @throws \RuntimeException
@@ -29677,6 +29840,7 @@ namespace  {
          * @param string $fileName
          * @param string|null $writerType
          * @param mixed $withHeadings
+         * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
          * @static
          */
         public static function downloadExcel($fileName, $writerType = null, $withHeadings = false)
@@ -29690,6 +29854,7 @@ namespace  {
          * @param string|null $disk
          * @param string|null $writerType
          * @param mixed $withHeadings
+         * @return \Illuminate\Foundation\Bus\PendingDispatch|bool
          * @static
          */
         public static function storeExcel($filePath, $disk = null, $writerType = null, $withHeadings = false)
@@ -29702,6 +29867,7 @@ namespace  {
          * @param string $filename
          * @param string|null $disk
          * @param string|null $readerType
+         * @return \Maatwebsite\Excel\Importer|\Illuminate\Foundation\Bus\PendingDispatch|\Illuminate\Bus\PendingBatch
          * @static
          */
         public static function import($filename, $disk = null, $readerType = null)
@@ -29715,6 +29881,7 @@ namespace  {
          * @param callable $mapping
          * @param string|null $disk
          * @param string|null $readerType
+         * @return \Maatwebsite\Excel\Importer|\Illuminate\Foundation\Bus\PendingDispatch|\Illuminate\Bus\PendingBatch
          * @static
          */
         public static function importAs($filename, $mapping, $disk = null, $readerType = null)
@@ -31682,7 +31849,7 @@ namespace  {
          * Add a vector-distance "order by" clause to the query.
          *
          * @param \Illuminate\Contracts\Database\Query\Expression|string $column
-         * @param \Illuminate\Support\Collection<int, float>|\Illuminate\Contracts\Support\Arrayable|array<int, float> $vector
+         * @param \Illuminate\Support\Collection<int, float>|\Illuminate\Contracts\Support\Arrayable|array<int, float>|string $vector
          * @return \Illuminate\Database\Eloquent\Builder<static>
          * @throws \JsonException
          * @static
@@ -31763,7 +31930,7 @@ namespace  {
         /**
          * Alias to set the "limit" value of the query.
          *
-         * @param int $value
+         * @param int|null $value
          * @return \Illuminate\Database\Eloquent\Builder<static>
          * @static
          */
@@ -31776,7 +31943,7 @@ namespace  {
         /**
          * Set the "limit" value of the query.
          *
-         * @param int $value
+         * @param int|null $value
          * @return \Illuminate\Database\Eloquent\Builder<static>
          * @static
          */
@@ -32856,7 +33023,7 @@ namespace  {
         }
 
         /**
-         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:74$a4::creator()
+         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:74$a6::creator()
          * @static
          */
         public static function creator()
@@ -32865,7 +33032,7 @@ namespace  {
         }
 
         /**
-         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:74$a4::updater()
+         * @see \class@anonymous /usr/share/nginx/html/app/Providers/AuditTrailServiceProvider.php:74$a6::updater()
          * @static
          */
         public static function updater()

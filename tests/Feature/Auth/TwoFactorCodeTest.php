@@ -5,6 +5,8 @@ use App\Mail\TwoFactorCodeMail;
 use Database\Seeders\EmailTemplateSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Webkul\Contact\Models\Person;
+use Webkul\Email\Models\Email;
 use Webkul\EmailTemplate\Models\EmailTemplate;
 
 uses(RefreshDatabase::class);
@@ -24,6 +26,34 @@ it('mails the 2fa code to the given address', function () {
         && str_contains($mail->renderedHtml, '123456')
         && $mail->subjectLine === 'Uw verificatiecode');
 });
+
+it('stores a copy with the code masked on the person of the keycloak user', function () {
+    $person = Person::factory()->create(['keycloak_user_id' => 'kc-patient-1']);
+
+    $this->withHeader('X-API-KEY', 'valid-api-key-123')
+        ->postJson(route('api.two-factor.code'), ['email' => 'patient@example.com', 'code' => '123456', 'keycloak_user_id' => 'kc-patient-1'])
+        ->assertOk();
+
+    $email = Email::query()->where('person_id', $person->id)->sole();
+
+    Mail::assertSent(TwoFactorCodeMail::class, fn (TwoFactorCodeMail $mail) => str_contains($mail->renderedHtml, '123456'));
+    expect($email->subject)->toBe('Uw verificatiecode')
+        ->and($email->source)->toBe('system')
+        ->and($email->reply)->toContain('••••••')
+        ->and($email->reply)->not->toContain('123456');
+});
+
+it('stores nothing without a matching person', function (?string $keycloakUserId) {
+    $this->withHeader('X-API-KEY', 'valid-api-key-123')
+        ->postJson(route('api.two-factor.code'), array_filter(['email' => 'medewerker@example.com', 'code' => '123456', 'keycloak_user_id' => $keycloakUserId]))
+        ->assertOk();
+
+    Mail::assertSent(TwoFactorCodeMail::class);
+    expect(Email::query()->count())->toBe(0);
+})->with([
+    'no keycloak id'      => [null],
+    'unknown keycloak id' => ['kc-employee-1'],
+]);
 
 it('rejects invalid input', function (array $payload, string $field) {
     $this->withHeader('X-API-KEY', 'valid-api-key-123')

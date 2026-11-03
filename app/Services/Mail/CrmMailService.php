@@ -4,12 +4,14 @@ namespace App\Services\Mail;
 
 use App\Enums\EmailTemplateCode;
 use App\Enums\PersonPreferenceKey;
+use App\Mail\TwoFactorCodeMail;
 use App\Models\PersonPreference;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use RuntimeException;
+use Throwable;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\Mails\Email as EmailMailable;
@@ -32,6 +34,7 @@ use Webkul\EmailTemplate\Models\EmailTemplate;
  *  - {@see sendEmail()}             – send a pre-persisted email record and move it to a folder.
  *  - {@see createAndMaybeSend()}    – create + conditionally send in one call (admin mail UI).
  *  - {@see sendToPersonTemplate()}  – render a template and send to a Person, honouring opt-out preferences.
+ *  - {@see sendTwoFactorCode()}     – send a 2FA code; stores a masked copy on the person.
  *  - {@see renderTemplate()}        – render only (for preview or external send logic).
  *  - {@see renderHtmlForEntities()} – render by code/name string with entity variable resolution.
  */
@@ -179,6 +182,47 @@ class CrmMailService
             $rendered['html'],
             $linkEmailToEntities
         );
+    }
+
+    /**
+     * Send a 2FA code directly (not queued, so a failure reaches the caller) and, when the
+     * Keycloak user is a Person, store a copy on that person with the code masked: staff see
+     * that and when a code was sent, never the code itself. Employees/clinic users have no Person.
+     *
+     * @throws Throwable when rendering or sending fails
+     */
+    public function sendTwoFactorCode(string $email, string $code, ?string $keycloakUserId = null): void
+    {
+        $rendered = $this->renderTemplate(EmailTemplateCode::TWO_FACTOR_CODE, ['code' => $code]);
+
+        Mail::to($email)->send(new TwoFactorCodeMail($rendered['subject'], $rendered['html']));
+
+        $person = filled($keycloakUserId)
+            ? Person::query()->where('keycloak_user_id', $keycloakUserId)->first()
+            : null;
+
+        if (! $person) {
+            return;
+        }
+
+        try {
+            $masked = $this->renderTemplate(EmailTemplateCode::TWO_FACTOR_CODE, ['code' => '••••••']);
+
+            $this->emailRepository->create([
+                'subject'   => $masked['subject'],
+                'reply'     => $masked['html'],
+                'reply_to'  => [$email],
+                'name'      => $person->name,
+                'source'    => 'system',
+                'user_type' => 'user',
+                'person_id' => $person->id,
+            ]);
+        } catch (Throwable $e) {
+            Log::warning('2FA code mail sent, but storing the masked copy failed', [
+                'person_id' => $person->id,
+                'error'     => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

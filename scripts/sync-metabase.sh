@@ -8,8 +8,10 @@
 #   ./scripts/sync-metabase.sh --dry-run       # alleen tonen wat er zou veranderen
 #   ./scripts/sync-metabase.sh --prod --dry-run
 #
-# Extra opties worden doorgegeven aan het artisan-commando, bijv. --dashboard=12
-# of --sync-schema. Bron overschrijven: METABASE_SOURCE=local ./scripts/sync-metabase.sh
+# --sync-schema staat standaard aan: Metabase scant eerst het schema van het doel opnieuw,
+# zodat nieuwe analytics-views zichtbaar zijn. Uitzetten met --no-sync-schema.
+# Overige opties gaan door naar het artisan-commando, bijv. --dashboard=12 of --force.
+# Bron overschrijven: METABASE_SOURCE=local ./scripts/sync-metabase.sh
 # Vereist METABASE_<ENV>_URL en METABASE_<ENV>_API_KEY in .env (zie .env.example).
 
 set -euo pipefail
@@ -19,11 +21,13 @@ cd "$(dirname "$0")/.."
 SOURCE=${METABASE_SOURCE:-dev}
 TARGET=acc
 ARGS=()
+SYNC_SCHEMA=--sync-schema
 
 for arg in "$@"; do
     case "$arg" in
         --prod) TARGET=prod ;;
-        -h|--help) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        --no-sync-schema) SYNC_SCHEMA= ;;
+        -h|--help) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) ARGS+=("$arg") ;;
     esac
 done
@@ -40,4 +44,4 @@ else
     ARTISAN=(php artisan)
 fi
 
-exec "${ARTISAN[@]}" metabase:sync-dashboard --source="$SOURCE" --target="$TARGET" ${ARGS[@]+"${ARGS[@]}"}
+exec "${ARTISAN[@]}" metabase:sync-dashboard --source="$SOURCE" --target="$TARGET" ${SYNC_SCHEMA:+"$SYNC_SCHEMA"} ${ARGS[@]+"${ARGS[@]}"}

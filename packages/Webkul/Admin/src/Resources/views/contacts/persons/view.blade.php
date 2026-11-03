@@ -66,6 +66,11 @@
                                ])
 
                         @endif
+                        @include('adminc.persons.partials.new-lead-button', [
+                            'persons' => collect([$person]),
+                            'returnUrl' => route('admin.contacts.persons.view', $person->id),
+                        ])
+
                         {!! view_render_event('admin.persons.view.actions.after', ['person' => $person]) !!}
                     </div>
                 </div>

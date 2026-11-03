@@ -225,11 +225,12 @@ $userDefaultsForJs = (object) ($userDefaults ?? []);
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M5 13l4 4L19 7"></path>
                                         </svg>
-                                        <span class="font-medium text-green-800">Vooraf ingevuld vanuit persoon:</span>
+                                        <span class="font-medium text-green-800">@{{ selectedPersonId ? 'Lead wordt gekoppeld aan:' : 'Vooraf ingevuld vanuit persoon:' }}</span>
                                         <span class="text-green-700">@{{ joinedPersonNames }}</span>
+                                        <a v-if="selectedPersonId" :href="`/admin/contacts/persons/view/${selectedPersonId}`" target="_blank" class="icon-eye text-sm text-green-700" title="Bekijk persoon"></a>
 
                                     </div>
-                                    <div class="flex items-center gap-2">
+                                    <div v-if="!selectedPersonId" class="flex items-center gap-2">
                                         <span class="text-green-700"><i>Kies een suggestie om deze persoon te koppelen aan de lead.</i></span>
                                     </div>
                                 </div>
@@ -604,11 +605,16 @@ $userDefaultsForJs = (object) ($userDefaults ?? []);
                         if (!this.formData.phone && p.phones && p.phones.length) {
                             this.formData.phone = p.phones[0].value || '';
                         }
+                        // Person came in via ?person_id=: link it right away, as if "Koppelen" was clicked
+                        if (p.id) {
+                            this.selectedPersonId = p.id;
+                            this.suggestionsDisabled = true;
+                        }
                         this.updateSelectedPersonsSummary();
                         this.$nextTick(() => {
                             this.syncPersonalFieldsToForm();
                             // Trigger suggestions immediately when phone is present
-                            if (this.formData.phone && String(this.formData.phone).trim().length > 0) {
+                            if (!this.suggestionsDisabled && this.formData.phone && String(this.formData.phone).trim().length > 0) {
                                 this.fetchSuggestions();
                             }
                         });

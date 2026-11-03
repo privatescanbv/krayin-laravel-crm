@@ -62,6 +62,11 @@
                             <x-admin::activities.actions.activity :entity="$order" entity-control-name="order_id"/>
                         @endif
 
+                        @include('adminc.persons.partials.new-lead-button', [
+                            'persons' => $order->salesLead?->persons ?? collect(),
+                            'returnUrl' => route('admin.orders.view', $order->id),
+                        ])
+
                         {!! view_render_event('admin.orders.view.actions.after', ['order' => $order]) !!}
                     </div>
                 </div>

@@ -1,6 +1,7 @@
 # API-voorstel: kliniekportaal en nieuw patiëntportaal
 
-- **Status:** voorstel (2026-11-03), nog niet besproken, niets gebouwd
+- **Status:** voorstel (2026-11-03), nog niet besproken. Alleen de accountroutes voor kliniekgebruikers zijn gebouwd
+  (wachtwoord vergeten, profiel, wachtwoord wijzigen; zie §3.3). De rest van dit voorstel is niet gebouwd.
 - **Bronnen:** `tickets/kliniekportaal-api-gap-analyse.md` (§6 API-oppervlakte), requirements patiëntportaal
   (DASH/APPT/DOC/FORM/TRJ/MSG/DATA/FIN/NOT), huidige `routes/api.php` en de `Api/Patient*`-controllers.
 - **Architecture Mode:** dit raakt auth, publieke API-contracten en het datamodel van meerdere modules.
@@ -13,7 +14,7 @@
    | Portaalbegrip | CRM | Opmerking |
    |---|---|---|
    | Traject (trajectory) | `SalesLead` | Herniapoli én Privatescan. Eén persoon kan meerdere trajecten hebben |
-   | Afspraak (appointment) | `Order` + `OrderItem` + boeking (`ResourceOrderItem`) | zie §5, V5: afspraak = boeking, niet order |
+   | Afspraak (appointment) | `Order` + `OrderItem` + boeking (`ResourceOrderItem`) | zie §7, V5: afspraak = boeking, niet order |
    | Document | `Activity type=file` + `activity_files` | zichtbaarheid via `activity_portal_persons` (patiënt) of traject-scope (medewerker) |
    | Bericht | `PatientMessage` (patiënt ↔ team) / `Activity type=note` (team-intern) | die twee mogen nooit door elkaar lopen |
    | Actie (patiënt) | afgeleid: open formulier, gevraagd document, open betaling, afspraakverzoek | geen nieuwe tabel, zie §4.2 |
@@ -37,21 +38,21 @@ Wat er nu staat werkt, maar het nieuwe portaal bouwt erop voort. Deze punten wil
 | # | Bevinding | Waar | Gevolg | Voorstel |
 |---|---|---|---|---|
 | K1 | De patiënt wordt aangeduid met de **Keycloak-id in het pad** (`patient/{id}`). Bij een bearer-token moet die gelijk zijn aan `sub`: het pad herhaalt dus het token | `EnsureKeycloakPatientMatchesRoute` | elke client moet de sub uit het token halen en in de URL zetten; Keycloak-id's lekken in logs en URL's | `patient/me/...` voor bearer-callers. `{id}` blijft alleen voor API-key (service-to-service). Eén middleware zet de `Person` op de request, voor beide vormen |
-| K2 | Elke controller doet zelf `resolvePersonOrUser()` en de afhandeling "user zonder person → lege lijst" | alle 10 `Patient*`-controllers | gedrag loopt uiteen: `messages` geeft 200 met lege data, `password` 404, `store` logt een error en geeft 200 | resolven in de middleware van K1; controllers krijgen een `Person`. Medewerker-accounts op het patiëntportaal: één keer besluiten (advies: 403) |
-| K3 | **API-key heeft volledige toegang tot alle patiënten.** `patient.self` controleert niets zonder bearer | `EnsureKeycloakPatientMatchesRoute` r.25 | elke API-key-houder (n8n, forms) kan elk dossier lezen en bewerken | per API-key scopes (bijv. `patient:read`), of de patiënt-routes alleen voor bearer openzetten en de BFF het patiënttoken laten doorsturen. Zie V-P1 |
+| K2 | Elke controller doet zelf `resolvePersonOrUser()` en de afhandeling "user zonder person → lege lijst" | de `Patient*`-controllers en `PersonActivityController` | gedrag loopt uiteen: `messages` geeft 200 met lege data, `password` 404, `store` logt een error en geeft 200 | resolven in de middleware van K1; controllers krijgen een `Person`. Medewerker-accounts op het patiëntportaal: één keer besluiten (advies: 403) |
+| K3 | **API-key heeft volledige toegang tot alle patiënten.** `patient.self` controleert niets zonder bearer | `EnsureKeycloakPatientMatchesRoute` (alleen met bearer) | elke API-key-houder (n8n, forms) kan elk dossier lezen en bewerken | per API-key scopes (bijv. `patient:read`), of de patiënt-routes alleen voor bearer openzetten en de BFF het patiënttoken laten doorsturen. Zie V-P1 |
 | K4 | `PUT patient/{id}/password` met bearer **vraagt het huidige wachtwoord niet** | `PatientPasswordController::update` | een gestolen of nog open sessietoken is genoeg om het account over te nemen | `current_password` altijd verplicht; of wachtwoordwijziging helemaal via Keycloak (account console / required action) |
 | K5 | Het CRM kan het patiëntwachtwoord **terug-ontsleutelen** (`getDecryptedPassword()`) en zet het op `Person` én `User` | `PatientPasswordController` | omkeerbaar opgeslagen wachtwoorden; dubbele bron naast Keycloak | wachtwoord alleen in Keycloak. CRM zet het door via de Keycloak admin-API en slaat het niet op. Apart ticket (security) |
-| K6 | `password/reset` hangt in de groep waar de patiënt al ingelogd moet zijn, en weigert daarna juist bearer-callers | `routes/api.php` r.144 | de route staat op de verkeerde plek; de bedoeling valt niet uit de route af te lezen | naast `patient/forgot-password` zetten: `POST patient/password/reset` (API-key, met `reset_token`) |
+| K6 | `password/reset` hangt in de groep waar de patiënt al ingelogd moet zijn, en weigert daarna juist bearer-callers | `routes/api.php` (`patient/{id}/password/reset`) | de route staat op de verkeerde plek; de bedoeling valt niet uit de route af te lezen | naast `patient/forgot-password` zetten: `POST patient/password/reset` (API-key, met `reset_token`) |
 | K7 | **`GET notifications` markeert als gelezen** (zijwerking bij lezen) | `PatientNotificationController::index` | een prefetch, retry of tweede tabblad markeert alles als gelezen; DASH-003 ("nieuw") kan niet betrouwbaar | GET is alleen lezen. Lezen markeren via `POST notifications/read` (ids of `all`) |
 | K8 | `markAsRead` zet **`dismissed_at`**, en weigert niet-dismissable meldingen | idem | "gelezen" en "weggeklikt" zijn één ding | twee acties: `read` (altijd mag) en `dismiss` (alleen dismissable) |
-| K9 | `counters.new_docs_count` telt **open formulieren**, geen documenten | `PatientCounterController` r.58 | de naam liegt; DASH-003 (nieuwe documenten) kan er niet op leunen | opgaan in `GET patient/me/dashboard` met correcte namen (`unread_messages`, `new_documents`, `open_forms`, `open_actions`) |
+| K9 | `counters.new_docs_count` telt **open formulieren**, geen documenten | `PatientCounterController` (`new_docs_count` = aantal open formulieren) | de naam liegt; DASH-003 (nieuwe documenten) kan er niet op leunen | opgaan in `GET patient/me/dashboard` met correcte namen (`unread_messages`, `new_documents`, `open_forms`, `open_actions`) |
 | K10 | `messages` is oplopend gesorteerd én gepagineerd: pagina 1 is het **oudste** bericht | `PersonActivityController::index` | het portaal moet alle pagina's ophalen om het laatste bericht te tonen | aflopend + cursor-paginering (`?before=`); de client draait om voor weergave |
 | K11 | `messages` kent geen **categorie, traject of bijlage**; `mark_as_read` markeert altijd alles | `PatientMessage` | MSG-001/002/004/006 kunnen niet | kolommen `category`, `sales_lead_id`; bijlagen als file-activiteit aan het bericht; `read` met `up_to_id` |
-| K12 | `POST messages` logt de volledige request-body (`print_r($request->all())`) | `PersonActivityController::store` r.81 | medische berichtinhoud in de applicatielog (AVG) | logregel weg |
+| K12 | `POST messages` logt de volledige request-body (`print_r($request->all())`) | `PersonActivityController::store` (`print_r($request->all())`) | medische berichtinhoud in de applicatielog (AVG) | logregel weg |
 | K13 | Patiënt-upload heeft geen **document_type, traject of status**; een rare closure-validatie doet niets | `PatientFileUploadController` | DOC-002/003/005 kunnen niet; upload komt "los" op de persoon | velden `document_type`, `sales_lead_id`, optioneel `request_id`; status zie §4.3; de lege closure weg |
-| K14 | **NAW-update laat kerngegevens wijzigen** (naam, geboortedatum, geslacht) | `PatientNawController::update` r.104 | in strijd met DATA-004; identiteit kan zonder controle veranderen | whitelist: alleen contactgegevens + adres. Kerngegevens via een correctieverzoek (`POST me/details/correction-requests` → taak in werkvoorraad) |
+| K14 | **NAW-update laat kerngegevens wijzigen** (naam, geboortedatum, geslacht) | `PatientNawController::update` (`$personFields`) | in strijd met DATA-004; identiteit kan zonder controle veranderen | whitelist: alleen contactgegevens + adres. Kerngegevens via een correctieverzoek (`POST me/details/correction-requests` → taak in werkvoorraad) |
 | K15 | Afspraak-id's zijn strings `"order-123"` / `"activity-123"`; `practitioner_id`, `end_at`, `is_remote` zijn altijd null/false | `PatientPortalAppointmentResource` | id's zijn niet stabiel als één order meerdere afspraken krijgt; dode velden in het contract | afspraak-id = boeking-id (zie V5); dode velden weg of vullen (type, locatie, eindtijd) |
-| K16 | Kleiner: het dubbele `sales-leads`-blok heet in het commentaar "singular", maar het prefix is hetzelfde | `routes/api.php` r.72 | twee keer dezelfde route registreren; het enkelvoudige n8n-pad bestaat niet | kijken wat n8n echt aanroept; óf `sales-lead` maken, óf het blok weghalen |
+| K16 | Kleiner: het dubbele `sales-leads`-blok heet in het commentaar "singular", maar het prefix is hetzelfde | `routes/api.php` (twee `sales-leads`-groepen) | twee keer dezelfde route registreren; het enkelvoudige n8n-pad bestaat niet | kijken wat n8n echt aanroept; óf `sales-lead` maken, óf het blok weghalen |
 | K17 | Kleiner: de `patient/*`-routes hebben geen rate limit (alleen forgot-password en 2FA) | `routes/api.php` | uploads en berichten zonder rem | `throttle:patient` op de groep |
 
 **Wat goed is en blijft:** publicatie via `activity_portal_persons` (DOC-004 werkt al zo), `PatientNotification`
@@ -113,7 +114,31 @@ GET    portal/notifications                        alleen lezen
 POST   portal/notifications/read                   ids[] of all
 ```
 
-24 endpoints. Het verschil met de gap-lijst komt door de samenvoegingen uit §3.1.
+27 endpoints. Het verschil met de gap-lijst komt door de samenvoegingen uit §3.1.
+
+### 3.3 Reeds gebouwd: accountroutes voor kliniekgebruikers
+
+Een kliniekgebruiker is een CRM-`User` met een clinic-rol (`RoleCode`), geen `Person`. De patiëntroutes geven voor hen
+altijd 404. Daarom bestaan deze routes al (2026-11-03), naast `portal/*`:
+
+| Route | Auth | Doel |
+|---|---|---|
+| `POST clinic/forgot-password` | API-key | mailt de resetlink (neutraal antwoord voor onbekende adressen) |
+| `POST clinic/{keycloakUserId}/password/reset` | API-key, bearer geweigerd (403) | zet het nieuwe wachtwoord nadat het kliniekportaal het token bevestigde |
+| `GET clinic/{keycloakUserId}/naw` | API-key of eigen bearer | naam en e-mailadres |
+| `PUT clinic/{keycloakUserId}/naw` | idem | alleen `first_name` en `last_name`; het e-mailadres is de Keycloak-loginnaam en blijft vast |
+| `PUT clinic/{keycloakUserId}/password` | idem | zonder bearer is `current_password` verplicht; met bearer controleert het portaal het tegen Keycloak |
+
+Alleen de paden `api/clinic/*/naw` en `api/clinic/*/password` accepteren een bearer-token (`ApiKeyAuth`); het token
+moet bij `{keycloakUserId}` horen. Alleen actieve gebruikers met een clinic-rol en een Keycloak-account zijn bereikbaar.
+
+**Afwijkingen van dit voorstel, bewust voorlopig:**
+
+- Deze routes herhalen de Keycloak-id in het pad (K1) en `password/reset` staat in dezelfde vorm als bij de patiënt (K6).
+  Bij de overstap naar `portal/*` worden ze `portal/me/profile` en `portal/me/password`, en `forgot-password` /
+  `password/reset` gaan naar niet-ingelogde routes zonder id in het pad.
+- Met bearer controleert het CRM het huidige wachtwoord niet (K4). Het kliniekportaal doet dat wel, via een
+  Keycloak password grant. Dit volgt het besluit bij V-P2.
 
 ---
 
@@ -259,4 +284,5 @@ GET    keycloak/persons/{keycloakUserId}        ✅ overbodig voor bearer zodra 
 | V-P5 | Waar staan patiëntfacturen en offertes: in het CRM (te bouwen), in het boekhoudpakket, of bij de betaalprovider? | FIN-001/004 zijn zonder bron niet te bouwen |
 | V-P6 | Welke berichtcategorieën, en naar welke groep/werkvoorraad gaat elk? | MSG-001-routering |
 | V-P7 | Moeten patiënt-uploads in het CRM worden goedgekeurd (`accepted`/`rejected`), of is `received` genoeg? | DOC-003; bepaalt of er CRM-UI nodig is |
+| V-P8 | Blijft de kliniekprofiel-API `clinic/{id}/…` tot `portal/*` bestaat, of meteen `portal/me/…`? | §3.3: de huidige routes herhalen K1 en K6 |
 | V5 (gap) | Eén operatie per order, of meerdere? | Bepaalt het afspraak-id voor beide portalen (K15, §3.1) |

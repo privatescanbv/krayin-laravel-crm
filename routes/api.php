@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\ClinicPasswordResetController;
+use App\Http\Controllers\Api\ClinicProfileController;
 use App\Http\Controllers\Api\EventWebhookController;
 use App\Http\Controllers\Api\FailedJobsAlertController;
 use App\Http\Controllers\Api\KeycloakUserController;
@@ -101,6 +102,15 @@ $registerAuthenticatedApiRoutes = function () {
     Route::post('clinic/{keycloakUserId}/password/reset', [ClinicPasswordResetController::class, 'reset'])
         ->middleware('throttle:clinic-forgot-password')
         ->name('api.clinic.password.reset');
+
+    // Clinic-portal profile of the logged-in user (Keycloak Bearer token must match {keycloakUserId}; API key callers are service-to-service)
+    Route::prefix('clinic/{keycloakUserId}')
+        ->middleware('patient.self:keycloakUserId')
+        ->group(function () {
+            Route::get('naw', [ClinicProfileController::class, 'show'])->name('api.clinic.naw.show');
+            Route::put('naw', [ClinicProfileController::class, 'update'])->name('api.clinic.naw.update');
+            Route::put('password', [ClinicProfileController::class, 'updatePassword'])->name('api.clinic.password.update');
+        });
 
     // 2FA verification code mail (API-key only; used by the forms/patient portal for all user types)
     Route::post('two-factor/code', TwoFactorCodeController::class)

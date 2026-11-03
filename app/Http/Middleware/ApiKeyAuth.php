@@ -127,6 +127,8 @@ class ApiKeyAuth
     private function allowsKeycloakBearerFallback(Request $request): bool
     {
         return $request->is('api/patient/*')
-            || $request->is('api/keycloak/persons/*');
+            || $request->is('api/keycloak/persons/*')
+            || $request->is('api/clinic/*/naw')
+            || $request->is('api/clinic/*/password');
     }
 }

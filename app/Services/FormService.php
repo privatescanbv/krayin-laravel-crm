@@ -367,6 +367,14 @@ class FormService
     }
 
     /**
+     * Whether the Forms API token is configured.
+     */
+    public function isConfigured(): bool
+    {
+        return ! empty(config('services.portal.patient.api_token'));
+    }
+
+    /**
      * Validate and get API token.
      *
      * @param  array  $context  Additional context for logging

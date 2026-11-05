@@ -30,6 +30,15 @@ class SyncAnamnesisFormStatus extends Command
 
     public function handle(FormService $formService): int
     {
+        if (! $formService->isConfigured()) {
+            // Without this guard, every pending form in the chunk below hits getApiToken()
+            // and logs its own error, turning one missing env var into dozens of Bugsink events.
+            Log::error('forms:sync-anamnesis-status: FORMS_API_TOKEN not configured, skipping run');
+            $this->error('FORMS_API_TOKEN is not configured, skipping run.');
+
+            return self::FAILURE;
+        }
+
         $checked = 0;
         $changed = 0;
         $completed = 0;

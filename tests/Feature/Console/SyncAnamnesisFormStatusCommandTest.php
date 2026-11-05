@@ -11,6 +11,7 @@ use App\Models\AnamnesisGvlForm;
 use Database\Seeders\TestSeeder;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -100,6 +101,23 @@ test('it does not poll forms that are already completed', function () {
     Http::fake();
 
     $this->artisan('forms:sync-anamnesis-status')->assertSuccessful();
+
+    Http::assertNothingSent();
+});
+
+test('it skips the run and logs once when the forms API token is not configured', function () {
+    config(['services.portal.patient.api_token' => null]);
+
+    makeGvlForm('108', FormStatus::New);
+    makeGvlForm('109', FormStatus::New);
+
+    Http::fake();
+
+    Log::shouldReceive('error')
+        ->once()
+        ->with('forms:sync-anamnesis-status: FORMS_API_TOKEN not configured, skipping run');
+
+    $this->artisan('forms:sync-anamnesis-status')->assertFailed();
 
     Http::assertNothingSent();
 });

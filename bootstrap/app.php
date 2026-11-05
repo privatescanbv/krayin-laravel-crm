@@ -1,7 +1,9 @@
 <?php
 
 use App\Exceptions\Mail\EmailSendingBlockedException;
+use App\Http\Controllers\HealthController;
 use App\Http\Middleware\ApiKeyAuth;
+use App\Http\Middleware\HealthGuard;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\BouncerPermissionMiddleware;
 use App\Http\Middleware\EncryptCookies;
@@ -21,6 +23,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 use Sentry\Laravel\Integration;
 use GuzzleHttp\Exception\ClientException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -37,6 +40,12 @@ $app = Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
+        // Buiten de web-groep: geen sessie of cookies op health-checks.
+        then: function () {
+            Route::get('health/live', [HealthController::class, 'live']);
+            Route::get('health/ready', [HealthController::class, 'ready'])->middleware('health.guard:probe');
+            Route::get('health/report', [HealthController::class, 'report'])->middleware('health.guard:report');
+        },
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->redirectGuestsTo(fn () => route('admin.session.create'));
@@ -78,6 +87,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'guest'              => RedirectIfAuthenticated::class,
             'log.api.http'       => LogApiHttpTraffic::class,
             'api.key'            => ApiKeyAuth::class,
+            'health.guard'       => HealthGuard::class,
             'patient.self'       => EnsureKeycloakPatientMatchesRoute::class,
             'bouncer.permission' => BouncerPermissionMiddleware::class,
         ]);

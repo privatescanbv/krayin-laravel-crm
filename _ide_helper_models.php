@@ -1546,6 +1546,7 @@ namespace App\Models{
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Shift> $shifts
  * @property-read int|null $shifts_count
  * @property-read \Webkul\User\Models\User|null $updater
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Resource activeWithActiveClinic()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Resource artsen()
  * @method static \Database\Factories\ResourceFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Resource newModelQuery()

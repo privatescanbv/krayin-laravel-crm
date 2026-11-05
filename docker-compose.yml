@@ -101,7 +101,7 @@ services:
       privateforms_form_traefik:
       clinic_portal_traefik:
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/up"]
+      test: ["CMD", "curl", "-f", "http://localhost/health/live"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -111,6 +111,25 @@ services:
         condition: service_started
       keycloak:
         condition: service_healthy
+
+  # Health API (contract v1), gelijk aan acc/prod: healthcheck van crm = alleen /health/live;
+  # deze container meldt apart of de database bereikbaar is (/health/ready, intern) zonder routing te raken.
+  crm-db-check:
+    image: curlimages/curl:8.10.1
+    container_name: crm-db-check
+    restart: unless-stopped
+    entrypoint: ["sleep", "infinity"]
+    healthcheck:
+      test: [ "CMD", "curl", "-fsS", "-o", "/dev/null", "http://crm/health/ready" ]
+      interval: 30s
+      timeout: 5s
+      retries: 2
+      start_period: 60s
+    networks:
+      - backend
+    depends_on:
+      crm:
+        condition: service_started
 
   mysql_crm:
     image: 'mysql/mysql-server:8.0'

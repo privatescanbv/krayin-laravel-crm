@@ -73,7 +73,7 @@ services:
       - '/home/mbulthuis/upload:/usr/share/nginx/html/upload_sugarcrm'
       - '/home/apps/storage/crm:/usr/share/nginx/html/storage/app'
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost/up" ]
+      test: [ "CMD", "curl", "-f", "http://localhost/health/live" ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -84,6 +84,30 @@ services:
     networks:
       - backend
       - public
+
+  # Health API (contract v1): Docker-healthchecks gebruiken alleen /health/live (observatie, geen herstart).
+  # /health/ready is alleen intern bereikbaar (geen proxy-headers); /health/report vereist een bearer-token
+  # (.env: HEALTH_REPORT_TOKEN voor crm, FORMS_HEALTH_REPORT_TOKEN, CLINIC_HEALTH_REPORT_TOKEN).
+  # Meldt of crm zijn MySQL (native op de host, via host.docker.internal) kan bereiken.
+  # Bewust een aparte container: de healthcheck van crm zelf blijft /health/live. Anders zou een
+  # MySQL-storing crm unhealthy maken en haalt Traefik de route én de crm-whitelist uit de routing.
+  # Zichtbaar met `docker ps` / `docker compose ps`; geen Traefik-labels, dus geen effect op routing.
+  crm-db-check:
+    image: curlimages/curl:8.10.1
+    container_name: crm-db-check
+    restart: unless-stopped
+    entrypoint: ["sleep", "infinity"]
+    healthcheck:
+      test: [ "CMD", "curl", "-fsS", "-o", "/dev/null", "http://crm/health/ready" ]
+      interval: 30s
+      timeout: 5s
+      retries: 2
+      start_period: 60s
+    networks:
+      - backend
+    depends_on:
+      crm:
+        condition: service_started
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -170,6 +194,7 @@ services:
       CRM_API_URL: "http://crm/api/"
       PATIENT_MESSAGES_ENABLED: false
       SENTRY_LARAVEL_DSN: "https://2d18cebce543495a9c99ab095e7f5045@bugs.mbsoftware.nl/2"
+      HEALTH_REPORT_TOKEN: "${FORMS_HEALTH_REPORT_TOKEN:-}"
       TWO_FACTOR_CHANNELS: "email,sms"
     labels:
       - traefik.enable=true
@@ -204,7 +229,7 @@ services:
       - backend
       - public
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost/up" ]
+      test: [ "CMD", "curl", "-f", "http://localhost/health/live" ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -260,6 +285,7 @@ services:
       CRM_API_URL: "http://crm/api/"
       # Do not inherit the CRM's Sentry project from .env
       SENTRY_LARAVEL_DSN: "${CLINIC_SENTRY_LARAVEL_DSN:-}"
+      HEALTH_REPORT_TOKEN: "${CLINIC_HEALTH_REPORT_TOKEN:-}"
     labels:
       - traefik.enable=true
       - traefik.http.routers.clinic.rule=Host("clinic.${PRIVATESCAN_BASE_DOMAIN}")
@@ -280,7 +306,7 @@ services:
       - backend
       - public
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost/up" ]
+      test: [ "CMD", "curl", "-f", "http://localhost/health/live" ]
       interval: 30s
       timeout: 5s
       retries: 3

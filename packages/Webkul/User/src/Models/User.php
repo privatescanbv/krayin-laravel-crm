@@ -3,6 +3,7 @@
 namespace Webkul\User\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
@@ -191,7 +192,7 @@ class User extends Authenticatable implements UserContract
     /**
      * Get the role that owns the user.
      */
-    public function role()
+    public function role(): BelongsTo
     {
         return $this->belongsTo(RoleProxy::modelClass());
     }
@@ -199,7 +200,7 @@ class User extends Authenticatable implements UserContract
     /**
      * ARTSEN resource of a user with the Arts role; clinic via $user->resource->clinic.
      */
-    public function resource()
+    public function resource(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Resource::class);
     }
@@ -207,7 +208,7 @@ class User extends Authenticatable implements UserContract
     /**
      * Clinic of a user with the Kliniek medewerker role.
      */
-    public function clinic()
+    public function clinic(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Clinic::class);
     }

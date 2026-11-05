@@ -10,14 +10,15 @@
 #   2. Draai het script, voor alles of voor specifieke keys:
 #        /pad/naar/rotatie_password.sh
 #        /pad/naar/rotatie_password.sh API_KEY_1 FORMS_APP_KEY
-#      Er wordt eerst een backup gemaakt: .env.bak.<timestamp>
+#      Er wordt eerst een backup gemaakt: .env.bak.<timestamp> (bij FORMS_APP_KEY ook .env.forms.bak.<timestamp>)
 #   3. Recreate direct de containers die .env lezen (restart is niet genoeg):
-#        docker compose -f docker-compose-<acc|prod>.yml up -d crm forms
+#        docker compose -f docker-compose-<acc|prod>.yml up -d crm forms clinic-portal
 #   4. Werk externe afnemers bij (zie meldingen aan het eind van het script).
 #   5. Controleer de site en verwijder daarna de .env.bak.* (bevat oude secrets).
 #
 #   Vereist: draaiende container "crm" (andere naam: CRM_CONTAINER=...), openssl.
 #   Andere .env: ENV_FILE=/pad/.env
+#   forms heeft een eigen env-bestand (.env.forms, naast de .env); ander pad: FORMS_ENV_FILE=/pad/.env.forms
 #
 # KEYS
 #   DB_PASSWORD, DB_ANALYTICS_PASSWORD     MySQL-wachtwoord van de user + .env
@@ -26,17 +27,22 @@
 #   PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET  door Keycloak geregenereerd (client patient-app) + .env;
 #                                          forms krijgt hem als KEYCLOAK_CLIENT_SECRET
 #   CRM_KEYCLOAK_CLIENT_SECRET             door Keycloak geregenereerd (client crm-app) + .env; SSO-login CRM
-#   FORMS_APP_KEY                          Laravel APP_KEY van forms; wordt toegevoegd als hij ontbreekt.
+#   FORMS_APP_KEY                          Laravel APP_KEY van forms; staat als APP_KEY in .env.forms
+#                                          (FORMS_ENV_FILE), wordt toegevoegd als hij ontbreekt.
 #                                          Patiënten worden één keer uitgelogd.
 set -euo pipefail
 
 ENV_FILE="${ENV_FILE:-.env}"
+FORMS_ENV_FILE="${FORMS_ENV_FILE:-.env.forms}"
 CRM_CONTAINER="${CRM_CONTAINER:-crm}"
 ALL_KEYS=(DB_PASSWORD DB_ANALYTICS_PASSWORD API_KEY_1 FORMS_API_KEY PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET CRM_KEYCLOAK_CLIENT_SECRET FORMS_APP_KEY)
 
 if [ $# -gt 0 ]; then KEYS=("$@"); else KEYS=("${ALL_KEYS[@]}"); fi
 
 [ -f "$ENV_FILE" ] || { echo "Geen $ENV_FILE in $(pwd)" >&2; exit 1; }
+if [[ " ${KEYS[*]} " == *" FORMS_APP_KEY "* ]]; then
+    [ -f "$FORMS_ENV_FILE" ] || { echo "Geen $FORMS_ENV_FILE in $(pwd) (nodig voor FORMS_APP_KEY)" >&2; exit 1; }
+fi
 
 env_get() { # value of KEY in .env, surrounding quotes stripped
     grep -E "^$1=" "$ENV_FILE" | tail -n1 | cut -d= -f2- | sed -E 's/^"(.*)"$/\1/; s/^'\''(.*)'\''$/\1/'
@@ -87,6 +93,15 @@ rotate_env_value() {
     echo "  ok: $ENV_FILE bijgewerkt"
 }
 
+# forms leest APP_KEY uit .env.forms. ENV_FILE is hier tijdelijk dat bestand (env_get/env_set gebruiken de variabele).
+rotate_forms_app_key() {
+    local ENV_FILE="$FORMS_ENV_FILE"
+    cp -p "$ENV_FILE" "${ENV_FILE}.bak.$(date +%Y%m%d%H%M%S)"
+    echo "→ FORMS_APP_KEY (APP_KEY in $ENV_FILE)"
+    env_set APP_KEY "base64:$(openssl rand -base64 32)"
+    echo "  ok: $ENV_FILE bijgewerkt"
+}
+
 # Keycloak is the source of truth: let it regenerate the secret, then copy it into .env.
 rotate_keycloak_secret() {
     local key="$1" client_id="$2" new
@@ -123,7 +138,7 @@ for key in "${KEYS[@]}"; do
         API_KEY_1 | FORMS_API_KEY) rotate_env_value "$key" "$(generate 40)" ;;
         PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET) rotate_keycloak_secret "$key" patient-app ;;
         CRM_KEYCLOAK_CLIENT_SECRET) rotate_keycloak_secret "$key" crm-app ;;
-        FORMS_APP_KEY) rotate_env_value "$key" "base64:$(openssl rand -base64 32)" ;;
+        FORMS_APP_KEY) rotate_forms_app_key ;;
     esac
 done
 
@@ -131,7 +146,7 @@ rotated() { [[ " ${KEYS[*]} " == *" $1 "* ]]; }
 
 echo
 echo "Klaar. Recreate nu direct de containers die .env lezen (restart is niet genoeg):"
-echo "  docker compose -f docker-compose-<acc|prod>.yml up -d crm forms"
+echo "  docker compose -f docker-compose-<acc|prod>.yml up -d crm forms clinic-portal"
 if rotated DB_PASSWORD || rotated DB_ANALYTICS_PASSWORD; then
     echo "- DB: bestaande verbindingen blijven werken tot de recreate; nieuwe hebben het nieuwe wachtwoord nodig."
     echo "  Gebruikt Metabase de analytics-user? Werk het wachtwoord bij in Metabase > Admin > Databases."
@@ -150,5 +165,6 @@ if rotated CRM_KEYCLOAK_CLIENT_SECRET; then
 fi
 if rotated FORMS_APP_KEY; then
     echo "- FORMS_APP_KEY: ingelogde patiënten moeten na de recreate opnieuw inloggen."
+    echo "  Daarna: verwijder ook ${FORMS_ENV_FILE}.bak.* (bevat de oude APP_KEY)."
 fi
 echo "Daarna: verwijder $backup (bevat de oude secrets)."

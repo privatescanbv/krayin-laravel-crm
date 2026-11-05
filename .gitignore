@@ -73,3 +73,5 @@ docs/html
 /.playwright-mcp/
 /.yarn/
 *.sql.gz
+.env.forms
+.env.clinic

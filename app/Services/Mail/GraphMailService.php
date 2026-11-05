@@ -220,7 +220,9 @@ class GraphMailService extends AbstractEmailProcessor
 
     protected function hasAttachments($message): bool
     {
-        return $message['hasAttachments'] ?? false;
+        // Graph's hasAttachments is false for inline-only mails; fall back to cid: references in the body.
+        return ($message['hasAttachments'] ?? false)
+            || preg_match('/\bcid:/i', $message['body']['content'] ?? '') === 1;
     }
 
     protected function processAttachments(Email $email, $message): void

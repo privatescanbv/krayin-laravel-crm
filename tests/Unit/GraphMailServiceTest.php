@@ -528,6 +528,80 @@ class GraphMailServiceTest extends TestCase
         $method->invoke($this->service, $email, $message);
     }
 
+    public function test_has_attachments_detects_inline_cid_images(): void
+    {
+        $method = (new ReflectionClass($this->service))->getMethod('hasAttachments');
+        $method->setAccessible(true);
+        $check = fn (array $m) => $method->invoke($this->service, $m);
+
+        $this->assertTrue($check(['hasAttachments' => false, 'body' => ['content' => '<img src="cid:example-image">']]));
+        $this->assertTrue($check(['hasAttachments' => false, 'body' => ['content' => '<img src="CID:example-image">']]));
+        $this->assertTrue($check(['hasAttachments' => true, 'body' => ['content' => '<p>x</p>']]));
+        $this->assertFalse($check(['hasAttachments' => false, 'body' => ['content' => '<p>x</p>']]));
+        $this->assertFalse($check(['hasAttachments' => false]));
+    }
+
+    public function test_process_message_stores_both_regular_and_inline_attachments(): void
+    {
+        Http::fake([
+            '*/oauth2/v2.0/token'              => Http::response(['access_token' => 't', 'expires_in' => 3600]),
+            '*/messages/msg-mixed/attachments' => Http::response(['value' => [
+                ['name' => 'report.pdf', 'contentType' => 'application/pdf', 'contentBytes' => base64_encode('pdf'), 'size' => 3, 'isInline' => false],
+                ['name' => 'image001.jpg', 'contentType' => 'image/jpeg', 'contentId' => 'example-image', 'contentBytes' => base64_encode('jpg'), 'size' => 3, 'isInline' => true],
+            ]]),
+            '*' => Http::response([]),
+        ]);
+
+        $this->emailRepository->method('findOneByField')->willReturn(null);
+        $this->emailRepository->method('create')->willReturn(new Email);
+
+        $this->attachmentRepository
+            ->expects($this->exactly(2))
+            ->method('createFromGraphData');
+
+        $this->service->processMessage([
+            'id'                => 'msg-mixed',
+            'internetMessageId' => '<mixed@example.com>',
+            'subject'           => 'Mixed',
+            'from'              => ['emailAddress' => ['address' => 's@example.com', 'name' => 'S']],
+            'toRecipients'      => [['emailAddress' => ['address' => 'r@example.com', 'name' => 'R']]],
+            'receivedDateTime'  => '2025-01-28T10:00:00Z',
+            'hasAttachments'    => true,
+            'body'              => ['contentType' => 'html', 'content' => '<img src="cid:example-image">'],
+        ]);
+    }
+
+    public function test_process_message_fetches_attachments_for_inline_only_mail(): void
+    {
+        Http::fake([
+            '*/oauth2/v2.0/token'                => Http::response(['access_token' => 't', 'expires_in' => 3600]),
+            '*/messages/msg-inline/attachments'  => Http::response(['value' => [[
+                'name'         => 'image001.jpg', 'contentType' => 'image/jpeg', 'contentId' => 'example-image',
+                'contentBytes' => base64_encode('jpg'), 'size' => 3, 'isInline' => true,
+            ]]]),
+            '*' => Http::response([]),
+        ]);
+
+        $this->emailRepository->method('findOneByField')->willReturn(null);
+        $this->emailRepository->method('create')->willReturn(new Email);
+
+        $this->attachmentRepository
+            ->expects($this->once())
+            ->method('createFromGraphData')
+            ->with($this->anything(), $this->callback(fn ($a) => $a['contentId'] === 'example-image'));
+
+        $this->service->processMessage([
+            'id'                => 'msg-inline',
+            'internetMessageId' => '<inline@example.com>',
+            'subject'           => 'Inline',
+            'from'              => ['emailAddress' => ['address' => 's@example.com', 'name' => 'S']],
+            'toRecipients'      => [['emailAddress' => ['address' => 'r@example.com', 'name' => 'R']]],
+            'receivedDateTime'  => '2025-01-28T10:00:00Z',
+            'hasAttachments'    => false,
+            'body'              => ['contentType' => 'html', 'content' => '<img src="cid:example-image">'],
+        ]);
+    }
+
     // -------------------------------------------------------------------------
     // Threading: reference_ids & In-Reply-To
     // -------------------------------------------------------------------------

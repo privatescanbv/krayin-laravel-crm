@@ -163,7 +163,6 @@ services:
       APP_URL: "${PATIENT_PORTAL_URL}"
       ASSET_URL: "${PATIENT_PORTAL_URL}"
       KEYCLOAK_CLIENT_SECRET: "${PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET}"
-      API_KEY_1: "${FORMS_API_KEY}"
       HEALTH_REPORT_TOKEN: "${FORMS_HEALTH_REPORT_TOKEN:-}"
     extra_hosts:
       - "host.docker.internal:host-gateway"

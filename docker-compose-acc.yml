@@ -87,7 +87,7 @@ services:
 
   # Health API (contract v1): Docker-healthchecks gebruiken alleen /health/live (observatie, geen herstart).
   # /health/ready is alleen intern bereikbaar (geen proxy-headers); /health/report vereist een bearer-token
-  # (.env: HEALTH_REPORT_TOKEN voor crm, FORMS_HEALTH_REPORT_TOKEN, CLINIC_HEALTH_REPORT_TOKEN).
+  # (.env: HEALTH_REPORT_TOKEN voor alles).
   # Meldt of crm zijn MySQL (native op de host, via host.docker.internal) kan bereiken.
   # Bewust een aparte container: de healthcheck van crm zelf blijft /health/live. Anders zou een
   # MySQL-storing crm unhealthy maken en haalt Traefik de route én de crm-whitelist uit de routing.
@@ -154,7 +154,7 @@ services:
       APP_URL: "${PATIENT_PORTAL_URL}"
       ASSET_URL: "${PATIENT_PORTAL_URL}"
       KEYCLOAK_CLIENT_SECRET: "${PATIENT_PORTAL_KEYCLOAK_CLIENT_SECRET}"
-      HEALTH_REPORT_TOKEN: "${FORMS_HEALTH_REPORT_TOKEN:-}"
+      HEALTH_REPORT_TOKEN: "${HEALTH_REPORT_TOKEN}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     labels:
@@ -217,7 +217,7 @@ services:
       ASSET_URL: "${CLINIC_PORTAL_URL}"
       KEYCLOAK_CALLBACK_URL: "${CLINIC_PORTAL_URL}/auth/callback"
       KEYCLOAK_CLIENT_SECRET: "${CLINIC_PORTAL_KEYCLOAK_CLIENT_SECRET}"
-      HEALTH_REPORT_TOKEN: "${CLINIC_HEALTH_REPORT_TOKEN:-}"
+      HEALTH_REPORT_TOKEN: "${HEALTH_REPORT_TOKEN}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     labels:

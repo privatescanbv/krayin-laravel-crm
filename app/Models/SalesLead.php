@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\LostReason;
+use App\Enums\PipelineDefaultKeys;
 use App\Models\Concerns\HasAiSummary;
 use App\Traits\HasAuditTrail;
 use App\Traits\SelectsBestContactPerson;
@@ -22,7 +23,9 @@ use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Models\StageProxy;
+use Webkul\User\Models\User as PortalUser;
 
 // Quote entity removed
 
@@ -56,6 +59,7 @@ class SalesLead extends Model
         'lead_id',
         'department_id',
         'user_id',
+        'doctor_user_id',
         'contact_person_id',
         'created_by',
         'updated_by',
@@ -129,6 +133,14 @@ class SalesLead extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Behandelend arts (rol Arts). Optioneel, alleen Herniapoli.
+     */
+    public function doctor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'doctor_user_id');
     }
 
     /**
@@ -502,6 +514,20 @@ class SalesLead extends Model
 
             return collect();
         }
+    }
+
+    /**
+     * Sales die een arts in het kliniekportaal mag zien: toegekend aan de arts, in de Herniapoli-salespipeline
+     * en in een stage die zichtbaar is voor de rol van de arts.
+     */
+    public function scopeForPortalDoctor($query, PortalUser $doctor)
+    {
+        $visibleStages = Stage::query()
+            ->where('lead_pipeline_id', PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value)
+            ->visibleForRole($doctor->role_id)
+            ->select('id');
+
+        return $query->where('doctor_user_id', $doctor->id)->whereIn('pipeline_stage_id', $visibleStages);
     }
 
     public function scopeResolveDepartment($query, int $salesId)

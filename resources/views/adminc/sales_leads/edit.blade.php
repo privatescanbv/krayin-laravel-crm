@@ -173,6 +173,24 @@
                         </x-adminc::components.field>
                     </div>
 
+                    <!-- Arts (Herniapoli, optioneel) -->
+                    <div class="flex-1">
+                        @php($currentDoctorId = old('doctor_user_id', $salesLead->doctor_user_id))
+                        <x-adminc::components.field
+                            type="select"
+                            name="doctor_user_id"
+                            value="{{ $currentDoctorId }}"
+                            label="Arts"
+                        >
+                            <option value="">-- Geen arts --</option>
+                            @foreach ($doctors as $doctor)
+                                <option value="{{ $doctor->id }}" {{ (string) $currentDoctorId === (string) $doctor->id ? 'selected' : '' }}>
+                                    {{ $doctor->name }}
+                                </option>
+                            @endforeach
+                        </x-adminc::components.field>
+                    </div>
+
                     <!-- Aanvullend onderzoek vereist (Herniapoli); forced to nee after "Gepland voor aanvullend onderzoek" -->
                     <div class="flex-1">
                         @php($currentAdditionalResearch = (bool) old('additional_research_required', $salesLead->additional_research_required))

@@ -2,6 +2,7 @@
 
 namespace Webkul\User\Repositories;
 
+use App\Enums\RoleCode;
 use Illuminate\Database\Eloquent\Collection;
 use Webkul\Core\Eloquent\Repository;
 
@@ -51,6 +52,20 @@ class UserRepository extends Repository
         return $this->scopeQuery(function ($query) {
             return $query
                 ->where('status', 1)
+                ->orderBy('first_name', 'asc')
+                ->orderBy('last_name', 'asc');
+        })->all();
+    }
+
+    /**
+     * Active users with the Arts role (selectable as doctor on a sales lead).
+     */
+    public function activeDoctors(): Collection
+    {
+        return $this->scopeQuery(function ($query) {
+            return $query
+                ->where('status', 1)
+                ->whereHas('role', fn ($q) => $q->where('code', RoleCode::ARTS->value))
                 ->orderBy('first_name', 'asc')
                 ->orderBy('last_name', 'asc');
         })->all();

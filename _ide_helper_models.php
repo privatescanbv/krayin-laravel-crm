@@ -1651,6 +1651,7 @@ namespace App\Models{
  * @property int|null $department_id
  * @property int|null $quote_id
  * @property int|null $user_id
+ * @property int|null $doctor_user_id Behandelend arts (rol Arts); alleen Herniapoli, optioneel
  * @property int|null $contact_person_id
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
@@ -1667,6 +1668,7 @@ namespace App\Models{
  * @property-read \Webkul\Contact\Models\Person|null $contactPerson
  * @property-read \Webkul\User\Models\User|null $creator
  * @property-read \App\Models\Department|null $department
+ * @property-read \App\Models\User|null $doctor
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Webkul\Email\Models\Email> $emails
  * @property-read int|null $emails_count
  * @property-read mixed $anamnesis
@@ -1701,6 +1703,7 @@ namespace App\Models{
  * @property-read \Webkul\User\Models\User|null $updater
  * @property-read \App\Models\User|null $user
  * @method static \Database\Factories\SalesLeadFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead forPortalDoctor(\Webkul\User\Models\User $doctor)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead query()
@@ -1713,6 +1716,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereCreatedBy($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereDepartmentId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereDoctorUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereLeadId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereLostReason($value)

@@ -1,22 +1,10 @@
 <?php
 
-use App\Http\Controllers\Api\ClinicPasswordResetController;
-use App\Http\Controllers\Api\ClinicProfileController;
 use App\Http\Controllers\Api\EventWebhookController;
 use App\Http\Controllers\Api\FailedJobsAlertController;
 use App\Http\Controllers\Api\KeycloakUserController;
 use App\Http\Controllers\Api\KeycloakWebhookController;
 use App\Http\Controllers\Api\LeadFormController;
-use App\Http\Controllers\Api\PatientAppointmentController;
-use App\Http\Controllers\Api\PatientCounterController;
-use App\Http\Controllers\Api\PatientDocumentController;
-use App\Http\Controllers\Api\PatientFileUploadController;
-use App\Http\Controllers\Api\PatientForgotPasswordController;
-use App\Http\Controllers\Api\PatientNawController;
-use App\Http\Controllers\Api\PatientNotificationController;
-use App\Http\Controllers\Api\PatientPasswordController;
-use App\Http\Controllers\Api\PatientPreferenceController;
-use App\Http\Controllers\Api\PersonActivityController;
 use App\Http\Controllers\Api\SalesLeadController;
 use App\Http\Controllers\Api\TwoFactorCodeController;
 use App\Http\Controllers\LeadNoteController;
@@ -90,27 +78,8 @@ $registerAuthenticatedApiRoutes = function () {
         ->middleware('patient.self:keycloakUserId')
         ->name('api.keycloak.persons.findByKeycloakId');
 
-    // Patient unauthenticated-flow routes (API-key only; no patient token available yet)
-    Route::post('patient/forgot-password', [PatientForgotPasswordController::class, 'store'])
-        ->middleware('throttle:patient-forgot-password')
-        ->name('api.patient.forgot-password');
-
-    // Clinic-portal forgot-password flow (API-key only; called by the clinic portal)
-    Route::post('clinic/forgot-password', [ClinicPasswordResetController::class, 'store'])
-        ->middleware('throttle:clinic-forgot-password')
-        ->name('api.clinic.forgot-password');
-    Route::post('clinic/{keycloakUserId}/password/reset', [ClinicPasswordResetController::class, 'reset'])
-        ->middleware('throttle:clinic-forgot-password')
-        ->name('api.clinic.password.reset');
-
-    // Clinic-portal profile of the logged-in user (Keycloak Bearer token must match {keycloakUserId}; API key callers are service-to-service)
-    Route::prefix('clinic/{keycloakUserId}')
-        ->middleware('patient.self:keycloakUserId')
-        ->group(function () {
-            Route::get('naw', [ClinicProfileController::class, 'show'])->name('api.clinic.naw.show');
-            Route::put('naw', [ClinicProfileController::class, 'update'])->name('api.clinic.naw.update');
-            Route::put('password', [ClinicProfileController::class, 'updatePassword'])->name('api.clinic.password.update');
-        });
+    // Clinic-portal routes (own file for overview; same middleware group)
+    require __DIR__.'/api/clinic.php';
 
     // 2FA verification code mail (API-key only; used by the forms/patient portal for all user types)
     Route::post('two-factor/code', TwoFactorCodeController::class)
@@ -121,54 +90,8 @@ $registerAuthenticatedApiRoutes = function () {
     Route::post('failed-jobs/alert', FailedJobsAlertController::class)
         ->name('api.failed-jobs.alert');
 
-    // Patient routes (Keycloak Bearer token must match {id}; API key callers are service-to-service)
-    Route::prefix('patient/{id}')
-        ->middleware('patient.self:id')
-        ->group(function () {
-            // Person patient messages, by keycloak user id
-            Route::get('messages', [PersonActivityController::class, 'index']);
-            Route::post('messages', [PersonActivityController::class, 'store']);
-            Route::put('messages/mark_as_read', [PersonActivityController::class, 'markAsRead']);
-
-            // Patient counters (menu badges): unread messages + future appointments
-            Route::get('counters', PatientCounterController::class)
-                ->name('api.patient.counters');
-
-            // Patient appointments (derived from Orders), by keycloak user id
-            Route::get('appointments', [PatientAppointmentController::class, 'index']);
-
-            // Patient documents (derived from Orders -> Activities type=file)
-            Route::get('documents', [PatientDocumentController::class, 'index'])
-                ->name('api.patient.documents.index');
-            Route::post('documents', [PatientFileUploadController::class, 'store'])
-                ->name('api.patient.documents.store');
-            Route::get('documents/{documentId}/download', [PatientDocumentController::class, 'download'])
-                ->name('api.patient.documents.download');
-
-            // Patient notifications
-            Route::get('notifications', [PatientNotificationController::class, 'index'])
-                ->name('api.patient.notifications.index');
-            Route::post('notifications/{notificationId}/read', [PatientNotificationController::class, 'markAsRead'])
-                ->name('api.patient.notifications.read');
-
-            // Patient NAW (personal details + address)
-            Route::get('naw', [PatientNawController::class, 'show'])
-                ->name('api.patient.naw.show');
-            Route::put('naw', [PatientNawController::class, 'update'])
-                ->name('api.patient.naw.update');
-
-            // Patient password
-            Route::put('password', [PatientPasswordController::class, 'update'])
-                ->name('api.patient.password.update');
-            Route::post('password/reset', [PatientPasswordController::class, 'reset'])
-                ->name('api.patient.password.reset');
-
-            // Patient preferences
-            Route::get('preferences', [PatientPreferenceController::class, 'index'])
-                ->name('api.patient.preferences.index');
-            Route::put('preferences', [PatientPreferenceController::class, 'update'])
-                ->name('api.patient.preferences.update');
-        });
+    // Patient-portal routes (own file for overview; same middleware group)
+    require __DIR__.'/api/patient.php';
 };
 
 // All API routes are protected by ApiKeyAuth middleware, which supports:

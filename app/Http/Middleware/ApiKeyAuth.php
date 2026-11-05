@@ -129,6 +129,8 @@ class ApiKeyAuth
         return $request->is('api/patient/*')
             || $request->is('api/keycloak/persons/*')
             || $request->is('api/clinic/*/naw')
-            || $request->is('api/clinic/*/password');
+            || $request->is('api/clinic/*/password')
+            || $request->is('api/clinic/*/sales-stages')
+            || $request->is('api/clinic/*/sales-leads');
     }
 }

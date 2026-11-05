@@ -8,6 +8,7 @@ use App\Enums\ActivityType;
 use App\Enums\LostReason;
 use App\Enums\PipelineStage;
 use App\Enums\PipelineType;
+use App\Enums\RoleCode;
 use App\Helpers\RequestHelper;
 use App\Http\Controllers\Controller;
 use App\Models\AssessmentOutcome;
@@ -43,6 +44,7 @@ use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\StageProxy;
 use Webkul\Lead\Repositories\PipelineRepository;
+use Webkul\User\Repositories\UserRepository;
 
 class SalesLeadController extends Controller
 {
@@ -261,17 +263,23 @@ class SalesLeadController extends Controller
 
     public function edit($id)
     {
-        $salesLead = SalesLead::with(['contactPerson', 'lead.contactPerson', 'user', 'department'])->findOrFail($id);
+        $salesLead = SalesLead::with(['contactPerson', 'lead.contactPerson', 'user', 'doctor', 'department'])->findOrFail($id);
         $departments = Department::orderBy('name')->get();
 
-        return view('adminc.sales_leads.edit', ['salesLead' => $salesLead, 'departments' => $departments]);
+        // Current doctor stays selectable even if (s)he lost the Arts role, so saving does not silently clear it.
+        $doctors = app(UserRepository::class)->activeDoctors();
+        if ($salesLead->doctor && ! $doctors->contains('id', $salesLead->doctor->id)) {
+            $doctors->push($salesLead->doctor);
+        }
+
+        return view('adminc.sales_leads.edit', ['salesLead' => $salesLead, 'departments' => $departments, 'doctors' => $doctors]);
     }
 
     public function update(Request $request, $id)
     {
-        $request->validate($this->getValidationRules());
-
         $salesLead = SalesLead::findOrFail($id);
+        $request->validate($this->getValidationRules(keepDoctorId: $salesLead->doctor_user_id));
+
         $targetStage = $request->filled('pipeline_stage_id') ? StageProxy::find((int) $request->input('pipeline_stage_id')) : null;
         $additionalResearch = $this->resolveAdditionalResearch($salesLead, $targetStage ?? $salesLead->stage);
         $this->ensureAssessmentOutcome(
@@ -280,8 +288,16 @@ class SalesLeadController extends Controller
             $request->exists('assessment_outcome') ? $request->input('assessment_outcome') : $salesLead->assessment_outcome,
             $additionalResearch,
         );
+        $data = $this->prepareSalesLeadData($request->all());
+
+        // Arts only exists on Herniapoli sales; never store it for other departments.
+        $department = ! empty($data['department_id']) ? Department::find($data['department_id']) : $salesLead->getDepartment();
+        if (! $department?->isHernia()) {
+            $data['doctor_user_id'] = null;
+        }
+
         $salesLead->update([
-            ...$this->prepareSalesLeadData($request->all()),
+            ...$data,
             'additional_research_required' => $additionalResearch,
         ]);
 
@@ -306,7 +322,7 @@ class SalesLeadController extends Controller
     public function view($id)
     {
         // First load the Sales to check if it has a lead_id
-        $salesLead = SalesLead::with(['stage.pipeline.stages', 'user', 'lead', 'persons'])->findOrFail($id);
+        $salesLead = SalesLead::with(['stage.pipeline.stages', 'user', 'doctor', 'lead', 'persons'])->findOrFail($id);
 
         // If there's no related lead_id, return 404
         if (! $salesLead->lead_id) {
@@ -914,7 +930,7 @@ class SalesLeadController extends Controller
         return $data;
     }
 
-    private function getValidationRules(bool $isCreate = false): array
+    private function getValidationRules(bool $isCreate = false, ?int $keepDoctorId = null): array
     {
         $leadRule = ($isCreate) ? 'required|exists:leads,id' : 'nullable|exists:leads,id';
 
@@ -928,6 +944,10 @@ class SalesLeadController extends Controller
             'pipeline_stage_id'            => 'nullable|exists:lead_pipeline_stages,id',
             'lead_id'                      => $leadRule,
             'user_id'                      => 'nullable|exists:users,id',
+            // Arts: only users with the Arts role (or the doctor already on this sale).
+            'doctor_user_id'               => ['nullable', Rule::exists('users', 'id')->where(fn ($q) => $q
+                ->whereIn('role_id', DB::table('roles')->where('code', RoleCode::ARTS->value)->select('id'))
+                ->orWhere('id', $keepDoctorId))],
             'department_id'                => 'nullable|exists:departments,id',
             'assessment_outcome'           => ['nullable', Rule::exists('assessment_outcomes', 'code')],
             'additional_research_required' => 'nullable|boolean',

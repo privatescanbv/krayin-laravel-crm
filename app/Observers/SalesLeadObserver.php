@@ -105,6 +105,7 @@ class SalesLeadObserver
             'description'                  => 'Omschrijving',
             'pipeline_stage_id'            => 'Status',
             'user_id'                      => 'Toegewezen aan',
+            'doctor_user_id'               => 'Arts',
             'department_id'                => 'Afdeling',
             'lost_reason'                  => 'Reden verlies',
             'assessment_outcome'           => 'Uitkomst beoordeling',
@@ -149,7 +150,7 @@ class SalesLeadObserver
                 Stage::find($oldRaw)?->name,
                 Stage::find($newRaw)?->name,
             ],
-            'user_id' => [
+            'user_id', 'doctor_user_id' => [
                 User::find($oldRaw)?->name,
                 User::find($newRaw)?->name,
             ],

@@ -5,10 +5,13 @@ namespace Webkul\Lead\Models;
 use Database\Factories\StageFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Webkul\Lead\Contracts\Stage as StageContract;
+use Webkul\User\Models\Role;
 
 class Stage extends Model implements StageContract
 {
@@ -64,6 +67,24 @@ class Stage extends Model implements StageContract
     public function leads(): HasMany
     {
         return $this->hasMany(LeadProxy::modelClass(), 'lead_pipeline_stage_id');
+    }
+
+    /**
+     * Rollen die deze stage mogen zien. Geen rollen gekoppeld = alle rollen.
+     */
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class, 'lead_pipeline_stage_roles', 'lead_pipeline_stage_id', 'role_id');
+    }
+
+    /**
+     * @param  Builder<Stage>  $query
+     */
+    public function scopeVisibleForRole(Builder $query, ?int $roleId): void
+    {
+        $query->where(fn (Builder $q) => $q
+            ->whereDoesntHave('roles')
+            ->orWhereHas('roles', fn (Builder $r) => $r->where('roles.id', $roleId)));
     }
 
     public function isLost(): bool

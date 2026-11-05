@@ -45,12 +45,12 @@
     </span>
 </a>
 <div class="tocify-wrapper">
-    
+
             <div class="lang-selector">
                                             <button type="button" class="lang-button" data-language-name="bash">bash</button>
                                             <button type="button" class="lang-button" data-language-name="javascript">javascript</button>
                     </div>
-    
+
     <div class="search">
         <input type="text" class="search" id="input-search" placeholder="Search">
     </div>
@@ -89,6 +89,19 @@
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="clinic-profile-PUTapi-clinic--keycloakUserId--password">
                                 <a href="#clinic-profile-PUTapi-clinic--keycloakUserId--password">Change the password of a clinic user (UserObserver writes it to Keycloak).</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
+                    <ul id="tocify-header-clinic-sales" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="clinic-sales">
+                    <a href="#clinic-sales">Clinic sales</a>
+                </li>
+                                    <ul id="tocify-subheader-clinic-sales" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="clinic-sales-GETapi-clinic--keycloakUserId--sales-stages">
+                                <a href="#clinic-sales-GETapi-clinic--keycloakUserId--sales-stages">Stages (kanban columns) of the Herniapoli sales pipeline that the user's role may see.</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="clinic-sales-GETapi-clinic--keycloakUserId--sales-leads">
+                                <a href="#clinic-sales-GETapi-clinic--keycloakUserId--sales-leads">Herniapoli sales assigned to the doctor, newest first. Minimal card data; persons only carry id and name.</a>
                             </li>
                                                                         </ul>
                             </ul>
@@ -145,9 +158,6 @@
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-POSTapi-keycloak-webhooks">
                                 <a href="#endpoints-POSTapi-keycloak-webhooks">POST api/keycloak/webhooks</a>
                             </li>
-                                                                                <li class="tocify-item level-2" data-unique="endpoints-POSTapi-patient-forgot-password">
-                                <a href="#endpoints-POSTapi-patient-forgot-password">Trigger a patient password-reset e-mail.</a>
-                            </li>
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-POSTapi-clinic-forgot-password">
                                 <a href="#endpoints-POSTapi-clinic-forgot-password">Trigger a clinic password-reset e-mail. Same answer for unknown addresses (no enumeration).</a>
                             </li>
@@ -159,6 +169,9 @@
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-POSTapi-failed-jobs-alert">
                                 <a href="#endpoints-POSTapi-failed-jobs-alert">Mail a failed-jobs alert on behalf of another app (e.g. privateforms, which has no mailer).</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="endpoints-POSTapi-patient-forgot-password">
+                                <a href="#endpoints-POSTapi-patient-forgot-password">Trigger a patient password-reset e-mail.</a>
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-POSTapi-patient--id--messages">
                                 <a href="#endpoints-POSTapi-patient--id--messages">Store a new patient message or reply.</a>
@@ -318,7 +331,7 @@ You can switch the language used with the tabs at the top right (or from the nav
 
         <h1 id="application-webhooks">Application webhooks</h1>
 
-    
+
 
                                 <h2 id="application-webhooks-PUTapi-webhooks-event">Handle an application webhook event.</h2>
 
@@ -572,7 +585,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="clinic-profile">Clinic profile</h1>
 
-    
+
 
                                 <h2 id="clinic-profile-GETapi-clinic--keycloakUserId--naw">Get the profile of a clinic user.</h2>
 
@@ -1144,9 +1157,408 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </div>
         </form>
 
+                <h1 id="clinic-sales">Clinic sales</h1>
+
+
+
+                                <h2 id="clinic-sales-GETapi-clinic--keycloakUserId--sales-stages">Stages (kanban columns) of the Herniapoli sales pipeline that the user&#039;s role may see.</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>A stage without role restrictions is visible to every role.</p>
+
+<span id="example-requests-GETapi-clinic--keycloakUserId--sales-stages">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "https://crm.local.privatescan.nl/api/clinic/architecto/sales-stages" \
+    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://crm.local.privatescan.nl/api/clinic/architecto/sales-stages"
+);
+
+const headers = {
+    "X-API-KEY": "{YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-clinic--keycloakUserId--sales-stages">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;data&quot;: [
+        {
+            &quot;id&quot;: 41,
+            &quot;code&quot;: &quot;sales-intake-hernia&quot;,
+            &quot;name&quot;: &quot;Casus bij arts ter beoordeling&quot;,
+            &quot;sort_order&quot;: 2,
+            &quot;is_won&quot;: false,
+            &quot;is_lost&quot;: false
+        }
+    ]
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, User is not a doctor):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;"></code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, No clinic user for this Keycloak user id):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;"></code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-clinic--keycloakUserId--sales-stages" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-clinic--keycloakUserId--sales-stages"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-clinic--keycloakUserId--sales-stages"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-clinic--keycloakUserId--sales-stages" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-clinic--keycloakUserId--sales-stages">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-clinic--keycloakUserId--sales-stages" data-method="GET"
+      data-path="api/clinic/{keycloakUserId}/sales-stages"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-clinic--keycloakUserId--sales-stages', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-clinic--keycloakUserId--sales-stages"
+                    onclick="tryItOut('GETapi-clinic--keycloakUserId--sales-stages');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-clinic--keycloakUserId--sales-stages"
+                    onclick="cancelTryOut('GETapi-clinic--keycloakUserId--sales-stages');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-clinic--keycloakUserId--sales-stages"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/clinic/{keycloakUserId}/sales-stages</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-API-KEY" class="auth-value"               data-endpoint="GETapi-clinic--keycloakUserId--sales-stages"
+               value="{YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-clinic--keycloakUserId--sales-stages"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-clinic--keycloakUserId--sales-stages"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>keycloakUserId</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="keycloakUserId"                data-endpoint="GETapi-clinic--keycloakUserId--sales-stages"
+               value="architecto"
+               data-component="url">
+    <br>
+<p>The Keycloak user ID of the doctor. Example: <code>architecto</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="clinic-sales-GETapi-clinic--keycloakUserId--sales-leads">Herniapoli sales assigned to the doctor, newest first. Minimal card data; persons only carry id and name.</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+
+
+<span id="example-requests-GETapi-clinic--keycloakUserId--sales-leads">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "https://crm.local.privatescan.nl/api/clinic/architecto/sales-leads?stage_id=41&amp;page=1&amp;per_page=25" \
+    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://crm.local.privatescan.nl/api/clinic/architecto/sales-leads"
+);
+
+const params = {
+    "stage_id": "41",
+    "page": "1",
+    "per_page": "25",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "X-API-KEY": "{YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-clinic--keycloakUserId--sales-leads">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;data&quot;: [
+        {
+            &quot;id&quot;: 12,
+            &quot;name&quot;: &quot;Rugklachten&quot;,
+            &quot;pipeline_stage_id&quot;: 41,
+            &quot;created_at&quot;: &quot;2026-11-05T09:00:00+00:00&quot;,
+            &quot;updated_at&quot;: &quot;2026-11-05T09:00:00+00:00&quot;,
+            &quot;closed_at&quot;: null,
+            &quot;persons&quot;: [
+                {
+                    &quot;id&quot;: 7,
+                    &quot;name&quot;: &quot;Jan Jansen&quot;
+                }
+            ]
+        }
+    ],
+    &quot;links&quot;: {},
+    &quot;meta&quot;: {}
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, User is not a doctor):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;"></code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, No clinic user for this Keycloak user id):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;"></code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-clinic--keycloakUserId--sales-leads" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-clinic--keycloakUserId--sales-leads"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-clinic--keycloakUserId--sales-leads"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-clinic--keycloakUserId--sales-leads" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-clinic--keycloakUserId--sales-leads">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-clinic--keycloakUserId--sales-leads" data-method="GET"
+      data-path="api/clinic/{keycloakUserId}/sales-leads"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-clinic--keycloakUserId--sales-leads', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-clinic--keycloakUserId--sales-leads"
+                    onclick="tryItOut('GETapi-clinic--keycloakUserId--sales-leads');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-clinic--keycloakUserId--sales-leads"
+                    onclick="cancelTryOut('GETapi-clinic--keycloakUserId--sales-leads');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-clinic--keycloakUserId--sales-leads"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/clinic/{keycloakUserId}/sales-leads</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-API-KEY" class="auth-value"               data-endpoint="GETapi-clinic--keycloakUserId--sales-leads"
+               value="{YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>keycloakUserId</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="keycloakUserId"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads"
+               value="architecto"
+               data-component="url">
+    <br>
+<p>The Keycloak user ID of the doctor. Example: <code>architecto</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>stage_id</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="stage_id"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads"
+               value="41"
+               data-component="query">
+    <br>
+<p>Only sales in this stage (a stage the user may not see gives an empty page). Example: <code>41</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>page</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="page"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads"
+               value="1"
+               data-component="query">
+    <br>
+<p>Page number. Het veld value moet minimaal 1 zijn. Example: <code>1</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>per_page</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="per_page"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads"
+               value="25"
+               data-component="query">
+    <br>
+<p>Items per page (1-100, default 25). Het veld value moet minimaal 1 zijn. Het veld value mag niet groter zijn dan 100. Example: <code>25</code></p>
+            </div>
+                </form>
+
                 <h1 id="endpoints">Endpoints</h1>
 
-    
+
 
                                 <h2 id="endpoints-POSTapi-leads-hernia">Create a Hernia lead from the inbound (Gravity Forms) payload schema.</h2>
 
@@ -2564,7 +2976,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 8ffe1b2b-bc41-4358-9fab-c106ec68cc40
+x-request-id: 6d2faf44-93a3-4fa5-b1d6-289dcecbf917
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 59
  </code></pre></details>         <pre>
@@ -3591,7 +4003,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 950333a5-3d05-4573-8e6a-228ccefad53e
+x-request-id: fc57a0eb-72c2-4993-974b-c69969adb9d5
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 58
  </code></pre></details>         <pre>
@@ -3749,7 +4161,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: b1c55f46-ebee-43c5-bb3b-e976e3af2280
+x-request-id: 61d2c76e-987e-4882-b1da-8a9d94dda71e
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 57
  </code></pre></details>         <pre>
@@ -4118,7 +4530,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: a95ba492-e6f1-4133-88da-25a917bd7368
+x-request-id: 4c7799b7-dcd6-4957-b52f-81899cb65147
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 56
  </code></pre></details>         <pre>
@@ -4250,7 +4662,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_to\": \"2026-11-05 15:10:07\"
+    \"schedule_to\": \"2026-11-05 18:00:18\"
 }"
 </code></pre></div>
 
@@ -4271,7 +4683,7 @@ let body = {
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_to": "2026-11-05 15:10:07"
+    "schedule_to": "2026-11-05 18:00:18"
 };
 
 fetch(url, {
@@ -4450,10 +4862,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-11-05 15:10:07"
+               value="2026-11-05 18:00:18"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-11-05 15:10:07</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-11-05 18:00:18</code></p>
         </div>
         </form>
 
@@ -4582,155 +4994,6 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Example: <code>application/json</code></p>
             </div>
                         </form>
-
-                    <h2 id="endpoints-POSTapi-patient-forgot-password">Trigger a patient password-reset e-mail.</h2>
-
-<p>
-<small class="badge badge-darkred">requires authentication</small>
-</p>
-
-<p>Always returns 200 with the same message regardless of whether the address
-is known, to prevent email enumeration.</p>
-<p>Protected by X-API-KEY (service-to-service).</p>
-
-<span id="example-requests-POSTapi-patient-forgot-password">
-<blockquote>Example request:</blockquote>
-
-
-<div class="bash-example">
-    <pre><code class="language-bash">curl --request POST \
-    "https://crm.local.privatescan.nl/api/patient/forgot-password" \
-    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
-    --header "Content-Type: application/json" \
-    --header "Accept: application/json" \
-    --data "{
-    \"email\": \"gbailey@example.net\"
-}"
-</code></pre></div>
-
-
-<div class="javascript-example">
-    <pre><code class="language-javascript">const url = new URL(
-    "https://crm.local.privatescan.nl/api/patient/forgot-password"
-);
-
-const headers = {
-    "X-API-KEY": "{YOUR_AUTH_KEY}",
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-};
-
-let body = {
-    "email": "gbailey@example.net"
-};
-
-fetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-}).then(response =&gt; response.json());</code></pre></div>
-
-</span>
-
-<span id="example-responses-POSTapi-patient-forgot-password">
-</span>
-<span id="execution-results-POSTapi-patient-forgot-password" hidden>
-    <blockquote>Received response<span
-                id="execution-response-status-POSTapi-patient-forgot-password"></span>:
-    </blockquote>
-    <pre class="json"><code id="execution-response-content-POSTapi-patient-forgot-password"
-      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
-</span>
-<span id="execution-error-POSTapi-patient-forgot-password" hidden>
-    <blockquote>Request failed with error:</blockquote>
-    <pre><code id="execution-error-message-POSTapi-patient-forgot-password">
-
-Tip: Check that you&#039;re properly connected to the network.
-If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
-You can check the Dev Tools console for debugging information.</code></pre>
-</span>
-<form id="form-POSTapi-patient-forgot-password" data-method="POST"
-      data-path="api/patient/forgot-password"
-      data-authed="1"
-      data-hasfiles="0"
-      data-isarraybody="0"
-      autocomplete="off"
-      onsubmit="event.preventDefault(); executeTryOut('POSTapi-patient-forgot-password', this);">
-    <h3>
-        Request&nbsp;&nbsp;&nbsp;
-                    <button type="button"
-                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-tryout-POSTapi-patient-forgot-password"
-                    onclick="tryItOut('POSTapi-patient-forgot-password');">Try it out ⚡
-            </button>
-            <button type="button"
-                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-canceltryout-POSTapi-patient-forgot-password"
-                    onclick="cancelTryOut('POSTapi-patient-forgot-password');" hidden>Cancel 🛑
-            </button>&nbsp;&nbsp;
-            <button type="submit"
-                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-executetryout-POSTapi-patient-forgot-password"
-                    data-initial-text="Send Request 💥"
-                    data-loading-text="⏱ Sending..."
-                    hidden>Send Request 💥
-            </button>
-            </h3>
-            <p>
-            <small class="badge badge-black">POST</small>
-            <b><code>api/patient/forgot-password</code></b>
-        </p>
-                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="X-API-KEY" class="auth-value"               data-endpoint="POSTapi-patient-forgot-password"
-               value="{YOUR_AUTH_KEY}"
-               data-component="header">
-    <br>
-<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Content-Type"                data-endpoint="POSTapi-patient-forgot-password"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Accept"                data-endpoint="POSTapi-patient-forgot-password"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                                <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
-        <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>email</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="email"                data-endpoint="POSTapi-patient-forgot-password"
-               value="gbailey@example.net"
-               data-component="body">
-    <br>
-<p>Het veld value moet een geldig e-mailadres zijn. Example: <code>gbailey@example.net</code></p>
-        </div>
-        </form>
 
                     <h2 id="endpoints-POSTapi-clinic-forgot-password">Trigger a clinic password-reset e-mail. Same answer for unknown addresses (no enumeration).</h2>
 
@@ -5456,6 +5719,155 @@ Must be one of:
         </div>
         </form>
 
+                    <h2 id="endpoints-POSTapi-patient-forgot-password">Trigger a patient password-reset e-mail.</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Always returns 200 with the same message regardless of whether the address
+is known, to prevent email enumeration.</p>
+<p>Protected by X-API-KEY (service-to-service).</p>
+
+<span id="example-requests-POSTapi-patient-forgot-password">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "https://crm.local.privatescan.nl/api/patient/forgot-password" \
+    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"email\": \"gbailey@example.net\"
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://crm.local.privatescan.nl/api/patient/forgot-password"
+);
+
+const headers = {
+    "X-API-KEY": "{YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "email": "gbailey@example.net"
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-patient-forgot-password">
+</span>
+<span id="execution-results-POSTapi-patient-forgot-password" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-patient-forgot-password"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-patient-forgot-password"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-patient-forgot-password" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-patient-forgot-password">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-patient-forgot-password" data-method="POST"
+      data-path="api/patient/forgot-password"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-patient-forgot-password', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-POSTapi-patient-forgot-password"
+                    onclick="tryItOut('POSTapi-patient-forgot-password');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-POSTapi-patient-forgot-password"
+                    onclick="cancelTryOut('POSTapi-patient-forgot-password');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-POSTapi-patient-forgot-password"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/patient/forgot-password</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-API-KEY" class="auth-value"               data-endpoint="POSTapi-patient-forgot-password"
+               value="{YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-patient-forgot-password"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-patient-forgot-password"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>email</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="email"                data-endpoint="POSTapi-patient-forgot-password"
+               value="gbailey@example.net"
+               data-component="body">
+    <br>
+<p>Het veld value moet een geldig e-mailadres zijn. Example: <code>gbailey@example.net</code></p>
+        </div>
+        </form>
+
                     <h2 id="endpoints-POSTapi-patient--id--messages">Store a new patient message or reply.</h2>
 
 <p>
@@ -5618,7 +6030,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="keycloak">Keycloak</h1>
 
-    
+
 
                                 <h2 id="keycloak-GETapi-keycloak-persons--keycloakUserId-">Haal person id op op basis van Keycloak user id.</h2>
 
@@ -6014,7 +6426,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-naw">Patient NAW</h1>
 
-    
+
 
                                 <h2 id="patient-naw-GETapi-patient--id--naw">Get NAW data for a patient.</h2>
 
@@ -6780,7 +7192,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-password">Patient Password</h1>
 
-    
+
 
                                 <h2 id="patient-password-PUTapi-patient--id--password">Update the password for a patient.</h2>
 
@@ -7228,7 +7640,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-appointments">Patient appointments</h1>
 
-    
+
 
                                 <h2 id="patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders and published Activities).</h2>
 
@@ -7468,7 +7880,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-counters">Patient counters</h1>
 
-    
+
 
                                 <h2 id="patient-counters-GETapi-patient--id--counters">Get notification counters for the patient portal menu badges.</h2>
 
@@ -7642,7 +8054,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-documents">Patient documents</h1>
 
-    
+
 
                                 <h2 id="patient-documents-GETapi-patient--id--documents">Get all documents for a patient (FILE activities published to their portal via pivot).</h2>
 
@@ -7911,7 +8323,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --form "name=Bloeduitslag"\
     --form "description=Resultaten van het bloedonderzoek."\
-    --form "file=@/tmp/phpcv7jsvbm5d18dyuoAdO" </code></pre></div>
+    --form "file=@/tmp/phpmdvi76dbnj2icBsHTDU" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -8100,7 +8512,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The file to upload (max 20 MB). Example: <code>/tmp/phpcv7jsvbm5d18dyuoAdO</code></p>
+<p>The file to upload (max 20 MB). Example: <code>/tmp/phpmdvi76dbnj2icBsHTDU</code></p>
         </div>
         </form>
 
@@ -8153,7 +8565,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: dbe5c8ad-1ccc-4385-996b-8cbfbedf15ee
+x-request-id: 4d5d516b-1b83-4e7b-a4f3-3c9ad5195408
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 55
  </code></pre></details>         <pre>
@@ -8285,7 +8697,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-messages">Patient messages</h1>
 
-    
+
 
                                 <h2 id="patient-messages-GETapi-patient--id--messages">Get all patient messages for a person, grouped by thread.</h2>
 
@@ -8670,7 +9082,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-notifications">Patient notifications</h1>
 
-    
+
 
                                 <h2 id="patient-notifications-GETapi-patient--id--notifications">Get notifications for a patient.</h2>
 
@@ -8728,7 +9140,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: d3a93f62-8a12-403e-b86a-6ac9241cd0cb
+x-request-id: 56027325-8ffa-4bf4-aad6-18d069ac9f17
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 54
  </code></pre></details>         <pre>
@@ -9165,7 +9577,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-preferences">Patient preferences</h1>
 
-    
+
 
                                 <h2 id="patient-preferences-GETapi-patient--id--preferences">Get preferences for a patient.</h2>
 
@@ -9216,7 +9628,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 765b82ce-ee7d-46af-8bcd-c531006ee2fe
+x-request-id: d3f2a586-85c4-48c3-bee1-0ec228569e87
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 53
  </code></pre></details>         <pre>
@@ -9397,7 +9809,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"preferences\": {
         \"email_notifications_enabled\": true,
         \"language\": \"architecto\",
-        \"onboarding_completed_at\": \"2026-11-05T15:10:08\"
+        \"onboarding_completed_at\": \"2026-11-05T18:00:18\"
     }
 }"
 </code></pre></div>
@@ -9418,7 +9830,7 @@ let body = {
     "preferences": {
         "email_notifications_enabled": true,
         "language": "architecto",
-        "onboarding_completed_at": "2026-11-05T15:10:08"
+        "onboarding_completed_at": "2026-11-05T18:00:18"
     }
 };
 
@@ -9590,10 +10002,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="preferences.onboarding_completed_at"                data-endpoint="PUTapi-patient--id--preferences"
-               value="2026-11-05T15:10:08"
+               value="2026-11-05T18:00:18"
                data-component="body">
     <br>
-<p>Het veld value is geen geldige datum. Example: <code>2026-11-05T15:10:08</code></p>
+<p>Het veld value is geen geldige datum. Example: <code>2026-11-05T18:00:18</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>email_notifications_enabled</code></b>&nbsp;&nbsp;
@@ -9621,9 +10033,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </div>
         </form>
 
-            
 
-        
+
+
     </div>
     <div class="dark-box">
                     <div class="lang-selector">

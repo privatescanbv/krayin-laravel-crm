@@ -1,6 +1,15 @@
 # Gap-analyse: CRM API-laag vs. ontwerp Kliniekportaal (Herniapoli)
 
-- **Status:** analyse, eerste open vragen beantwoord (2026-10-29); nog geen bouw
+- **Status:** analyse, eerste open vragen beantwoord (2026-10-29); bouw gestart met G-1a deel 1 (2026-11-05)
+- **G-1a deel 1 gebouwd (2026-11-05):** `salesleads.doctor_user_id` (migratie, FK naar `users`, `nullOnDelete`), `SalesLead::doctor()`, keuzelijst in "sale bewerken" en weergave in "sale bekijken" (alleen Herniapoli), wijziging in het Wijzigingslogboek. Staat in de werkmap op branch `development`, nog niet gecommit. Pest-tests (`tests/Feature/Sales/SalesLeadDoctorTest.php`) en bestaande sale-tests slagen, Larastan schoon; lokaal gemigreerd, nog niet in de browser bekeken en niet op acc/prod.
+- **Sales-kanban API gebouwd (2026-11-05), deels G-2/G-1a:** `GET api/clinic/{keycloakUserId}/sales-stages` en `GET api/clinic/{keycloakUserId}/sales-leads` (alleen rol Arts, Herniapoli-salespipeline, alleen eigen sales via `doctor_user_id`). Stage-zichtbaarheid per rol via koppeltabel `lead_pipeline_stage_roles` (geen rijen = alle rollen), nu alleen via de database in te stellen. Kaart bevat directe velden plus `persons[{id,name}]`. Keycloak-bearer toegestaan voor deze twee routes (`patient.self` dwingt `sub` = route-id af). Pest-tests in `tests/Feature/Api/clinic/ClinicSalesLeadsTest.php` slagen; in de werkmap op `development`, niet gecommit, niet op acc/prod, niet getest met een echt Keycloak-token.
+- **Sales-kanban in clinic-portal gebouwd (2026-11-05):** `GET /sales` (route `sales.index`, `SalesController`, view `sales/index`), `App\Services\ClinicCrmClient` (`fetchSalesStages`, `fetchSalesLeads`), menu-item "Sales". Eén leads-aanroep (max 100) gegroepeerd per stage; 403 van het CRM geeft "alleen voor artsen". Pest-tests (`tests/Feature/SalesKanbanTest.php`) slagen, alle 38 portal-tests groen; ongecommit op `development`. **Niet in de browser bekeken** (Chrome-extensie niet verbonden; inloggen via Keycloak moet de gebruiker zelf doen) en het Keycloak-bearer-pad is nog niet met een echt token geprobeerd.
+  - **Nog open:** sale-detail, `get person`-API, kliniekmedewerker-scope (`doctor.clinic_id`), stage-zichtbaarheid beheren in de CRM-admin, stage verplaatsen.
+  - **Afwijking van het ticket:** het veld is bewust **optioneel**; de verplichting vanaf "Casus bij arts ter beoordeling", de backfill en de bulk-toekenning zijn niet gebouwd.
+  - De keuzelijst toont alleen actieve gebruikers met rol Arts (`RoleCode::ARTS`). Een arts die de rol later kwijtraakt blijft op de sale staan en blijft selecteerbaar.
+  - Voor niet-Herniapoli-sales wordt `doctor_user_id` altijd op `null` gezet.
+  - **Nog te doen in G-1a:** `users.clinic_id` is al aanwezig (kliniekportaal-migratie), maar de CRM-admin-UI voor de kliniek per gebruiker, de verplichting, de backfill, bulk-toekenning, Keycloak-rol en de portaalscope (`scopeVisibleInPortalFor`) ontbreken nog.
+- **Naamgeving (2026-11-05):** in code, routes, API en UI heet dit **sale** / **sales** (`SalesLead`, `SalesController`, `portal/sales`, route `sales.index`). **Niet** "traject" of "trajectory": dat is de monday-term uit het ontwerp en wordt hier alleen nog genoemd bij de vertaling (§2) en in monday-operatienamen. Gebruik die naam niet voor nieuwe code of endpoints.
 - **Besluiten (2026-10-29):**
     - Patiëntbegeleider komt **niet** in het portaal.
     - De arts wordt CRM-gebruiker en wordt **toegekend aan een sale** (SalesLead). Dat bestaat nog niet en is onderdeel van de gap (G-1a).
@@ -48,7 +57,7 @@ Het ontwerp gebruikt twee monday-borden. Dit is de vertaling naar ons model. Een
 | Ontwerp (monday) | CRM | Opmerking |
 |---|---|---|
 | Patiënt (recordtype op patiëntenbord) | `Person` | naam, voornaam en geboortedatum aanwezig |
-| Behandeltraject (LWS/HWS-dossier) | `SalesLead` met `department = Herniapoli` | één patiënt kan meerdere trajecten hebben; dat klopt al (`lead_persons`/`persons()`) |
+| Behandeltraject (LWS/HWS-dossier) | `SalesLead` met `department = Herniapoli` | één patiënt kan meerdere sales hebben; dat klopt al (`lead_persons`/`persons()`) |
 | Regio (LWS / HWS) | niet als veld; af te leiden uit `FormType::HerniaBackPainForm` / `HerniaNeckPainForm` | **gap**, zie G-2 |
 | Werkstatus (10 statussen, "wie is aan zet") | `SalesLead.pipeline_stage_id` (Hernia-saleslijn) | **andere as**, zie G-3 |
 | Diagnose / Behandlungsberatung | niet aanwezig; wel `assessment_outcome` (code) | **gap**, zie G-2 |
@@ -107,7 +116,7 @@ Legenda: ✅ aanwezig · 🟡 deels / alleen in admin-web (sessie) · ❌ ontbre
 
 #### G-1a Arts als gebruiker, toegekend aan een sale ❌ (besloten, nog niet gebouwd)
 
-Een arts ziet in het portaal **alleen de trajecten waaraan hij is toegekend**. Op dit moment:
+Een arts ziet in het portaal **alleen de sales waaraan hij is toegekend**. Op dit moment:
 
 - `SalesLead.user_id` is de eigenaar (de zorgadviseur). Er is geen veld voor een behandelend arts.
 - Een arts bestaat nog niet als CRM-`User` met een eigen rol.
@@ -140,7 +149,7 @@ Wat er nodig is:
 | Kliniek | sales waarvan de arts bij de eigen kliniek hoort: `doctor.clinic_id = mijn clinic_id` |
 
 Deze scope zit als één query-scope (`SalesLead::scopeVisibleInPortalFor(User)`) plus Policy op alle
-portaal-endpoints: trajecten, afspraken, documenten, chat en Home. Afspraken en documenten erven hun zichtbaarheid
+portaal-endpoints: sales, afspraken, documenten, chat en Home. Afspraken en documenten erven hun zichtbaarheid
 van de sale; ze krijgen geen eigen check.
 
 Let op: een operatie wordt ingepland op een `Resource` → `ClinicDepartment` → `Clinic`. Bij het plannen
@@ -151,19 +160,19 @@ de patiënt niet. Voorstel: bij het boeken valideren en een afwijking weigeren.
 vindt de `User` via `keycloak_user_id` of e-mail, controleert de rol (`clinic`, `employee` + portaalrol) en
 weigert alles zonder rol. API-key-callers horen hier **niet** toegang te krijgen.
 
-### G-2 Behandeltraject (SalesLead) als dossier 🟡
+### G-2 Sale (SalesLead) als dossier 🟡
 
 | Ontwerp-operatie | CRM | Gap |
 |---|---|---|
-| `patients.list` / `itemsOpen` / `itemsAfgerond` (werkvoorraad: patiënt + open trajecten, kaartgegevens) | admin-web kanban `/admin/sales-leads`; geen API-index | ❌ `GET portal/trajectories?status=open\|closed&q=` (gepagineerd, lichte kaartvorm) |
-| `patients.detail` / `trajectory` (dossierkop + overzicht) | `SalesLead` + persons + anamnesis | ❌ `GET portal/trajectories/{id}` |
+| `patients.list` / `itemsOpen` / `itemsAfgerond` (werkvoorraad: patiënt + open sales, kaartgegevens) | admin-web kanban `/admin/sales-leads`; geen API-index | ❌ `GET portal/sales?status=open\|closed&q=` (gepagineerd, lichte kaartvorm) |
+| `patients.detail` / `sale` (dossierkop + overzicht) | `SalesLead` + persons + anamnesis | ❌ `GET portal/sales/{id}` |
 | `patients.itemsPatienten` / `patients.create` / `patients.addTrajectory` (patiënt of dossier aanmaken + duplicaatcontrole) | lead → sales-flow + duplicaatdetectie in het CRM | ✅ **geen gap:** dit blijft in het CRM (besloten). Het portaal kan een knop "openen in CRM" tonen |
 | Veld **Regio** (LWS/HWS) | niet aanwezig | ❌ kolom op `salesleads` of afleiden uit formuliertype |
 | Veld **Diagnose** (long text, arts) | niet aanwezig | ❌ kolom op `salesleads` |
 | Veld **Behandlungsberatung** (long text, arts) | niet aanwezig (`assessment_outcome` is alleen een code) | ❌ kolom op `salesleads` |
 | Veld **Trajectnummer** | — | ❌ of `salesleads.id` gebruiken (voorstel: id) |
 | Veld **Siehe Chat** (checkbox) | niet aanwezig | ❌ boolean op `salesleads` |
-| `patients.updateField` (één veld, met optimistic lock `verwacht`) | — | ❌ `PATCH portal/trajectories/{id}` met whitelist per rol + `updated_at`-check (409 bij conflict) |
+| `patients.updateField` (één veld, met optimistic lock `verwacht`) | — | ❌ `PATCH portal/sales/{id}` met whitelist per rol + `updated_at`-check (409 bij conflict) |
 | Historie mag nooit overschreven worden | audit trail (`HasAuditTrail`) + Wijzigingslogboek | ✅ wijzigingen loggen als system activity |
 
 ### G-3 Werkstatus ❌ (besluit nodig)
@@ -180,12 +189,12 @@ Het ontwerp kent **10 werkstatussen** die zeggen wie aan zet is:
 | Wachten | 🟡 deels (bedenktijd, zorgverzekeraar) |
 | Afgerond | ✅ succes/niet succesvol afgerond |
 
-De CRM-fases beschrijven de **traject-levenscyclus** (bedenktijd, gepland, nazorg). De werkstatus is een
-**taak-as** die er dwars doorheen loopt: een traject in "1e Nazorg" kan tegelijk "OP-verslag nodig" hebben.
+De CRM-fases beschrijven de **sale-levenscyclus** (bedenktijd, gepland, nazorg). De werkstatus is een
+**taak-as** die er dwars doorheen loopt: een sale in "1e Nazorg" kan tegelijk "OP-verslag nodig" hebben.
 
 **Advies:** een aparte kolom `salesleads.work_status` (enum, 10 waarden) naast de pipeline-fase. Voeg geen
 fases toe, want dan breekt de analytics-sync (`003_sync_procedure.sql`). Endpoint:
-`PUT portal/trajectories/{id}/work-status`, met de "controle bij het sluiten" uit de handleiding server-side.
+`PUT portal/sales/{id}/work-status`, met de "controle bij het sluiten" uit de handleiding server-side.
 Home-blokken (G-9) filteren op deze kolom.
 
 ### G-4 Planning: operaties, consulten, nacontroles, capaciteit 🟡
@@ -197,7 +206,7 @@ Planning bestaat in het CRM, maar alleen in admin-web (`OrderItemPlanningControl
 |---|---|---|
 | `operations.week` / `items` (weekoverzicht: per dag operatie-, intake-, consult- en nacontrolekaarten) | planning-monitor (admin-web) | ❌ `GET portal/appointments?from=&to=` met type, status, patiënt, behandeltype en kamer |
 | `operations.detail` (afspraakvenster, 3 tabs) | `Order` + items + boekingen | ❌ `GET portal/appointments/{id}` |
-| `operations.forTrajectory` | `SalesLead.orders()` | ❌ `GET portal/trajectories/{id}/appointments` |
+| `operations.forTrajectory` | `SalesLead.orders()` | ❌ `GET portal/sales/{id}/appointments` |
 | `operations.freeSlots` | `.../availability` (admin-web) | 🟡 ontsluiten als `GET portal/availability?from=&days=` |
 | `operations.claimSlot` / `plan` (operatie of consult inplannen; status Optie/Ingepland; behandeltype; intakedatum; aankomsttijd) | `book` (admin-web); Order + OrderItem aanmaken | 🟡 ontsluiten; **Intake-datum** en **aankomsttijd** hebben geen duidelijke plek (`first_examination_at/_time`?, te verifiëren) |
 | Status **Optie** + **Optie vervalt** | `OrderItemStatus` heeft geen optie-met-vervaldatum | ❌ status + `option_expires_at` + job die verlopen opties vrijgeeft |
@@ -251,7 +260,7 @@ Wat ontbreekt in de API:
 
 | Ontwerp-operatie | Gap |
 |---|---|
-| `files.dossier` (alle documentregels van één traject of operatie, met status aanwezig/ontbreekt) | ❌ `GET portal/trajectories/{id}/documents` en `GET portal/appointments/{id}/documents`, gegroepeerd per `document_type` |
+| `files.dossier` (alle documentregels van één sale of operatie, met status aanwezig/ontbreekt) | ❌ `GET portal/sales/{id}/documents` en `GET portal/appointments/{id}/documents`, gegroepeerd per `document_type` |
 | `files.open` (kortlevend ondertekend ticket) | 🟡 de patiënt-download bestaat; voor medewerkers ❌. Advies: `URL::temporarySignedRoute` (5 min) |
 | `files.upload` (gechunkt tot 500 MB, 8 MB per stuk) | 🟡 patiënt-upload bestaat. Voor MRI-bestanden ❌ grote/gechunkte upload; eerst checken wat de maximale upload in onze stack is |
 | `files.link` (externe MRI-viewerlink) | ❌ |
@@ -263,10 +272,10 @@ Wat ontbreekt in de API:
 
 De Rezept Studio maakt een vergrendelde PDF ("_v2" bij een nieuwe versie). Wat het CRM moet doen:
 
-1. ✅ File-activiteit op het traject (en/of de order) aanmaken: dit mechanisme bestaat.
+1. ✅ File-activiteit op het sale (en/of de order) aanmaken: dit mechanisme bestaat.
 2. ✅ Publiceren naar het patiëntportaal via `activity_portal_persons`. `GET patient/{id}/documents` toont het daarna.
 3. ✅/🟡 `PatientNotification` maken: het mechanisme bestaat, het referentietype voor "recept" controleren.
-4. ❌ Endpoint: `POST portal/trajectories/{id}/documents` met `document_type=recept`, `share_with_patient=true`.
+4. ❌ Endpoint: `POST portal/sales/{id}/documents` met `document_type=recept`, `share_with_patient=true`.
    Idempotent op een client-key, zodat "Opnieuw versturen" geen tweede document maakt (het ontwerp eist dat).
 5. ❌ Vergrendeling: een recept-activiteit is na aanmaken niet meer te wijzigen of te verwijderen.
 
@@ -344,17 +353,17 @@ Alle routes vallen onder `api/portal`, met Keycloak-bearer voor medewerkers, een
 GET    portal/me                                    rol, capabilities, kliniek
 GET    portal/home[/version]                        G-9
 GET    portal/users                                 G-7 (mentions)
-GET    portal/trajectories                          G-2 werkvoorraad (arts: alleen toegekend, G-1a)
-GET    portal/trajectories/{id}                     G-2
-PATCH  portal/trajectories/{id}                     G-2 diagnose, beratung, regio, siehe chat
-PUT    portal/trajectories/{id}/work-status         G-3
-GET    portal/trajectories/{id}/appointments        G-4
-GET    portal/trajectories/{id}/documents           G-6
-POST   portal/trajectories/{id}/documents           G-6 / G-6a (incl. share_with_patient)
-GET    portal/trajectories/{id}/messages            G-7
-POST   portal/trajectories/{id}/messages            G-7 (parent_id, mentions)
+GET    portal/sales                          G-2 werkvoorraad (arts: alleen toegekend, G-1a)
+GET    portal/sales/{id}                     G-2
+PATCH  portal/sales/{id}                     G-2 diagnose, beratung, regio, siehe chat
+PUT    portal/sales/{id}/work-status         G-3
+GET    portal/sales/{id}/appointments        G-4
+GET    portal/sales/{id}/documents           G-6
+POST   portal/sales/{id}/documents           G-6 / G-6a (incl. share_with_patient)
+GET    portal/sales/{id}/messages            G-7
+POST   portal/sales/{id}/messages            G-7 (parent_id, mentions)
 DELETE portal/messages/{id}                         G-7
-GET    portal/trajectories/{id}/notes   POST ...    G-7
+GET    portal/sales/{id}/notes   POST ...    G-7
 GET    portal/appointments?from=&to=                G-4
 GET    portal/appointments/{id}                     G-4
 POST   portal/appointments                          G-4 plannen (operatie/consult/nacontrole)
@@ -423,15 +432,15 @@ Al deze wijzigingen raken meerdere modules en de auth-laag. Volgens de werkafspr
 
 9. Medische velden op sale: regio, diagnose, Behandlungsberatung, Siehe Chat
 10. Werkstatus als aparte kolom (10 statussen)
-11. Werkvoorraad-endpoint (lijst trajecten)
-12. Dossier-endpoint (detail traject)
+11. Werkvoorraad-endpoint (lijst sales)
+12. Dossier-endpoint (detail sale)
 13. Dossiervelden wijzigen met conflictcontrole
 14. Werkstatus wijzigen met sluitcontrole
 
 **Documenten (G-6, G-6a)**
 
 15. Vaste documentsoorten (`document_type`-enum)
-16. Documenten per traject en per operatie, met check aanwezig/ontbreekt
+16. Documenten per sale en per operatie, met check aanwezig/ontbreekt
 17. Document uploaden vanuit portaal (Arztbrief, OP-bericht, ...)
 18. Recept opslaan, vergrendelen en delen met patiëntportaal (idempotent)
 19. Kortlevende download-links voor medewerkers
@@ -443,7 +452,7 @@ Al deze wijzigingen raken meerdere modules en de auth-laag. Volgens de werkafspr
 
 23. Intake-datum en aankomsttijd: plek in datamodel bepalen (V8)
 24. Afspraken-overzicht per periode
-25. Afspraak-detail en afspraken per traject
+25. Afspraak-detail en afspraken per sale
 26. Beschikbaarheid ontsluiten
 27. Afspraak plannen (operatie, consult, nacontrole)
 28. Status Optie met vervaldatum + automatisch vrijgeven

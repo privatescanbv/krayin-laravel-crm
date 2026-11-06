@@ -160,3 +160,14 @@ test('user search with search parameter filters by email', function () {
     $this->assertEntityFound($response, $userMatch->id);
     $this->assertEntityNotFound($response, $userNoMatch->id);
 });
+
+test('user search with searchFields naming no searchable column returns 422 instead of crashing', function () {
+    User::factory()->create(['first_name' => 'John', 'last_name' => 'Doe']);
+
+    $response = $this->performSearch('admin.settings.users.search', [
+        'search'       => 'John',
+        'searchFields' => 'not_a_real_column',
+    ]);
+
+    $response->assertStatus(422);
+});

@@ -133,6 +133,23 @@ $app = Application::configure(basePath: dirname(__DIR__))
                 && (new LostConnectionDetector)->causedByLostConnection($e)
         );
 
+        // l5-repository's RequestCriteria throws a plain \Exception (not a
+        // dedicated class) when a request's `searchFields` param names no
+        // field accepted by the repository. That is a bad request, not a
+        // server error, so render it as 422 instead of a 500 and keep it
+        // out of error monitoring noise.
+        $exceptions->dontReportWhen(
+            fn (Throwable $e) => str_contains($e->getFile(), '/vendor/prettus/l5-repository/')
+        );
+
+        $exceptions->renderable(function (\Exception $e, $request) {
+            if (str_contains($e->getFile(), '/vendor/prettus/l5-repository/')) {
+                return new \Illuminate\Http\JsonResponse([
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+        });
+
         $exceptions->reportable(function (Throwable $e) {
             if (app()->runningInConsole()) {
                 return false;

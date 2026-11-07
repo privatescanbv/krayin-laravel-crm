@@ -39,6 +39,13 @@ class OrderItemObserver
         $this->updateOrderItemStatus($orderItem);
         $this->updatePartnerProductChecks($orderItem);
         $orderItem->order?->recalculateTotalPrice();
+
+        // Plannable products get their purchase price once booked onto a resource (see
+        // ResourceOrderItemObserver); non-plannable products never go through that flow, so
+        // resolve their purchase price straight away instead of leaving it empty (MBS-515).
+        if ($orderItem->product_id) {
+            $this->orderItemPurchasePriceService->relinkPartnerProduct($orderItem);
+        }
     }
 
     /**

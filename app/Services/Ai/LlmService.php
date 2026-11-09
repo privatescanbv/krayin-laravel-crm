@@ -3,6 +3,7 @@
 namespace App\Services\Ai;
 
 use Exception;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -79,6 +80,13 @@ class LlmService
                 'Authorization' => 'Bearer '.config('services.llm.api_key'),
                 'Content-Type'  => 'application/json',
             ])
+            // Retry transient failures only: the self-hosted model server returns 429/5xx
+            // during a reload or a momentary overload, which clears within seconds. A 4xx
+            // other than 429 is permanent (bad request/auth) — let it through immediately.
+            ->retry(3, fn (int $attempt) => $attempt * 2000, function ($e) {
+                return $e instanceof RequestException
+                    && in_array($e->response->status(), [429, 500, 502, 503, 504], true);
+            }, throw: false)
             ->post($url, $requestBody);
 
         $durationMs = (int) round((microtime(true) - $startedAt) * 1000);

@@ -28,6 +28,8 @@ use App\Services\OrderCheckService;
 use App\Services\Storage\DocumentStorage;
 use App\Services\Storage\LaravelDocumentStorage;
 use Illuminate\Foundation\AliasLoader;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Validator;
@@ -84,6 +86,29 @@ class AppServiceProvider extends ServiceProvider
         Activity::observe(ActivityObserver::class);
         Email::observe(EmailObserver::class);
         AnamnesisGvlForm::observe(AnamnesisGvlFormObserver::class);
+
+        // Http::...->retryTransient(): retry only 429/5xx (model reload, overload); other 4xx are permanent.
+        // $budgetSeconds caps the total wall time: no retry is started that could not finish within it
+        // (next delay + the request timeout), so callers with a hard job/worker timeout are never killed mid-retry.
+        PendingRequest::macro('retryTransient', function (int $times = 3, int $stepMs = 2000, ?int $budgetSeconds = null) {
+            /** @var PendingRequest $this */
+            $deadline = $budgetSeconds === null ? null : microtime(true) + $budgetSeconds;
+            $timeout = $this->options['timeout'] ?? 30;
+            $attempts = 0;
+
+            return $this->retry(
+                $times,
+                fn (int $attempt) => $attempt * $stepMs,
+                function ($e) use (&$attempts, $deadline, $timeout, $stepMs) {
+                    $attempts++;
+
+                    return $e instanceof RequestException
+                        && in_array($e->response->status(), [429, 500, 502, 503, 504], true)
+                        && ($deadline === null || microtime(true) + $attempts * $stepMs / 1000 + $timeout <= $deadline);
+                },
+                throw: false,
+            );
+        });
 
         Password::defaults(fn () => Password::min(8)->mixedCase()->numbers()->symbols());
 

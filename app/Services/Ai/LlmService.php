@@ -79,6 +79,8 @@ class LlmService
                 'Authorization' => 'Bearer '.config('services.llm.api_key'),
                 'Content-Type'  => 'application/json',
             ])
+            // Budget stays under the queue worker's --timeout=210 (.docker/supervisord.conf).
+            ->retryTransient(budgetSeconds: 200)
             ->post($url, $requestBody);
 
         $durationMs = (int) round((microtime(true) - $startedAt) * 1000);

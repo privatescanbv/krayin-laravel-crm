@@ -27788,6 +27788,26 @@ namespace Illuminate\Routing {
             }
     }
 
+namespace Illuminate\Http\Client {
+    /**
+     * @template TAsync of bool = false
+     */
+    class PendingRequest {
+        /**
+         * @see \App\Providers\AppServiceProvider::boot()
+         * @param int $times
+         * @param int $stepMs
+         * @param int|null $budgetSeconds
+         * @static
+         */
+        public static function retryTransient($times = 3, $stepMs = 2000, $budgetSeconds = null)
+        {
+            return \Illuminate\Http\Client\PendingRequest::retryTransient($times, $stepMs, $budgetSeconds);
+        }
+
+            }
+    }
+
 namespace Illuminate\Database\Query {
     /**
      */

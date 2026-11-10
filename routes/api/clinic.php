@@ -37,4 +37,7 @@ Route::prefix('clinic/{keycloakUserId}')
         Route::get('sales-stages', [ClinicSalesLeadController::class, 'stages'])->name('api.clinic.sales-stages');
         Route::get('sales-leads', [ClinicSalesLeadController::class, 'index'])->name('api.clinic.sales-leads');
         Route::put('sales-leads/{saleId}/stage', [ClinicSalesLeadController::class, 'updateStage'])->whereNumber('saleId')->name('api.clinic.sales-leads.stage');
+        Route::get('sales-leads/{saleId}', [ClinicSalesLeadController::class, 'show'])->whereNumber('saleId')->name('api.clinic.sales-leads.show');
+        Route::get('sales-leads/{saleId}/notes', [ClinicSalesLeadController::class, 'notes'])->whereNumber('saleId')->name('api.clinic.sales-leads.notes');
+        Route::post('sales-leads/{saleId}/notes', [ClinicSalesLeadController::class, 'storeNote'])->whereNumber('saleId')->name('api.clinic.sales-leads.notes.store');
     });

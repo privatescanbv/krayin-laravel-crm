@@ -2,18 +2,27 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Activities\CreateActivityForSalesLeadAction;
 use App\Actions\Clinic\SendClinicForgotPasswordMailAction;
+use App\Enums\ActivityType;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\RoleCode;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\ClinicSalesLeadIndexRequest;
 use App\Http\Requests\Api\ClinicSalesLeadStageRequest;
+use App\Http\Requests\Api\ClinicSalesNoteIndexRequest;
+use App\Http\Requests\Api\ClinicSalesNoteStoreRequest;
+use App\Http\Resources\ClinicSalesLeadDetailResource;
 use App\Http\Resources\ClinicSalesLeadResource;
+use App\Http\Resources\ClinicSalesNoteResource;
 use App\Http\Resources\ClinicSalesStageResource;
 use App\Models\SalesLead;
+use App\Services\PlainText;
 use App\Services\StageTransitionAttributes;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\ValidationException;
+use Webkul\Activity\Models\Activity;
 use Webkul\Lead\Models\Stage;
 use Webkul\User\Models\User;
 
@@ -73,6 +82,95 @@ class ClinicSalesLeadController extends Controller
                 ->orderByDesc('id')
                 ->paginate($request->integer('per_page', 25))
         );
+    }
+
+    /**
+     * Patient card of one sale assigned to the doctor: card fields plus all linked persons (with date of birth),
+     * stage, doctor, description (plain text), assessment outcome and additional-research flag.
+     * Closed sales that are visible to the doctor stay readable. No diagnosis, region, advice, contact or financial data.
+     *
+     * @group Clinic sales
+     *
+     * @urlParam keycloakUserId string required The Keycloak user ID of the doctor.
+     * @urlParam saleId integer required The sale id (must be assigned to this doctor and visible to the role).
+     *
+     * @response 200 scenario="Success" {"data":{"id":12,"name":"Rugklachten","pipeline_stage_id":41,"created_at":"2026-11-05T09:00:00+00:00","updated_at":"2026-11-05T09:00:00+00:00","closed_at":null,"stage_entered_at":null,"persons":[{"id":7,"name":"Jan Jansen","first_name":"Jan","last_name":"Jansen","date_of_birth":"1980-02-03"}],"stage":{"id":41,"code":"sales-intake-hernia","name":"Casus bij arts ter beoordeling","sort_order":2,"is_won":false,"is_lost":false},"doctor":{"id":3,"name":"Dr. Voorbeeld"},"description":"Omschrijving van het traject.","assessment_outcome":{"code":"example-code","label":"Voorbeeldlabel"},"additional_research_required":false}}
+     * @response 403 scenario="User is not a doctor, or Bearer token belongs to another user"
+     * @response 404 scenario="Unknown user, or sale not assigned to / not visible for this doctor"
+     */
+    public function show(string $keycloakUserId, int $saleId): ClinicSalesLeadDetailResource
+    {
+        $doctor = $this->doctor($keycloakUserId);
+
+        return new ClinicSalesLeadDetailResource(
+            SalesLead::query()
+                ->forPortalDoctor($doctor)
+                ->withStageEnteredAt()
+                ->with(['persons', 'stage', 'doctor', 'assessmentOutcome'])
+                ->findOrFail($saleId)
+        );
+    }
+
+    /**
+     * Internal notes directly linked to this sale (type note only), newest first. Text is plain text.
+     * `author` is the CRM user who created the note, or null when unknown.
+     *
+     * @group Clinic sales
+     *
+     * @urlParam keycloakUserId string required The Keycloak user ID of the doctor.
+     * @urlParam saleId integer required The sale id.
+     *
+     * @response 200 scenario="Success" {"data":[{"id":5,"text":"Patiënt belt terug na MRI.","created_at":"2026-11-10T09:00:00+00:00","author":{"id":3,"name":"Dr. Voorbeeld"}}],"links":{},"meta":{}}
+     * @response 403 scenario="User is not a doctor, or Bearer token belongs to another user"
+     * @response 404 scenario="Unknown user, or sale not visible for this doctor"
+     */
+    public function notes(ClinicSalesNoteIndexRequest $request, string $keycloakUserId, int $saleId): AnonymousResourceCollection
+    {
+        $sale = SalesLead::query()->forPortalDoctor($this->doctor($keycloakUserId))->findOrFail($saleId);
+
+        $page = Activity::query()
+            ->where('sales_lead_id', $sale->id)
+            ->where('type', ActivityType::NOTE->value)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate($request->integer('per_page', 10));
+
+        $authors = User::query()->whereIn('id', $page->getCollection()->pluck('created_by')->filter()->unique())->get()->keyBy('id');
+        $page->getCollection()->each(fn (Activity $note) => $note->setAttribute('author_user', $authors->get($note->created_by)));
+
+        return ClinicSalesNoteResource::collection($page);
+    }
+
+    /**
+     * Add a plain-text internal note to this sale. The doctor from the URL is the author; type and sale are fixed
+     * server-side. Changes nothing else and notifies nobody.
+     *
+     * @group Clinic sales
+     *
+     * @urlParam keycloakUserId string required The Keycloak user ID of the doctor.
+     * @urlParam saleId integer required The sale id.
+     *
+     * @response 201 scenario="Created" {"data":{"id":5,"text":"Patiënt belt terug na MRI.","created_at":"2026-11-10T09:00:00+00:00","author":{"id":3,"name":"Dr. Voorbeeld"}}}
+     * @response 403 scenario="User is not a doctor, or Bearer token belongs to another user"
+     * @response 404 scenario="Unknown user, or sale not visible for this doctor"
+     * @response 422 scenario="Empty or too long text" {"message":"The text field is required.","errors":{"text":["The text field is required."]}}
+     */
+    public function storeNote(ClinicSalesNoteStoreRequest $request, CreateActivityForSalesLeadAction $create, string $keycloakUserId, int $saleId): JsonResponse
+    {
+        $doctor = $this->doctor($keycloakUserId);
+        $sale = SalesLead::query()->forPortalDoctor($doctor)->findOrFail($saleId);
+
+        // Bearer calls have no CRM session, so the audit trail cannot infer the actor: set it explicitly.
+        $note = $create->execute($sale, true, [
+            'type'       => ActivityType::NOTE->value,
+            'comment'    => PlainText::toHtml($request->validated('text')),
+            'user_id'    => $doctor->id,
+            'created_by' => $doctor->id,
+            'updated_by' => $doctor->id,
+        ]);
+        $note->setAttribute('author_user', $doctor);
+
+        return (new ClinicSalesNoteResource($note))->response()->setStatusCode(201);
     }
 
     /**

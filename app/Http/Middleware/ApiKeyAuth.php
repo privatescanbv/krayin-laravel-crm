@@ -132,6 +132,21 @@ class ApiKeyAuth
             || $request->is('api/clinic/*/password')
             || $request->is('api/clinic/*/sales-stages')
             || $request->is('api/clinic/*/sales-leads')
-            || ($request->isMethod('PUT') && $request->is('api/clinic/*/sales-leads/*/stage'));
+            || $this->isClinicSaleRoute($request);
+    }
+
+    /**
+     * Exact sale routes of the clinic portal (the wildcard `*` would also match deeper paths).
+     */
+    private function isClinicSaleRoute(Request $request): bool
+    {
+        $path = $request->path();
+
+        return match ($request->method()) {
+            'GET'   => (bool) preg_match('#^api/clinic/[^/]+/sales-leads/\d+(/notes)?$#', $path),
+            'POST'  => (bool) preg_match('#^api/clinic/[^/]+/sales-leads/\d+/notes$#', $path),
+            'PUT'   => (bool) preg_match('#^api/clinic/[^/]+/sales-leads/\d+/stage$#', $path),
+            default => false,
+        };
     }
 }

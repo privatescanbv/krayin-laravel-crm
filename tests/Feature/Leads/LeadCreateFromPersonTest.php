@@ -66,3 +66,12 @@ test('the address of the person from person_id is passed to the form', function 
         ->assertSee('Teststraat', false)
         ->assertSee('1234AB', false);
 });
+
+test('new lead links carry no return_url so saving lands on the new lead', function () {
+    $person = Person::factory()->create();
+
+    $this->get(route('admin.contacts.persons.view', $person->id))
+        ->assertOk()
+        ->assertSee('person_id='.$person->id, false)
+        ->assertDontSee('person_id='.$person->id.'&amp;return_url', false);
+});

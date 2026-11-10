@@ -4,6 +4,7 @@ use App\Models\Clinic;
 use App\Models\ClinicDepartment;
 use App\Models\Resource;
 use Database\Seeders\TestSeeder;
+use Webkul\User\Models\Role;
 
 beforeEach(function () {
     $this->seed(TestSeeder::class);
@@ -49,4 +50,19 @@ test('users overview offers a view action per user', function () {
     $view = collect(collect($records)->firstWhere('id', $user->id)['actions'])->firstWhere('index', 'view');
 
     expect($view['url'])->toBe(route('admin.settings.users.view', $user->id));
+});
+
+test('users overview can be filtered by role', function () {
+    $roleA = Role::factory()->create();
+    $roleB = Role::factory()->create();
+    $inA = makeUser(['first_name' => 'Alfa', 'last_name' => 'Rol', 'role_id' => $roleA->id]);
+    $inB = makeUser(['first_name' => 'Beta', 'last_name' => 'Rol', 'role_id' => $roleB->id]);
+
+    $ids = fn (array $filters) => collect(
+        $this->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])
+            ->getJson(route('admin.settings.users.index', ['filters' => $filters]))->assertOk()->json('records')
+    )->pluck('id')->all();
+
+    expect($ids(['role_id' => [(string) $roleA->id]]))->toContain($inA->id)->not->toContain($inB->id)
+        ->and($ids([]))->toContain($inA->id, $inB->id);
 });

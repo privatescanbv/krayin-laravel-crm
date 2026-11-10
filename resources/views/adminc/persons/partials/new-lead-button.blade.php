@@ -1,12 +1,11 @@
 @props([
     'persons',
-    'returnUrl' => null,
 ])
 
 @if (bouncer()->hasPermission('leads.create') && $persons->isNotEmpty())
     @php
         $tileClass = 'group flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-activity-note-bg font-medium text-activity-note-text transition-all hover:border-activity-note-border hover:text-blue-700';
-        $leadUrl = fn ($person) => route('admin.leads.create', ['person_id' => $person->id, 'return_url' => $returnUrl]);
+        $leadUrl = fn ($person) => route('admin.leads.create', ['person_id' => $person->id]);
         $tile = '<span class="icon-leads text-2xl text-activity-note-text transition-all group-hover:text-blue-700 dark:!text-activity-note-text"></span>Lead';
     @endphp
 

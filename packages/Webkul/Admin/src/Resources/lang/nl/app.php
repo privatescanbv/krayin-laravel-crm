@@ -2294,6 +2294,7 @@ return [
         'view' => [
             'title'       => 'Lead: :title',
             'rotten-days' => ':days dagen',
+            'create-order-after-won' => 'Ook een nieuwe order aanmaken voor de nieuwe sales',
 
             'tabs' => [
                 'description' => 'Beschrijving',

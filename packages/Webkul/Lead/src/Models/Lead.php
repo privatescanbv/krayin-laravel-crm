@@ -66,6 +66,7 @@ class Lead extends Model implements LeadContract
         'last_purchase_at'               => 'date',
         'customer_type_determined_at'    => 'datetime',
         'had_contact'                    => 'boolean',
+        'create_order_after_won'         => 'boolean',
     ];
 
     /**
@@ -108,6 +109,7 @@ class Lead extends Model implements LeadContract
         'lead_channel_id',
         'department_id',
         'order_department_id_after_won',
+        'create_order_after_won',
         'organization_id',
         'contact_person_id',
         'created_by',

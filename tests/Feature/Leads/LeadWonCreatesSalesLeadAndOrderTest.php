@@ -305,3 +305,85 @@ test('lead won with alternate order department creates order on chosen departmen
     expect($order)->not->toBeNull();
     expect($order->pipeline_stage_id)->toBe(PipelineStage::ORDER_CONFIRM->id());
 });
+
+function herniaLeadForWonFlow(): Lead
+{
+    $user = User::factory()->create();
+    $department = Department::create(['name' => Departments::HERNIA->value]);
+    $person = Person::factory()->create([
+        'first_name'    => 'Jane',
+        'last_name'     => 'Smith',
+        'emails'        => [['value' => 'jane.smith@example.com', 'label' => 'work', 'is_default' => true]],
+        'phones'        => [['value' => '+31698765432', 'label' => 'mobile', 'is_default' => true]],
+        'date_of_birth' => '1990-01-01',
+    ]);
+
+    $lead = new Lead([
+        'lead_pipeline_id'       => PipelineDefaultKeys::PIPELINE_HERNIA_ID->value,
+        'lead_pipeline_stage_id' => PipelineStage::NIEUWE_AANVRAAG_KWALIFICEREN_HERNIA->id(),
+        'status'                 => 1,
+        'first_name'             => 'Jane',
+        'last_name'              => 'Smith',
+        'emails'                 => [['value' => 'jane.smith@example.com', 'label' => 'work', 'is_default' => true]],
+        'phones'                 => [['value' => '+31698765432', 'label' => 'mobile', 'is_default' => true]],
+        'date_of_birth'          => '1990-01-01',
+        'user_id'                => $user->id,
+        'lead_source_id'         => Source::create(['name' => 'Website'])->id,
+        'lead_type_id'           => Type::create(['name' => 'New Lead'])->id,
+        'department_id'          => $department->id,
+    ]);
+    $lead->save();
+    $lead->attachPersons([$person->id]);
+
+    return $lead;
+}
+
+test('lead won without the order checkbox only creates a sales lead', function (): void {
+    $lead = herniaLeadForWonFlow();
+
+    $lead->update([
+        'lead_pipeline_stage_id' => PipelineStage::WON_HERNIA->id(),
+        'create_order_after_won' => false,
+    ]);
+
+    $salesLead = SalesLead::where('lead_id', $lead->id)->first();
+    expect($salesLead)->not->toBeNull()
+        ->and(Order::where('sales_lead_id', $salesLead->id)->exists())->toBeFalse()
+        // The choice is one-off: reset so a later won transition without the modal creates an order again.
+        ->and($lead->fresh()->create_order_after_won)->toBeTrue();
+});
+
+test('lead won with the order checkbox on creates the order', function (): void {
+    $lead = herniaLeadForWonFlow();
+
+    $lead->update([
+        'lead_pipeline_stage_id' => PipelineStage::WON_HERNIA->id(),
+        'create_order_after_won' => true,
+    ]);
+
+    $salesLead = SalesLead::where('lead_id', $lead->id)->firstOrFail();
+    expect(Order::where('sales_lead_id', $salesLead->id)->exists())->toBeTrue();
+});
+
+test('stage update endpoint passes the order checkbox through and defaults to creating an order', function (bool $send, ?int $value, bool $expectOrder): void {
+    $lead = herniaLeadForWonFlow();
+    $this->actingAs(getDefaultAdmin(), 'user');
+
+    $payload = [
+        'lead_pipeline_stage_id'        => PipelineStage::WON_HERNIA->id(),
+        'user_id'                       => $lead->user_id,
+        'order_department_id_after_won' => $lead->department_id,
+    ];
+    if ($send) {
+        $payload['create_order_after_won'] = $value;
+    }
+
+    $this->putJson(route('admin.leads.stage.update', $lead->id), $payload)->assertOk();
+
+    $salesLead = SalesLead::where('lead_id', $lead->id)->firstOrFail();
+    expect(Order::where('sales_lead_id', $salesLead->id)->exists())->toBe($expectOrder);
+})->with([
+    'unchecked'              => [true, 0, false],
+    'checked'                => [true, 1, true],
+    'absent (other callers)' => [false, null, true],
+]);

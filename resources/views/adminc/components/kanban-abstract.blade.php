@@ -559,6 +559,18 @@
                                         placeholder="dd-mm-yyyy"
                                     />
                                 </x-admin::form.control-group>
+
+                                <div v-if="entityType === 'leads'">
+                                <label class="flex cursor-pointer items-center gap-2 text-sm dark:text-gray-300">
+                                    <input
+                                        type="checkbox"
+                                        name="create_order_after_won"
+                                        class="h-4 w-4 rounded border-gray-300"
+                                        v-model="currentStageUpdate.create_order_after_won"
+                                    >
+                                    @lang('admin::app.leads.view.create-order-after-won')
+                                </label>
+                                </div>
                             </template>
 
                             <!-- Herniapoli: uitkomst beoordeling -->
@@ -1199,6 +1211,7 @@
                             closed_at: new Date().toISOString().slice(0, 10),
                             user_id: String(lead.user_id || lead.user?.id || ''),
                             order_department_id_after_won: String(lead.department_id || ''),
+                            create_order_after_won: true,
                         };
 
                         if (type === 'won') {
@@ -1255,6 +1268,7 @@
 
                             if (this.entityType === 'leads') {
                                 extraData.order_department_id_after_won = update.order_department_id_after_won;
+                                extraData.create_order_after_won = update.create_order_after_won ? 1 : 0;
                             }
                         } else {
                             extraData.lost_reason = update.lost_reason;

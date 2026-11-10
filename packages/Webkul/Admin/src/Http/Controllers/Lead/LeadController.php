@@ -844,6 +844,7 @@ class LeadController extends Controller
             'closed_at' => 'nullable|date',
             'user_id' => 'nullable|exists:users,id',
             'order_department_id_after_won' => 'nullable|exists:departments,id',
+            'create_order_after_won' => 'nullable|boolean',
         ]);
         $closeOpenActivities = request()->has('close_open_activities') && request()->input('close_open_activities');
 
@@ -854,7 +855,8 @@ class LeadController extends Controller
             request()->input('lost_reason'),
             request()->input('closed_at'),
             request()->input('user_id'),
-            request()->input('order_department_id_after_won'));
+            request()->input('order_department_id_after_won'),
+            request()->boolean('create_order_after_won', true));
     }
 
     /**
@@ -867,7 +869,8 @@ class LeadController extends Controller
         ?string $lostReason,
         ?string $closedAt,
         ?string $userId = null,
-        ?string $orderDepartmentIdAfterWon = null
+        ?string $orderDepartmentIdAfterWon = null,
+        bool $createOrderAfterWon = true
     ): JsonResponse
     {
         $lead = $this->leadRepository->findOrFail($leadId);
@@ -925,6 +928,7 @@ class LeadController extends Controller
 
         if ($targetStage && $targetStage->is_won) {
             $data['order_department_id_after_won'] = $orderDepartmentIdAfterWon ?: $lead->department_id;
+            $data['create_order_after_won'] = $createOrderAfterWon;
         }
 
         // update state after closing activiteit, otherwise new activities will be closed

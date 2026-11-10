@@ -131,7 +131,15 @@ class LeadObserver
             // Reload the stage relationship to get the fresh data
             $lead->load('stage');
             if ($lead->stage?->is_won) {
-                $this->salesLeadRepository->createFromWonLead($lead);
+                // Choice from the "won" modal; null/true (default, other paths) = also create the order.
+                $createOrder = $lead->create_order_after_won ?? true;
+                $this->salesLeadRepository->createFromWonLead($lead, createOrder: $createOrder);
+
+                // One-off choice: reset so a later won transition without the modal creates an order again.
+                // Direct query: saving the model here would overwrite its changes (wasChanged() below).
+                if (! $createOrder) {
+                    DB::table('leads')->where('id', $lead->id)->update(['create_order_after_won' => true]);
+                }
             }
         }
 

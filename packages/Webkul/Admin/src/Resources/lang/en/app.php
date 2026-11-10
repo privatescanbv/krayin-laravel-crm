@@ -2251,6 +2251,7 @@ return [
         'view' => [
             'title'       => 'Lead: :title',
             'rotten-days' => ':days Days',
+            'create-order-after-won' => 'Also create a new order for the new sales',
 
             'tabs'        => [
                 'description' => 'Description',

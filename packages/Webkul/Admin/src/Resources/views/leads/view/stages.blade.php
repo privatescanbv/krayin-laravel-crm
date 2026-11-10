@@ -175,6 +175,18 @@
                                             v-model="nextStage.closed_at"
                                             :label="trans('admin::app.leads.view.stages.closed-at')"
                                         />
+
+                                        @if (! $isSalesLead && ! $isOrder)
+                                        <label class="flex cursor-pointer items-center gap-2 text-sm dark:text-gray-300">
+                                            <input
+                                                type="checkbox"
+                                                name="create_order_after_won"
+                                                class="h-4 w-4 rounded border-gray-300"
+                                                v-model="nextStage.create_order_after_won"
+                                            >
+                                            @lang('admin::app.leads.view.create-order-after-won')
+                                        </label>
+                                        @endif
                                     </template>
 
                                     <!-- Lost Reason -->
@@ -403,6 +415,10 @@
                             : '';
                     }
 
+                    if (this.isLeadContext && this.isWonStage(this.nextStage)) {
+                        this.nextStage.create_order_after_won = true;
+                    }
+
                     this.$refs.stageUpdateModal.open();
                 },
 
@@ -425,6 +441,7 @@
 
                         if (this.isLeadContext) {
                             params.order_department_id_after_won = this.nextStage.order_department_id_after_won;
+                            params.create_order_after_won = this.nextStage.create_order_after_won === false ? 0 : 1;
                         }
                     } else if (this.needsAssessmentOutcome(this.nextStage)) {
                         if (! this.nextStage.assessment_outcome && ! this.outcomeOptional(this.nextStage)) {

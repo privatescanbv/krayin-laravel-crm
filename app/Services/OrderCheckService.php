@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ProductReports;
 use App\Models\Order;
 use App\Models\OrderCheck;
+use App\Models\OrderItem;
 use App\Models\PartnerProduct;
 use App\Models\ResourceOrderItem;
 use Illuminate\Support\Collection;
@@ -12,6 +13,40 @@ use Webkul\Contact\Models\Person;
 
 class OrderCheckService
 {
+    /**
+     * Surface a non-removable order check so the user notices the purchase price could not be
+     * resolved automatically (e.g. a non-plannable product with zero or multiple matching
+     * partner products). Replaces any earlier check for the same order item.
+     */
+    public function flagPurchasePriceIssue(OrderItem $orderItem, string $reason): void
+    {
+        if (! $orderItem->order_id) {
+            return;
+        }
+
+        $this->purchasePriceChecks($orderItem)->delete();
+
+        OrderCheck::create([
+            'order_id'  => $orderItem->order_id,
+            'name'      => "{$this->purchasePriceCheckPrefix($orderItem)}: {$reason}",
+            'done'      => false,
+            'removable' => false,
+        ]);
+    }
+
+    /**
+     * Clear a previously flagged purchase price issue for this order item, e.g. once it has
+     * been resolved automatically or filled in manually.
+     */
+    public function clearPurchasePriceIssue(OrderItem $orderItem): void
+    {
+        if (! $orderItem->order_id) {
+            return;
+        }
+
+        $this->purchasePriceChecks($orderItem)->delete();
+    }
+
     public function retrieveClinicFromOrder(Order $order, Person $patient): ?string
     {
         $firstBooking = ResourceOrderItem::query()
@@ -69,6 +104,20 @@ class OrderCheckService
         foreach ($checksToRemove as $check) {
             $check->delete();
         }
+    }
+
+    /**
+     * Match on "#{id}: " including the separator: a bare "#12%" would also match line #123.
+     */
+    private function purchasePriceChecks(OrderItem $orderItem)
+    {
+        return OrderCheck::where('order_id', $orderItem->order_id)
+            ->where('name', 'like', $this->purchasePriceCheckPrefix($orderItem).': %');
+    }
+
+    private function purchasePriceCheckPrefix(OrderItem $orderItem): string
+    {
+        return "Inkoopprijs ontbreekt — orderregel #{$orderItem->id}";
     }
 
     /**

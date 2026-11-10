@@ -39,6 +39,13 @@ class OrderItemObserver
         $this->updateOrderItemStatus($orderItem);
         $this->updatePartnerProductChecks($orderItem);
         $orderItem->order?->recalculateTotalPrice();
+
+        // Plannable products get their purchase price once booked onto a resource (see
+        // ResourceOrderItemObserver); non-plannable products never go through that flow, so
+        // resolve their purchase price straight away instead of leaving it empty (MBS-515).
+        if ($orderItem->product_id) {
+            $this->orderItemPurchasePriceService->relinkPartnerProduct($orderItem);
+        }
     }
 
     /**
@@ -89,6 +96,8 @@ class OrderItemObserver
         // After deleting an order item, check if we need to update the parent order status
         $this->updateParentOrderStatus($orderItem);
         $this->updatePartnerProductChecks($orderItem);
+        // The purchase price warning belongs to this line; don't leave it behind on the order.
+        $this->orderCheckService->clearPurchasePriceIssue($orderItem);
     }
 
     private function logFieldChanges(OrderItem $orderItem): void

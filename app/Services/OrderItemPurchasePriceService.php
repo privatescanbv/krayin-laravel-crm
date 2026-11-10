@@ -6,9 +6,14 @@ use App\Enums\PurchasePriceType;
 use App\Models\OrderItem;
 use App\Models\PartnerProduct;
 use App\Models\PurchasePrice;
+use Illuminate\Support\Facades\Log;
 
 class OrderItemPurchasePriceService
 {
+    public function __construct(
+        private readonly OrderCheckService $orderCheckService,
+    ) {}
+
     public function linkPartnerProduct(OrderItem $orderItem, PartnerProduct $partnerProduct): void
     {
         $orderItem->update(['partner_product_id' => $partnerProduct->id]);
@@ -16,6 +21,8 @@ class OrderItemPurchasePriceService
         $orderItem->unsetRelation('purchasePrice');
 
         if ($orderItem->hasEnteredPurchasePrice()) {
+            $this->orderCheckService->clearPurchasePriceIssue($orderItem);
+
             return;
         }
 
@@ -24,6 +31,11 @@ class OrderItemPurchasePriceService
             : $partnerProduct->purchasePrice()->first();
 
         if ($partnerPrice === null) {
+            $this->orderCheckService->flagPurchasePriceIssue(
+                $orderItem,
+                "partnerproduct \"{$partnerProduct->name}\" heeft geen inkoopprijs geconfigureerd"
+            );
+
             return;
         }
 
@@ -36,21 +48,18 @@ class OrderItemPurchasePriceService
             'purchase_price_radiology'  => $partnerPrice->purchase_price_radiology,
             'purchase_price'            => $partnerPrice->purchase_price,
         ]);
+
+        $this->orderCheckService->clearPurchasePriceIssue($orderItem);
     }
 
     /**
-     * Re-resolve the partner product for the planned clinic, e.g. after the order item's product changed.
+     * Re-resolve the partner product for this order item, e.g. after its product changed.
      */
     public function relinkPartnerProduct(OrderItem $orderItem): void
     {
-        $clinicId = $orderItem->resourceOrderItem()->with('resource.clinicDepartment')->first()
-            ?->resource
-            ?->clinicDepartment
-            ?->clinic_id;
-
-        $partnerProduct = $clinicId && $orderItem->product_id
-            ? PartnerProduct::forClinicAndProduct($clinicId, $orderItem->product_id)->with('purchasePrice')->first()
-            : null;
+        $partnerProduct = $orderItem->isPlannable()
+            ? $this->resolvePlannedPartnerProduct($orderItem)
+            : $this->resolveNonPlannablePartnerProduct($orderItem);
 
         $previous = $orderItem->partnerProduct()->withTrashed()->with('purchasePrice')->first();
 
@@ -98,6 +107,73 @@ class OrderItemPurchasePriceService
         }
 
         $orderItem->purchasePrice()->updateOrCreate([], $payload);
+
+        $this->orderCheckService->clearPurchasePriceIssue($orderItem);
+    }
+
+    /**
+     * Plannable products are resolved per clinic, taken from the resource the order item is
+     * booked onto (see ResourceOrderItemObserver). Before planning, there is no clinic yet.
+     */
+    private function resolvePlannedPartnerProduct(OrderItem $orderItem): ?PartnerProduct
+    {
+        $clinicId = $orderItem->resourceOrderItem()->with('resource.clinicDepartment')->first()
+            ?->resource
+            ?->clinicDepartment
+            ?->clinic_id;
+
+        return $clinicId && $orderItem->product_id
+            ? PartnerProduct::forClinicAndProduct($clinicId, $orderItem->product_id)->with('purchasePrice')->first()
+            : null;
+    }
+
+    /**
+     * Non-plannable products are never booked onto a resource, so there is no clinic to key
+     * the partner product on (MBS-515). Resolve it straight from product_id instead; this only
+     * works when exactly one active partner product matches. Having none is normal (plenty of
+     * products have no partner/purchase arrangement at all), but having more than one is a real
+     * configuration ambiguity, so that case is surfaced to the user via an order check.
+     */
+    private function resolveNonPlannablePartnerProduct(OrderItem $orderItem): ?PartnerProduct
+    {
+        if (! $orderItem->product_id) {
+            $this->orderCheckService->clearPurchasePriceIssue($orderItem);
+
+            return null;
+        }
+
+        $partnerProducts = PartnerProduct::bookable()
+            ->where('product_id', $orderItem->product_id)
+            ->with('purchasePrice')
+            ->get();
+
+        if ($partnerProducts->count() === 1) {
+            return $partnerProducts->first();
+        }
+
+        if ($partnerProducts->isEmpty()) {
+            $this->orderCheckService->clearPurchasePriceIssue($orderItem);
+
+            return null;
+        }
+
+        // A valid (e.g. manually entered) price makes the ambiguity harmless: nothing is missing.
+        $orderItem->unsetRelation('purchasePrice');
+
+        if ($orderItem->hasEnteredPurchasePrice()) {
+            $this->orderCheckService->clearPurchasePriceIssue($orderItem);
+
+            return null;
+        }
+
+        $productName = $orderItem->product?->name ?? "product #{$orderItem->product_id}";
+        $reason = "meerdere partnerproducten gevonden voor \"{$productName}\", vul de inkoopprijs handmatig in";
+
+        Log::warning("[OrderItemPurchasePriceService] Kan inkoopprijs niet automatisch bepalen voor orderregel #{$orderItem->id}: {$reason}");
+
+        $this->orderCheckService->flagPurchasePriceIssue($orderItem, $reason);
+
+        return null;
     }
 
     private function hasPriceCopiedFrom(OrderItem $orderItem, PartnerProduct $partnerProduct): bool

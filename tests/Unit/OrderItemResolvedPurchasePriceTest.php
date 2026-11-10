@@ -6,10 +6,15 @@ use App\Enums\PurchasePriceType;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PartnerProduct;
+use App\Models\ResourceType;
 use Webkul\Product\Models\Product;
 
 beforeEach(function () {
-    $this->product = Product::factory()->create();
+    // Plannable product: these tests cover resolvedPurchasePrice()'s own precedence rules, not
+    // the MBS-515 auto-link-on-create behaviour for non-plannable products (see
+    // NonPlannableOrderItemPurchasePriceTest), so keep the item unplanned/unlinked here.
+    $resourceType = ResourceType::firstOrCreate(['name' => 'MRI scanner'], ['description' => null]);
+    $this->product = Product::factory()->create(['resource_type_id' => $resourceType->id]);
 });
 
 test('resolvedPurchasePrice returns all zeros when order item has no purchase price', function () {

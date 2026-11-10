@@ -96,6 +96,8 @@ class OrderItemObserver
         // After deleting an order item, check if we need to update the parent order status
         $this->updateParentOrderStatus($orderItem);
         $this->updatePartnerProductChecks($orderItem);
+        // The purchase price warning belongs to this line; don't leave it behind on the order.
+        $this->orderCheckService->clearPurchasePriceIssue($orderItem);
     }
 
     private function logFieldChanges(OrderItem $orderItem): void

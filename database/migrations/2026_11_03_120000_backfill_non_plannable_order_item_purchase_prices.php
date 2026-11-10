@@ -12,14 +12,24 @@ return new class extends Migration
 
         OrderItem::query()
             ->whereNotNull('product_id')
-            ->whereNull('partner_product_id')
-            ->with(['product.resourceType', 'product.partnerProducts.resourceType', 'resourceType', 'purchasePrice'])
+            ->whereDoesntHave('purchasePrice', fn ($query) => $query->where('purchase_price', '>', 0))
+            ->with(['product.resourceType', 'product.partnerProducts.resourceType', 'resourceType', 'purchasePrice', 'partnerProduct.purchasePrice'])
+            ->lazyById()
             ->each(function (OrderItem $orderItem) use ($service) {
-                if ($orderItem->isPlannable()) {
+                if ($orderItem->isPlannable() || $orderItem->hasEnteredPurchasePrice()) {
                     return;
                 }
 
-                $service->relinkPartnerProduct($orderItem);
+                if ($orderItem->partner_product_id === null) {
+                    $service->relinkPartnerProduct($orderItem);
+
+                    return;
+                }
+
+                // Existing link: use it as is. A soft-deleted partner product is not resolvable here.
+                if ($orderItem->partnerProduct !== null) {
+                    $service->linkPartnerProduct($orderItem, $orderItem->partnerProduct);
+                }
             });
     }
 

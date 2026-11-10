@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PartnerProduct;
 use App\Models\ResourceType;
+use App\Services\OrderCheckService;
 use App\Services\OrderItemPurchasePriceService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -165,4 +166,94 @@ test('resolving an ambiguous match successfully clears a previously flagged warn
 
     expect($order->orderChecks()->where('name', 'like', 'Inkoopprijs ontbreekt%')->exists())->toBeFalse()
         ->and($item->fresh()->partner_product_id)->toBe($keep->id);
+});
+
+function runBackfillMigration(): void
+{
+    (require database_path('migrations/2026_11_03_120000_backfill_non_plannable_order_item_purchase_prices.php'))->up();
+}
+
+test('backfill migration prices a line that is already linked to a partner product but has no purchase price', function () {
+    $product = nonPlannableProduct();
+    $partnerProduct = PartnerProduct::factory()
+        ->withMainPurchasePrice(['misc' => 30, 'total' => 30])
+        ->create(['product_id' => $product->id]);
+
+    $item = OrderItem::factory()->create(['order_id' => Order::factory()->create()->id, 'product_id' => $product->id, 'person_id' => test()->person->id]);
+    $item->purchasePrice()->delete();
+    $item->update(['partner_product_id' => $partnerProduct->id]);
+
+    runBackfillMigration();
+
+    expect((float) $item->fresh()->purchasePrice->purchase_price)->toBe(30.0)
+        ->and($item->fresh()->partner_product_id)->toBe($partnerProduct->id);
+});
+
+test('backfill migration keeps the existing link even when several partner products match', function () {
+    $product = nonPlannableProduct();
+    $linked = PartnerProduct::factory()->withMainPurchasePrice(['misc' => 12, 'total' => 12])->create(['product_id' => $product->id]);
+    PartnerProduct::factory()->withMainPurchasePrice(['misc' => 99, 'total' => 99])->create(['product_id' => $product->id]);
+
+    $item = OrderItem::factory()->create(['order_id' => Order::factory()->create()->id, 'product_id' => $product->id, 'person_id' => test()->person->id]);
+    $item->purchasePrice()->delete();
+    $item->update(['partner_product_id' => $linked->id]);
+
+    runBackfillMigration();
+
+    expect((float) $item->fresh()->purchasePrice->purchase_price)->toBe(12.0)
+        ->and($item->fresh()->partner_product_id)->toBe($linked->id);
+});
+
+test('backfill migration leaves a line that already has a purchase price untouched', function () {
+    $product = nonPlannableProduct();
+    $partnerProduct = PartnerProduct::factory()->withMainPurchasePrice(['misc' => 30, 'total' => 30])->create(['product_id' => $product->id]);
+
+    $item = OrderItem::factory()->create(['order_id' => Order::factory()->create()->id, 'product_id' => $product->id, 'person_id' => test()->person->id]);
+    $item->purchasePrice()->updateOrCreate([], ['type' => PurchasePriceType::MAIN, 'purchase_price_misc' => 45, 'purchase_price' => 45]);
+    $item->update(['partner_product_id' => $partnerProduct->id]);
+
+    runBackfillMigration();
+
+    expect((float) $item->fresh()->purchasePrice->purchase_price)->toBe(45.0);
+});
+
+test('multiple matching partner products do not flag a warning when a purchase price is already entered', function () {
+    $product = nonPlannableProduct();
+    PartnerProduct::factory()->count(2)->withMainPurchasePrice(['misc' => 30, 'total' => 30])->create(['product_id' => $product->id]);
+
+    $item = OrderItem::factory()->create(['order_id' => Order::factory()->create()->id, 'product_id' => $product->id, 'person_id' => test()->person->id]);
+    $item->purchasePrice()->updateOrCreate([], ['type' => PurchasePriceType::MAIN, 'purchase_price_misc' => 45, 'purchase_price' => 45]);
+
+    app(OrderItemPurchasePriceService::class)->relinkPartnerProduct($item->fresh());
+
+    expect((float) $item->fresh()->purchasePrice->purchase_price)->toBe(45.0)
+        ->and($item->order->orderChecks()->where('name', 'like', 'Inkoopprijs ontbreekt%')->exists())->toBeFalse();
+});
+
+test('clearing the warning of one line does not clear the warning of a line whose id starts with the same digits', function () {
+    $order = Order::factory()->create();
+    $itemA = OrderItem::factory()->create(['order_id' => $order->id, 'person_id' => test()->person->id]);
+    $itemB = OrderItem::factory()->create(['order_id' => $order->id, 'person_id' => test()->person->id]);
+    $itemB->id = (int) ($itemA->id.'3');
+    $service = app(OrderCheckService::class);
+
+    $service->flagPurchasePriceIssue($itemA, 'reden');
+    $service->flagPurchasePriceIssue($itemB, 'reden');
+    $service->clearPurchasePriceIssue($itemA);
+
+    $names = $order->orderChecks()->pluck('name')->all();
+    expect($names)->toHaveCount(1)->and($names[0])->toContain("#{$itemB->id}:");
+});
+
+test('deleting an order item removes its purchase price warning', function () {
+    $product = nonPlannableProduct();
+    PartnerProduct::factory()->count(2)->withMainPurchasePrice(['misc' => 30, 'total' => 30])->create(['product_id' => $product->id]);
+    $order = Order::factory()->create();
+    $item = OrderItem::factory()->create(['order_id' => $order->id, 'product_id' => $product->id, 'person_id' => test()->person->id]);
+
+    expect($order->orderChecks()->where('name', 'like', 'Inkoopprijs ontbreekt%')->exists())->toBeTrue();
+
+    $item->delete();
+
+    expect($order->orderChecks()->where('name', 'like', 'Inkoopprijs ontbreekt%')->exists())->toBeFalse();
 });

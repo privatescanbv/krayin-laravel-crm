@@ -24,9 +24,7 @@ class OrderCheckService
             return;
         }
 
-        OrderCheck::where('order_id', $orderItem->order_id)
-            ->where('name', 'like', $this->purchasePriceCheckPrefix($orderItem).'%')
-            ->delete();
+        $this->purchasePriceChecks($orderItem)->delete();
 
         OrderCheck::create([
             'order_id'  => $orderItem->order_id,
@@ -46,9 +44,7 @@ class OrderCheckService
             return;
         }
 
-        OrderCheck::where('order_id', $orderItem->order_id)
-            ->where('name', 'like', $this->purchasePriceCheckPrefix($orderItem).'%')
-            ->delete();
+        $this->purchasePriceChecks($orderItem)->delete();
     }
 
     public function retrieveClinicFromOrder(Order $order, Person $patient): ?string
@@ -108,6 +104,15 @@ class OrderCheckService
         foreach ($checksToRemove as $check) {
             $check->delete();
         }
+    }
+
+    /**
+     * Match on "#{id}: " including the separator: a bare "#12%" would also match line #123.
+     */
+    private function purchasePriceChecks(OrderItem $orderItem)
+    {
+        return OrderCheck::where('order_id', $orderItem->order_id)
+            ->where('name', 'like', $this->purchasePriceCheckPrefix($orderItem).': %');
     }
 
     private function purchasePriceCheckPrefix(OrderItem $orderItem): string

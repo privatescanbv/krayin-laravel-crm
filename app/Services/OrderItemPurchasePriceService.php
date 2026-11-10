@@ -157,6 +157,15 @@ class OrderItemPurchasePriceService
             return null;
         }
 
+        // A valid (e.g. manually entered) price makes the ambiguity harmless: nothing is missing.
+        $orderItem->unsetRelation('purchasePrice');
+
+        if ($orderItem->hasEnteredPurchasePrice()) {
+            $this->orderCheckService->clearPurchasePriceIssue($orderItem);
+
+            return null;
+        }
+
         $productName = $orderItem->product?->name ?? "product #{$orderItem->product_id}";
         $reason = "meerdere partnerproducten gevonden voor \"{$productName}\", vul de inkoopprijs handmatig in";
 

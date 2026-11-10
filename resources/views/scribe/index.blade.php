@@ -101,7 +101,7 @@
                                 <a href="#clinic-sales-GETapi-clinic--keycloakUserId--sales-stages">Stages (kanban columns) of the Herniapoli sales pipeline that the user's role may see.</a>
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="clinic-sales-GETapi-clinic--keycloakUserId--sales-leads">
-                                <a href="#clinic-sales-GETapi-clinic--keycloakUserId--sales-leads">Herniapoli sales assigned to the doctor, newest first. Minimal card data; persons only carry id and name.</a>
+                                <a href="#clinic-sales-GETapi-clinic--keycloakUserId--sales-leads">Herniapoli sales assigned to the doctor, newest first. Card data: persons carry id, name and date_of_birth (nullable); `stage_entered_at` is null when the move into the current stage is not in the audit trail.</a>
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="clinic-sales-PUTapi-clinic--keycloakUserId--sales-leads--saleId--stage">
                                 <a href="#clinic-sales-PUTapi-clinic--keycloakUserId--sales-leads--saleId--stage">Move the doctor's own sale to another ordinary stage of the Herniapoli sales pipeline (kanban drag).</a>
@@ -1335,7 +1335,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                     </form>
 
-                    <h2 id="clinic-sales-GETapi-clinic--keycloakUserId--sales-leads">Herniapoli sales assigned to the doctor, newest first. Minimal card data; persons only carry id and name.</h2>
+                    <h2 id="clinic-sales-GETapi-clinic--keycloakUserId--sales-leads">Herniapoli sales assigned to the doctor, newest first. Card data: persons carry id, name and date_of_birth (nullable); `stage_entered_at` is null when the move into the current stage is not in the audit trail.</h2>
 
 <p>
 <small class="badge badge-darkred">requires authentication</small>
@@ -1397,10 +1397,12 @@ fetch(url, {
             &quot;created_at&quot;: &quot;2026-11-05T09:00:00+00:00&quot;,
             &quot;updated_at&quot;: &quot;2026-11-05T09:00:00+00:00&quot;,
             &quot;closed_at&quot;: null,
+            &quot;stage_entered_at&quot;: &quot;2026-11-06T10:30:00+00:00&quot;,
             &quot;persons&quot;: [
                 {
                     &quot;id&quot;: 7,
-                    &quot;name&quot;: &quot;Jan Jansen&quot;
+                    &quot;name&quot;: &quot;Jan Jansen&quot;,
+                    &quot;date_of_birth&quot;: &quot;1980-04-02&quot;
                 }
             ]
         }
@@ -1621,10 +1623,12 @@ fetch(url, {
         &quot;created_at&quot;: &quot;2026-11-05T09:00:00+00:00&quot;,
         &quot;updated_at&quot;: &quot;2026-11-10T09:00:00+00:00&quot;,
         &quot;closed_at&quot;: null,
+        &quot;stage_entered_at&quot;: &quot;2026-11-10T09:00:00+00:00&quot;,
         &quot;persons&quot;: [
             {
                 &quot;id&quot;: 7,
-                &quot;name&quot;: &quot;Jan Jansen&quot;
+                &quot;name&quot;: &quot;Jan Jansen&quot;,
+                &quot;date_of_birth&quot;: &quot;1980-04-02&quot;
             }
         ]
     }
@@ -3202,7 +3206,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 7787ab77-39f0-4593-b530-54cb79f74c38
+x-request-id: 2625e7ca-c1f7-475c-930a-b6998f9fbd04
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 59
  </code></pre></details>         <pre>
@@ -4229,7 +4233,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: b9912431-f2b0-4e1e-9d28-230419406e9a
+x-request-id: 58e70b3b-d55b-4832-a498-16347fb9fd5e
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 58
  </code></pre></details>         <pre>
@@ -4387,7 +4391,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: e9dc71c1-c3d4-4d05-86d0-d3c30879f224
+x-request-id: 6aba9cdb-b9d8-4d92-a13a-5abfc366a64e
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 57
  </code></pre></details>         <pre>
@@ -4756,7 +4760,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: a1f3085a-bf5a-4d3b-aafc-7b4f5086a6e8
+x-request-id: 449e1166-b831-46a2-8261-d64778928d34
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 56
  </code></pre></details>         <pre>
@@ -4884,11 +4888,11 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"type\": \"note\",
+    \"type\": \"task\",
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_to\": \"2026-11-10 11:30:50\"
+    \"schedule_to\": \"2026-11-10 12:37:17\"
 }"
 </code></pre></div>
 
@@ -4905,11 +4909,11 @@ const headers = {
 };
 
 let body = {
-    "type": "note",
+    "type": "task",
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_to": "2026-11-10 11:30:50"
+    "schedule_to": "2026-11-10 12:37:17"
 };
 
 fetch(url, {
@@ -5026,10 +5030,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="type"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="note"
+               value="task"
                data-component="body">
     <br>
-<p>Example: <code>note</code></p>
+<p>Example: <code>task</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>task</code></li> <li><code>meeting</code></li> <li><code>call</code></li> <li><code>note</code></li> <li><code>file</code></li></ul>
         </div>
@@ -5088,10 +5092,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-11-10 11:30:50"
+               value="2026-11-10 12:37:17"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-11-10 11:30:50</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-11-10 12:37:17</code></p>
         </div>
         </form>
 
@@ -5787,7 +5791,7 @@ addresses or content.</p>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"level\": \"warning\",
+    \"level\": \"critical\",
     \"count\": 27,
     \"app\": \"n\"
 }"
@@ -5806,7 +5810,7 @@ const headers = {
 };
 
 let body = {
-    "level": "warning",
+    "level": "critical",
     "count": 27,
     "app": "n"
 };
@@ -5912,10 +5916,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="level"                data-endpoint="POSTapi-failed-jobs-alert"
-               value="warning"
+               value="critical"
                data-component="body">
     <br>
-<p>Example: <code>warning</code></p>
+<p>Example: <code>critical</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>warning</code></li> <li><code>critical</code></li></ul>
         </div>
@@ -8549,7 +8553,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --form "name=Bloeduitslag"\
     --form "description=Resultaten van het bloedonderzoek."\
-    --form "file=@/tmp/phpoodd689idho09YRKAyy" </code></pre></div>
+    --form "file=@/tmp/phpof9v8dicure53f7TfAc" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -8738,7 +8742,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The file to upload (max 20 MB). Example: <code>/tmp/phpoodd689idho09YRKAyy</code></p>
+<p>The file to upload (max 20 MB). Example: <code>/tmp/phpof9v8dicure53f7TfAc</code></p>
         </div>
         </form>
 
@@ -8791,7 +8795,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: d9e84201-e780-4fdb-9c36-cd006d6d3c0a
+x-request-id: 200f1e74-a4c2-4ef1-8ac4-2233cc3f40ff
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 55
  </code></pre></details>         <pre>
@@ -9366,7 +9370,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: f00669a6-116f-417c-a466-301d32403342
+x-request-id: 92778e25-3244-45bf-93e1-ee25b4a00c42
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 54
  </code></pre></details>         <pre>
@@ -9854,7 +9858,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 6d831b98-d167-46c7-94eb-1c8e4be4312a
+x-request-id: 8928bc97-d6ff-45e9-8b6b-6f4d2608ce4e
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 53
  </code></pre></details>         <pre>
@@ -10035,7 +10039,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"preferences\": {
         \"email_notifications_enabled\": true,
         \"language\": \"architecto\",
-        \"onboarding_completed_at\": \"2026-11-10T11:30:50\"
+        \"onboarding_completed_at\": \"2026-11-10T12:37:18\"
     }
 }"
 </code></pre></div>
@@ -10056,7 +10060,7 @@ let body = {
     "preferences": {
         "email_notifications_enabled": true,
         "language": "architecto",
-        "onboarding_completed_at": "2026-11-10T11:30:50"
+        "onboarding_completed_at": "2026-11-10T12:37:18"
     }
 };
 
@@ -10228,10 +10232,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="preferences.onboarding_completed_at"                data-endpoint="PUTapi-patient--id--preferences"
-               value="2026-11-10T11:30:50"
+               value="2026-11-10T12:37:18"
                data-component="body">
     <br>
-<p>Het veld value is geen geldige datum. Example: <code>2026-11-10T11:30:50</code></p>
+<p>Het veld value is geen geldige datum. Example: <code>2026-11-10T12:37:18</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>email_notifications_enabled</code></b>&nbsp;&nbsp;

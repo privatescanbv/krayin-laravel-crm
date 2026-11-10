@@ -1726,6 +1726,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereUpdatedBy($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead withStageEnteredAt()
  * @mixin \Eloquent
  */
 	#[\AllowDynamicProperties]

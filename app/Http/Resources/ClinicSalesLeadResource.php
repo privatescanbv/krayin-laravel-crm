@@ -12,6 +12,8 @@ use Illuminate\Support\Carbon;
  * `stage_entered_at` is het moment van de laatste stagewissel naar de huidige stage, null als dat niet bekend is.
  * Regio, diagnose en behandeladvies hebben nog geen CRM-bron en zijn bewust niet aanwezig.
  *
+ * @property-read string|null $stage_entered_at Subquery-kolom uit ClinicSalesLeadController, geen echte kolom.
+ *
  * @mixin SalesLead
  */
 class ClinicSalesLeadResource extends JsonResource

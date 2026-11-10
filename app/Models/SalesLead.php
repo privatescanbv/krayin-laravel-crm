@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ActivityType;
 use App\Enums\LostReason;
 use App\Enums\PipelineDefaultKeys;
 use App\Models\Concerns\HasAiSummary;
@@ -528,6 +529,27 @@ class SalesLead extends Model
             ->select('id');
 
         return $query->where('doctor_user_id', $doctor->id)->whereIn('pipeline_stage_id', $visibleStages);
+    }
+
+    /**
+     * Adds `stage_entered_at`: the newest "Status gewijzigd" audit activity that moved this sale into its
+     * current stage. Null when no such activity exists (e.g. created in this stage and never moved, or moved
+     * before the audit trail existed): updated_at is no substitute, any dossier edit changes it.
+     */
+    public function scopeWithStageEnteredAt($query)
+    {
+        return $query->addSelect([
+            'salesleads.*',
+            'stage_entered_at' => Activity::query()
+                ->select('created_at')
+                ->whereColumn('sales_lead_id', 'salesleads.id')
+                ->where('type', ActivityType::SYSTEM->value)
+                ->where('title', 'Status gewijzigd')
+                ->whereColumn('additional->new->value', 'salesleads.pipeline_stage_id')
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->limit(1),
+        ]);
     }
 
     public function scopeResolveDepartment($query, int $salesId)

@@ -49,13 +49,13 @@ class ClinicSalesLeadController extends Controller
     }
 
     /**
-     * Herniapoli sales assigned to the doctor, newest first. Minimal card data; persons only carry id and name.
+     * Herniapoli sales assigned to the doctor, newest first. Card data: persons carry id, name and date_of_birth (nullable); `stage_entered_at` is null when the move into the current stage is not in the audit trail.
      *
      * @group Clinic sales
      *
      * @urlParam keycloakUserId string required The Keycloak user ID of the doctor.
      *
-     * @response 200 scenario="Success" {"data":[{"id":12,"name":"Rugklachten","pipeline_stage_id":41,"created_at":"2026-11-05T09:00:00+00:00","updated_at":"2026-11-05T09:00:00+00:00","closed_at":null,"persons":[{"id":7,"name":"Jan Jansen"}]}],"links":{},"meta":{}}
+     * @response 200 scenario="Success" {"data":[{"id":12,"name":"Rugklachten","pipeline_stage_id":41,"created_at":"2026-11-05T09:00:00+00:00","updated_at":"2026-11-05T09:00:00+00:00","closed_at":null,"stage_entered_at":"2026-11-06T10:30:00+00:00","persons":[{"id":7,"name":"Jan Jansen","date_of_birth":"1980-04-02"}]}],"links":{},"meta":{}}
      * @response 403 scenario="User is not a doctor"
      * @response 404 scenario="No clinic user for this Keycloak user id"
      */
@@ -66,6 +66,7 @@ class ClinicSalesLeadController extends Controller
         return ClinicSalesLeadResource::collection(
             SalesLead::query()
                 ->forPortalDoctor($doctor)
+                ->withStageEnteredAt()
                 ->when($request->integer('stage_id'), fn ($query, $stageId) => $query->where('pipeline_stage_id', $stageId))
                 ->with('persons')
                 ->orderByDesc('created_at')
@@ -84,7 +85,7 @@ class ClinicSalesLeadController extends Controller
      * @urlParam keycloakUserId string required The Keycloak user ID of the doctor.
      * @urlParam saleId integer required The sale id (must be assigned to this doctor and visible to the role).
      *
-     * @response 200 scenario="Success" {"data":{"id":12,"name":"Rugklachten","pipeline_stage_id":42,"created_at":"2026-11-05T09:00:00+00:00","updated_at":"2026-11-10T09:00:00+00:00","closed_at":null,"persons":[{"id":7,"name":"Jan Jansen"}]}}
+     * @response 200 scenario="Success" {"data":{"id":12,"name":"Rugklachten","pipeline_stage_id":42,"created_at":"2026-11-05T09:00:00+00:00","updated_at":"2026-11-10T09:00:00+00:00","closed_at":null,"stage_entered_at":"2026-11-10T09:00:00+00:00","persons":[{"id":7,"name":"Jan Jansen","date_of_birth":"1980-04-02"}]}}
      * @response 403 scenario="User is not a doctor, or Bearer token belongs to another user"
      * @response 404 scenario="Unknown user, or sale not assigned to / not visible for this doctor"
      * @response 422 scenario="Invalid or refused move" {"message":"Vul eerst de uitkomst beoordeling in voordat de sales naar \"Beoordeling gereed\" gaat.","errors":{"assessment_outcome":["Vul eerst de uitkomst beoordeling in voordat de sales naar \"Beoordeling gereed\" gaat."]}}
@@ -121,7 +122,7 @@ class ClinicSalesLeadController extends Controller
             ]);
         }
 
-        return new ClinicSalesLeadResource($sale->fresh('persons'));
+        return new ClinicSalesLeadResource(SalesLead::query()->withStageEnteredAt()->with('persons')->findOrFail($sale->id));
     }
 
     private function doctor(string $keycloakUserId): User

@@ -12,6 +12,13 @@ use Illuminate\Support\Facades\Log;
 
 class KeycloakConfigService
 {
+    /**
+     * Portal clients the CRM impersonates users of (needs a service account with the impersonation role).
+     *
+     * @var list<KeyCloakClient>
+     */
+    private const IMPERSONATION_CLIENTS = [KeyCloakClient::PATIENT, KeyCloakClient::CLINIC];
+
     public function __construct(
         protected KeycloakService $keycloakService,
         protected GetKeycloakClientSecretAction $getClientSecretAction
@@ -261,7 +268,71 @@ class KeycloakConfigService
             }
         }
 
+        if (in_array($keyCloakClient, self::IMPERSONATION_CLIENTS, true) && ($results['exists'] || $results['created'])) {
+            $impersonationError = $this->syncImpersonationAccess($clientId, $realmName, $accessToken);
+            if ($impersonationError) {
+                $results['errors'][] = $impersonationError;
+            }
+        }
+
         return $results;
+    }
+
+    /**
+     * Give the client's service account the realm-management "impersonation" role, which the CRM's
+     * "login as" flow (KeycloakTokenExchangeService) needs. Enables service accounts when still off.
+     * Idempotent: does nothing when already in place.
+     *
+     * @return string|null error message, null on success
+     */
+    protected function syncImpersonationAccess(string $clientId, string $realmName, string $accessToken): ?string
+    {
+        $adminUrl = $this->keycloakService->getRealmsAdminUrl($realmName);
+        $http = fn () => Http::withToken($accessToken)->acceptJson()->asJson();
+
+        try {
+            $client = $this->keycloakService->getClientById($clientId, $realmName, $accessToken);
+            $realmManagement = $this->keycloakService->getClientById('realm-management', $realmName, $accessToken);
+
+            if (! $client || ! $realmManagement) {
+                return "Kon {$clientId} of realm-management niet ophalen om impersonation in te stellen.";
+            }
+
+            if (empty($client['serviceAccountsEnabled'])
+                && ! $this->keycloakService->updateClient($realmName, $clientId, ['serviceAccountsEnabled' => true], $accessToken)) {
+                return "Kon service accounts niet inschakelen voor client {$clientId}.";
+            }
+
+            $serviceAccount = $http()->get("{$adminUrl}/clients/{$client['id']}/service-account-user");
+            $role = $http()->get("{$adminUrl}/clients/{$realmManagement['id']}/roles/impersonation");
+
+            if (! $serviceAccount->successful() || ! $role->successful()) {
+                return "Kon service account of impersonation-role niet ophalen voor client {$clientId}.";
+            }
+
+            $mappingsUrl = "{$adminUrl}/users/{$serviceAccount->json('id')}/role-mappings/clients/{$realmManagement['id']}";
+            $assigned = $http()->get($mappingsUrl);
+
+            if (! $assigned->successful()) {
+                return "Kon role mappings van het service account van {$clientId} niet ophalen.";
+            }
+
+            if (in_array('impersonation', array_column($assigned->json() ?? [], 'name'), true)) {
+                return null;
+            }
+
+            if (! $http()->post($mappingsUrl, [$role->json()])->successful()) {
+                return "Kon de impersonation-role niet toekennen aan het service account van {$clientId}.";
+            }
+
+            Log::info('Keycloak impersonation role assigned to service account', ['client_id' => $clientId]);
+
+            return null;
+        } catch (Exception $e) {
+            Log::error('Keycloak impersonation sync failed', ['client_id' => $clientId, 'error' => $e->getMessage()]);
+
+            return "Impersonation instellen voor {$clientId} mislukt: {$e->getMessage()}";
+        }
     }
 
     /**

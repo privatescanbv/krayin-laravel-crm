@@ -1,14 +1,17 @@
 <?php
 
+use App\Enums\ActivityType;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStage;
 use App\Enums\RoleCode;
 use App\Models\SalesLead;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
+use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Stage;
 use Webkul\User\Models\Role;
@@ -76,18 +79,18 @@ it('lists only the doctor\'s own sales in the Herniapoli pipeline', function () 
         ->assertJsonPath('data.0.id', $mine->id);
 });
 
-it('returns the minimal card shape with person id and name only', function () {
+it('returns the card shape with person id, name and date of birth, without medical fields', function () {
     $doctor = portalUser('kc-doc-1');
     $sale = doctorSale($doctor, herniaStage());
-    $person = Person::factory()->create(['first_name' => 'Jan', 'last_name' => 'Jansen']);
+    $person = Person::factory()->create(['first_name' => 'Jan', 'last_name' => 'Jansen', 'date_of_birth' => '1980-04-02']);
     $sale->persons()->attach($person->id);
 
     $response = $this->withHeaders(apiKeyHeader())
         ->getJson(route('api.clinic.sales-leads', 'kc-doc-1'))
         ->assertOk();
 
-    expect(array_keys($response->json('data.0')))->toBe(['id', 'name', 'pipeline_stage_id', 'created_at', 'updated_at', 'closed_at', 'persons'])
-        ->and($response->json('data.0.persons'))->toBe([['id' => $person->id, 'name' => $person->name]]);
+    expect(array_keys($response->json('data.0')))->toBe(['id', 'name', 'pipeline_stage_id', 'created_at', 'updated_at', 'closed_at', 'stage_entered_at', 'persons'])
+        ->and($response->json('data.0.persons'))->toBe([['id' => $person->id, 'name' => $person->name, 'date_of_birth' => '1980-04-02']]);
 });
 
 it('shows stages without role restriction to every role', function () {
@@ -353,4 +356,40 @@ it('treats a move to the current stage as a no-op without writing', function () 
     moveStage('kc-doc-1', $sale->id, $stage->id)->assertOk()->assertJsonPath('data.pipeline_stage_id', $stage->id);
 
     expect($sale->fresh()->updated_at->equalTo($updatedAt))->toBeTrue();
+});
+
+it('reports a null date of birth and no stage change time for a sale that was never moved', function () {
+    $doctor = portalUser('kc-doc-1');
+    $sale = doctorSale($doctor, herniaStage());
+    $sale->persons()->attach(Person::factory()->create(['date_of_birth' => null])->id);
+
+    $this->withHeaders(apiKeyHeader())
+        ->getJson(route('api.clinic.sales-leads', 'kc-doc-1'))
+        ->assertOk()
+        ->assertJsonPath('data.0.persons.0.date_of_birth', null)
+        ->assertJsonPath('data.0.stage_entered_at', null);
+});
+
+it('reports when the sale entered its current stage, not the last edit', function () {
+    $doctor = portalUser('kc-doc-1');
+    $from = herniaStage(1);
+    $to = herniaStage(2);
+    $sale = doctorSale($doctor, $to);
+
+    $activity = function (int $stageId, string $at) use ($sale, $doctor) {
+        $row = Activity::query()->create([
+            'type'          => ActivityType::SYSTEM, 'title' => 'Status gewijzigd', 'is_done' => 1, 'user_id' => $doctor->id,
+            'sales_lead_id' => $sale->id,
+            'additional'    => ['attribute' => 'Status', 'new' => ['value' => $stageId, 'label' => 'x'], 'old' => ['value' => null, 'label' => '-']],
+        ]);
+        DB::table('activities')->where('id', $row->id)->update(['created_at' => $at]);
+    };
+    $activity($to->id, '2026-11-01 10:00:00');   // eerdere keer in deze stage
+    $activity($from->id, '2026-11-03 10:00:00'); // terug
+    $activity($to->id, '2026-11-05 10:00:00');   // nu weer: dit telt
+    $sale->update(['name' => 'Aangepast']); // dossierwijziging, wijzigt updated_at
+
+    $response = $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads', 'kc-doc-1'))->assertOk();
+
+    expect(Carbon::parse($response->json('data.0.stage_entered_at'))->toDateTimeString())->toBe('2026-11-05 10:00:00');
 });

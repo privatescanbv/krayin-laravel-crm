@@ -3863,7 +3863,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 41178fc9-4c33-49a0-9930-e88d09390ebf
+x-request-id: 0c6b47c3-121c-4beb-b211-53461caf936b
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 59
  </code></pre></details>         <pre>
@@ -4890,7 +4890,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: dba23737-4a7c-43b6-aba9-f2d0114f42d3
+x-request-id: 311d38fb-74b1-41f8-b985-73b9a58eb637
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 58
  </code></pre></details>         <pre>
@@ -5048,7 +5048,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 37dab81b-0e89-4d71-982e-e44c26cfd98e
+x-request-id: 1fd55209-5b26-453d-836d-cd6f6869eb2f
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 57
  </code></pre></details>         <pre>
@@ -5417,7 +5417,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: e173eebc-7f84-4005-b3fb-e1b5d0708e70
+x-request-id: 1b1291f4-8ade-4c59-959d-969a2835344b
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 56
  </code></pre></details>         <pre>
@@ -5545,11 +5545,11 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"type\": \"task\",
+    \"type\": \"note\",
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_to\": \"2026-11-10 12:44:22\"
+    \"schedule_to\": \"2026-11-10 14:48:15\"
 }"
 </code></pre></div>
 
@@ -5566,11 +5566,11 @@ const headers = {
 };
 
 let body = {
-    "type": "task",
+    "type": "note",
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_to": "2026-11-10 12:44:22"
+    "schedule_to": "2026-11-10 14:48:15"
 };
 
 fetch(url, {
@@ -5687,10 +5687,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="type"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="task"
+               value="note"
                data-component="body">
     <br>
-<p>Example: <code>task</code></p>
+<p>Example: <code>note</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>task</code></li> <li><code>meeting</code></li> <li><code>call</code></li> <li><code>note</code></li> <li><code>file</code></li></ul>
         </div>
@@ -5749,10 +5749,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-11-10 12:44:22"
+               value="2026-11-10 14:48:15"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-11-10 12:44:22</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-11-10 14:48:15</code></p>
         </div>
         </form>
 
@@ -9210,7 +9210,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --form "name=Bloeduitslag"\
     --form "description=Resultaten van het bloedonderzoek."\
-    --form "file=@/tmp/phpe2e5cb0anlva2xszIsp" </code></pre></div>
+    --form "file=@/tmp/phpeq8nejvtgqs57E2Laj1" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -9399,7 +9399,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The file to upload (max 20 MB). Example: <code>/tmp/phpe2e5cb0anlva2xszIsp</code></p>
+<p>The file to upload (max 20 MB). Example: <code>/tmp/phpeq8nejvtgqs57E2Laj1</code></p>
         </div>
         </form>
 
@@ -9452,7 +9452,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 9aa67a7d-a0bd-4fae-aca7-962844a32d3e
+x-request-id: 2069744e-a05a-4612-9022-3d7573810492
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 55
  </code></pre></details>         <pre>
@@ -10027,7 +10027,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 576d081f-67d2-4b07-864c-2690f62c51a6
+x-request-id: a3739818-410e-41e9-b713-e4abe999a764
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 54
  </code></pre></details>         <pre>
@@ -10515,7 +10515,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 032ed7ea-2bcd-4176-986d-b6cb31753791
+x-request-id: 3b2efa14-87f6-4638-8824-727f148fcc3b
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 53
  </code></pre></details>         <pre>
@@ -10696,7 +10696,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"preferences\": {
         \"email_notifications_enabled\": true,
         \"language\": \"architecto\",
-        \"onboarding_completed_at\": \"2026-11-10T12:44:23\"
+        \"onboarding_completed_at\": \"2026-11-10T14:48:16\"
     }
 }"
 </code></pre></div>
@@ -10717,7 +10717,7 @@ let body = {
     "preferences": {
         "email_notifications_enabled": true,
         "language": "architecto",
-        "onboarding_completed_at": "2026-11-10T12:44:23"
+        "onboarding_completed_at": "2026-11-10T14:48:16"
     }
 };
 
@@ -10889,10 +10889,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="preferences.onboarding_completed_at"                data-endpoint="PUTapi-patient--id--preferences"
-               value="2026-11-10T12:44:23"
+               value="2026-11-10T14:48:16"
                data-component="body">
     <br>
-<p>Het veld value is geen geldige datum. Example: <code>2026-11-10T12:44:23</code></p>
+<p>Het veld value is geen geldige datum. Example: <code>2026-11-10T14:48:16</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>email_notifications_enabled</code></b>&nbsp;&nbsp;

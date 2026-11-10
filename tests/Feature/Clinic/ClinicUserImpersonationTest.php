@@ -179,7 +179,8 @@ test('user activities endpoint keeps showing impersonations from a previous clin
     $this->actingAs($admin, 'user')
         ->getJson(route('admin.settings.users.activities.index', $user->id))
         ->assertOk()
-        ->assertJsonCount(1, 'data');
+        ->assertJsonCount(2, 'data') // old impersonation + the clinic change itself
+        ->assertJsonFragment(['title' => 'Kliniekportaal-sessie gestart']);
 });
 
 function viewerAdmin(): User
@@ -275,4 +276,24 @@ test('user view page renders the log tab and the expandable audit details', func
     expect($html)->toContain(route('admin.settings.users.activities.index', $target->id))
         ->toContain('hasAudit(activity)')
         ->toContain('auditSections(activity)');
+});
+
+test('field changes of a user end up in his log with old and new value, without password hashes', function () {
+    $target = clinicStaffUser(['first_name' => 'Jan']);
+    $admin = viewerAdmin();
+
+    $this->actingAs($admin, 'user');
+    $target->update(['first_name' => 'Piet', 'password' => 'NieuwWachtwoord123!']);
+    $target->update(['first_name' => 'Piet']); // unchanged: no extra row
+
+    $rows = collect($this->getJson(route('admin.settings.users.activities.index', $target->id))
+        ->assertOk()
+        ->assertJsonCount(2, 'data')
+        ->json('data'))->keyBy(fn ($r) => $r['additional']['attribute']);
+
+    expect($rows['Voornaam']['additional']['old']['label'])->toBe('Jan')
+        ->and($rows['Voornaam']['additional']['new']['label'])->toBe('Piet')
+        ->and($rows['Voornaam']['user_id'] ?? $admin->id)->toBe($admin->id)
+        ->and($rows['Wachtwoord']['title'])->toBe('Wachtwoord gewijzigd')
+        ->and($rows['Wachtwoord']['additional'])->not->toHaveKeys(['old', 'new']);
 });

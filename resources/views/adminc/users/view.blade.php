@@ -19,34 +19,66 @@
                 </button>
             </form>
         @endif
-        @if (bouncer()->hasPermission('settings.user.users.edit'))
-            <a href="{{ route('admin.settings.users.edit', $user->id) }}" class="group flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-activity-note-bg font-medium text-activity-note-text transition-all hover:border-activity-note-border hover:text-blue-700">
-                <span class="icon-edit text-2xl text-activity-note-text transition-all group-hover:text-blue-700 dark:!text-activity-note-text"></span>
-                Bewerken
-            </a>
-        @endif
     </x-slot>
 
     <x-slot:navigation>
         <x-adminc::components.entity-navigation-menu :activitiesCount="$activitiesCount" :showAnamnesis="false" :showMarketing="false"/>
     </x-slot>
 
-    <div v-if="leadDetailSection === 'algemeen'" class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <dl class="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
-            @foreach ([
-                'E-mail'   => $user->email,
-                'Rol'      => $user->role?->name,
-                'Status'   => $user->status ? 'Actief' : 'Inactief',
-                'Kliniek'  => $user->clinic?->name ?? $user->resource?->clinicDepartment?->clinic?->name,
-                'Afdeling' => $user->resource?->clinicDepartment?->name,
-                'Groepen'  => $user->groups->pluck('name')->join(', '),
-            ] as $label => $value)
-                <div>
-                    <dt class="text-gray-500 dark:text-gray-400">{{ $label }}</dt>
-                    <dd class="font-medium dark:text-white">{{ filled($value) ? $value : '-' }}</dd>
+    <div v-if="leadDetailSection === 'algemeen'" class="flex w-full flex-col gap-4 rounded-lg">
+        <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="flex items-center justify-between gap-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Algemene informatie Gebruiker</h3>
+
+                <div class="direction-row flex items-center gap-4">
+                    @if (bouncer()->hasPermission('settings.user.users.edit'))
+                        <a href="{{ route('admin.settings.users.edit', $user->id) }}"
+                           class="secondary-button flex items-center gap-1 border hover:border-neutral-text hover:text-neutral-text">
+                            <span class="icon-edit text-base"></span>
+                            <span>Bewerk Gebruiker</span>
+                        </a>
+                    @endif
+
+                    @if (bouncer()->hasPermission('settings.user.users.delete') && auth()->guard('user')->id() !== $user->id)
+                        <x-adminc::components.entity-delete-button
+                            :delete-url="route('admin.settings.users.delete', $user->id)"
+                            :redirect-url="route('admin.settings.users.index')"
+                            :name="$user->name"
+                            label="Gebruiker"
+                        />
+                    @endif
                 </div>
-            @endforeach
-        </dl>
+            </div>
+        </div>
+
+        <div class="rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">
+            <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+                <div class="flex items-center gap-3">
+                    <span class="icon-menu text-xl text-gray-600 dark:text-gray-400"></span>
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">gebruiker gegevens</h3>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <span class="icon-calendar text-base"></span>
+                    <span>Laatst bijgewerkt: {{ $user->updated_at?->format('d M Y') }}</span>
+                </div>
+            </div>
+
+            <dl class="grid grid-cols-1 gap-6 p-4 text-sm md:grid-cols-3">
+                @foreach ([
+                    'E-mail'   => $user->email,
+                    'Rol'      => $user->role?->name,
+                    'Status'   => $user->status ? 'Actief' : 'Inactief',
+                    'Kliniek'  => $user->clinic?->name ?? $user->resource?->clinicDepartment?->clinic?->name,
+                    'Afdeling' => $user->resource?->clinicDepartment?->name,
+                    'Groepen'  => $user->groups->pluck('name')->join(', '),
+                ] as $label => $value)
+                    <div>
+                        <dt class="text-gray-500 dark:text-gray-400">{{ $label }}</dt>
+                        <dd class="font-medium dark:text-white">{{ filled($value) ? $value : '-' }}</dd>
+                    </div>
+                @endforeach
+            </dl>
+        </div>
     </div>
 
     <div v-else-if="leadDetailSection === 'activiteiten'" class="flex w-full flex-col gap-4 rounded-lg">

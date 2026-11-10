@@ -181,7 +181,7 @@ class UserController extends Controller
 
         return view('adminc::users.view', [
             'user'            => $user,
-            'activitiesCount' => $this->impersonationLog($user)->count(),
+            'activitiesCount' => $this->auditLog($user)->count(),
         ]);
     }
 
@@ -192,19 +192,20 @@ class UserController extends Controller
     {
         abort_if(! bouncer()->hasPermission('settings.user.users.view'), 403);
 
-        return $this->paginateSystemActivities($this->impersonationLog($this->userRepository->findOrFail($id)));
+        return $this->paginateSystemActivities($this->auditLog($this->userRepository->findOrFail($id)));
     }
 
     /**
-     * Full history of this user: the audit rows are written on the clinic of that moment
-     * (ImpersonationService::logUserActivity), but we deliberately match on the impersonated
-     * user id only, so the log stays complete after the user moves to another clinic.
+     * Full history of this user: impersonations (written on the clinic of that moment by
+     * ImpersonationService::logUserActivity, matched on the impersonated user id only so the log stays
+     * complete after a clinic change) and field changes (LogUserChangesAction, subject_user.id).
      */
-    private function impersonationLog(User $user)
+    private function auditLog(User $user)
     {
-        return Activity::where('type', ActivityType::SYSTEM)
-            ->whereNotNull('clinic_id')
-            ->where('additional->clinic_user->id', $user->id);
+        return Activity::where('type', ActivityType::SYSTEM)->where(function ($q) use ($user) {
+            $q->where('additional->clinic_user->id', $user->id)
+                ->orWhere('additional->subject_user->id', $user->id);
+        });
     }
 
     /**

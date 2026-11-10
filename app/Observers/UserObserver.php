@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Actions\Keycloak\AddKeycloakUserAction;
 use App\Actions\Keycloak\DeleteKeycloakUserAction;
 use App\Actions\Keycloak\UpdateKeycloakUserAction;
+use App\Actions\User\LogUserChangesAction;
 use App\Enums\KeycloakRoles;
 use App\Services\Keycloak\KeycloakService;
 use App\Support\PasswordGenerator;
@@ -139,6 +140,8 @@ class UserObserver
      */
     public function updated(User $user): void
     {
+        app(LogUserChangesAction::class)($user);
+
         // Only sync if Keycloak is configured
         if (! $this->isKeycloakConfigured()) {
             return;

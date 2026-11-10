@@ -3,6 +3,7 @@
 use App\Enums\ActivityType;
 use App\Enums\RoleCode;
 use App\Models\Clinic;
+use App\Models\Resource;
 use Database\Seeders\TestSeeder;
 use Illuminate\Support\Facades\Http;
 use Webkul\Activity\Models\Activity;
@@ -179,4 +180,99 @@ test('user activities endpoint keeps showing impersonations from a previous clin
         ->getJson(route('admin.settings.users.activities.index', $user->id))
         ->assertOk()
         ->assertJsonCount(1, 'data');
+});
+
+function viewerAdmin(): User
+{
+    return adminWith(['settings', 'settings.user', 'settings.user.users', 'settings.user.users.view', 'settings.user.users.impersonate']);
+}
+
+test('start and stop through the impersonation flow both show up in the user log with audit details', function () {
+    fakeKeycloakExchange();
+    $target = clinicStaffUser();
+    $admin = viewerAdmin();
+
+    $this->actingAs($admin, 'user')
+        ->withHeader('User-Agent', 'PestBrowser/1.0')
+        ->post(route('admin.settings.users.impersonate', $target->id))
+        ->assertSessionHas('impersonating');
+
+    $this->travel(5)->minutes();
+
+    $this->actingAs($admin, 'user')
+        ->post(route('admin.contacts.impersonation.stop'))
+        ->assertSessionMissing('impersonating');
+
+    $rows = collect($this->actingAs($admin, 'user')
+        ->getJson(route('admin.settings.users.activities.index', $target->id))
+        ->assertOk()
+        ->assertJsonCount(2, 'data')
+        ->json('data'))->keyBy('title');
+
+    expect($rows->keys()->all())->toEqualCanonicalizing(['Kliniekportaal-sessie gestart', 'Kliniekportaal-sessie gestopt']);
+
+    $start = $rows['Kliniekportaal-sessie gestart']['additional'];
+    expect($start['admin']['name'])->toBe($admin->name)
+        ->and($start['clinic_user']['id'])->toBe($target->id)
+        ->and($start['network']['ip_address'])->not->toBeEmpty()
+        ->and($start['client']['user_agent'])->toBe('PestBrowser/1.0')
+        ->and($start['session_id'])->not->toBeEmpty();
+
+    expect($rows['Kliniekportaal-sessie gestopt']['additional']['duration_seconds'])->toBeGreaterThan(0);
+});
+
+test('user log falls back to the clinic of the department when the user has no clinic_id', function () {
+    fakeKeycloakExchange();
+    $clinic = Clinic::factory()->create();
+    $resource = Resource::factory()->create(['clinic_id' => $clinic->id]);
+    $target = clinicStaffUser(['clinic_id' => null, 'resource_id' => $resource->id]);
+    $admin = viewerAdmin();
+
+    $this->actingAs($admin, 'user')->post(route('admin.settings.users.impersonate', $target->id))->assertRedirect();
+
+    expect(Activity::where('clinic_id', $clinic->id)->count())->toBe(1);
+
+    $this->actingAs($admin, 'user')
+        ->getJson(route('admin.settings.users.activities.index', $target->id))
+        ->assertOk()
+        ->assertJsonCount(1, 'data');
+});
+
+test('user log is paginated', function () {
+    $target = clinicStaffUser();
+    $admin = viewerAdmin();
+
+    foreach (range(1, 25) as $i) {
+        Activity::create([
+            'type'       => ActivityType::SYSTEM,
+            'title'      => "Kliniekportaal-sessie gestart $i",
+            'is_done'    => 1,
+            'clinic_id'  => $target->clinic_id,
+            'user_id'    => $admin->id,
+            'additional' => ['action' => 'start', 'clinic_user' => ['id' => $target->id]],
+        ]);
+    }
+
+    $this->actingAs($admin, 'user')
+        ->getJson(route('admin.settings.users.activities.index', $target->id))
+        ->assertJsonCount(20, 'data')
+        ->assertJsonPath('meta.total', 25)
+        ->assertJsonPath('meta.last_page', 2);
+
+    $this->actingAs($admin, 'user')
+        ->getJson(route('admin.settings.users.activities.index', [$target->id, 'page' => 2]))
+        ->assertJsonCount(5, 'data');
+});
+
+test('user view page renders the log tab and the expandable audit details', function () {
+    $target = clinicStaffUser();
+
+    $html = $this->actingAs(viewerAdmin(), 'user')
+        ->get(route('admin.settings.users.view', $target->id))
+        ->assertOk()
+        ->getContent();
+
+    expect($html)->toContain(route('admin.settings.users.activities.index', $target->id))
+        ->toContain('hasAudit(activity)')
+        ->toContain('auditSections(activity)');
 });

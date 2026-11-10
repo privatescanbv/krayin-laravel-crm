@@ -24,6 +24,7 @@ class UserDataGrid extends DataGrid
                 'email',
                 'image',
                 'status',
+                'role_id',
                 'last_login_at',
                 'created_at'
             )
@@ -34,25 +35,6 @@ class UserDataGrid extends DataGrid
         }
 
         return $queryBuilder;
-    }
-
-    /**
-     * Default sorting: active resources first, then by name ASC.
-     * Only applies when no explicit sort is requested by the client.
-     */
-    protected function processRequestedSorting($requestedSort)
-    {
-        if (empty($requestedSort) || empty($requestedSort['column'])) {
-            // Reset any existing order and apply our default
-            $this->queryBuilder->reorder()
-                ->orderBy('status', 'desc')
-                ->orderBy('first_name', 'asc')
-                ->orderBy('last_name', 'asc');
-
-            return $this->queryBuilder;
-        }
-
-        return parent::processRequestedSorting($requestedSort);
     }
 
     /**
@@ -98,6 +80,20 @@ class UserDataGrid extends DataGrid
             'filterable' => true,
             'sortable'   => true,
             'searchable' => true,
+        ]);
+
+        $this->addColumn([
+            'index'              => 'role_id',
+            'label'              => 'Rol',
+            'type'               => 'string',
+            'filterable'         => true,
+            'sortable'           => false,
+            'searchable'         => false,
+            'visibility'         => false, // filter-only
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => DB::table('roles')->orderBy('name')->get(['id', 'name'])
+                ->map(fn ($role) => ['label' => $role->name, 'value' => (string) $role->id])
+                ->all(),
         ]);
 
         $this->addColumn([
@@ -187,6 +183,25 @@ class UserDataGrid extends DataGrid
     }
 
     /**
+     * Default sorting: active resources first, then by name ASC.
+     * Only applies when no explicit sort is requested by the client.
+     */
+    protected function processRequestedSorting($requestedSort)
+    {
+        if (empty($requestedSort) || empty($requestedSort['column'])) {
+            // Reset any existing order and apply our default
+            $this->queryBuilder->reorder()
+                ->orderBy('status', 'desc')
+                ->orderBy('first_name', 'asc')
+                ->orderBy('last_name', 'asc');
+
+            return $this->queryBuilder;
+        }
+
+        return parent::processRequestedSorting($requestedSort);
+    }
+
+    /**
      * Override the processRequestedFilters method to handle name search properly.
      */
     protected function processRequestedFilters(array $requestedFilters)
@@ -205,8 +220,8 @@ class UserDataGrid extends DataGrid
                                     // Handle name search with first_name and last_name
                                     $scopeQueryBuilder->orWhere(function ($nameQuery) use ($value) {
                                         $nameQuery->where('users.first_name', 'LIKE', '%'.$value.'%')
-                                                 ->orWhere('users.last_name', 'LIKE', '%'.$value.'%')
-                                                 ->orWhereRaw(DatabaseHelper::concatUserName('users.') . " LIKE ?", ['%'.$value.'%']);
+                                            ->orWhere('users.last_name', 'LIKE', '%'.$value.'%')
+                                            ->orWhereRaw(DatabaseHelper::concatUserName('users.').' LIKE ?', ['%'.$value.'%']);
                                     });
                                 } else {
                                     $scopeQueryBuilder->orWhere($column->getColumnName(), 'LIKE', '%'.$value.'%');
@@ -226,8 +241,8 @@ class UserDataGrid extends DataGrid
                             foreach ($requestedValues as $value) {
                                 $nameQuery->where(function ($subQuery) use ($value) {
                                     $subQuery->where('users.first_name', 'LIKE', '%'.$value.'%')
-                                             ->orWhere('users.last_name', 'LIKE', '%'.$value.'%')
-                                             ->orWhereRaw(DatabaseHelper::concatUserName('users.') . " LIKE ?", ['%'.$value.'%']);
+                                        ->orWhere('users.last_name', 'LIKE', '%'.$value.'%')
+                                        ->orWhereRaw(DatabaseHelper::concatUserName('users.').' LIKE ?', ['%'.$value.'%']);
                                 });
                             }
                         });

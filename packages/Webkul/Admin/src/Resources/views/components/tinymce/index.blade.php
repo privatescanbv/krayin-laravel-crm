@@ -7,11 +7,8 @@
         ? 'image media wordcount save fullscreen code table lists link'
         : 'media wordcount save fullscreen code table lists link';
     $tinymceToolbar = $imagesEnabled
-        ? "{$placeholderToolbarPrefix}bold italic strikethrough forecolor backcolor image alignleft aligncenter alignright alignjustify | link hr | numlist bullist outdent indent | removeformat | code | table"
-        : "{$placeholderToolbarPrefix}bold italic strikethrough forecolor backcolor alignleft aligncenter alignright alignjustify | link hr | numlist bullist outdent indent | removeformat | code | table";
-    $tinymceContextmenu = $imagesEnabled
-        ? 'link image table spellchecker'
-        : 'link table spellchecker';
+        ? "{$placeholderToolbarPrefix}bold italic underline strikethrough forecolor backcolor image alignleft aligncenter alignright alignjustify | link hr | numlist bullist outdent indent | removeformat | code | table"
+        : "{$placeholderToolbarPrefix}bold italic underline strikethrough forecolor backcolor alignleft aligncenter alignright alignjustify | link hr | numlist bullist outdent indent | removeformat | code | table";
 @endphp
 
 <v-tinymce {{ $attributes }}></v-tinymce>
@@ -229,7 +226,7 @@
                         @endif
                         directionality: 'ltr',
                         browser_spellcheck: true,
-                        contextmenu: @json($tinymceContextmenu),
+                        contextmenu: false,
                         @if($showPlaceholders)
                         // Preserve template placeholder URLs in links (avoid prepending document_base_url)
                         convert_urls: false,

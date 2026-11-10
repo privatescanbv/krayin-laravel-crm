@@ -36,4 +36,5 @@ Route::prefix('clinic/{keycloakUserId}')
         // Sales kanban of a doctor (role Arts)
         Route::get('sales-stages', [ClinicSalesLeadController::class, 'stages'])->name('api.clinic.sales-stages');
         Route::get('sales-leads', [ClinicSalesLeadController::class, 'index'])->name('api.clinic.sales-leads');
+        Route::put('sales-leads/{saleId}/stage', [ClinicSalesLeadController::class, 'updateStage'])->whereNumber('saleId')->name('api.clinic.sales-leads.stage');
     });

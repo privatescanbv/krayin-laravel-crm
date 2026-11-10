@@ -2,7 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\AssessmentOutcome;
+use App\Models\SalesLead;
 use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class StageTransitionAttributes
@@ -49,5 +52,43 @@ class StageTransitionAttributes
     public static function isWonOrLost(object $stage): bool
     {
         return (bool) ($stage->is_won ?? false) || (bool) ($stage->is_lost ?? false);
+    }
+
+    /**
+     * Herniapoli: from "Beoordeling gereed" onwards the assessment outcome is required
+     * (AssessmentOutcome::requiredForStageCodes). Only checked on an actual stage change, so
+     * existing sales without an outcome can still be edited. When additional research is still
+     * required (only allowed up to "Gepland voor aanvullend onderzoek") the outcome may stay empty.
+     *
+     * @throws ValidationException
+     */
+    public static function ensureAssessmentOutcome(SalesLead $salesLead, mixed $targetStage, mixed $outcome, bool $additionalResearch = false): void
+    {
+        if (! $targetStage
+            || (int) $targetStage->id === (int) $salesLead->pipeline_stage_id
+            || ! in_array($targetStage->code, AssessmentOutcome::requiredForStageCodes(), true)
+            || $additionalResearch
+            || ! blank($outcome)) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'assessment_outcome' => "Vul eerst de uitkomst beoordeling in voordat de sales naar \"{$targetStage->name}\" gaat.",
+        ]);
+    }
+
+    /**
+     * "Aanvullend onderzoek vereist" as requested (null = keep the current value), forced to nee once
+     * the stage is past "Gepland voor aanvullend onderzoek" (AssessmentOutcome::additionalResearchAllowedStageCodes).
+     */
+    public static function resolveAdditionalResearch(SalesLead $salesLead, mixed $stage, ?bool $requested = null): bool
+    {
+        $requested ??= (bool) $salesLead->additional_research_required;
+
+        $pastAllowedStages = $stage
+            && in_array($stage->code, AssessmentOutcome::requiredForStageCodes(), true)
+            && ! in_array($stage->code, AssessmentOutcome::additionalResearchAllowedStageCodes(), true);
+
+        return $requested && ! $pastAllowedStages;
     }
 }

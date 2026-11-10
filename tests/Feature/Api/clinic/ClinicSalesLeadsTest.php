@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\PipelineDefaultKeys;
+use App\Enums\PipelineStage;
 use App\Enums\RoleCode;
 use App\Models\SalesLead;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -209,4 +210,147 @@ it('forbids reading another doctor\'s sales with a keycloak bearer token', funct
 
     $this->getJson(route('api.clinic.sales-leads', 'kc-doc-1'), ['Authorization' => 'Bearer test-token'])->assertForbidden();
     $this->getJson(route('api.clinic.sales-stages', 'kc-doc-1'), ['Authorization' => 'Bearer test-token'])->assertForbidden();
+});
+
+function moveStage(string $keycloakId, int $saleId, mixed $stageId, array $extra = [])
+{
+    return test()->withHeaders(apiKeyHeader())
+        ->putJson(route('api.clinic.sales-leads.stage', [$keycloakId, $saleId]), ['pipeline_stage_id' => $stageId, ...$extra]);
+}
+
+it('moves the doctor\'s own sale to another visible Herniapoli stage', function () {
+    $doctor = portalUser('kc-doc-1');
+    $from = herniaStage(1);
+    $to = herniaStage(2);
+    $sale = doctorSale($doctor, $from);
+
+    moveStage('kc-doc-1', $sale->id, $to->id)
+        ->assertOk()
+        ->assertJsonPath('data.id', $sale->id)
+        ->assertJsonPath('data.pipeline_stage_id', $to->id)
+        ->assertJsonMissingPath('data.assessment_outcome');
+
+    expect($sale->fresh()->pipeline_stage_id)->toBe($to->id);
+});
+
+it('refuses other doctors, non-doctors, unknown users and missing authentication', function () {
+    $doctor = portalUser('kc-doc-1');
+    portalUser('kc-doc-2');
+    portalUser('kc-clinic-1', RoleCode::KLINIEK_MEDEWERKER);
+    $to = herniaStage(2);
+    $sale = doctorSale($doctor, herniaStage(1));
+
+    moveStage('kc-doc-2', $sale->id, $to->id)->assertNotFound();
+    moveStage('kc-clinic-1', $sale->id, $to->id)->assertForbidden();
+    moveStage('kc-unknown', $sale->id, $to->id)->assertNotFound();
+    $this->withoutHeader('X-API-KEY')->putJson(route('api.clinic.sales-leads.stage', ['kc-doc-1', $sale->id]), ['pipeline_stage_id' => $to->id])->assertUnauthorized();
+
+    expect($sale->fresh()->pipeline_stage_id)->not->toBe($to->id);
+});
+
+it('forbids moving a sale with the bearer token of another subject', function () {
+    $doctor = portalUser('kc-doc-1');
+    $to = herniaStage(2);
+    $sale = doctorSale($doctor, herniaStage(1));
+    fakeKeycloakToken('kc-doc-2');
+
+    $this->putJson(route('api.clinic.sales-leads.stage', ['kc-doc-1', $sale->id]), ['pipeline_stage_id' => $to->id], ['Authorization' => 'Bearer t'])->assertForbidden();
+    expect($sale->fresh()->pipeline_stage_id)->not->toBe($to->id);
+});
+
+it('moves a sale with the bearer token of the doctor itself', function () {
+    $doctor = portalUser('kc-doc-1');
+    $to = herniaStage(2);
+    $sale = doctorSale($doctor, herniaStage(1));
+    fakeKeycloakToken('kc-doc-1');
+
+    $this->putJson(route('api.clinic.sales-leads.stage', ['kc-doc-1', $sale->id]), ['pipeline_stage_id' => $to->id], ['Authorization' => 'Bearer t'])
+        ->assertOk()
+        ->assertJsonPath('data.pipeline_stage_id', $to->id);
+});
+
+it('does not touch sales in a hidden source stage, another pipeline or of another doctor', function () {
+    $doctor = portalUser('kc-doc-1');
+    $other = portalUser('kc-doc-2');
+    $to = herniaStage(2);
+    $hiddenStage = herniaStage(3);
+    $hiddenStage->roles()->attach(Role::factory()->create()->id);
+    $hidden = doctorSale($doctor, $hiddenStage);
+    $otherPipeline = doctorSale($doctor, salesStage(PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID));
+    $foreign = doctorSale($other, herniaStage(1));
+
+    foreach ([$hidden, $otherPipeline, $foreign] as $sale) {
+        $stageBefore = $sale->pipeline_stage_id;
+        moveStage('kc-doc-1', $sale->id, $to->id)->assertNotFound();
+        expect($sale->fresh()->pipeline_stage_id)->toBe($stageBefore);
+    }
+});
+
+it('rejects hidden, foreign-pipeline, unknown and badly typed target stages', function () {
+    $doctor = portalUser('kc-doc-1');
+    $from = herniaStage(1);
+    $hiddenStage = herniaStage(2);
+    $hiddenStage->roles()->attach(Role::factory()->create()->id);
+    $sale = doctorSale($doctor, $from);
+
+    foreach ([$hiddenStage->id, salesStage(PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID)->id, 999999, 'abc', null] as $target) {
+        moveStage('kc-doc-1', $sale->id, $target)->assertUnprocessable()->assertJsonValidationErrors('pipeline_stage_id');
+    }
+
+    expect($sale->fresh()->pipeline_stage_id)->toBe($from->id);
+});
+
+it('refuses won/lost targets and closed sales, ignoring forbidden fields', function () {
+    $doctor = portalUser('kc-doc-1');
+    $open = herniaStage(1);
+    $won = Stage::factory()->won()->create(['lead_pipeline_id' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value]);
+    $lost = Stage::factory()->lost()->create(['lead_pipeline_id' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value]);
+    $sale = doctorSale($doctor, $open);
+    $closed = doctorSale($doctor, $won, ['closed_at' => now()]);
+
+    moveStage('kc-doc-1', $sale->id, $won->id)->assertUnprocessable();
+    moveStage('kc-doc-1', $sale->id, $lost->id, ['lost_reason' => 'x', 'closed_at' => now()->toDateString()])->assertUnprocessable();
+    moveStage('kc-doc-1', $closed->id, $open->id)->assertUnprocessable();
+
+    expect($sale->fresh())->pipeline_stage_id->toBe($open->id)->closed_at->toBeNull()
+        ->and($closed->fresh()->pipeline_stage_id)->toBe($won->id);
+});
+
+it('ignores client overrides of doctor, closed_at and pipeline on a valid move', function () {
+    $doctor = portalUser('kc-doc-1');
+    $other = portalUser('kc-doc-2');
+    $to = herniaStage(2);
+    $sale = doctorSale($doctor, herniaStage(1));
+
+    moveStage('kc-doc-1', $sale->id, $to->id, ['doctor_user_id' => $other->id, 'closed_at' => now()->toDateString(), 'lead_pipeline_id' => 1])->assertOk();
+
+    expect($sale->fresh())->doctor_user_id->toBe($doctor->id)->closed_at->toBeNull();
+});
+
+it('requires an assessment outcome for stages that need one, and keeps the old stage', function () {
+    $doctor = portalUser('kc-doc-1');
+    $from = herniaStage(1);
+    $needsOutcome = Stage::factory()->create(['lead_pipeline_id' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value, 'code' => PipelineStage::SALES_CONFIRM_TREATMENT_HERNIA->value]);
+    $sale = doctorSale($doctor, $from);
+
+    moveStage('kc-doc-1', $sale->id, $needsOutcome->id, ['assessment_outcome' => 'made-up'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('assessment_outcome');
+    expect($sale->fresh()->pipeline_stage_id)->toBe($from->id);
+
+    $sale->update(['assessment_outcome' => 'existing-outcome']);
+    moveStage('kc-doc-1', $sale->id, $needsOutcome->id)->assertOk();
+    expect($sale->fresh())->pipeline_stage_id->toBe($needsOutcome->id)->additional_research_required->toBeFalse();
+});
+
+it('treats a move to the current stage as a no-op without writing', function () {
+    $doctor = portalUser('kc-doc-1');
+    $stage = herniaStage(1);
+    $sale = doctorSale($doctor, $stage);
+    $updatedAt = $sale->fresh()->updated_at;
+    $this->travel(5)->minutes();
+
+    moveStage('kc-doc-1', $sale->id, $stage->id)->assertOk()->assertJsonPath('data.pipeline_stage_id', $stage->id);
+
+    expect($sale->fresh()->updated_at->equalTo($updatedAt))->toBeTrue();
 });

@@ -11,7 +11,6 @@ use App\Enums\PipelineType;
 use App\Enums\RoleCode;
 use App\Helpers\RequestHelper;
 use App\Http\Controllers\Controller;
-use App\Models\AssessmentOutcome;
 use App\Models\Department;
 use App\Models\Order;
 use App\Models\SalesLead;
@@ -28,7 +27,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
 use RuntimeException;
@@ -281,8 +279,8 @@ class SalesLeadController extends Controller
         $request->validate($this->getValidationRules(keepDoctorId: $salesLead->doctor_user_id));
 
         $targetStage = $request->filled('pipeline_stage_id') ? StageProxy::find((int) $request->input('pipeline_stage_id')) : null;
-        $additionalResearch = $this->resolveAdditionalResearch($salesLead, $targetStage ?? $salesLead->stage);
-        $this->ensureAssessmentOutcome(
+        $additionalResearch = StageTransitionAttributes::resolveAdditionalResearch($salesLead, $targetStage ?? $salesLead->stage, $request->has('additional_research_required') ? $request->boolean('additional_research_required') : null);
+        StageTransitionAttributes::ensureAssessmentOutcome(
             $salesLead,
             $targetStage,
             $request->exists('assessment_outcome') ? $request->input('assessment_outcome') : $salesLead->assessment_outcome,
@@ -413,8 +411,8 @@ class SalesLeadController extends Controller
         }
 
         $outcome = request('assessment_outcome') ?: $salesLead->assessment_outcome;
-        $additionalResearch = $this->resolveAdditionalResearch($salesLead, $targetStage);
-        $this->ensureAssessmentOutcome($salesLead, $targetStage, $outcome, $additionalResearch);
+        $additionalResearch = StageTransitionAttributes::resolveAdditionalResearch($salesLead, $targetStage, request()->has('additional_research_required') ? request()->boolean('additional_research_required') : null);
+        StageTransitionAttributes::ensureAssessmentOutcome($salesLead, $targetStage, $outcome, $additionalResearch);
 
         // Optionally close open activities for this Sales when requested (parity with lead stage update)
         if (request()->boolean('close_open_activities')) {
@@ -874,46 +872,6 @@ class SalesLeadController extends Controller
      * 2. Convert empty strings or '0' to null for database consistency
      * 3. Remove the display field to prevent database errors
      */
-    /**
-     * Herniapoli: from "Beoordeling gereed" onwards the assessment outcome is required
-     * (AssessmentOutcome::requiredForStageCodes). Only checked on an actual stage change, so
-     * existing sales without an outcome can still be edited. When additional research is still
-     * required (only allowed up to "Gepland voor aanvullend onderzoek") the outcome may stay empty.
-     *
-     * @throws ValidationException
-     */
-    private function ensureAssessmentOutcome(SalesLead $salesLead, mixed $targetStage, mixed $outcome, bool $additionalResearch = false): void
-    {
-        if (! $targetStage
-            || (int) $targetStage->id === (int) $salesLead->pipeline_stage_id
-            || ! in_array($targetStage->code, AssessmentOutcome::requiredForStageCodes(), true)
-            || $additionalResearch
-            || ! blank($outcome)) {
-            return;
-        }
-
-        throw ValidationException::withMessages([
-            'assessment_outcome' => "Vul eerst de uitkomst beoordeling in voordat de sales naar \"{$targetStage->name}\" gaat.",
-        ]);
-    }
-
-    /**
-     * "Aanvullend onderzoek vereist" from the request (or the current value), forced to nee once the
-     * stage is past "Gepland voor aanvullend onderzoek" (AssessmentOutcome::additionalResearchAllowedStageCodes).
-     */
-    private function resolveAdditionalResearch(SalesLead $salesLead, mixed $stage): bool
-    {
-        $requested = request()->has('additional_research_required')
-            ? request()->boolean('additional_research_required')
-            : (bool) $salesLead->additional_research_required;
-
-        $pastAllowedStages = $stage
-            && in_array($stage->code, AssessmentOutcome::requiredForStageCodes(), true)
-            && ! in_array($stage->code, AssessmentOutcome::additionalResearchAllowedStageCodes(), true);
-
-        return $requested && ! $pastAllowedStages;
-    }
-
     private function prepareSalesLeadData(array $data): array
     {
         // Handle contact_person_id_display -> contact_person_id mapping

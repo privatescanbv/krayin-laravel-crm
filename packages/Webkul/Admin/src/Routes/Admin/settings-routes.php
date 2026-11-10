@@ -295,6 +295,8 @@ Route::prefix('settings')->group(function () {
 
         Route::get('view/{id}', 'view')->name('admin.settings.users.view');
 
+        Route::get('{id}/activities', 'activities')->whereNumber('id')->name('admin.settings.users.activities.index');
+
         Route::get('create', 'create')->name('admin.settings.users.create');
 
         Route::post('create', 'store')->name('admin.settings.users.store');

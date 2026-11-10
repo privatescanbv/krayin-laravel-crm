@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Settings;
 
+use App\Enums\ActivityType;
 use App\Enums\RoleCode;
 use App\Models\Clinic;
 use App\Models\Department as DepartmentModel;
@@ -18,7 +19,9 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Webkul\Activity\Models\Activity;
 use Webkul\Admin\DataGrids\Settings\UserDataGrid;
+use Webkul\Admin\Http\Controllers\Concerns\ConcatsEmailActivities;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Requests\MassUpdateRequest;
@@ -28,6 +31,7 @@ use Webkul\Lead\Models\Channel;
 use Webkul\Lead\Models\Source;
 use Webkul\Lead\Models\Type as LeadType;
 use Webkul\User\Models\Role;
+use Webkul\User\Models\User;
 use Webkul\User\Models\UserDefaultValue;
 use Webkul\User\Repositories\GroupRepository;
 use Webkul\User\Repositories\RoleRepository;
@@ -35,6 +39,8 @@ use Webkul\User\Repositories\UserRepository;
 
 class UserController extends Controller
 {
+    use ConcatsEmailActivities;
+
     /**
      * Create a new controller instance.
      *
@@ -173,7 +179,32 @@ class UserController extends Controller
     {
         $user = $this->userRepository->with(['role', 'groups', 'resource.clinicDepartment', 'clinic'])->findOrFail($id);
 
-        return view('adminc::users.view', ['user' => $user]);
+        return view('adminc::users.view', [
+            'user'            => $user,
+            'activitiesCount' => $this->impersonationLog($user)->count(),
+        ]);
+    }
+
+    /**
+     * Impersonation log of a clinic user.
+     */
+    public function activities(int $id)
+    {
+        abort_if(! bouncer()->hasPermission('settings.user.users.view'), 403);
+
+        return $this->paginateSystemActivities($this->impersonationLog($this->userRepository->findOrFail($id)));
+    }
+
+    /**
+     * Full history of this user: the audit rows are written on the clinic of that moment
+     * (ImpersonationService::logUserActivity), but we deliberately match on the impersonated
+     * user id only, so the log stays complete after the user moves to another clinic.
+     */
+    private function impersonationLog(User $user)
+    {
+        return Activity::where('type', ActivityType::SYSTEM)
+            ->whereNotNull('clinic_id')
+            ->where('additional->clinic_user->id', $user->id);
     }
 
     /**

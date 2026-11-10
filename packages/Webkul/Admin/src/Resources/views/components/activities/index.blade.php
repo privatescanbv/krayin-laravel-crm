@@ -310,6 +310,8 @@
 
                     isUpdating: {},
 
+                    expandedAudit: {},
+
                     activities: [],
 
                     systemPagination: { currentPage: 1, lastPage: 1, total: 0, perPage: 20 },
@@ -472,6 +474,33 @@
             },
 
             methods: {
+                /**
+                 * Audit (AVG) details of a system activity, grouped like activities/partials/system.blade.php.
+                 */
+                auditSections(activity) {
+                    const a = (activity.type === 'system' && activity.additional) || {};
+                    const v = (x) => (x === undefined || x === null || x === '' ? null : x);
+                    const who = a.clinic_user || a.person;
+                    const sections = [
+                        ['Actie', [['Actie', a.action], ['Tijdstip', a.timestamp]]],
+                        [a.clinic_user ? 'Kliniekgebruiker' : 'Patiënt', [['Naam', who?.name], ['E-mail', a.clinic_user?.email], ['Keycloak ID', a.clinic_user_keycloak_id ?? a.patient_keycloak_id]]],
+                        ['Beheerder', [['Naam', a.admin?.name], ['E-mail', a.admin?.email], ['ID', a.admin?.id]]],
+                        ['Netwerk', [['IP-adres', a.network?.ip_address], ['Forwarded for', a.network?.forwarded_for], ['Alle IPs', Array.isArray(a.network?.all_ips) ? a.network.all_ips.join(', ') : a.network?.all_ips]]],
+                        ['Browser', [['User Agent', a.client?.user_agent], ['Referer', a.client?.referer]]],
+                        ['Sessie', [['Sessie ID', a.session_id], ['Duur', v(a.duration_seconds) === null ? null : a.duration_seconds + ' seconden']]],
+                    ];
+
+                    return sections
+                        .map(([title, rows]) => ({ title, rows: rows.filter(([, value]) => v(value) !== null) }))
+                        .filter(section => section.rows.length);
+                },
+
+                hasAudit(activity) {
+                    const a = activity.additional || {};
+
+                    return activity.type === 'system' && !!(a.admin || a.network || a.client || a.session_id);
+                },
+
                 sortOpenFirstThenByDate(a, b) {
                     if (!a.is_done && b.is_done) return -1;
                     if (a.is_done && !b.is_done) return 1;

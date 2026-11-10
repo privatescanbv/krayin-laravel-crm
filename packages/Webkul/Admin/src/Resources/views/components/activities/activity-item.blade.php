@@ -158,6 +158,13 @@
                       class="inline-flex shrink-0 items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400"
                       title="Gepubliceerd in patiëntportaal">Portaal<template v-if="activity.portal_persons && activity.portal_persons.length">: @{{ activity.portal_persons.map(p => p.name).join(', ') }}</template></span>
 
+                <button v-if="hasAudit(activity)" type="button"
+                        class="ml-auto inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                        @click="expandedAudit[activity.id] = ! expandedAudit[activity.id]">
+                    <span>Details</span>
+                    <span class="icon-down-arrow text-[10px] transition-transform" :class="{ 'rotate-180': expandedAudit[activity.id] }"></span>
+                </button>
+
                 <template v-if="activity.type != 'system'">
                     {!! view_render_event('admin.components.activities.content.activity.item.more_actions.before') !!}
 
@@ -267,6 +274,19 @@
             </div>
 
             {!! view_render_event('admin.components.activities.content.activity.item.title.after') !!}
+
+            <!-- Audit details (system activities: admin, network, browser, session) -->
+            <div v-if="hasAudit(activity) && expandedAudit[activity.id]" class="flex flex-col gap-3 py-2">
+                <div v-for="section in auditSections(activity)" :key="section.title">
+                    <h4 class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">@{{ section.title }}</h4>
+                    <dl class="space-y-1">
+                        <div v-for="[label, value] in section.rows" :key="label" class="flex gap-2">
+                            <dt class="w-32 shrink-0 text-sm text-gray-500 dark:text-gray-400">@{{ label }}</dt>
+                            <dd class="min-w-0 break-all text-sm text-gray-900 dark:text-gray-100">@{{ value }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
 
             {!! view_render_event('admin.components.activities.content.activity.item.time_and_user.before') !!}
 

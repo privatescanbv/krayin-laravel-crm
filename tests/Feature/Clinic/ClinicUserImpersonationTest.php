@@ -130,3 +130,53 @@ test('user view page only offers the clinic impersonation button with the permis
     'permission, other user'     => [['settings', 'settings.user', 'settings.user.users', 'settings.user.users.view', 'settings.user.users.impersonate'], false, false],
     'no permission, clinic user' => [['settings', 'settings.user', 'settings.user.users', 'settings.user.users.view'], true, false],
 ]);
+
+test('user activities endpoint only returns the impersonation log of that user', function () {
+    $clinic = Clinic::factory()->create();
+    $a = clinicStaffUser(['clinic_id' => $clinic->id]);
+    $b = clinicStaffUser(['clinic_id' => $clinic->id, 'keycloak_user_id' => 'kc-clinic-2']);
+    $admin = adminWith(['settings', 'settings.user', 'settings.user.users', 'settings.user.users.view']);
+
+    foreach ([$a, $b] as $target) {
+        Activity::create([
+            'type'       => ActivityType::SYSTEM,
+            'title'      => 'Kliniekportaal-sessie gestart',
+            'is_done'    => 1,
+            'clinic_id'  => $clinic->id,
+            'user_id'    => $admin->id,
+            'additional' => ['action' => 'start', 'clinic_user' => ['id' => $target->id], 'admin' => ['name' => 'Beheerder']],
+        ]);
+    }
+
+    $this->actingAs($admin, 'user')
+        ->getJson(route('admin.settings.users.activities.index', $a->id))
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.additional.clinic_user.id', $a->id);
+
+    $this->actingAs(adminWith(['settings']), 'user')
+        ->getJson(route('admin.settings.users.activities.index', $a->id))
+        ->assertForbidden();
+});
+
+test('user activities endpoint keeps showing impersonations from a previous clinic', function () {
+    $oldClinic = Clinic::factory()->create();
+    $user = clinicStaffUser(['clinic_id' => $oldClinic->id]);
+    $admin = adminWith(['settings', 'settings.user', 'settings.user.users', 'settings.user.users.view']);
+
+    Activity::create([
+        'type'       => ActivityType::SYSTEM,
+        'title'      => 'Kliniekportaal-sessie gestart',
+        'is_done'    => 1,
+        'clinic_id'  => $oldClinic->id,
+        'user_id'    => $admin->id,
+        'additional' => ['action' => 'start', 'clinic_user' => ['id' => $user->id]],
+    ]);
+
+    $user->update(['clinic_id' => Clinic::factory()->create()->id]);
+
+    $this->actingAs($admin, 'user')
+        ->getJson(route('admin.settings.users.activities.index', $user->id))
+        ->assertOk()
+        ->assertJsonCount(1, 'data');
+});

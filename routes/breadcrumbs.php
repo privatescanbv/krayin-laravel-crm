@@ -357,6 +357,12 @@ Breadcrumbs::for('settings.users.create', function (BreadcrumbTrail $trail) {
     $trail->push(trans('admin::app.settings.users.create-title'), route('admin.settings.users.create'));
 });
 
+// Users > View
+Breadcrumbs::for('settings.users.view', function (BreadcrumbTrail $trail, $user) {
+    $trail->parent('settings.users');
+    $trail->push($user->name, route('admin.settings.users.view', $user->id));
+});
+
 // Users > Edit Role
 Breadcrumbs::for('settings.users.edit', function (BreadcrumbTrail $trail, $user) {
     $trail->parent('settings.users');

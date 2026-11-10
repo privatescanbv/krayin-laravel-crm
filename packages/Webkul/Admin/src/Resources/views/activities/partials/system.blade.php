@@ -54,6 +54,30 @@
                 <hr class="mb-4 border-gray-200 dark:border-gray-700">
             @endif
 
+            {{-- Kliniekgebruiker --}}
+            @if(isset($additional['clinic_user']))
+                <div class="mb-4">
+                    <h4 class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Kliniekgebruiker</h4>
+                    <dl class="space-y-1">
+                        <div class="flex gap-2">
+                            <dt class="w-32 shrink-0 text-sm text-gray-500 dark:text-gray-400">Naam</dt>
+                            <dd class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $additional['clinic_user']['name'] ?? '-' }}</dd>
+                        </div>
+                        <div class="flex gap-2">
+                            <dt class="w-32 shrink-0 text-sm text-gray-500 dark:text-gray-400">E-mail</dt>
+                            <dd class="text-sm text-gray-900 dark:text-gray-100">{{ $additional['clinic_user']['email'] ?? '-' }}</dd>
+                        </div>
+                        @if(isset($additional['clinic_user_keycloak_id']))
+                            <div class="flex gap-2">
+                                <dt class="w-32 shrink-0 text-sm text-gray-500 dark:text-gray-400">Keycloak ID</dt>
+                                <dd class="break-all text-sm text-gray-900 dark:text-gray-100">{{ $additional['clinic_user_keycloak_id'] }}</dd>
+                            </div>
+                        @endif
+                    </dl>
+                </div>
+                <hr class="mb-4 border-gray-200 dark:border-gray-700">
+            @endif
+
             {{-- Beheerder --}}
             @if(isset($additional['admin']))
                 <div class="mb-4">

@@ -126,6 +126,18 @@
 
                             <!-- Actions -->
                             <div class="flex justify-end">
+                                <a
+                                    v-if="record.actions.find(action => action.index === 'view')"
+                                    :href="record.actions.find(action => action.index === 'view')?.url"
+                                    :title="record.actions.find(action => action.index === 'view')?.title"
+                                >
+                                    <span
+                                        :class="record.actions.find(action => action.index === 'view')?.icon"
+                                        class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
+                                    >
+                                    </span>
+                                </a>
+
                                 <a :href="record.actions.find(action => action.index === 'edit')?.url">
                                     <span
                                         :class="record.actions.find(action => action.index === 'edit')?.icon"
@@ -174,6 +186,18 @@
                                         v-if="available.actions.length"
                                     >
                                         <!-- Actions -->
+                                        <a
+                                            v-if="record.actions.find(action => action.index === 'view')"
+                                            :href="record.actions.find(action => action.index === 'view')?.url"
+                                            :title="record.actions.find(action => action.index === 'view')?.title"
+                                        >
+                                            <span
+                                                :class="record.actions.find(action => action.index === 'view')?.icon"
+                                                class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
+                                            >
+                                            </span>
+                                        </a>
+
                                         <a :href="record.actions.find(action => action.index === 'edit')?.url">
                                             <span
                                                 :class="record.actions.find(action => action.index === 'edit')?.icon"

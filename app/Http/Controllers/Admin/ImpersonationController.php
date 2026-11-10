@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Clinic\SendClinicForgotPasswordMailAction;
+use App\Enums\KeyCloakClient;
 use App\Services\FormService;
 use App\Services\ImpersonationService;
 use App\Services\KeycloakTokenExchangeService;
@@ -11,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Contact\Models\Person;
+use Webkul\User\Models\User;
 
 class ImpersonationController extends Controller
 {
@@ -52,6 +55,44 @@ class ImpersonationController extends Controller
             .'/auth/keycloak?token='.urlencode($token);
 
         return redirect()->away($portalUrl);
+    }
+
+    /**
+     * Start impersonating a clinic portal user (arts / kliniek medewerker): exchanges a token and
+     * redirects to the clinic portal.
+     */
+    public function impersonateUser(int $id): RedirectResponse
+    {
+        abort_if(! bouncer()->hasPermission('settings.user.users.impersonate'), 403);
+
+        $user = User::findOrFail($id);
+
+        // Same predicate as the clinic forgot-password flow: active, Keycloak account, clinic role.
+        if (! SendClinicForgotPasswordMailAction::clinicUsers()->whereKey($user->id)->exists()) {
+            abort(422, 'Gebruiker heeft geen actief kliniekportaal account.');
+        }
+
+        $existing = session('impersonating');
+        if ($existing && ! (($existing['type'] ?? null) === 'clinic_user' && (int) ($existing['user_id'] ?? 0) === (int) $user->id)) {
+            $this->stopCurrentImpersonation();
+        }
+
+        $token = $this->keycloakTokenExchange->impersonate($user->keycloak_user_id, KeyCloakClient::CLINIC);
+
+        session(['impersonating' => [
+            'type'             => 'clinic_user',
+            'user_id'          => $user->id,
+            'person_name'      => $user->name,
+            'keycloak_user_id' => $user->keycloak_user_id,
+            'started_at'       => now()->toISOString(),
+            'expires_at'       => now()->addMinutes(config('services.impersonation.max_minutes', 180))->toISOString(),
+        ]]);
+
+        $this->impersonationService->logUserActivity($user, 'start', request());
+
+        return redirect()->away(
+            rtrim(config('services.portal.clinic.web_url'), '/').'/auth/keycloak?token='.urlencode($token)
+        );
     }
 
     /**
@@ -125,6 +166,18 @@ class ImpersonationController extends Controller
         }
 
         $this->impersonationService->stopImpersonation($data['keycloak_user_id']);
+
+        if (($data['type'] ?? null) === 'clinic_user') {
+            $user = User::find($data['user_id'] ?? 0);
+            $user
+                ? $this->impersonationService->logUserActivity($user, 'stop', request())
+                : Log::error('Could not stop impersonation, user not found by ID '.($data['user_id'] ?? '?'));
+
+            session()->forget('impersonating');
+
+            return;
+        }
+
         $person = Person::find($data['person_id']);
         if ($person) {
             $this->impersonationService->logActivity($person, 'stop', request());

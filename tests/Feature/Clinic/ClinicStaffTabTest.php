@@ -38,3 +38,15 @@ test('user view page shows the user', function () {
         ->assertSee('Zoe Zicht')
         ->assertSee($user->email);
 });
+
+test('users overview offers a view action per user', function () {
+    $user = makeUser(['first_name' => 'Zoe', 'last_name' => 'Zicht']);
+
+    // The users grid has its own row template: it must render the view action too.
+    $this->get(route('admin.settings.users.index'))->assertOk()->assertSee("action.index === 'view'", false);
+
+    $records = $this->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])->getJson(route('admin.settings.users.index'))->assertOk()->json('records');
+    $view = collect(collect($records)->firstWhere('id', $user->id)['actions'])->firstWhere('index', 'view');
+
+    expect($view['url'])->toBe(route('admin.settings.users.view', $user->id));
+});

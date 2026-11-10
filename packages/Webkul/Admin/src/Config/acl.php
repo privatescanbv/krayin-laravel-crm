@@ -298,6 +298,11 @@ return [
         'route' => ['admin.settings.users.delete', 'admin.settings.users.mass_delete'],
         'sort'  => 3,
     ], [
+        'key'   => 'settings.user.users.impersonate',
+        'name'  => 'admin::app.acl.impersonate_clinic',
+        'route' => 'admin.settings.users.impersonate',
+        'sort'  => 4,
+    ], [
         'key'   => 'settings.clinics',
         'name'  => 'Klinieken',
         'route' => 'admin.clinics.index',

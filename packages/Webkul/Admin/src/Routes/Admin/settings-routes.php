@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\Settings\ResourceController;
 use App\Http\Controllers\Admin\Settings\AssessmentOutcomeController;
 use App\Http\Controllers\Admin\Settings\ResourceTypeController;
 use App\Http\Controllers\Admin\Settings\ShiftController;
+use App\Http\Controllers\Admin\ImpersonationController;
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Settings\AttributeController;
 use Webkul\Admin\Http\Controllers\Settings\DataTransfer\ImportController;
@@ -303,6 +304,8 @@ Route::prefix('settings')->group(function () {
         Route::put('edit/{id}', 'update')->name('admin.settings.users.update');
 
         Route::get('search', 'search')->name('admin.settings.users.search');
+
+        Route::post('{id}/impersonate', [ImpersonationController::class, 'impersonateUser'])->name('admin.settings.users.impersonate');
 
         Route::delete('{id}', 'destroy')->name('admin.settings.users.delete');
 

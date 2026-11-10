@@ -126,6 +126,16 @@ class UserDataGrid extends DataGrid
      */
     public function prepareActions(): void
     {
+        if (bouncer()->hasPermission('settings.user.users.view')) {
+            $this->addAction([
+                'index'  => 'view',
+                'icon'   => 'icon-eye',
+                'title'  => trans('admin::app.settings.users.index.datagrid.view'),
+                'method' => 'GET',
+                'url'    => fn ($row) => route('admin.settings.users.view', $row->id),
+            ]);
+        }
+
         if (bouncer()->hasPermission('settings.user.users.edit')) {
             $this->addAction([
                 'index'  => 'edit',

@@ -6,6 +6,7 @@
             ? (int) now()->diffInMinutes(\Carbon\Carbon::parse($impersonationExpiresAt))
             : null;
         $impersonationNearExpiry = $impersonationMinutesLeft !== null && $impersonationMinutesLeft <= 15;
+        $impersonatingClinicUser = ($impersonating['type'] ?? null) === 'clinic_user';
     @endphp
     @if ($impersonationExpired)
         <div class="sticky top-0 z-[10002] flex items-center justify-between bg-red-600 px-4 py-2 text-sm text-white shadow-md">
@@ -27,17 +28,17 @@
     @else
         <div class="sticky top-0 z-[10002] flex items-center justify-between {{ $impersonationNearExpiry ? 'bg-orange-600' : 'bg-amber-500' }} px-4 py-2 text-sm text-white shadow-md">
             <span class="font-semibold">
-                &#9888; U simuleert een sessie als patiënt: {{ $impersonating['person_name'] }}
+                &#9888; U simuleert een sessie als {{ $impersonatingClinicUser ? 'kliniekgebruiker' : 'patiënt' }}: {{ $impersonating['person_name'] }}
                 @if ($impersonationMinutesLeft !== null)
                     <span class="ml-2 font-normal opacity-90">(nog {{ $impersonationMinutesLeft }} min.)</span>
                 @endif
             </span>
             <div class="flex items-center gap-4">
                 <a
-                    href="{{ config('services.portal.patient.web_url') }}"
+                    href="{{ config('services.portal.'.($impersonatingClinicUser ? 'clinic' : 'patient').'.web_url') }}"
                     target="_blank"
                     class="underline hover:no-underline"
-                >Open patiëntportaal &#8599;</a>
+                >Open {{ $impersonatingClinicUser ? 'kliniekportaal' : 'patiëntportaal' }} &#8599;</a>
 
                 <form
                     method="POST"

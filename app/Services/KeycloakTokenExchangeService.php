@@ -10,15 +10,15 @@ use RuntimeException;
 
 class KeycloakTokenExchangeService
 {
-    public function impersonate(string $keycloakUserId): string
+    public function impersonate(string $keycloakUserId, KeyCloakClient $client = KeyCloakClient::PATIENT): string
     {
         $realm = KeycloakConfig::realm();
         $tokenUrl = KeycloakConfig::internalUrl(
             "/realms/{$realm}/protocol/openid-connect/token"
         );
 
-        $clientId = KeyCloakClient::PATIENT->clientId();
-        $clientSecret = config('services.portal.patient.secret');
+        $clientId = $client->clientId();
+        $clientSecret = config('services.portal.'.$client->value.'.secret');
 
         // Step 1: obtain a service account token via client credentials
         // scope=openid is required so the exchanged token also inherits openid scope

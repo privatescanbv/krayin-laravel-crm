@@ -52,14 +52,16 @@ services:
       - traefik.http.routers.crm.tls.certresolver=myresolver
       - traefik.http.routers.crm.service=crm-svc
       - traefik.http.routers.crm.priority=1
+      # IP whitelist middleware — beheer de lijst via ADMIN_WHITELIST in .env
+      - traefik.http.middlewares.crm-whitelist.ipallowlist.sourcerange=${ADMIN_WHITELIST}
+      - traefik.http.routers.crm.middlewares=crm-whitelist@docker
       # === APIDOCS ROUTER (afgeschermd) ===
       - traefik.http.routers.crm-apidocs.rule=Host("newcrm.${PRIVATESCAN_BASE_DOMAIN}") && PathPrefix("/admin/apidocs")
       - traefik.http.routers.crm-apidocs.entrypoints=https
       - traefik.http.routers.crm-apidocs.tls=true
       - traefik.http.routers.crm-apidocs.priority=100
       - traefik.http.routers.crm-apidocs.service=crm-svc
-      - traefik.http.middlewares.crm-apidocs-whitelist.ipallowlist.sourcerange=${ADMIN_WHITELIST}
-      - traefik.http.routers.crm-apidocs.middlewares=crm-apidocs-whitelist@docker,crm-apidocs-auth
+      - traefik.http.routers.crm-apidocs.middlewares=crm-whitelist@docker,crm-apidocs-auth
       # === BASIC AUTH MIDDLEWARE ===
       - traefik.http.middlewares.crm-apidocs-auth.basicauth.users=${CRM_APIDOCS_AUTH}
       - traefik.http.services.crm-svc.loadbalancer.server.port=80
@@ -212,6 +214,7 @@ services:
       # Gedeeld met de CRM-.env; overige variabelen staan in .env.clinic
       KEYCLOAK_BASE_URL: "https://sso.${PRIVATESCAN_BASE_DOMAIN}"
       KEYCLOAK_REALM: "${KEYCLOAK_REALM}"
+      KEYCLOAK_REALM_PUBLIC_KEY: "${KEYCLOAK_REALM_PUBLIC_KEY}"
       CRM_API_KEY: "${API_KEY_1}"
       CRM_API_URL: "http://crm/api/"
       APP_URL: "${CLINIC_PORTAL_URL}"
@@ -228,7 +231,7 @@ services:
       - traefik.http.routers.clinic.tls=true
       - traefik.http.routers.clinic.tls.certresolver=myresolver
       - traefik.http.routers.clinic.service=clinic-svc
-      - traefik.http.routers.clinic.middlewares=clinic-forward-headers
+      - traefik.http.routers.clinic.middlewares=crm-whitelist@docker,clinic-forward-headers
       - traefik.http.services.clinic-svc.loadbalancer.server.port=80
       - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
       - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443

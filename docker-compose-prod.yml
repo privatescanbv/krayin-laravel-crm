@@ -221,6 +221,7 @@ services:
       # Gedeeld met de CRM-.env; overige variabelen staan in .env.clinic
       KEYCLOAK_BASE_URL: "https://sso.${PRIVATESCAN_BASE_DOMAIN}"
       KEYCLOAK_REALM: "${KEYCLOAK_REALM}"
+      KEYCLOAK_REALM_PUBLIC_KEY: "${KEYCLOAK_REALM_PUBLIC_KEY}"
       CRM_API_KEY: "${API_KEY_1}"
       CRM_API_URL: "http://crm/api/"
       APP_URL: "${CLINIC_PORTAL_URL}"
@@ -237,7 +238,7 @@ services:
       - traefik.http.routers.clinic.tls=true
       - traefik.http.routers.clinic.tls.certresolver=myresolver
       - traefik.http.routers.clinic.service=clinic-svc
-      - traefik.http.routers.clinic.middlewares=clinic-forward-headers
+      - traefik.http.routers.clinic.middlewares=crm-whitelist@docker,clinic-forward-headers
       - traefik.http.services.clinic-svc.loadbalancer.server.port=80
       - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
       - traefik.http.middlewares.clinic-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443

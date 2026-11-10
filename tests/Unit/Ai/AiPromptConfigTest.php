@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\GenerateAiSummaryJob;
 use App\Services\Ai\AiPromptConfig;
 
 beforeEach(function () {
@@ -93,5 +94,26 @@ test('every shipped use case exposes the override keys', function () {
 
     foreach ($shipped as $useCase => $settings) {
         expect($settings)->toHaveKeys(['prompt', 'base_url', 'model', 'temperature', 'timeout'], $useCase);
+    }
+});
+
+test('every shipped use case timeout fits within the AI summary job timeout', function () {
+    // GenerateAiSummaryJob::$timeout is the hard SIGALRM deadline for the whole job, not just
+    // the LLM call. A per use case timeout at or above it lets a stalled backend keep the
+    // worker blocked past that deadline instead of failing with a catchable ConnectionException
+    // that the job's existing retry-from-the-queue logic can act on.
+    $jobTimeout = (new GenerateAiSummaryJob('lead', 1))->timeout;
+
+    // TestCase clears the per use case base_url overrides, so read the file directly.
+    $shipped = require config_path('ai_prompts.php');
+
+    foreach ($shipped as $useCase => $settings) {
+        $timeout = is_array($settings) ? ($settings['timeout'] ?? null) : null;
+
+        if ($timeout === null) {
+            continue; // falls back to services.llm.timeout, which is well under the job timeout.
+        }
+
+        expect((int) $timeout)->toBeLessThan($jobTimeout, "use case [{$useCase}]");
     }
 });

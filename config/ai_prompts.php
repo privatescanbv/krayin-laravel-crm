@@ -70,7 +70,7 @@ PROMPT,
         'base_url'    => env('LLM_LEAD_SUMMARY_BASE_URL', 'https://newcrm.dev.privatescan.nl/llm-qwen/v1'),
         'model'       => env('LLM_LEAD_SUMMARY_MODEL'),
         'temperature' => env('LLM_LEAD_SUMMARY_TEMPERATURE'),
-        'timeout'     => env('LLM_LEAD_SUMMARY_TIMEOUT', 360),
+        'timeout'     => env('LLM_LEAD_SUMMARY_TIMEOUT', 200),
 
         'prompt' => <<<'PROMPT'
 Je maakt een compacte commerciële samenvatting van één lead in een CRM.
@@ -127,7 +127,7 @@ PROMPT,
         'base_url'    => env('LLM_PERSON_SUMMARY_BASE_URL'),
         'model'       => env('LLM_PERSON_SUMMARY_MODEL'),
         'temperature' => env('LLM_PERSON_SUMMARY_TEMPERATURE'),
-        'timeout'     => env('LLM_PERSON_SUMMARY_TIMEOUT', 360),
+        'timeout'     => env('LLM_PERSON_SUMMARY_TIMEOUT', 200),
 
         'prompt' => <<<'PROMPT'
 Je maakt een compacte samenvatting van één contactpersoon (patiënt) voor interne sales in een CRM.
@@ -199,7 +199,7 @@ PROMPT,
         'base_url'    => env('LLM_ORDER_SUMMARY_BASE_URL'),
         'model'       => env('LLM_ORDER_SUMMARY_MODEL'),
         'temperature' => env('LLM_ORDER_SUMMARY_TEMPERATURE'),
-        'timeout'     => env('LLM_ORDER_SUMMARY_TIMEOUT', 360),
+        'timeout'     => env('LLM_ORDER_SUMMARY_TIMEOUT', 200),
 
         'prompt' => <<<'PROMPT'
 Je maakt een compacte samenvatting van één order voor interne sales en planning in een CRM.
@@ -271,7 +271,7 @@ PROMPT,
         'base_url'    => env('LLM_SALES_LEAD_SUMMARY_BASE_URL'),
         'model'       => env('LLM_SALES_LEAD_SUMMARY_MODEL'),
         'temperature' => env('LLM_SALES_LEAD_SUMMARY_TEMPERATURE'),
-        'timeout'     => env('LLM_SALES_LEAD_SUMMARY_TIMEOUT', 360),
+        'timeout'     => env('LLM_SALES_LEAD_SUMMARY_TIMEOUT', 200),
 
         'prompt' => <<<'PROMPT'
 Je maakt een compacte commerciële samenvatting van één sales lead (verkooptraject) in een CRM.

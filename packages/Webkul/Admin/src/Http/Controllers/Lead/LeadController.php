@@ -846,6 +846,11 @@ class LeadController extends Controller
             'order_department_id_after_won' => 'nullable|exists:departments,id',
             'create_order_after_won' => 'nullable|boolean',
         ]);
+
+        if ($this->stageRepository->find(request()->input('lead_pipeline_stage_id'))?->is_won) {
+            $this->validate(request(), ['user_id' => 'required|exists:users,id']);
+        }
+
         $closeOpenActivities = request()->has('close_open_activities') && request()->input('close_open_activities');
 
         return $this->updateStageWithData(

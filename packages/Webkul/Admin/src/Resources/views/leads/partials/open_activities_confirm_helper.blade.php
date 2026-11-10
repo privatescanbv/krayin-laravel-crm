@@ -1,5 +1,18 @@
 @pushOnce('scripts')
     <script>
+        // Single source for modal field validation: the `required` attribute on a field is the rule.
+        // Returns an error message for the first empty required field in the container, or null.
+        window.firstEmptyRequiredMessage = function(container) {
+            const field = [...(container?.querySelectorAll('[required]') ?? [])]
+                .find(el => ! String(el.value ?? '').trim());
+
+            if (! field) return null;
+
+            const label = field.closest('div')?.querySelector('label')?.textContent.replace('*', '').trim() || field.name;
+
+            return `${label} is verplicht`;
+        };
+
         // Shared helper to build confirmation message with open activity titles
         window.buildOpenActivitiesConfirmMessage = async function(axiosInstance, entityId, openCount, entityType='lead', options = {}) {
             const type = (options && options.type) ? options.type : entityType;

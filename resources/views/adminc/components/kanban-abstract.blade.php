@@ -498,7 +498,7 @@
                     </x-slot>
 
                     <x-slot:content>
-                        <div v-if="currentStageUpdate">
+                        <div v-if="currentStageUpdate" ref="stageDetailFields">
                             <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
                                 Lead "<strong>@{{ getLeadName(currentStageUpdate.lead) }}</strong>" wordt verplaatst
                                 naar status "@{{ currentStageUpdate.type === 'won' ? 'Gewonnen' : (currentStageUpdate.type === 'lost' ? 'Verloren' : currentStageUpdate.stage.name) }}"
@@ -647,6 +647,9 @@
                                 Laden...
                             </p>
                         </div>
+                        <p v-if="stageDetailError" class="mt-3 text-sm text-red-600">
+                            @{{ stageDetailError }}
+                        </p>
                         </x-slot>
 
                         <x-slot:footer>
@@ -662,6 +665,7 @@
                                 type="button"
                                 class="primary-button"
                                 ref="stageSubmitBtn"
+                                :disabled="isSubmittingStage"
                                 @click="handleStageDetailSubmit"
                             >
                                 Opslaan
@@ -703,6 +707,8 @@
                         wonLostLabel: 'Toon gewonnen/verloren',
                         showDuplicates: false,
                         currentStageUpdate: null,
+                        stageDetailError: '',
+                        isSubmittingStage: false,
                         scrollTimeouts: {},
                         stageSorts: {},
                         assignableUsers: [],
@@ -1226,24 +1232,21 @@
                     /**
                      * Handle form submission for won/lost stage
                      */
-                    handleStageDetailSubmit() {
+                    async handleStageDetailSubmit() {
                         const update = this.currentStageUpdate;
 
-                        if (update.type === 'lost' && !update.lost_reason.trim()) {
-                            this.$emitter.emit('add-flash', {
-                                type: 'error',
-                                message: 'Reden van verlies is verplicht'
-                            });
+                        if (this.isSubmittingStage) {
                             return;
                         }
 
-                        if (update.type === 'outcome' && ! update.assessment_outcome && ! this.outcomeOptional(update)) {
-                            this.$emitter.emit('add-flash', {
-                                type: 'error',
-                                message: 'Uitkomst beoordeling is verplicht'
-                            });
+                        const missing = window.firstEmptyRequiredMessage(this.$refs.stageDetailFields);
+
+                        if (missing) {
+                            this.stageDetailError = missing;
                             return;
                         }
+
+                        this.stageDetailError = '';
 
                         let extraData = {};
 
@@ -1252,17 +1255,7 @@
 
                             extraData.assessment_outcome = update.assessment_outcome;
                             extraData.additional_research_required = additionalResearch ? 1 : 0;
-                            update.lead.assessment_outcome = update.assessment_outcome || null;
-                            update.lead.additional_research_required = additionalResearch;
                         } else if (update.type === 'won') {
-                            if (this.entityType === 'leads' && ! String(update.order_department_id_after_won || '').trim()) {
-                                this.$emitter.emit('add-flash', {
-                                    type: 'error',
-                                    message: 'Order afdeling is verplicht bij status "Gewonnen"'
-                                });
-                                return;
-                            }
-
                             extraData.closed_at = update.closed_at;
                             extraData.user_id = update.user_id;
 
@@ -1275,27 +1268,34 @@
                             extraData.closed_at = update.closed_at;
                         }
 
-                        this.updateLeadStage(
-                            update.lead.id,
-                            update.stage.id,
-                            extraData
-                        );
+                        this.isSubmittingStage = true;
 
-                        if (this.$refs.stageDetailModal) {
-                            this.$refs.stageDetailModal.close();
+                        const error = await this.updateLeadStage(update.lead.id, update.stage.id, extraData, false);
+
+                        this.isSubmittingStage = false;
+
+                        if (error) {
+                            this.stageDetailError = error;
+                            return;
                         }
-                        this.currentStageUpdate = null;
+
+                        if (update.type === 'outcome') {
+                            update.lead.assessment_outcome = update.assessment_outcome || null;
+                            update.lead.additional_research_required = this.outcomeOptional(update);
+                        }
+
+                        this.cancelStageDetail();
                     },
 
                     /**
                      * Update lead stage with optional additional data
                      */
-                    async updateLeadStage(leadId, stageId, additionalData = {}) {
+                    async updateLeadStage(leadId, stageId, additionalData = {}, flashErrors = true) {
                         const data = {
                             'lead_pipeline_stage_id': stageId,
                             ...additionalData
                         };
-                        this.$axios
+                        return this.$axios
                             .put("{{ route($routeNameStageUpdate, 'replace') }}".replace('replace',
                                 leadId), data)
                             .then(response => {
@@ -1310,12 +1310,18 @@
                                     this.stageLeads[stage.id].leads.meta.total = this
                                         .stageLeads[stage.id].leads.meta.total + 1;
                                 }
+
+                                return null;
                             })
                             .catch(error => {
-                                this.$emitter.emit('add-flash', {
-                                    type: 'error',
-                                    message: error.response.data.message
-                                });
+                                const data = error.response?.data;
+                                const message = Object.values(data?.errors ?? {})[0]?.[0] ?? data?.message ?? 'Er ging iets mis';
+
+                                if (flashErrors) {
+                                    this.$emitter.emit('add-flash', { type: 'error', message });
+                                }
+
+                                return message;
                             });
                     },
 
@@ -1385,6 +1391,7 @@
                      * Cancel stage detail modal
                      */
                     cancelStageDetail() {
+                        this.stageDetailError = '';
                         if (this.$refs.stageDetailModal) {
                             this.$refs.stageDetailModal.close();
                         }

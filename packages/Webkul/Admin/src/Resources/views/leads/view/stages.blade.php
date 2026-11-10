@@ -130,6 +130,8 @@
                             <x-slot:content>
                                 {!! view_render_event('admin.leads.view.stages.form_controls.modal.content.before', ['lead' => $leadOrNull]) !!}
 
+                                <div ref="stageFields">
+
                                 <!-- Won stage fields (Lead, SalesLead, Order) -->
                                 <template v-if="isWonStage(nextStage)">
                                         <x-admin::form.control-group>
@@ -203,6 +205,7 @@
                                                 name="lost_reason"
                                                 class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
                                                 v-model="nextStage.lost_reason"
+                                                required
                                             >
                                                 <option value="">Selecteer reden...</option>
                                                 @foreach(LostReason::cases() as $reason)
@@ -225,6 +228,7 @@
                                                     name="assessment_outcome"
                                                     class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
                                                     v-model="nextStage.assessment_outcome"
+                                                    :required="! outcomeOptional(nextStage)"
                                                 >
                                                     <option value="">Selecteer uitkomst...</option>
                                                     @foreach (AssessmentOutcome::ordered()->get() as $outcome)
@@ -251,7 +255,7 @@
                                     <template v-else>
                                         <!-- No extra fields required for regular stage transitions -->
                                     </template>
-
+                                </div>
                                 </x-slot>
 
                                 <x-slot:footer>
@@ -423,19 +427,18 @@
                 },
 
                 handleFormSubmit(event) {
+                    const missing = window.firstEmptyRequiredMessage(this.$refs.stageFields);
+
+                    if (missing) {
+                        this.$emitter.emit('add-flash', { type: 'error', message: missing });
+                        return;
+                    }
+
                     let params = {
                         'lead_pipeline_stage_id': this.nextStage.id
                     };
 
                     if (this.isWonStage(this.nextStage)) {
-                        if (this.isLeadContext && ! String(this.nextStage.order_department_id_after_won || '').trim()) {
-                            this.$emitter.emit('add-flash', {
-                                type: 'error',
-                                message: 'Order afdeling is verplicht bij status "Gewonnen"'
-                            });
-                            return;
-                        }
-
                         params.closed_at = this.nextStage.closed_at;
                         params.user_id = this.nextStage.user_id;
 
@@ -444,25 +447,9 @@
                             params.create_order_after_won = this.nextStage.create_order_after_won === false ? 0 : 1;
                         }
                     } else if (this.needsAssessmentOutcome(this.nextStage)) {
-                        if (! this.nextStage.assessment_outcome && ! this.outcomeOptional(this.nextStage)) {
-                            this.$emitter.emit('add-flash', {
-                                type: 'error',
-                                message: 'Uitkomst beoordeling is verplicht'
-                            });
-                            return;
-                        }
-
                         params.assessment_outcome = this.nextStage.assessment_outcome;
                         params.additional_research_required = this.outcomeOptional(this.nextStage) ? 1 : 0;
                     } else if (this.isLostStage(this.nextStage)) {
-                        if (! String(this.nextStage.lost_reason || '').trim()) {
-                            this.$emitter.emit('add-flash', {
-                                type: 'error',
-                                message: 'Reden van verlies is verplicht bij status "Verloren"'
-                            });
-                            return;
-                        }
-
                         params.lost_reason = this.nextStage.lost_reason;
                         params.closed_at = this.nextStage.closed_at;
                     }

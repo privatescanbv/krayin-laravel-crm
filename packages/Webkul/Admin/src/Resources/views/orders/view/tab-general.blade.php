@@ -456,6 +456,9 @@
 
     <!-- Order Items Card -->
     @if($order->orderItems && $order->orderItems->count() > 0)
+        @php
+            $canEditOrderItems = bouncer()->hasPermission('orders.order_items.edit');
+        @endphp
         <div class="rounded-lg border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <h4 class="mb-4 font-semibold text-gray-800 dark:text-white">Order Items</h4>
             <div class="overflow-x-auto">
@@ -467,6 +470,9 @@
                         <th class="px-2 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Aantal</th>
                         <th class="px-2 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Prijs</th>
                         <th class="px-2 py-2 text-center font-medium text-gray-500 dark:text-gray-400">Status</th>
+                        @if($canEditOrderItems)
+                            <th class="w-10 px-2 py-2"></th>
+                        @endif
                     </tr>
                     </thead>
                     <tbody>
@@ -497,6 +503,13 @@
                                     <span class="text-gray-400 text-xs">-</span>
                                 @endif
                             </td>
+                            @if($canEditOrderItems)
+                                <td class="px-2 py-2 text-right">
+                                    <a href="{{ route('admin.order_items.edit', $item->id) }}" title="Bewerken">
+                                        <i class="icon-edit cursor-pointer text-2xl"></i>
+                                    </a>
+                                </td>
+                            @endif
                         </tr>
                     @endforeach
                     </tbody>

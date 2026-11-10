@@ -58,3 +58,19 @@ test('order page only offers the order line edit link with the permission', func
     'with permission'    => [['orders', 'orders.edit', 'orders.order_items', 'orders.order_items.edit'], true],
     'without permission' => [['orders', 'orders.edit'], false],
 ]);
+
+test('order view page only offers the order line edit link with the permission', function (array $permissions, bool $visible) {
+    $orderItem = OrderItem::factory()->create();
+    $role = Role::factory()->create(['permission_type' => 'custom', 'permissions' => $permissions]);
+    $user = User::factory()->create(['role_id' => $role->id, 'view_permission' => 'global', 'status' => 1]);
+
+    $html = $this->actingAs($user, 'user')
+        ->get(route('admin.orders.view', $orderItem->order_id))
+        ->assertOk()
+        ->getContent();
+
+    expect(str_contains($html, route('admin.order_items.edit', $orderItem->id)))->toBe($visible);
+})->with([
+    'with permission'    => [['orders', 'orders.view', 'orders.order_items', 'orders.order_items.edit'], true],
+    'without permission' => [['orders', 'orders.view'], false],
+]);

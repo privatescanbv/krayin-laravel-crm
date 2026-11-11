@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\AiSummary;
 use App\Services\Ai\AiSubjectRegistry;
 use App\Services\Ai\AiSummaryService;
+use App\Services\Ai\LlmTransientException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -67,7 +68,7 @@ class GenerateAiSummaryJob implements ShouldBeUnique, ShouldQueue
 
         try {
             $summary = $service->generate($subject, $this->trigger);
-        } catch (ConnectionException $exception) {
+        } catch (ConnectionException|LlmTransientException $exception) {
             // The service already recorded this attempt as 'failed'. While the queue
             // still has retries left, reflect that here so a manual "vernieuwen"
             // click sees 'retrying' instead of a misleadingly final 'failed'.

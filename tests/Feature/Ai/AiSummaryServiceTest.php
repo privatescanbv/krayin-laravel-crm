@@ -6,6 +6,7 @@ use App\Models\AiSummaryGeneration;
 use App\Models\Order;
 use App\Models\SalesLead;
 use App\Services\Ai\AiSummaryService;
+use App\Services\Ai\LlmTransientException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -379,6 +380,35 @@ test('rethrows connection failures so the queued job can be retried, while keepi
     expect($existing->status)->toBe('failed')
         ->and($existing->summary)->toBe('Eerder geldige samenvatting.')
         ->and($existing->last_error)->toContain('Failed to connect')
+        ->and($existing->generations)->toHaveCount(1)
+        ->and($existing->generations->first()->status)->toBe('failed');
+});
+
+test('rethrows an exhausted transient LLM failure so the queued job can be retried, instead of a permanent generation failure', function () {
+    // Regression for the Bugsink flood: lead_summary/person_summary/order_summary/sales_lead_summary
+    // all configure their LLM timeout at or above LlmService's retry budget, so a transient 429/5xx
+    // from the model backend could never actually be retried and always fell through to a permanent
+    // 'failed' generation logged as "AI summary generation failed". LlmService now reports an
+    // exhausted transient status as LlmTransientException, which must be rethrown here (like a
+    // ConnectionException) rather than swallowed into a permanent failure.
+    $lead = Lead::factory()->create();
+    $existing = AiSummary::factory()->forSubject($lead)->create([
+        'summary' => 'Eerder geldige samenvatting.',
+        'status'  => 'completed',
+    ]);
+
+    Http::fake([
+        'https://llm.test/v1/chat/completions' => Http::response(['error' => 'unavailable'], 503),
+    ]);
+
+    expect(fn () => app(AiSummaryService::class)->generate($lead, 'test'))
+        ->toThrow(LlmTransientException::class);
+
+    $existing->refresh();
+
+    expect($existing->status)->toBe('failed')
+        ->and($existing->summary)->toBe('Eerder geldige samenvatting.')
+        ->and($existing->last_error)->toContain('LLM request failed with status 503')
         ->and($existing->generations)->toHaveCount(1)
         ->and($existing->generations->first()->status)->toBe('failed');
 });

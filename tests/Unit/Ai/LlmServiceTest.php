@@ -2,6 +2,7 @@
 
 use App\Services\Ai\LlmJsonParseException;
 use App\Services\Ai\LlmService;
+use App\Services\Ai\LlmTransientException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Sleep;
@@ -120,20 +121,24 @@ test('chat gives up after three attempts on a persistent 503', function () {
     ]);
 
     expect(fn () => (new LlmService)->chat('email_sender_extraction', '{}'))
-        ->toThrow(Exception::class, 'LLM request failed with status 503');
+        ->toThrow(LlmTransientException::class, 'LLM request failed with status 503');
 
     Http::assertSentCount(3);
     Sleep::assertSleptTimes(2);
 });
 
-test('chat does not retry when another attempt could not finish within the worker timeout budget', function () {
+test('chat does not retry when another attempt could not finish within the worker timeout budget, but still reports the failure as transient', function () {
     config(['services.llm.timeout' => 250]);
     Http::fake([
         'https://llm.test/v1/chat/completions' => Http::response(['error' => 'unavailable'], 503),
     ]);
 
+    // Exhausting the retry budget on the first attempt is exactly the bug this guards against:
+    // a use case timeout left no headroom for any retry, yet the failure is still a transient
+    // 503 and must be reported as such so the caller retries the job instead of recording a
+    // permanent generation failure (see AiSummaryServiceTest).
     expect(fn () => (new LlmService)->chat('email_sender_extraction', '{}'))
-        ->toThrow(Exception::class, 'LLM request failed with status 503');
+        ->toThrow(LlmTransientException::class, 'LLM request failed with status 503');
 
     Http::assertSentCount(1);
 });

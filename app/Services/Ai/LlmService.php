@@ -94,7 +94,17 @@ class LlmService
                 'response_raw' => $logContent ? $response->body() : '[redacted]',
             ]));
 
-            throw new Exception('LLM request failed with status '.$response->status());
+            $message = 'LLM request failed with status '.$response->status();
+
+            // Same status set retryTransient() treats as transient. Reaching this point means
+            // either every retry failed, or the budget could not fit one (e.g. a use case's
+            // timeout leaves no headroom). Either way the backend hiccup is still transient, so
+            // let the caller retry the whole job later instead of recording a permanent failure.
+            if (in_array($response->status(), [429, 500, 502, 503, 504], true)) {
+                throw new LlmTransientException($message);
+            }
+
+            throw new Exception($message);
         }
 
         $data = $response->json();

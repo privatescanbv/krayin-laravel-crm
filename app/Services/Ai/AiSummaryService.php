@@ -188,7 +188,7 @@ class AiSummaryService
                 'duration_ms' => $durationMs,
                 'model'       => $model,
             ]);
-        } catch (ConnectionException $exception) {
+        } catch (ConnectionException|LlmTransientException $exception) {
             $durationMs = (int) round((microtime(true) - $startedTimestamp) * 1000);
             $error = Str::limit($exception->getMessage(), 2000, '');
 

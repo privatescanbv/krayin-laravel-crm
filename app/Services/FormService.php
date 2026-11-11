@@ -402,7 +402,8 @@ class FormService
     {
         $token = $this->getApiToken();
 
-        return Http::timeout(10)
+        return Http::connectTimeout(3)
+            ->timeout(10)
             ->acceptJson()
             ->withHeaders([
                 'X-API-KEY' => $token,

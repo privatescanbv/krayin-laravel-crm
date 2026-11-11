@@ -179,3 +179,23 @@ test('counters combines messages and appointments independently', function () {
         'new_appointments_count' => 1,
     ]);
 });
+
+// ─── Forms API failure ────────────────────────────────────────────────────
+
+test('counters falls back to -1 docs when the forms api fails', function () {
+    $this->mock(FormService::class, function ($mock) {
+        $mock->shouldReceive('getOpenForms')->andThrow(new Exception('Forms API kon niet worden bereikt'));
+    });
+
+    $keycloakUserId = (string) Str::uuid();
+    $person = Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
+    PatientMessage::factory()->create([
+        'person_id'   => $person->id,
+        'sender_type' => PatientMessageSenderType::STAFF,
+        'is_read'     => false,
+    ]);
+
+    $this->getJson(countersUrl($keycloakUserId), ['X-API-KEY' => 'test-api-key'])
+        ->assertOk()
+        ->assertJson(['new_messages_count' => 1, 'new_docs_count' => -1]);
+});

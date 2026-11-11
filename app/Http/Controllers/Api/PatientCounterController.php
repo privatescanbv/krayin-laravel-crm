@@ -10,6 +10,8 @@ use App\Repositories\OrderRepository;
 use App\Services\FormService;
 use App\Services\Keycloak\KeycloakService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class PatientCounterController extends Controller
 {
@@ -53,7 +55,16 @@ class PatientCounterController extends Controller
             ->getPatientAppointmentOrdersForPerson($person, AppointmentTimeFilter::FUTURE, $now)
             ->count();
 
-        $openForms = $this->formService->getOpenForms($person->id);
+        // De forms-teller is alleen een badge: een haperende Forms API mag de andere tellers niet breken.
+        try {
+            $openForms = $this->formService->getOpenForms($person->id);
+        } catch (Throwable $e) {
+            Log::warning('PatientCounter: open forms count unavailable, falling back to 0', [
+                'person_id' => $person->id,
+                'error'     => $e->getMessage(),
+            ]);
+            $openForms = -1;
+        }
 
         return $this->countersResponse($messagesCount, $appointmentsCount, $openForms);
     }

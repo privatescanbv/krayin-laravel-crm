@@ -11,6 +11,10 @@ return [
     // Bronnen die /health/ready mogen aanroepen (rechtstreeks binnen het docker-netwerk, zonder proxy-headers).
     'probe_cidrs' => array_filter(explode(',', env('HEALTH_PROBE_CIDRS', '127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,::1'))),
 
+    // true = /health/ready ook via Traefik (X-Forwarded-For) toestaan; zet alleen aan samen met de
+    // monitor-router met eigen ipallowlist (docker-compose-*.yml, HEALTH_MONITOR_WHITELIST).
+    'probe_allow_proxied' => (bool) env('HEALTH_PROBE_ALLOW_PROXIED', false),
+
     'max_requests_per_minute' => 60,
     'check_timeout_ms'        => 1000,
     'total_timeout_ms'        => 5000,

@@ -2,9 +2,9 @@
 
 use App\Services\Ai\LlmJsonParseException;
 use App\Services\Ai\LlmService;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Sleep;
 
 beforeEach(function () {
     config([
@@ -14,8 +14,6 @@ beforeEach(function () {
         'services.llm.timeout'       => 180,
         'services.llm.model'         => 'local-llama',
     ]);
-
-    Sleep::fake();
 });
 
 test('chat sends request to completions endpoint with configured settings', function () {
@@ -69,73 +67,6 @@ test('chat prefers the per use case base url, model and temperature overrides', 
             && $body['model'] === 'gpt-oss-120b'
             && $body['temperature'] === 0.3;
     });
-});
-
-test('chat retries a transient 500 from the model server and returns the recovered response', function () {
-    Http::fake([
-        'https://llm.test/v1/chat/completions' => Http::sequence()
-            ->push(['error' => 'internal server error'], 500)
-            ->push([
-                'choices' => [
-                    ['message' => ['content' => 'Hello']],
-                ],
-            ], 200),
-    ]);
-
-    $service = new LlmService;
-    $response = $service->chat('email_sender_extraction', '{}');
-
-    expect($response)->toBe('Hello');
-    Http::assertSentCount(2);
-    Sleep::assertSleptTimes(1);
-});
-
-test('chat does not retry a permanent 4xx response from the model server', function () {
-    Http::fake([
-        'https://llm.test/v1/chat/completions' => Http::response(['error' => 'bad request'], 400),
-    ]);
-
-    $service = new LlmService;
-
-    expect(fn () => $service->chat('email_sender_extraction', '{}'))
-        ->toThrow(Exception::class, 'LLM request failed with status 400');
-
-    Http::assertSentCount(1);
-});
-
-test('chat retries a 429 from the model server', function () {
-    Http::fake([
-        'https://llm.test/v1/chat/completions' => Http::sequence()
-            ->push(['error' => 'rate limited'], 429)
-            ->push(['choices' => [['message' => ['content' => 'Hello']]]], 200),
-    ]);
-
-    expect((new LlmService)->chat('email_sender_extraction', '{}'))->toBe('Hello');
-    Http::assertSentCount(2);
-});
-
-test('chat gives up after three attempts on a persistent 503', function () {
-    Http::fake([
-        'https://llm.test/v1/chat/completions' => Http::response(['error' => 'unavailable'], 503),
-    ]);
-
-    expect(fn () => (new LlmService)->chat('email_sender_extraction', '{}'))
-        ->toThrow(Exception::class, 'LLM request failed with status 503');
-
-    Http::assertSentCount(3);
-    Sleep::assertSleptTimes(2);
-});
-
-test('chat does not retry when another attempt could not finish within the worker timeout budget', function () {
-    config(['services.llm.timeout' => 250]);
-    Http::fake([
-        'https://llm.test/v1/chat/completions' => Http::response(['error' => 'unavailable'], 503),
-    ]);
-
-    expect(fn () => (new LlmService)->chat('email_sender_extraction', '{}'))
-        ->toThrow(Exception::class, 'LLM request failed with status 503');
-
-    Http::assertSentCount(1);
 });
 
 test('chatJson strips markdown code fences', function () {
@@ -277,4 +208,24 @@ test('chat can redact sensitive request and response content from logs', functio
     Log::shouldHaveReceived('info')
         ->with('LLM response parsed', Mockery::on(fn (array $context) => $context['parsed'] === '[redacted]'))
         ->once();
+});
+
+test('chat throws a retryable ConnectionException on 429 and 5xx', function (int $status) {
+    Http::fake(['https://llm.test/v1/chat/completions' => Http::response(['error' => 'x'], $status)]);
+
+    expect(fn () => (new LlmService)->chat('email_sender_extraction', '{}'))
+        ->toThrow(ConnectionException::class, "LLM request failed with status {$status}");
+    Http::assertSentCount(1);
+})->with([429, 500, 502, 503, 504]);
+
+test('chat throws a plain non-retryable Exception on a permanent 4xx', function () {
+    Http::fake(['https://llm.test/v1/chat/completions' => Http::response(['error' => 'x'], 400)]);
+
+    try {
+        (new LlmService)->chat('email_sender_extraction', '{}');
+        $this->fail('expected exception');
+    } catch (Exception $e) {
+        expect($e)->not->toBeInstanceOf(ConnectionException::class)
+            ->and($e->getMessage())->toBe('LLM request failed with status 400');
+    }
 });

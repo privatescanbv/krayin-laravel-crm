@@ -44,6 +44,9 @@ services:
       - 'host.docker.internal:host-gateway'
     env_file:
       - .env
+    environment:
+      # /health/ready mag via Traefik (monitor-router hieronder met eigen ipallowlist)
+      HEALTH_PROBE_ALLOW_PROXIED: "true"
     labels:
       - traefik.enable=true
       - traefik.http.routers.crm.rule=Host("newcrm.${PRIVATESCAN_BASE_DOMAIN}") && !PathPrefix("/llm") && !PathPrefix("/llm-fast") && !PathPrefix("/chat")
@@ -62,6 +65,16 @@ services:
       - traefik.http.routers.crm-apidocs.priority=100
       - traefik.http.routers.crm-apidocs.service=crm-svc
       - traefik.http.routers.crm-apidocs.middlewares=crm-whitelist@docker,crm-apidocs-auth
+      # === HEALTH-MONITOR ROUTER (hostingprovider) ===
+      # Alleen /health/ready, met eigen allowlist (HEALTH_MONITOR_WHITELIST in .env): los van
+      # crm-whitelist, dat uit de routing verdwijnt zodra crm niet healthy is.
+      - traefik.http.routers.crm-health.rule=Host("newcrm.${PRIVATESCAN_BASE_DOMAIN}") && Path("/health/ready")
+      - traefik.http.routers.crm-health.entrypoints=https
+      - traefik.http.routers.crm-health.tls=true
+      - traefik.http.routers.crm-health.priority=100
+      - traefik.http.routers.crm-health.service=crm-svc
+      - traefik.http.middlewares.crm-health-whitelist.ipallowlist.sourcerange=${HEALTH_MONITOR_WHITELIST}
+      - traefik.http.routers.crm-health.middlewares=crm-health-whitelist@docker
       # === BASIC AUTH MIDDLEWARE ===
       - traefik.http.middlewares.crm-apidocs-auth.basicauth.users=${CRM_APIDOCS_AUTH}
       - traefik.http.services.crm-svc.loadbalancer.server.port=80

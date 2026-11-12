@@ -3,6 +3,7 @@
 namespace App\Services\Ai;
 
 use Exception;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -79,8 +80,6 @@ class LlmService
                 'Authorization' => 'Bearer '.config('services.llm.api_key'),
                 'Content-Type'  => 'application/json',
             ])
-            // Budget stays under the queue worker's --timeout=210 (.docker/supervisord.conf).
-            ->retryTransient(budgetSeconds: 200)
             ->post($url, $requestBody);
 
         $durationMs = (int) round((microtime(true) - $startedAt) * 1000);
@@ -94,7 +93,14 @@ class LlmService
                 'response_raw' => $logContent ? $response->body() : '[redacted]',
             ]));
 
-            throw new Exception('LLM request failed with status '.$response->status());
+            // 429/5xx (model reload, overload) are transient: surface them as a ConnectionException so
+            // GenerateAiSummaryJob retries from the queue (backoff), like an unreachable host.
+            // Other statuses (4xx) are permanent and stay a plain Exception.
+            $message = 'LLM request failed with status '.$response->status();
+
+            throw in_array($response->status(), [429, 500, 502, 503, 504], true)
+                ? new ConnectionException($message)
+                : new Exception($message);
         }
 
         $data = $response->json();

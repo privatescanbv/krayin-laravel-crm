@@ -45,9 +45,14 @@ class HealthGuard
             return is_string($token) && strlen($token) >= 32 && is_string($given) && hash_equals($token, $given);
         }
 
-        return ! $request->headers->has('X-Forwarded-For')
-            && ! $request->headers->has('Forwarded')
-            && ! $request->headers->has('X-Real-Ip')
+        // probe_allow_proxied: alleen aan op een omgeving waar Traefik /health/ready via een eigen
+        // ipallowlist-router doorlaat. De bron-IP-check gebeurt dan in Traefik; hier blijft REMOTE_ADDR
+        // (Traefik/intern netwerk) verplicht.
+        $proxied = $request->headers->has('X-Forwarded-For')
+            || $request->headers->has('Forwarded')
+            || $request->headers->has('X-Real-Ip');
+
+        return (! $proxied || config('health.probe_allow_proxied'))
             && IpUtils::checkIp((string) $request->server->get('REMOTE_ADDR'), config('health.probe_cidrs'));
     }
 

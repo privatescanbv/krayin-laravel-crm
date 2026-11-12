@@ -44,6 +44,14 @@ it('refuses ready via a proxy and does no work', function () {
     $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9'])->get('/health/ready')->assertForbidden();
 });
 
+it('allows ready via the proxy only when probe_allow_proxied is on and the peer is internal', function () {
+    config(['health.probe_allow_proxied' => true]);
+
+    $this->get('/health/ready', ['X-Forwarded-For' => '203.0.113.9'])->assertOk();
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9'])
+        ->get('/health/ready', ['X-Forwarded-For' => '203.0.113.9'])->assertForbidden();
+});
+
 it('fails ready with 503 and no error details when the database is unreachable', function () {
     breakDatabase();
 

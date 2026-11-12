@@ -1,0 +1,6 @@
+[#ops-storingshandleiding]
+=== Storingshandleiding (OPS)
+
+De actuele werkwijze bij storingen staat in de link:https://docs.google.com/document/d/1S7JaR7rvcfZ3W2V1Aa1__jahh-Au-Vz-JXFlyKBTvDc/edit?tab=t.0#heading=h.srlqvsrpyw3m[centrale storingshandleiding]. Hier worden de procedures, cases, tools, monitoring en afspraken met IceHosting onderhouden.
+
+Zie <<ops-verantwoordelijkheden,Verantwoordelijkheden bij storingen>> voor de taakverdeling en contactgegevens.

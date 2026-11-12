@@ -13,26 +13,19 @@ mbulthuis@178.251.28.76:/home/apps/migration/upload/
 2c. verwijderen de oude upload files.
 
 
-=== Calamiteitenplan
+[#ops-verantwoordelijkheden]
+=== Verantwoordelijkheden bij storingen
 
-Het calamiteitenplan beschrijft wie in geval van nood bereikbaar is, op welke manier, en waarvoor zij verantwoordelijk zijn. Dit biedt duidelijkheid en handelingssnelheid bij technische of operationele incidenten.
+[cols="1,2,3",options="header"]
+|===
+|Onderdeel |Verantwoordelijke |Taak / contact
+|Infrastructuur |IceHosting |OS, Docker-service en MySQL op de host (buiten Docker Compose). Bel 053 700 9750, ook buiten kantooruren bij storingen. E-mail: info@icehosting.nl.
+|Applicatie – eerste lijn |Mark Bulthuis |Applicatie, containers en processen binnen de containers.
+|Applicatie – tweede lijn |Mark Klaucke |Escalatie als de eerste lijn niet beschikbaar is of het probleem niet kan oplossen.
+|Applicatie – derde lijn |iBrandz B.V. |Escalatie als de tweede lijn niet beschikbaar is of het probleem niet kan oplossen.
+|===
 
-**Contactpersonen bij calamiteiten**
-
-==== IceHosting – Christian Bolster
-
-E: info@icehosting.nl
-T. +31 (0)53 700 9750
-IceHosting B.V.
-Josinkstraat 28
-7547AB Enschede
-
-Verantwoordelijk voor de hosting van twee cruciale services. Bereikbaar bij uitval van infrastructuur.
-
-==== CODE 14 – Backup software-expertise
-Indien zowel Mark K. als ondergetekende langdurig en plotseling wegvallen, kan contact worden opgenomen met:
-Harm-Jan, CTO van CODE 14 in Rijssen.
-Backup-expert met kennis van de softwarearchitectuur. Zij zijn ervaren met een Laravel stack, die hier is opgezet.
+Volg voor de storingsprocedure, cases, monitoring en actuele beheer- en SLA-afspraken de link:https://docs.google.com/document/d/1S7JaR7rvcfZ3W2V1Aa1__jahh-Au-Vz-JXFlyKBTvDc/edit?tab=t.0#heading=h.srlqvsrpyw3m[centrale storingshandleiding]. Deze werkwijze wordt alleen daar onderhouden.
 
 ==== Steentjes
 Speelde nog een rol in de hosting van het oude crm, SugarCRM Suite.
@@ -40,7 +33,7 @@ Contactgegevens zijn intern bekend. Alleen van toepassing zolang dit systeem nog
 
 === Hosting en servers (IceHosting)
 
-De CRM-omgeving draait bij hostingpartij *IceHosting* (contactgegevens: zie het Calamiteitenplan hierboven). Bij IceHosting nemen we twee VPS'en af:
+De CRM-omgeving draait bij hostingpartij *IceHosting* (contactgegevens: zie <<ops-verantwoordelijkheden,Verantwoordelijkheden bij storingen>>). Bij IceHosting nemen we twee VPS'en af:
 
 |===
 | VPS | Adres | Rol
@@ -118,6 +111,7 @@ De back-upserver (`10.0.0.1`) bevat meerdere Borg-repositories.
 | Productie
 |===
 
+[#borg-backup-bekijken]
 ==== De Borg-back-up bekijken
 
 NOTE: De productieomgeving gebruikt **BorgBackup 1.2**.
@@ -131,14 +125,14 @@ Beschikbare back-ups opvragen van de productieomgeving:
 
 [source,bash]
 ----
-borg list privatescan@10.0.0.1:~/data.privatescan.nl/borg/
+borg list privatescan@10.0.0.1:~/intern.privatescan.nl/borg/
 ----
 
 Beschikbare back-ups opvragen van de acceptatie-/dataomgeving:
 
 [source,bash]
 ----
-borg list privatescan@10.0.0.1:~/intern.privatescan.nl/borg/
+borg list privatescan@10.0.0.1:~/data.privatescan.nl/borg/
 ----
 
 De output toont alle beschikbare snapshots binnen de retentieperiode.
@@ -185,7 +179,7 @@ TIP: Wanneer ook applicatiebestanden moeten worden hersteld, extraheer dan de ma
 
 * **Monitoring & foutdetectie**
 
-Voor monitoring en foutanalyse wordt Sentry gebruikt. Hiermee kunnen technische problemen vroegtijdig worden gesignaleerd en opgelost.
+Zie de link:https://docs.google.com/document/d/1S7JaR7rvcfZ3W2V1Aa1__jahh-Au-Vz-JXFlyKBTvDc/edit?tab=t.0#heading=h.srlqvsrpyw3m[centrale storingshandleiding] voor monitoring, meldingen en incidentregistratie.
 
 * **Versiebeheer & Continuous Integration**
 

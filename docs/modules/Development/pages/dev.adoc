@@ -2,6 +2,8 @@
 
 include::quick-reference.adoc[]
 
+include::ops.adoc[]
+
 === Local Development Setup
 
 Stappen voor de eerste keer:

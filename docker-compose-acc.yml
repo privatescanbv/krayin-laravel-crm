@@ -198,6 +198,13 @@ services:
       # Eigen allowlist: niet afhankelijk van de crm-container
       - traefik.http.middlewares.patient-apidocs-whitelist.ipallowlist.sourcerange=${ADMIN_WHITELIST}
       - traefik.http.routers.patient-apidocs.middlewares=patient-apidocs-whitelist@docker,patient-apidocs-auth
+      # === DESIGN ROUTER (afgeschermd, zelfde whitelist + basic auth als apidocs) ===
+      - traefik.http.routers.patient-design.rule=Host("patient.${PRIVATESCAN_BASE_DOMAIN}") && PathPrefix("/design")
+      - traefik.http.routers.patient-design.entrypoints=https
+      - traefik.http.routers.patient-design.tls=true
+      - traefik.http.routers.patient-design.priority=100
+      - traefik.http.routers.patient-design.service=patient-svc
+      - traefik.http.routers.patient-design.middlewares=patient-apidocs-whitelist@docker,patient-apidocs-auth
       # === BASIC AUTH MIDDLEWARE ===
       - traefik.http.middlewares.patient-apidocs-auth.basicauth.users=${CRM_APIDOCS_AUTH}
       - traefik.http.services.patient-svc.loadbalancer.server.port=80

@@ -50,6 +50,7 @@ COPY --from=vite /build/resources ./resources
 COPY --from=vite /build/routes ./routes
 COPY --from=vite /build/lang ./lang
 COPY --from=vite /build/docs ./docs
+COPY --from=vite /build/design /usr/share/nginx/html/design
 COPY --from=vite /build/database ./database
 COPY --from=vite /build/artisan ./artisan
 COPY --from=vite /build/packages ./packages

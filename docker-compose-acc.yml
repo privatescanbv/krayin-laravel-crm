@@ -65,6 +65,13 @@ services:
       - traefik.http.routers.crm-apidocs.priority=100
       - traefik.http.routers.crm-apidocs.service=crm-svc
       - traefik.http.routers.crm-apidocs.middlewares=crm-whitelist@docker,crm-apidocs-auth
+      # === DESIGN ROUTER (afgeschermd, zelfde whitelist + basic auth als apidocs) ===
+      - traefik.http.routers.crm-design.rule=Host("newcrm.${PRIVATESCAN_BASE_DOMAIN}") && PathPrefix("/design")
+      - traefik.http.routers.crm-design.entrypoints=https
+      - traefik.http.routers.crm-design.tls=true
+      - traefik.http.routers.crm-design.priority=100
+      - traefik.http.routers.crm-design.service=crm-svc
+      - traefik.http.routers.crm-design.middlewares=crm-whitelist@docker,crm-apidocs-auth
       # === HEALTH-MONITOR ROUTER (hostingprovider) ===
       # Alleen /health/ready, met eigen allowlist (HEALTH_MONITOR_WHITELIST in .env): los van
       # crm-whitelist, dat uit de routing verdwijnt zodra crm niet healthy is.

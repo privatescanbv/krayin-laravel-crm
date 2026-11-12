@@ -885,6 +885,11 @@ class SalesLeadController extends Controller
             $data['contact_person_id'] = null;
         }
 
+        // Normalize doctor_user_id (arts) - convert empty values to null, since the FK rejects ''
+        if (isset($data['doctor_user_id']) && (empty($data['doctor_user_id']) || $data['doctor_user_id'] === '0')) {
+            $data['doctor_user_id'] = null;
+        }
+
         return $data;
     }
 

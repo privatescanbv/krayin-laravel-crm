@@ -86,6 +86,17 @@ test('the arts is optional: saving without it keeps working', function (): void 
     expect($sales->fresh()->doctor_user_id)->toBeNull();
 });
 
+test('submitting an empty arts select (as the edit form does) clears it without a foreign key error', function (): void {
+    $sales = salesFor('Herniapoli');
+    $doctor = doctorUser();
+    updateSales($sales, ['doctor_user_id' => $doctor->id])->assertOk();
+
+    // The Blade <select> posts "" for "-- Geen arts --", not null.
+    updateSales($sales, ['doctor_user_id' => ''])->assertOk();
+
+    expect($sales->fresh()->doctor_user_id)->toBeNull();
+});
+
 test('a doctor who lost the Arts role can stay on the sale', function (): void {
     $sales = salesFor('Herniapoli');
     $doctor = doctorUser();

@@ -342,6 +342,7 @@ class UserController extends Controller
     {
         $users = $this->userRepository
             ->pushCriteria(app(RequestCriteria::class))
+            ->scopeQuery(fn ($query) => $this->userRepository->excludingClinicRoles($query))
             ->all();
 
         return UserResource::collection($users);

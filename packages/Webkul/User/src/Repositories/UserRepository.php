@@ -50,7 +50,7 @@ class UserRepository extends Repository
     public function allActiveUsers(): Collection
     {
         return $this->scopeQuery(function ($query) {
-            return $query
+            return $this->excludingClinicRoles($query)
                 ->where('status', 1)
                 ->orderBy('first_name', 'asc')
                 ->orderBy('last_name', 'asc');
@@ -73,9 +73,24 @@ class UserRepository extends Repository
 
     public function allAsOptions(): array
     {
-        return $this->scopeQuery(fn ($q) => $q->where('status', 1)->orderBy('first_name')->orderBy('last_name'))
+        return $this->scopeQuery(fn ($q) => $this->excludingClinicRoles($q)
+                ->where('status', 1)
+                ->orderBy('first_name')
+                ->orderBy('last_name'))
             ->all(['id', 'first_name', 'last_name'])
             ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name])
             ->toArray();
+    }
+
+    /**
+     * Exclude users with clinic-portal-only roles (Arts, Kliniek medewerker) from
+     * "assigned to"/"owner" style user lists; they aren't valid lead/activity/order owners.
+     */
+    public function excludingClinicRoles($query)
+    {
+        return $query->whereDoesntHave('role', fn ($q) => $q->whereIn('code', [
+            RoleCode::ARTS->value,
+            RoleCode::KLINIEK_MEDEWERKER->value,
+        ]));
     }
 }

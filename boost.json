@@ -1,14 +1,26 @@
 {
     "agents": [
-        "copilot",
-        "cursor"
-    ],
-    "editors": [
         "cursor",
-        "phpstorm"
+        "claude_code",
+        "codex"
     ],
-    "guidelines": [
-        "tightenco/duster"
+    "cloud": false,
+    "guidelines": true,
+    "mcp": true,
+    "nightwatch": false,
+    "packages": [
+        "maatwebsite/excel",
+        "tightenco/duster",
+        "barryvdh/laravel-debugbar"
     ],
-    "sail": true
+    "sail": true,
+    "skills": [
+        "infer-conventions",
+        "laravel-best-practices",
+        "testing-best-practices",
+        "socialite-development",
+        "telescope-debugging",
+        "laravel-excel",
+        "debug-using-debugbar"
+    ]
 }

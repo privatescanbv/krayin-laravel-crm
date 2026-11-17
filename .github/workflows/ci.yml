@@ -11,7 +11,7 @@ on:
 
 jobs:
   tests-and-ui:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     services:
       mysql:

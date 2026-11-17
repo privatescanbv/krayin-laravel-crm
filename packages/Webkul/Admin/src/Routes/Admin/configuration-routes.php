@@ -11,6 +11,10 @@ Route::controller(ConfigurationController::class)->prefix('configuration')->grou
         return redirect()->route('admin.settings.import-runs.index');
     });
 
+    Route::get('report/missing-purchase-prices', function () {
+        return redirect()->route('admin.reports.missing-purchase-prices.index');
+    });
+
     Route::prefix('{slug?}/{slug2?}')->group(function () {
         Route::get('', 'index')->name('admin.configuration.index');
 

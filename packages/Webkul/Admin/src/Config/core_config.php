@@ -164,6 +164,13 @@ return [
         'route'      => 'admin.settings.import-runs.index',
         'icon' => 'icon-setting',
         'sort' => 1,
+    ], [
+        'key'   => 'report.missing-purchase-prices',
+        'name'  => 'Orders zonder inkoopprijs',
+        'info'  => 'Tijdelijk: orders met gewonnen, planbare regels zonder inkoopprijs.',
+        'route' => 'admin.reports.missing-purchase-prices.index',
+        'icon'  => 'icon-setting',
+        'sort'  => 2,
     ],
 
     /**

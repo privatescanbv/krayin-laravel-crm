@@ -469,6 +469,7 @@
                         <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Persoon</th>
                         <th class="px-2 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Aantal</th>
                         <th class="px-2 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Prijs</th>
+                        <th class="px-2 py-2 text-right font-medium text-gray-500 dark:text-gray-400">Totale inkoop</th>
                         <th class="px-2 py-2 text-center font-medium text-gray-500 dark:text-gray-400">Status</th>
                         @if($canEditOrderItems)
                             <th class="w-10 px-2 py-2"></th>
@@ -492,6 +493,9 @@
                             </td>
                             <td class="px-2 py-2 text-right text-gray-800 dark:text-white">
                                 &euro; {{ number_format($item->total_price ?? 0, 2, ',', '.') }}
+                            </td>
+                            <td class="px-2 py-2 text-right text-gray-800 dark:text-white">
+                                &euro; {{ number_format((float) $item->resolvedPurchasePrice()->purchase_price, 2, ',', '.') }}
                             </td>
                             <td class="px-2 py-2 text-center">
                                 @if($item->status)

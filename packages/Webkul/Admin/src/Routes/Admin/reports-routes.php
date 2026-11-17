@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\MissingPurchasePriceOrdersController;
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Reports\OrdersByInvestigationDateController;
 use Webkul\Admin\Http\Controllers\Reports\RevenueByEmployeeController;
@@ -35,3 +36,9 @@ Route::middleware('bouncer.permission:metabase.crm-reports')->group(function () 
             Route::get('data', 'data')->name('admin.reports.orders-by-investigation-date.data');
         });
 });
+
+/**
+ * Tijdelijk: orders met gewonnen, planbare regels zonder inkoopprijs.
+ */
+Route::get('reports/missing-purchase-prices', [MissingPurchasePriceOrdersController::class, 'index'])
+    ->name('admin.reports.missing-purchase-prices.index');

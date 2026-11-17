@@ -253,6 +253,11 @@ class InkoopPdfParser
                     $invoiceTotal = (float) str_replace(['.', ','], ['', '.'], $match[1]);
                 }
             } else {
+                // Augusta Oktober 2026: price and "€" are on separate lines, so "348,31" stands alone
+                if (preg_match('/^\d{1,3},\d{2}$/', $line)) {
+                    $line .= ' €';
+                }
+
                 // support all fields in one line, including price
                 if ((str_contains($line, ',')) && str_contains($line, '*') && str_contains($line, '€') && preg_match('/^([\p{L}\s\'\-]+),\s*([\p{L}\s\'\-]+)\s+\*(\d{2}\.\d{2}\.\d{4})\s+(\d{2}\.\d{2}\.\d{4})\s+(\d{1,3},\d{2})\s+€/u', $line, $matches)) {
 
@@ -274,11 +279,11 @@ class InkoopPdfParser
                         ],
                     ];
                     $patients[] = $this->preparePatientData($personData, $lastPrice);
-                } elseif (str_contains($line, ',') &&
-                    str_contains($line, '*') &&
+                } elseif (str_contains($line, '*') &&
                     ! str_contains($line, '€') &&
+                    (str_contains($line, ',') || empty($lastFoundedName)) &&
                     preg_match(
-                        '/^([\p{L}\s\'\-]+),\s*([\p{L}\s\'\-]+)\s+\*\s*(\d{2}\.\d{2}\.\d{4})\s+(\d{2}\.\d{2}\.\d{4})$/u',
+                        '/^([\p{L}\s\'\-]+?)(?:,\s*([\p{L}\s\'\-]+))?\s+\*\s*(\d{2}\.\d{2}\.\d{4})\s+(\d{2}\.\d{2}\.\d{4})$/u',
                         $line,
                         $matches
                     )
@@ -288,7 +293,8 @@ class InkoopPdfParser
                     // Van Drecheet, Marc * 29.10.1985 26.08.2025
                     $lastName = $matches[1];
                     $firstName = $matches[2];
-                    $lastFoundedName = $lastName.', '.$firstName;
+                    // some names have no comma (e.g. "Van Raaltem Liesbeth"): keep the whole name as lastname
+                    $lastFoundedName = $firstName === '' ? $lastName : $lastName.', '.$firstName;
                     $lastBirthDate = $matches[3];
                     $lastExamDate = $matches[4];
 

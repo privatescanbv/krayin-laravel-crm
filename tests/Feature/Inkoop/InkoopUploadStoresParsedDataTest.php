@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Inkoop\InkoopInvoiceParser;
+use App\Models\Address;
 use App\Models\Clinic;
 use App\Models\Inkoop\InkoopInvoice;
 use App\Models\Inkoop\InkoopPerson;
@@ -94,4 +95,41 @@ it('shows no parse warning on step0 when the parsed total matches the invoice to
         ->assertSee('Parser:')
         ->assertSee('MVZ Bochum')
         ->assertDontSee('De factuur is mogelijk niet volledig ingelezen');
+});
+
+it('parses the Augusta Bochum II Kostenaufstelling Oktober 2026 where price and euro sign are on separate lines', function () {
+    $address = Address::factory()->create([
+        'street'       => 'Farnstraße',
+        'house_number' => '9',
+        'postal_code'  => '44789',
+        'city'         => 'Bochum',
+    ]);
+    $clinic = Clinic::factory()->create([
+        'name'             => 'MVZ Augusta Bochum II GmbH',
+        'visit_address_id' => $address->id,
+    ]);
+    $filename = 'Kostenaufstelling-Oktober-2026.pdf';
+    $file = new UploadedFile(base_path('tests/fixtures/inkoop/pdfs/'.$filename), $filename, 'application/pdf', null, true);
+
+    $this->post(route('admin.inkoop.clinics.upload.store', ['clinic' => $clinic->id]), [
+        'parser' => InkoopInvoiceParser::MVZ_BOCHUM->value,
+        'file'   => $file,
+    ]);
+
+    $invoice = InkoopInvoice::query()->first();
+
+    expect($invoice->clinic_id)->toBe($clinic->id)
+        ->and($invoice->parse_warnings)->toBeNull()
+        ->and(InkoopPerson::where('invoice_id', $invoice->id)->count())->toBe(60);
+
+    // Standaard patiënt
+    $standard = InkoopPerson::where('invoice_id', $invoice->id)->where('lastname', 'Hoff')->where('firstname', 'Matthie')->first();
+    expect($standard?->birthday?->format('Y-m-d'))->toBe('1954-08-12');
+
+    // Dubbele achternaam over meerdere regels
+    $wrapped = InkoopPerson::where('invoice_id', $invoice->id)->where('lastname', 'Jansen-van de Grift')->where('firstname', 'Hans')->first();
+    expect($wrapped?->birthday?->format('Y-m-d'))->toBe('1938-08-02')
+        ->and(InkoopPerson::where('invoice_id', $invoice->id)->where('lastname', 'Van Raaltem Liesbeth')->exists())->toBeTrue();
+
+    // Naam zonder komma blijft behouden als achternaam
 });

@@ -110,5 +110,9 @@
       "Read(//private/tmp/**)",
       "mcp__bugsink__get_stacktrace"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "laravel-boost"
+  ],
+  "enableAllProjectMcpServers": true
 }

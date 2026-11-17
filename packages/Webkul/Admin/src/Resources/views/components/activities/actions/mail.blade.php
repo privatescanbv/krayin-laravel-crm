@@ -73,6 +73,7 @@
                     <x-admin::modal
                         ref="mailActivityModal"
                         position="center"
+                        :draggable="true"
                         @toggle="removeTinyMCE"
                     >
                         <x-slot:header>

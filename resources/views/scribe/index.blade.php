@@ -322,7 +322,7 @@ server-side. Changes nothing else and notifies nobody.</a>
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: November 15, 2026</li>
+        <li>Last updated: November 17, 2026</li>
     </ul>
 </div>
 
@@ -2473,7 +2473,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"salutation\": \"Dhr.\",
     \"first_name\": \"architecto\",
     \"last_name\": \"architecto\",
-    \"birthdate\": \"2026-11-15\",
+    \"birthdate\": \"2026-11-17\",
     \"email1\": \"zbailey@example.net\",
     \"phone_mobile\": \"0612345678\",
     \"primary_huisnr_c\": \"12\",
@@ -2522,7 +2522,7 @@ let body = {
     "salutation": "Dhr.",
     "first_name": "architecto",
     "last_name": "architecto",
-    "birthdate": "2026-11-15",
+    "birthdate": "2026-11-17",
     "email1": "zbailey@example.net",
     "phone_mobile": "0612345678",
     "primary_huisnr_c": "12",
@@ -2748,10 +2748,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="birthdate"                data-endpoint="POSTapi-leads-hernia"
-               value="2026-11-15"
+               value="2026-11-17"
                data-component="body">
     <br>
-<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-11-15</code></p>
+<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-11-17</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>email1</code></b>&nbsp;&nbsp;
@@ -3863,7 +3863,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 06f78b47-692f-406d-822e-e30a4c2c8a97
+x-request-id: 00670b3f-fda1-43ee-9929-371b96b2dac3
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 59
  </code></pre></details>         <pre>
@@ -4890,7 +4890,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: ecb48e6d-bdb9-4a1b-b735-44ae49a12a77
+x-request-id: 1f644103-16c8-4dcd-b39b-cbdb953d2827
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 58
  </code></pre></details>         <pre>
@@ -5048,7 +5048,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 8a201d50-f4d1-4bb5-b8b3-5bc67e6df8fa
+x-request-id: 9638e888-80e8-4a59-92b3-238272e90597
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 57
  </code></pre></details>         <pre>
@@ -5417,7 +5417,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: cab466fb-4f06-41c1-9084-9af80e766b56
+x-request-id: 35650572-f471-4e00-a92a-aa140632b5af
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 56
  </code></pre></details>         <pre>
@@ -5545,11 +5545,11 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"type\": \"note\",
+    \"type\": \"meeting\",
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_to\": \"2026-11-15 22:08:06\"
+    \"schedule_to\": \"2026-11-17 14:31:04\"
 }"
 </code></pre></div>
 
@@ -5566,11 +5566,11 @@ const headers = {
 };
 
 let body = {
-    "type": "note",
+    "type": "meeting",
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_to": "2026-11-15 22:08:06"
+    "schedule_to": "2026-11-17 14:31:04"
 };
 
 fetch(url, {
@@ -5687,10 +5687,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="type"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="note"
+               value="meeting"
                data-component="body">
     <br>
-<p>Example: <code>note</code></p>
+<p>Example: <code>meeting</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>task</code></li> <li><code>meeting</code></li> <li><code>call</code></li> <li><code>note</code></li> <li><code>file</code></li></ul>
         </div>
@@ -5749,10 +5749,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-11-15 22:08:06"
+               value="2026-11-17 14:31:04"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-11-15 22:08:06</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-11-17 14:31:04</code></p>
         </div>
         </form>
 
@@ -9210,7 +9210,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --form "name=Bloeduitslag"\
     --form "description=Resultaten van het bloedonderzoek."\
-    --form "file=@/tmp/php7nipkefc58an1jOEWgZ" </code></pre></div>
+    --form "file=@/tmp/phpajl37j8jcm5a1MNOd0h" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -9399,7 +9399,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The file to upload (max 20 MB). Example: <code>/tmp/php7nipkefc58an1jOEWgZ</code></p>
+<p>The file to upload (max 20 MB). Example: <code>/tmp/phpajl37j8jcm5a1MNOd0h</code></p>
         </div>
         </form>
 
@@ -9452,7 +9452,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: ad7a20a5-f564-4269-bb5a-80adbea78577
+x-request-id: 6310862b-9eb3-48c6-9acd-47244c11f5e6
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 55
  </code></pre></details>         <pre>
@@ -10027,7 +10027,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: d17c79c5-b8a4-4e0f-ae69-91d7746fb5ae
+x-request-id: dc16f6e0-da36-471a-b62a-559027d425d8
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 54
  </code></pre></details>         <pre>
@@ -10515,7 +10515,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: a4045098-7982-4291-801d-423308d27206
+x-request-id: 64480274-f044-4ce0-b8ac-4015f977d03c
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 53
  </code></pre></details>         <pre>
@@ -10696,7 +10696,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"preferences\": {
         \"email_notifications_enabled\": true,
         \"language\": \"architecto\",
-        \"onboarding_completed_at\": \"2026-11-15T22:08:06\"
+        \"onboarding_completed_at\": \"2026-11-17T14:31:05\"
     }
 }"
 </code></pre></div>
@@ -10717,7 +10717,7 @@ let body = {
     "preferences": {
         "email_notifications_enabled": true,
         "language": "architecto",
-        "onboarding_completed_at": "2026-11-15T22:08:06"
+        "onboarding_completed_at": "2026-11-17T14:31:05"
     }
 };
 
@@ -10889,10 +10889,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="preferences.onboarding_completed_at"                data-endpoint="PUTapi-patient--id--preferences"
-               value="2026-11-15T22:08:06"
+               value="2026-11-17T14:31:05"
                data-component="body">
     <br>
-<p>Het veld value is geen geldige datum. Example: <code>2026-11-15T22:08:06</code></p>
+<p>Het veld value is geen geldige datum. Example: <code>2026-11-17T14:31:05</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>email_notifications_enabled</code></b>&nbsp;&nbsp;

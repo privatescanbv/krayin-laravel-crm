@@ -2,12 +2,14 @@
     'isActive' => false,
     'position' => 'center',
     'size'     => 'normal',
+    'draggable' => false,
 ])
 
 <v-modal
     is-active="{{ $isActive }}"
     position="{{ $position }}"
     size="{{ $size }}"
+    :draggable="{{ $draggable ? 'true' : 'false' }}"
     {{ $attributes }}
 >
     @isset($toggle)
@@ -17,8 +19,12 @@
     @endisset
 
     @isset($header)
-        <template v-slot:header="{ toggle, isOpen, toggleFullscreen, isFullscreen }">
-            <div {{ ($header->attributes ?? collect())->merge(['class' => 'flex items-center justify-between gap-2.5 border-b px-4 py-3 dark:border-gray-800']) }}>
+        <template v-slot:header="{ toggle, isOpen, toggleFullscreen, isFullscreen, startDrag, draggable }">
+            <div
+                {{ ($header->attributes ?? collect())->merge(['class' => 'flex items-center justify-between gap-2.5 border-b px-4 py-3 dark:border-gray-800']) }}
+                @pointerdown="startDrag"
+                :class="{ 'cursor-move select-none': draggable && ! isFullscreen }"
+            >
                 {{ $header }}
 
                 <div class="flex items-center gap-2">
@@ -91,17 +97,20 @@
                     v-if="isOpen"
                     :class="{ 'p-0': isFullscreen }"
                 >
-                    <div 
+                    <div
                         class="flex min-h-full items-center justify-center max-md:p-4"
                         :class="{ 'p-0': isFullscreen }"
                     >
                         <div
                             class="box-shadow z-[999] w-full overflow-hidden rounded-lg bg-white dark:bg-gray-900 sm:absolute"
                             :class="[isFullscreen ? '' : finalPositionClass, sizeClass]"
+                            :style="{ transform: `translate(${dragX}px, ${dragY}px)` }"
                         >
                             <!-- Header Slot -->
                             <slot
                                 name="header"
+                                :startDrag="startDrag"
+                                :draggable="draggable"
                                 :toggle="toggle"
                                 :isOpen="isOpen"
                                 :toggleFullscreen="toggleFullscreen"
@@ -128,7 +137,8 @@
             props: [
                 'isActive',
                 'position',
-                'size'
+                'size',
+                'draggable'
             ],
 
             emits: [
@@ -144,6 +154,10 @@
                     isMobile: window.innerWidth < 640,
 
                     isFullscreen: false,
+
+                    dragX: 0,
+
+                    dragY: 0,
                 };
             },
 
@@ -229,6 +243,7 @@
                 close() {
                     this.isOpen = false;
                     this.isFullscreen = false;
+                    this.dragX = this.dragY = 0;
 
                     document.body.style.overflow = 'auto';
 
@@ -237,6 +252,30 @@
 
                 toggleFullscreen() {
                     this.isFullscreen = !this.isFullscreen;
+                    this.dragX = this.dragY = 0;
+                },
+
+                startDrag(event) {
+                    if (! this.draggable || this.isFullscreen || event.target.closest('button, .icon-cross-large')) {
+                        return;
+                    }
+
+                    const startX = event.clientX - this.dragX;
+                    const startY = event.clientY - this.dragY;
+
+                    const move = (e) => {
+                        // Houd de pointer binnen het venster, zodat de dialoog niet kwijtraakt.
+                        this.dragX = Math.min(Math.max(e.clientX, 0), window.innerWidth) - startX;
+                        this.dragY = Math.min(Math.max(e.clientY, 0), window.innerHeight) - startY;
+                    };
+
+                    const stop = () => {
+                        window.removeEventListener('pointermove', move);
+                        window.removeEventListener('pointerup', stop);
+                    };
+
+                    window.addEventListener('pointermove', move);
+                    window.addEventListener('pointerup', stop);
                 }
             }
         });

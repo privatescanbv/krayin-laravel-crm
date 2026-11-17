@@ -130,21 +130,6 @@ return [
             ]) : [],
         ],
 
-        'sugarcrm' => [
-            'driver'         => 'mysql',
-            'host'           => env('SUGARCRM_DB_HOST', 'mysql_crm'),
-            'port'           => env('SUGARCRM_DB_PORT', '3306'),
-            'database'       => env('SUGARCRM_DB_DATABASE', 'scrm_privatesuite9'),
-            'username'       => env('SUGARCRM_DB_USERNAME', 'root'),
-            'password'       => env('SUGARCRM_DB_PASSWORD', 'rootpassword'),
-            'charset'        => 'utf8mb4',
-            'collation'      => 'utf8mb4_unicode_ci',
-            'prefix'         => env('SUGARCRM_DB_PREFIX', ''),
-            'prefix_indexes' => true,
-            'strict'         => false,
-            'engine'         => null,
-        ],
-
     ],
 
     /*

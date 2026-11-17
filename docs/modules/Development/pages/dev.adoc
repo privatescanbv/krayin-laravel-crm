@@ -248,42 +248,7 @@ In dit geval draaien de testcases echter op SQLite, omdat dit de uitvoering van 
 Het nadeel daarvan is dat SQLite niet werkt met de database dump file.
 Daarom gebruiken de testcases in dit scenario wél de migratiescripts.
 
-=== Migratie instructies
-
-==== Samenvatting
-
-Je dient een mysql dump te maken vanuit de oude server, export met Filezilla te downloaden naar de Citrix omgeving, dan kopiëren van Citrix omgeving naar lokaal. Van lokaal met scp naar de nieuwe server en dan importeren in de mysql docker.
-
-Beter is rechtstreeks van de oude server naar de nieuwe met scp, maar er zijn nog firewall issues.
-
-==== Stappen plan om een nieuwe prod suite CRM dataset klaar te zetten
-
-1. **MySQL dump vanuit SSH sessie oude server**
-- Run `./export_db-suitecrm_prod.sh` (note: bestand staat in /home/mbulthuis)
-- wachtwoord voor user mark, zie keeper 'Sugar suite - PphMyAdmin - user mark'
-- Na db export, gaat deze copieren met scp naar de nieuwe test server. Met gebruiker mbulthuis, dit wachtwoord opgeven.
-
-2. **Uitpakken**
-- `gunzip -c scrm_privatesuite9_2025-09-02_1620.sql.gz > scrm_privatesuite9_2025-09-02_1620.sql`
-
-3. **Database aanmaken** [optioneel, alleen eerste keer]
-- https://phpmyadmin.dev.privatescan.nl -> maak database aan met naam `sugarcrm_privatesuite9`
-
-4. **Importeren in MySQL docker**
-- `sudo mysql -u root -p'[SUGARCRM_DB_PASSWORD]' scrm_privatesuite9 -h 127.0.0.1 -P 3306 < ./2026-05-05.sql`
-(DB_PASSWORD is te vinden in .env.prod SUGARCRM_DB_PASSWORD, van Github Project Krayin-laravel-crm)
-
-Note: dit is exclusief de e-mail attachments, zie daarvoor rsync command.
-
 === Commands
-
-include::cmd/cmd-import-sugarcrm-contacts.adoc[]
-
-include::cmd/cmd-import-sugarcrm-leads.adoc[]
-
-include::cmd/cmd-import-email-attachment-files.adoc[]
-
-include::cmd/cmd-import-sugarcrm-users.adoc[]
 
 include::cmd/cmd-create-leads.adoc[]
 

@@ -37,10 +37,6 @@ return [
         'token' => env('POSTCODEAPI_TOKEN'),
     ],
 
-    'sugarcrm' => [
-        'base_url' => env('SUGARCRM_BASE_URL', 'http://localhost:81/'),
-    ],
-
     /*
     | Metabase environments for `php artisan metabase:sync-dashboard`.
     | Each known name reads its own METABASE_<NAME>_URL / METABASE_<NAME>_API_KEY
@@ -135,12 +131,6 @@ return [
         'employee' => [
             'web_url' => env('EMPLOYEE_PORTAL_URL', 'https://employee.local.privatescan.nl'),
             'secret'  => env(KeyCloakClient::EMPLOYEE->envKeySecret()),
-        ],
-    ],
-
-    'sugar' => [
-        'import' => [
-            'send_reports_emails' => 'mark.bulthuis@mbsoftware.nl,mark.klaucke@digi4you.nl,linda@privatescan.nl,mark@privatescan.nl',
         ],
     ],
 

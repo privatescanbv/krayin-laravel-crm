@@ -15,6 +15,7 @@ use Webkul\Automation\Services\WebhookService;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\EmailTemplate\Repositories\EmailTemplateRepository;
 use Webkul\Lead\Contracts\Lead as ContractsLead;
+use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Tag\Repositories\TagRepository;
 use Illuminate\Support\Facades\Event;
@@ -169,6 +170,15 @@ class Lead extends AbstractEntity
             Log::info("workflow start leads, {$action['id']}", ['action'=>$action]);
             switch ($action['id']) {
                 case 'create_activity':
+                    if ($this->isLeadWonOrLost($sales)) {
+                        logger()->info('Skipped automatic activity: lead is won/lost (or transitioning to/from it)', [
+                            'lead_id' => $sales->id ?? null,
+                            'action'  => $action['id'],
+                        ]);
+
+                        break;
+                    }
+
                     $title = $action['attributes']['title'];
                     $type = $action['attributes']['type'];
                     $comment = $action['attributes']['comment'] ?? '';
@@ -309,5 +319,40 @@ class Lead extends AbstractEntity
                     break;
             }
         }
+    }
+
+    /**
+     * Whether the lead currently sits in a won/lost stage, or this update is
+     * transitioning it into (or out of) one. Automated tasks like "Klant data
+     * bijwerken" must never be created in either case - e.g. when a new lead
+     * gets linked to a person who already has an old, won lead, that old lead
+     * must not get its stage reset and a fresh task created.
+     */
+    private function isLeadWonOrLost(mixed $sales): bool
+    {
+        if (! $sales instanceof ContractsLead) {
+            return false;
+        }
+
+        // Query fresh rather than via the `stage` relation: that relation may already be
+        // cached on the model (e.g. LeadObserver::created() reads it for logging), and a
+        // cached relation is not invalidated when lead_pipeline_stage_id changes in-flight.
+        $currentStage = Stage::find($sales->lead_pipeline_stage_id);
+
+        if ($currentStage?->is_won || $currentStage?->is_lost) {
+            return true;
+        }
+
+        $originalStageId = $sales->getOriginal('lead_pipeline_stage_id');
+
+        if ($originalStageId && $originalStageId != $sales->lead_pipeline_stage_id) {
+            $originalStage = Stage::find($originalStageId);
+
+            if ($originalStage?->is_won || $originalStage?->is_lost) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

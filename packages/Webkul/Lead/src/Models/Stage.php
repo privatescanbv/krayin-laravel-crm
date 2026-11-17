@@ -70,7 +70,7 @@ class Stage extends Model implements StageContract
     }
 
     /**
-     * Rollen die deze stage mogen zien. Geen rollen gekoppeld = alle rollen.
+     * Rollen die deze stage mogen zien. Geen rollen gekoppeld = voor geen enkele portaalrol zichtbaar.
      */
     public function roles(): BelongsToMany
     {
@@ -82,9 +82,7 @@ class Stage extends Model implements StageContract
      */
     public function scopeVisibleForRole(Builder $query, ?int $roleId): void
     {
-        $query->where(fn (Builder $q) => $q
-            ->whereDoesntHave('roles')
-            ->orWhereHas('roles', fn (Builder $r) => $r->where('roles.id', $roleId)));
+        $query->whereHas('roles', fn (Builder $r) => $r->where('roles.id', $roleId));
     }
 
     public function isLost(): bool

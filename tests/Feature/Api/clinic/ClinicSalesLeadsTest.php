@@ -50,9 +50,21 @@ function salesStage(PipelineDefaultKeys $pipeline, int $sortOrder = 1): Stage
     return Stage::factory()->create(['lead_pipeline_id' => $pipeline->value, 'sort_order' => $sortOrder]);
 }
 
-function herniaStage(int $sortOrder = 1): Stage
+function herniaStage(int $sortOrder = 1, bool $visibleForPortal = true): Stage
 {
-    return salesStage(PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID, $sortOrder);
+    return grantPortalRoles(salesStage(PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID, $sortOrder), $visibleForPortal);
+}
+
+function grantPortalRoles(Stage $stage, bool $grant = true): Stage
+{
+    if ($grant) {
+        foreach (RoleCode::cases() as $code) {
+            $role = Role::query()->where('code', $code->value)->first() ?? Role::factory()->create(['code' => $code->value]);
+            $stage->roles()->attach($role->id);
+        }
+    }
+
+    return $stage;
 }
 
 function doctorSale(User $doctor, Stage $stage, array $attributes = []): SalesLead
@@ -98,8 +110,9 @@ it('returns the card shape with person id, name and date of birth, without medic
         ->and($response->json('data.0.persons'))->toBe([['id' => $person->id, 'name' => $person->name, 'date_of_birth' => '1980-04-02']]);
 });
 
-it('shows stages without role restriction to every role', function () {
+it('shows only stages granted to the role, none without role rows', function () {
     portalUser('kc-doc-1');
+    herniaStage(2, false);
     $stage = herniaStage();
 
     $this->withHeaders(apiKeyHeader())
@@ -112,9 +125,8 @@ it('shows stages without role restriction to every role', function () {
 it('hides stages and their sales when restricted to another role, and shows them for the own role', function () {
     $doctor = portalUser('kc-doc-1');
     $open = herniaStage(1);
-    $hidden = herniaStage(2);
-    $visibleForDoctor = herniaStage(3);
-    $hidden->roles()->attach(Role::factory()->create()->id);
+    $hidden = herniaStage(2, false);
+    $visibleForDoctor = herniaStage(3, false);
     $visibleForDoctor->roles()->attach($doctor->role_id);
     doctorSale($doctor, $open);
     doctorSale($doctor, $hidden);
@@ -281,8 +293,7 @@ it('does not touch sales in a hidden source stage, another pipeline or of anothe
     $doctor = portalUser('kc-doc-1');
     $other = portalUser('kc-doc-2');
     $to = herniaStage(2);
-    $hiddenStage = herniaStage(3);
-    $hiddenStage->roles()->attach(Role::factory()->create()->id);
+    $hiddenStage = herniaStage(3, false);
     $hidden = doctorSale($doctor, $hiddenStage);
     $otherPipeline = doctorSale($doctor, salesStage(PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID));
     $foreign = doctorSale($other, herniaStage(1));
@@ -297,8 +308,7 @@ it('does not touch sales in a hidden source stage, another pipeline or of anothe
 it('rejects hidden, foreign-pipeline, unknown and badly typed target stages', function () {
     $doctor = portalUser('kc-doc-1');
     $from = herniaStage(1);
-    $hiddenStage = herniaStage(2);
-    $hiddenStage->roles()->attach(Role::factory()->create()->id);
+    $hiddenStage = herniaStage(2, false);
     $sale = doctorSale($doctor, $from);
 
     foreach ([$hiddenStage->id, salesStage(PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID)->id, 999999, 'abc', null] as $target) {
@@ -311,8 +321,8 @@ it('rejects hidden, foreign-pipeline, unknown and badly typed target stages', fu
 it('refuses won/lost targets and closed sales, ignoring forbidden fields', function () {
     $doctor = portalUser('kc-doc-1');
     $open = herniaStage(1);
-    $won = Stage::factory()->won()->create(['lead_pipeline_id' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value]);
-    $lost = Stage::factory()->lost()->create(['lead_pipeline_id' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value]);
+    $won = grantPortalRoles(Stage::factory()->won()->create(['lead_pipeline_id' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value]));
+    $lost = grantPortalRoles(Stage::factory()->lost()->create(['lead_pipeline_id' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value]));
     $sale = doctorSale($doctor, $open);
     $closed = doctorSale($doctor, $won, ['closed_at' => now()]);
 
@@ -338,7 +348,7 @@ it('ignores client overrides of doctor, closed_at and pipeline on a valid move',
 it('requires an assessment outcome for stages that need one, and keeps the old stage', function () {
     $doctor = portalUser('kc-doc-1');
     $from = herniaStage(1);
-    $needsOutcome = Stage::factory()->create(['lead_pipeline_id' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value, 'code' => PipelineStage::SALES_CONFIRM_TREATMENT_HERNIA->value]);
+    $needsOutcome = grantPortalRoles(Stage::factory()->create(['lead_pipeline_id' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value, 'code' => PipelineStage::SALES_CONFIRM_TREATMENT_HERNIA->value]));
     $sale = doctorSale($doctor, $from);
 
     moveStage('kc-doc-1', $sale->id, $needsOutcome->id, ['assessment_outcome' => 'made-up'])
@@ -453,7 +463,7 @@ it('handles a sale without persons, doctor details, description and with an unkn
 
 it('keeps a closed sale readable and does not grow queries per person', function () {
     $doctor = portalUser('kc-doc-1');
-    $won = Stage::factory()->won()->create(['lead_pipeline_id' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value]);
+    $won = grantPortalRoles(Stage::factory()->won()->create(['lead_pipeline_id' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value]));
     $sale = doctorSale($doctor, $won, ['closed_at' => now()]);
     $count = function () use ($sale) {
         DB::flushQueryLog();
@@ -473,8 +483,7 @@ it('does not leak the detail of sales outside the doctor\'s scope', function () 
     $doctor = portalUser('kc-doc-1');
     $other = portalUser('kc-doc-2');
     portalUser('kc-clinic-1', RoleCode::KLINIEK_MEDEWERKER);
-    $hiddenStage = herniaStage(3);
-    $hiddenStage->roles()->attach(Role::factory()->create()->id);
+    $hiddenStage = herniaStage(3, false);
     $foreign = doctorSale($other, herniaStage(1));
     $hidden = doctorSale($doctor, $hiddenStage);
     $otherPipeline = doctorSale($doctor, salesStage(PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID));
@@ -576,8 +585,7 @@ it('refuses notes on sales outside the doctor\'s scope', function () {
     $doctor = portalUser('kc-doc-1');
     $other = portalUser('kc-doc-2');
     portalUser('kc-clinic-1', RoleCode::KLINIEK_MEDEWERKER);
-    $hiddenStage = herniaStage(3);
-    $hiddenStage->roles()->attach(Role::factory()->create()->id);
+    $hiddenStage = herniaStage(3, false);
     $foreign = saleWithDepartment($other, herniaStage(1));
     $hidden = saleWithDepartment($doctor, $hiddenStage);
     $otherPipeline = saleWithDepartment($doctor, salesStage(PipelineDefaultKeys::PIPELINE_PRIVATESCAN_SALES_ID));

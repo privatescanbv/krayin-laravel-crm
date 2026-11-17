@@ -108,15 +108,16 @@ class PipelineRepository extends Repository
 
         foreach ($data['stages'] as $stageId => $stageData) {
             if (Str::contains($stageId, 'stage_')) {
-                $this->stageRepository->create(array_merge([
+                $stage = $this->stageRepository->create(array_merge([
                     'lead_pipeline_id' => $pipeline->id,
                 ], $stageData));
+                $this->syncPortalRoles($stage, $stageData);
             } else {
                 if (is_numeric($index = $previousStageIds->search($stageId))) {
                     $previousStageIds->forget($index);
                 }
 
-                $this->stageRepository->update($stageData, $stageId);
+                $this->syncPortalRoles($this->stageRepository->update($stageData, $stageId), $stageData);
             }
         }
 
@@ -135,6 +136,29 @@ class PipelineRepository extends Repository
         }
 
         return $pipeline;
+    }
+
+    /**
+     * Zet de portaalrollen van een stage, alleen als het formulier ze meestuurde (`portal_roles_form`).
+     * Alle vinkjes uit = geen rollen = voor geen enkele portaalrol zichtbaar.
+     */
+    protected function syncPortalRoles(\Webkul\Lead\Models\Stage $stage, array $stageData): void
+    {
+        if (empty($stageData['portal_roles_form'])) {
+            return;
+        }
+
+        $changes = $stage->roles()->sync($stageData['role_ids'] ?? []);
+
+        if ($changes['attached'] || $changes['detached']) {
+            Log::info('Portaalrechten per salesfase gewijzigd', [
+                'stage_id' => $stage->id,
+                'stage'    => $stage->name,
+                'user_id'  => auth()->guard('user')->id(),
+                'attached' => $changes['attached'],
+                'detached' => $changes['detached'],
+            ]);
+        }
     }
 
     /**

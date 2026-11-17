@@ -41,6 +41,7 @@ class PipelineForm extends FormRequest
                 'stages'        => 'exactly_one_default_stage',
                 'stages.*.name' => 'unique_key',
                 'stages.*.code' => 'unique_key',
+                'stages.*.role_ids.*' => 'integer|exists:roles,id',
             ];
         }
 

@@ -2,7 +2,9 @@
 
 namespace Webkul\Admin\Http\Controllers\Settings;
 
+use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineType;
+use App\Enums\RoleCode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Event;
@@ -11,6 +13,7 @@ use Webkul\Admin\DataGrids\Settings\PipelineDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\PipelineForm;
 use Webkul\Lead\Repositories\PipelineRepository;
+use Webkul\User\Models\Role;
 
 class PipelineController extends Controller
 {
@@ -70,7 +73,12 @@ class PipelineController extends Controller
     {
         $pipeline = $this->pipelineRepository->findOrFail($id);
 
-        return view('admin::settings.pipelines.edit', compact('pipeline'));
+        $portalRoles = $pipeline->id === PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value
+            ? Role::query()->whereIn('code', array_column(RoleCode::cases(), 'value'))->get()
+                ->map(fn (Role $role) => ['id' => $role->id, 'label' => $role->code->label()])->values()
+            : collect();
+
+        return view('admin::settings.pipelines.edit', compact('pipeline', 'portalRoles'));
     }
 
     /**

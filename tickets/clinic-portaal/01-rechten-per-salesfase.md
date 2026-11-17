@@ -1,5 +1,11 @@
 # 01 — Rechten per salesfase per rol
 
+- **Status:** gebouwd, nog niet gecommit en niet handmatig in de browser getest (2026-11-17)
+  - Repo/branch: krayin-laravel-crm, `development`, ongecommit in de werkmap.
+  - Gedaan: `Stage::scopeVisibleForRole()` expliciet (geen rijen = onzichtbaar); migratie `2026_11_17_100000_grant_portal_roles_to_hernia_sales_stages` (idempotent, via `RoleCode`); vinkjes "Zichtbaar voor Arts/Kliniek medewerker" per fase in `settings/pipelines/edit` (alleen Hernia-salespipeline), opslaan via `PipelineRepository::update` (alleen als `portal_roles_form` meekomt); tests in `tests/Feature/Api/clinic` aangepast + `StageRolePermissionsTest`. 64 tests groen.
+  - Afwijking: wijzigingen gaan naar `Log::info` ("Portaalrechten per salesfase gewijzigd"), niet naar het Wijzigingslogboek: dat is per entiteit (lead/persoon/order) en een pipeline-fase heeft geen eigen logboek.
+  - Nog: beheerscherm in de browser controleren; nieuwe fases krijgen standaard geen rechten (vinkjes staan uit), maar dat staat nog niet als hint in het scherm.
+
 **Afhankelijk van:** –  ·  **Grootte:** M  ·  **Bron:** [gap-analyse](00-gap-analyse.md) §3.3
 
 ## Doel

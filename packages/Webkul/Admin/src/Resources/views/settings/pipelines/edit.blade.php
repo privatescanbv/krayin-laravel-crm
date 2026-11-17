@@ -163,6 +163,14 @@
                                             :name="'stages[' + element.id + '][code]'"
                                         />
 
+                                        <!-- Standaard-stage (validatie eist er precies één) -->
+                                        <input
+                                            v-if="element.is_default"
+                                            type="hidden"
+                                            value="1"
+                                            :name="'stages[' + element.id + '][is_default]'"
+                                        />
+
                                         <!-- Sort Order -->
                                         <input
                                             type="hidden"
@@ -213,6 +221,30 @@
 
                                         {!! view_render_event('admin.settings.pipelines.edit.form.stages.probability.after', ['pipeline' => $pipeline]) !!}
                                     </div>
+                                </div>
+
+                                <!-- Portaalrechten per rol -->
+                                <div
+                                    v-if="portalRoles.length"
+                                    class="flex flex-col gap-1 border-t border-gray-200 px-4 py-3 dark:border-gray-800"
+                                >
+                                    <input type="hidden" value="1" :name="'stages[' + element.id + '][portal_roles_form]'" />
+
+                                    <label
+                                        v-for="role in portalRoles"
+                                        :key="role.id"
+                                        class="flex items-center gap-2 dark:text-gray-300"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            class="!h-4 !w-4 !min-w-0 shrink-0 !p-0"
+                                            :value="role.id"
+                                            v-model="element.role_ids"
+                                            :name="'stages[' + element.id + '][role_ids][]'"
+                                        />
+
+                                        Zichtbaar voor @{{ role.label }}
+                                    </label>
                                 </div>
 
                                 {!! view_render_event('admin.settings.pipelines.edit.form.stages.remove_button.before', ['pipeline' => $pipeline]) !!}
@@ -271,7 +303,9 @@
 
                 data() {
                     return {
-                        stages: @json($pipeline->stages),
+                        stages: @json($pipeline->stages->load('roles:id')->map(fn ($stage) => $stage->setAttribute('role_ids', $stage->roles->pluck('id'))->makeHidden('roles'))),
+
+                        portalRoles: @json($portalRoles),
 
                         stageCount: 1,
                     };
@@ -288,6 +322,7 @@
                             'code': '',
                             'name': '',
                             'probability': 100,
+                            'role_ids': [],
                         });
                     },
 

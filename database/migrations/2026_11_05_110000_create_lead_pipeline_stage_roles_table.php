@@ -8,8 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Geen rijen voor een stage = zichtbaar voor alle rollen (default).
-        // Met rijen: alleen zichtbaar voor de gekoppelde rollen. Ids zijn unsigned INT (Krayin).
+        // Een stage is alleen zichtbaar voor de gekoppelde rollen (geen rijen = voor geen portaalrol). Ids zijn unsigned INT (Krayin).
         Schema::create('lead_pipeline_stage_roles', function (Blueprint $table) {
             $table->unsignedInteger('lead_pipeline_stage_id');
             $table->unsignedInteger('role_id');

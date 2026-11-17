@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ActivityType;
+use App\Enums\LostReason;
 use Database\Seeders\TestSeeder;
 use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Models\Activity;
@@ -196,4 +197,93 @@ test('lead workflow create_activity skips a duplicate open activity without logg
     Log::shouldHaveReceived('warning')
         ->withArgs(fn ($message) => str_contains($message, 'duplicate'))
         ->once();
+});
+
+test('lead workflow create_activity is skipped when the lead is moved back from a won stage', function () {
+    $pipeline = Pipeline::factory()->create();
+    $wonStage = Stage::create([
+        'name'       => 'Won', 'lead_pipeline_id' => $pipeline->id, 'code' => 'won4',
+        'sort_order' => 1, 'is_won' => true, 'is_lost' => false,
+    ]);
+    $qualifyStage = Stage::create([
+        'name'       => 'Qualify', 'lead_pipeline_id' => $pipeline->id, 'code' => 'qualify4',
+        'sort_order' => 2, 'is_won' => false, 'is_lost' => false,
+    ]);
+
+    Workflow::create([
+        'name'           => 'Test won lead reactivation',
+        'description'    => 'Test',
+        'entity_type'    => 'leads',
+        'event'          => 'lead.update_stage.after',
+        'condition_type' => 'and',
+        'conditions'     => [[
+            'value'          => (string) $qualifyStage->id,
+            'operator'       => '==',
+            'attribute'      => 'lead_pipeline_stage_id',
+            'attribute_type' => 'select',
+        ]],
+        'actions' => [[
+            'id'         => 'create_activity',
+            'attributes' => [
+                'title'   => 'Klant data bijwerken',
+                'type'    => ActivityType::TASK->value,
+                'user_id' => '',
+            ],
+        ]],
+    ]);
+
+    // A lead that was already won, e.g. because a new inbound lead got linked
+    // to the same person and the old lead's stage got reset to "qualify".
+    $lead = Lead::factory()->create([
+        'lead_pipeline_id'       => $pipeline->id,
+        'lead_pipeline_stage_id' => $wonStage->id,
+    ]);
+
+    $lead->update(['lead_pipeline_stage_id' => $qualifyStage->id]);
+
+    expect(Activity::where('lead_id', $lead->id)->where('title', 'Klant data bijwerken')->count())->toBe(0);
+});
+
+test('lead workflow create_activity is skipped when the lead is moving into a won/lost stage', function () {
+    $pipeline = Pipeline::factory()->create();
+    $qualifyStage = Stage::create([
+        'name'       => 'Qualify', 'lead_pipeline_id' => $pipeline->id, 'code' => 'qualify5',
+        'sort_order' => 1, 'is_won' => false, 'is_lost' => false,
+    ]);
+    $lostStage = Stage::create([
+        'name'       => 'Lost', 'lead_pipeline_id' => $pipeline->id, 'code' => 'lost5',
+        'sort_order' => 2, 'is_won' => false, 'is_lost' => true,
+    ]);
+
+    Workflow::create([
+        'name'           => 'Test lead closing into lost',
+        'description'    => 'Test',
+        'entity_type'    => 'leads',
+        'event'          => 'lead.update_stage.after',
+        'condition_type' => 'and',
+        'conditions'     => [[
+            'value'          => (string) $lostStage->id,
+            'operator'       => '==',
+            'attribute'      => 'lead_pipeline_stage_id',
+            'attribute_type' => 'select',
+        ]],
+        'actions' => [[
+            'id'         => 'create_activity',
+            'attributes' => [
+                'title'   => 'Should not be created',
+                'type'    => ActivityType::TASK->value,
+                'user_id' => '',
+            ],
+        ]],
+    ]);
+
+    $lead = Lead::factory()->create([
+        'lead_pipeline_id'       => $pipeline->id,
+        'lead_pipeline_stage_id' => $qualifyStage->id,
+        'lost_reason'            => LostReason::Informative->value,
+    ]);
+
+    $lead->update(['lead_pipeline_stage_id' => $lostStage->id]);
+
+    expect(Activity::where('lead_id', $lead->id)->where('title', 'Should not be created')->count())->toBe(0);
 });

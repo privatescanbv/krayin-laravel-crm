@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ProductReports;
+use App\Models\ClinicDepartment;
 use App\Models\Order;
 use App\Models\OrderCheck;
 use App\Models\OrderItem;
@@ -47,12 +48,16 @@ class OrderCheckService
         $this->purchasePriceChecks($orderItem)->delete();
     }
 
-    public function retrieveClinicFromOrder(Order $order, Person $patient): ?string
+    /**
+     * Department of the first planned (not lost) booking on the appointment day.
+     * Falls back to the first not-lost booking overall when nothing is planned on that day.
+     */
+    public function retrieveClinicDepartmentFromOrder(Order $order, Person $patient): ?ClinicDepartment
     {
-        $firstBooking = ResourceOrderItem::query()
-            ->with(['resource:id,clinic_department_id', 'resource.clinicDepartment:id,clinic_id'])
+        $query = fn () => ResourceOrderItem::query()
+            ->with(['resource:id,clinic_department_id', 'resource.clinicDepartment'])
             ->whereHas('orderItem', function ($q) use ($order, $patient) {
-                $q->where('order_id', $order->id);
+                $q->where('order_id', $order->id)->notLost();
 
                 // Only restrict to the patient's order items when the order is explicitly NOT combined.
                 // (Treat null as "combined", since legacy rows may have null here.)
@@ -60,12 +65,12 @@ class OrderCheckService
                     $q->where('person_id', $patient->id);
                 }
             })
-            ->orderBy('from', 'asc')
-            ->first();
+            ->orderBy('from', 'asc');
 
-        $clinicId = $firstBooking?->resource?->clinicDepartment?->clinic_id;
+        $day = $order->firstExaminationCarbon();
+        $firstBooking = ($day ? $query()->onDate($day)->first() : null) ?? $query()->first();
 
-        return $clinicId !== null ? (string) $clinicId : null;
+        return $firstBooking?->resource?->clinicDepartment;
     }
 
     /**

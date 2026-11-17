@@ -92,7 +92,7 @@
 
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="order_confirmation_note">
-                        Opmerking orderbevestiging
+                        {{ __('messages.clinic_department.registration_note') }}
                     </label>
                     <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Informatie over waar de patiënt zich kan melden bij deze afdeling.</p>
                     <textarea id="order_confirmation_note" name="order_confirmation_note" rows="4"

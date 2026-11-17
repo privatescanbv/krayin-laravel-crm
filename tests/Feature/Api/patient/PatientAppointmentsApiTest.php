@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Enums\OrderItemStatus;
 use App\Enums\PipelineStage;
 use App\Models\Clinic;
+use App\Models\ClinicDepartment;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Resource;
@@ -371,4 +373,75 @@ test('ingepland order is shown as patient appointment', function () {
         'patient_id' => (string) $person->id,
         'clinic_id'  => (string) $clinic->id,
     ]);
+});
+
+function plannedOrderWithBookings(string $keycloakId, array $bookings): array
+{
+    $person = Person::factory()->create(['keycloak_user_id' => $keycloakId]);
+    $salesLead = SalesLead::factory()->create();
+    $salesLead->persons()->attach($person->id);
+
+    $order = Order::factory()->create([
+        'sales_lead_id'     => $salesLead->id,
+        'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id(),
+    ]);
+
+    foreach ($bookings as $booking) {
+        $department = ClinicDepartment::factory()->create(['order_confirmation_note' => $booking['note']]);
+        $resource = Resource::factory()->create(['clinic_department_id' => $department->id]);
+        $item = OrderItem::factory()->create(['order_id' => $order->id]);
+        ResourceOrderItem::factory()->create([
+            'orderitem_id' => $item->id,
+            'resource_id'  => $resource->id,
+            'from'         => $booking['from'],
+            'to'           => $booking['from']->copy()->addHour(),
+        ]);
+        if (isset($booking['status'])) {
+            $item->update(['status' => $booking['status']]);
+        }
+        $departments[] = $department;
+    }
+
+    $order->refresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id()]);
+
+    return [$order, $departments ?? []];
+}
+
+test('appointment exposes the registration note of the first planned booking', function () {
+    $day = now()->addDays(3)->setTime(9, 0);
+    [, $departments] = plannedOrderWithBookings('kc-note-1', [
+        ['note' => 'Later op de dag', 'from' => $day->copy()->addHours(3)],
+        ['note' => 'Meld u bij de receptie van Evidia', 'from' => $day],
+    ]);
+
+    $this->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->getJson('/api/patient/kc-note-1/appointments')
+        ->assertOk()
+        ->assertJsonPath('data.0.registration_note', 'Meld u bij de receptie van Evidia')
+        ->assertJsonPath('data.0.clinic_id', (string) $departments[1]->clinic_id);
+});
+
+test('lost first booking is skipped when determining clinic and registration note', function () {
+    $day = now()->addDays(3)->setTime(9, 0);
+    [, $departments] = plannedOrderWithBookings('kc-note-2', [
+        ['note' => 'Vervallen product', 'from' => $day, 'status' => OrderItemStatus::LOST->value],
+        ['note' => 'Ingepland product', 'from' => $day->copy()->addHour()],
+    ]);
+
+    $this->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->getJson('/api/patient/kc-note-2/appointments')
+        ->assertOk()
+        ->assertJsonPath('data.0.registration_note', 'Ingepland product')
+        ->assertJsonPath('data.0.clinic_id', (string) $departments[1]->clinic_id);
+});
+
+test('registration note is null when the department has none', function () {
+    plannedOrderWithBookings('kc-note-3', [
+        ['note' => null, 'from' => now()->addDays(3)],
+    ]);
+
+    $this->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->getJson('/api/patient/kc-note-3/appointments')
+        ->assertOk()
+        ->assertJsonPath('data.0.registration_note', null);
 });

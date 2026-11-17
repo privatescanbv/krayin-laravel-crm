@@ -31,7 +31,7 @@
                                 Omschrijving
                             </th>
                             <th class="p-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                Opmerking orderbevestiging
+                                {{ __('messages.clinic_department.registration_note') }}
                             </th>
                             <th class="p-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
                                 Acties

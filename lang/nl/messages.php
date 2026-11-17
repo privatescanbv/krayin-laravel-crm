@@ -58,4 +58,8 @@ return [
         'not_found' => 'Product niet gevonden.',
     ],
 
+    'clinic_department' => [
+        'registration_note' => 'Opmerking aanmelding',
+    ],
+
 ];

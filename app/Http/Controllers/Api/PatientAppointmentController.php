@@ -77,14 +77,19 @@ class PatientAppointmentController extends Controller
     {
         return $this->orderRepository
             ->getPatientAppointmentOrdersForPerson($person, $filter, $now)
-            ->map(fn ($order) => [
-                'source'  => 'order',
-                'sort_at' => $order->firstExaminationCarbon(),
-                'payload' => [
-                    'order'  => $order,
-                    'clinic' => app(OrderCheckService::class)->retrieveClinicFromOrder($order, $person),
-                    'person' => $person,
-                ],
-            ]);
+            ->map(function ($order) use ($person) {
+                $department = app(OrderCheckService::class)->retrieveClinicDepartmentFromOrder($order, $person);
+
+                return [
+                    'source'  => 'order',
+                    'sort_at' => $order->firstExaminationCarbon(),
+                    'payload' => [
+                        'order'      => $order,
+                        'department' => $department,
+                        'clinic'     => $department?->clinic_id !== null ? (string) $department->clinic_id : null,
+                        'person'     => $person,
+                    ],
+                ];
+            });
     }
 }

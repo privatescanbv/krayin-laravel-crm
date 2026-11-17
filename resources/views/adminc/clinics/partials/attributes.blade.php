@@ -49,7 +49,7 @@
                 @if (!empty($clinic->order_confirmation_note))
                     <div class="grid grid-cols-[1fr_2fr] items-start gap-1">
                         <div class="label dark:text-white">
-                            Opmerking orderbevestiging
+                            {{ __('messages.clinic_department.registration_note') }}
                         </div>
                         <div class="font-medium dark:text-white">
                             {{ $clinic->order_confirmation_note }}

@@ -1,5 +1,8 @@
 # 02 — Afspraak-detail en stabiele afspraak-id's (gedeeld: kliniek- en patiëntportaal)
 
+**Trello:** https://trello.com/c/jVCi9fPG
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** [01](01-document-type.md) (voor `preparation[]`)  ·  **Grootte:** M  ·  **Prio:** hoog  ·  **Bron:** APPT-001, APPT-002, K15, V5, gap-analyse G-4
 
 ## Aanname (voorlopig)

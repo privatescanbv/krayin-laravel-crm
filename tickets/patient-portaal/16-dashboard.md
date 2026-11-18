@@ -1,5 +1,8 @@
 # 16 — `counters` uitbreiden tot dashboard
 
+**Trello:** https://trello.com/c/NlqLeIr1
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** 02, 08, 11, 15  ·  **Grootte:** M  ·  **Prio:** M  ·  **Bron:** DASH-001…005, K9
 
 ## Stand van zaken

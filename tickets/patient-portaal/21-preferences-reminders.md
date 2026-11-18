@@ -1,5 +1,8 @@
 # 21 — Voorkeuren per kanaal en reminder-stop
 
+**Trello:** https://trello.com/c/BiTHnTQc
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** 15  ·  **Grootte:** S  ·  **Prio:** S  ·  **Bron:** NOT-003, NOT-004
 
 ## Scope

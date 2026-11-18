@@ -1,5 +1,8 @@
 # 13 — Persoonsgegevens: whitelist, huisarts/noodcontact, correctieverzoek
 
+**Trello:** https://trello.com/c/p5wS2icO
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** –  ·  **Grootte:** M  ·  **Prio:** M/S  ·  **Bron:** K14, DATA-001…004
 
 ## Scope

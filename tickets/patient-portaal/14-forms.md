@@ -1,5 +1,8 @@
 # 14 — Formulieren per sale
 
+**Trello:** https://trello.com/c/BV59ul2C
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** 02  ·  **Grootte:** M  ·  **Prio:** M  ·  **Bron:** FORM-001, 004, 005, 006
 
 De formulieren zelf leven in Forms. Dit ticket is alleen de CRM-kant.

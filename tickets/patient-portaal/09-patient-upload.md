@@ -1,5 +1,8 @@
 # 09 — Patiënt-upload: soort, sale en verwerkingsstatus
 
+**Trello:** https://trello.com/c/IcTxdf8D
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** portaal/01  ·  **Grootte:** M  ·  **Prio:** M  ·  **Bron:** K13, DOC-002, DOC-003, V-P7
 
 ## Scope

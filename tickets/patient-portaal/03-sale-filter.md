@@ -1,5 +1,8 @@
 # 03 — `sale_id`-filter op afspraken en documenten
 
+**Trello:** https://trello.com/c/kHC5QtA9
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** –  ·  **Grootte:** S
 
 ## Doel

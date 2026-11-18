@@ -1,5 +1,8 @@
 # 08 — Documenten: gezien-status en filters
 
+**Trello:** https://trello.com/c/KKALHSEz
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** portaal/01  ·  **Grootte:** S  ·  **Prio:** M  ·  **Bron:** DASH-003, DOC-001, DOC-004, DOC-005
 
 ## Scope

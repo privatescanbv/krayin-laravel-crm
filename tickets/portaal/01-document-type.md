@@ -1,5 +1,8 @@
 # 01 — Documenttypes: zelf te beheren collectie + beheerscherm (gedeeld: kliniek- en patiëntportaal)
 
+**Trello:** https://trello.com/c/havMoA0Q
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** –  ·  **Grootte:** L  ·  **Prio:** hoog  ·  **Bron:** api-voorstel §5, gap-analyse G-6
 
 Gedeeld door beide portalen: één tabel, één beheerscherm. Voorrang boven de andere tickets, want

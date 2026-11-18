@@ -1,5 +1,8 @@
 # 17 — Betaalstatus per sale
 
+**Trello:** https://trello.com/c/hcqJgphl
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** 02  ·  **Grootte:** S  ·  **Prio:** M  ·  **Bron:** FIN-002, FIN-005
 
 ## Scope

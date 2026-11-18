@@ -1,5 +1,8 @@
 # 18 — Features per sale-type
 
+**Trello:** https://trello.com/c/Ixuklf60
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** 02  ·  **Grootte:** S  ·  **Prio:** M  ·  **Bron:** TRJ-003
 
 ## Doel

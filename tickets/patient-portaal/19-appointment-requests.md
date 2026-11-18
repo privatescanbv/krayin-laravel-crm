@@ -1,5 +1,8 @@
 # 19 — Afspraakverzoek wijzigen/annuleren
 
+**Trello:** https://trello.com/c/VYUlG5zO
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** [portaal/02](../portaal/02-appointment-detail.md)  ·  **Grootte:** S  ·  **Prio:** S  ·  **Bron:** APPT-004
 
 ## Scope

@@ -1,5 +1,8 @@
 # 05 — Security-fixes bestaande patiënt-API
 
+**Trello:** https://trello.com/c/f3hnvVP5
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** –  ·  **Grootte:** S  ·  **Prio:** M  ·  **Bron:** api-voorstel K4, K6, K12, K17
 
 ## Scope

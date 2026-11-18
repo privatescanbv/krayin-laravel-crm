@@ -1,5 +1,8 @@
 # 02 — Endpoint sales: lijst + detail
 
+**Trello:** https://trello.com/c/mLDk8KHf
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** 01  ·  **Grootte:** M
 
 ## Doel

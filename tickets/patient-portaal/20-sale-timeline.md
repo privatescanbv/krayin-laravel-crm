@@ -1,5 +1,8 @@
 # 20 — Tijdlijn per sale
 
+**Trello:** https://trello.com/c/BUXtvUcx
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** 01, [portaal/02](../portaal/02-appointment-detail.md)  ·  **Grootte:** M  ·  **Prio:** S  ·  **Bron:** TRJ-005
 
 ## Scope

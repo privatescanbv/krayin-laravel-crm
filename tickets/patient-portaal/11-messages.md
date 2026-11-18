@@ -1,5 +1,8 @@
 # 11 — Berichten: categorie, sale, bijlagen, cursor
 
+**Trello:** https://trello.com/c/QN48GAKm
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** –  ·  **Grootte:** M  ·  **Prio:** M  ·  **Bron:** K10, K11, MSG-001…006, V-P6
 
 ## Scope

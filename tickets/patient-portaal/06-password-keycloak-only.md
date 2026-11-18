@@ -1,5 +1,8 @@
 # 06 — Wachtwoord alleen in Keycloak
 
+**Trello:** https://trello.com/c/U9cv1QGn
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** 05  ·  **Grootte:** M  ·  **Prio:** M  ·  **Bron:** api-voorstel K5, V-P2
 
 Security-ticket. Architecture Mode: raakt Person, User en Keycloak-sync.

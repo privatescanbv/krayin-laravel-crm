@@ -1,5 +1,8 @@
 # 04 — Auth: `patient/me/*` en Person in de middleware
 
+**Trello:** https://trello.com/c/VXYr9V4D
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** –  ·  **Grootte:** M  ·  **Prio:** M  ·  **Bron:** api-voorstel K1, K2, K3
 
 Architecture Mode: raakt auth en publieke contracten. Eerst bespreken, dan bouwen.

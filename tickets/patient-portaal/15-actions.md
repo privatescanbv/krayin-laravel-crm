@@ -1,5 +1,8 @@
 # 15 — Patiëntacties (`actions`)
 
+**Trello:** https://trello.com/c/Kb8zGR49
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** 09, 14  ·  **Grootte:** M  ·  **Prio:** M  ·  **Bron:** api-voorstel §4.2, DASH-002
 
 ## Doel

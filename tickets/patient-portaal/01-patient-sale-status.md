@@ -1,5 +1,8 @@
 # 01 — Patiëntstatus van een sale
 
+**Trello:** https://trello.com/c/Znx4N71V
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** –  ·  **Grootte:** S
 
 ## Doel

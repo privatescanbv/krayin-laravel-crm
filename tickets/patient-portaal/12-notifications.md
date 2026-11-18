@@ -1,5 +1,8 @@
 # 12 — Meldingen: lezen zonder zijwerking, read/dismiss
 
+**Trello:** https://trello.com/c/vqKx0ibn
+**Trello-label:** `NOT_READY`
+
 **Afhankelijk van:** –  ·  **Grootte:** S  ·  **Prio:** M  ·  **Bron:** K7, K8, NOT-001, NOT-002
 
 ## Scope

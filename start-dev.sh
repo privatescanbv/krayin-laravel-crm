@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+# --no-generate: sla scribe:generate en ide-helper over (geen gewijzigde files in git)
+SKIP_GENERATE=0
+for arg in "$@"; do
+  case "$arg" in
+    --no-generate) SKIP_GENERATE=1 ;;
+  esac
+done
+
 echo "🚀 Starting local development (Docker + Vite)…"
 # Alle key=value regels uit .env exporteren (comments negeren)
 # Let op: gebruik sourcing i.p.v. `export $(... | xargs)`. Bij die laatste doet bash
@@ -94,13 +102,17 @@ docker-compose exec crm sh -lc "rm -f storage/framework/vite.hot storage/framewo
     echo "   https://crm.local.privatescan.nl"
     echo "   https://$VITE_HMR_HOST:$VITE_ADMIN_PORT (Admin)"
 
-# Not exactly the right place, but we don't have ci for this. So generate it here, to minimize human error of forgetting it.
-./vendor/bin/sail artisan scribe:generate
+if [ "$SKIP_GENERATE" != 1 ]; then
+  # Not exactly the right place, but we don't have ci for this. So generate it here, to minimize human error of forgetting it.
+  ./vendor/bin/sail artisan scribe:generate
 
-./vendor/bin/sail composer dump-autoload
+  ./vendor/bin/sail composer dump-autoload
 
-# Keep model files clean: only write @mixin, put properties/methods in _ide_helper_models.php
-./vendor/bin/sail artisan ide-helper:models --write-mixin --reset --no-interaction
-./vendor/bin/sail artisan ide-helper:generate --no-interaction
+  # Keep model files clean: only write @mixin, put properties/methods in _ide_helper_models.php
+  ./vendor/bin/sail artisan ide-helper:models --write-mixin --reset --no-interaction
+  ./vendor/bin/sail artisan ide-helper:generate --no-interaction
+else
+  ./vendor/bin/sail composer dump-autoload
+fi
 
 ./vendor/bin/sail artisan boost:mcp

@@ -145,6 +145,8 @@ services:
       MYSQL_PASSWORD: '${DB_PASSWORD}'
       MYSQL_ALLOW_EMPTY_PASSWORD: 1
       FORMS_DB_PASSWORD: '${FORMS_DB_PASSWORD}'
+      DB_ANALYTICS_USERNAME: '${DB_ANALYTICS_USERNAME}'
+      DB_ANALYTICS_PASSWORD: '${DB_ANALYTICS_PASSWORD}'
       CLINIC_DB_PASSWORD: '${CLINIC_DB_PASSWORD:-}'
     volumes:
       - 'crm-mysql:/var/lib/mysql'
@@ -282,6 +284,12 @@ services:
       MB_DB_USER: metabase
       MB_DB_PASS: ${METABASE_DB_PASSWORD}
       MB_DB_HOST: ${DB_HOST}
+      # Metabase's MariaDB-JDBC-driver struikelt over MySQL 8's caching_sha2_password
+      # ("RSA public key is not available client side"), ook als de metabase-user zelf
+      # op mysql_native_password staat: de server adverteert zijn default in de
+      # handshake. allowPublicKeyRetrieval=true lost dat op. Een expliciete URI
+      # overrulet de MB_DB_* vars hierboven, die blijven staan als documentatie.
+      MB_DB_CONNECTION_URI: 'jdbc:mysql://${DB_HOST}:${DB_PORT}/metabase?user=metabase&password=${METABASE_DB_PASSWORD}&allowPublicKeyRetrieval=true&useSsl=false'
 
     labels:
       - traefik.enable=true

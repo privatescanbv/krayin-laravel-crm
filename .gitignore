@@ -75,3 +75,11 @@ docs/html
 *.sql.gz
 .env.forms
 .env.clinic
+
+# Lokale dev-certificaten: nooit committen. Een certificaat is alleen vertrouwd
+# op de machine waar de bijbehorende CA in de trust store staat, dus een
+# gedeeld cert is voor iedere andere ontwikkelaar "niet vertrouwd" (en de
+# private key hoort al helemaal niet in de repo). Aanmaken met:
+#   ./scripts/generate-local-certs.sh
+/certs/*.pem
+/certs/*.srl

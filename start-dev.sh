@@ -21,6 +21,25 @@ export VITE_HMR_HOST=${VITE_HMR_HOST:-crm.local.privatescan.nl}
 export APP_ENV=${APP_ENV:-production}
 docker info >/dev/null 2>&1 || { echo "❌ Docker is not running"; exit 1; }
 
+# Lokale TLS-certificaten. Die staan niet in git (zie .gitignore): een cert is
+# alleen vertrouwd op de machine waar de bijbehorende CA in de trust store
+# staat, dus iedereen maakt zijn eigen set. Zonder dit krijg je in de browser
+# "niet vertrouwd" op https://crm.local.privatescan.nl en https://sso.local.privatescan.nl.
+if [ ! -f certs/local.pem ] || [ ! -f certs/local-key.pem ]; then
+  echo "🔐 Geen lokale certificaten gevonden — aanmaken…"
+  ./scripts/generate-local-certs.sh
+elif ! security verify-cert -c certs/local.pem >/dev/null 2>&1; then
+  echo "⚠️  Het certificaat in certs/ wordt door deze Mac niet vertrouwd."
+  if [ -f certs/localCA.pem ]; then
+    echo "   Vertrouw je eigen CA eenmalig met:"
+    echo "     sudo security add-trusted-cert -d -r trustRoot \\"
+    echo "       -k /Library/Keychains/System.keychain \"$(pwd)/certs/localCA.pem\""
+  else
+    echo "   Dit cert komt niet van jouw CA (waarschijnlijk van een collega)."
+    echo "   Maak je eigen set met: ./scripts/generate-local-certs.sh"
+  fi
+fi
+
 # remove old logs:
 VOLUME="privatescan_crm_loki-data"
 

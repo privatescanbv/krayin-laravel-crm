@@ -75,3 +75,14 @@ test('excludes order items whose product has no partner product', function () {
         ->assertSee('PARTNER-1')
         ->assertDontSee('NOPARTNER-1');
 });
+
+test('sugar filter splits orders on external id', function () {
+    wonItem('SGR-1', 'MRI scanner')->order->update(['external_id' => 'abc']);
+    wonItem('LOC-1', 'MRI scanner');
+
+    $url = route('admin.reports.missing-purchase-prices.index');
+
+    $this->get($url.'?sugar=import')->assertSee('SGR-1')->assertDontSee('LOC-1');
+    $this->get($url.'?sugar=geen')->assertSee('LOC-1')->assertDontSee('SGR-1');
+    $this->get($url.'?sugar=beide')->assertSee('SGR-1')->assertSee('LOC-1');
+});

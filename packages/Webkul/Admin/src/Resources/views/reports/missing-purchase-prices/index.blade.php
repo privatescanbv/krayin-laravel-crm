@@ -17,6 +17,13 @@
             <option value="nee" @selected($filter === 'nee')>Niet planbaar</option>
             <option value="alles" @selected($filter === 'alles')>Alles</option>
         </select>
+
+        <label for="sugar" class="ml-4 text-sm dark:text-gray-300">Sugar CRM:</label>
+        <select id="sugar" name="sugar" onchange="this.form.submit()" class="rounded-lg border bg-white px-3 py-1.5 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <option value="beide" @selected($sugar === 'beide')>Beide</option>
+            <option value="import" @selected($sugar === 'import')>Import Sugar CRM</option>
+            <option value="geen" @selected($sugar === 'geen')>Geen import</option>
+        </select>
     </form>
 
     <div class="overflow-x-auto rounded-lg border bg-white dark:border-gray-800 dark:bg-gray-900">

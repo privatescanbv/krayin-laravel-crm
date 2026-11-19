@@ -19,6 +19,7 @@ class MissingPurchasePriceOrdersController extends Controller
     public function index(Request $request): View
     {
         $filter = in_array($request->query('planbaar'), ['ja', 'nee', 'alles'], true) ? $request->query('planbaar') : 'ja';
+        $sugar = in_array($request->query('sugar'), ['import', 'geen', 'beide'], true) ? $request->query('sugar') : 'geen';
         $plannableTypes = ['mri scanner', 'ct scanner', 'pet ct scanner', 'artsen', 'cardiologie', 'rontgen'];
 
         $resourceTypeId = <<<'SQL'
@@ -52,6 +53,9 @@ class MissingPurchasePriceOrdersController extends Controller
             ->when($filter === 'nee', fn ($q) => $q->where(fn ($q) => $q
                 ->whereNull('resource_types.name')
                 ->orWhereNotIn(DB::raw('LOWER(resource_types.name)'), $plannableTypes)))
+            // Sugar CRM-import = orders.external_id gevuld
+            ->when($sugar === 'import', fn ($q) => $q->whereNotNull('orders.external_id'))
+            ->when($sugar === 'geen', fn ($q) => $q->whereNull('orders.external_id'))
             ->where(function ($query) {
                 foreach (['purchase_price', ...PurchasePrice::priceableFieldNames()] as $column) {
                     $query->whereRaw("COALESCE(purchase_prices.{$column}, 0) = 0");
@@ -68,6 +72,6 @@ class MissingPurchasePriceOrdersController extends Controller
                 DB::raw('COUNT(order_items.id) as items_count'),
             ]);
 
-        return view('admin::reports.missing-purchase-prices.index', ['orders' => $orders, 'filter' => $filter]);
+        return view('admin::reports.missing-purchase-prices.index', ['orders' => $orders, 'filter' => $filter, 'sugar' => $sugar]);
     }
 }

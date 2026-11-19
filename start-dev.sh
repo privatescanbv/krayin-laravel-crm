@@ -29,14 +29,15 @@ if [ ! -f certs/local.pem ] || [ ! -f certs/local-key.pem ]; then
   echo "🔐 Geen lokale certificaten gevonden — aanmaken…"
   ./scripts/generate-local-certs.sh
 elif ! security verify-cert -c certs/local.pem >/dev/null 2>&1; then
+  CA_PEM="${LOCAL_DEV_CA_DIR:-$HOME/.local-dev-ca}/rootCA.pem"
   echo "⚠️  Het certificaat in certs/ wordt door deze Mac niet vertrouwd."
-  if [ -f certs/localCA.pem ]; then
-    echo "   Vertrouw je eigen CA eenmalig met:"
+  if [ -f "$CA_PEM" ]; then
+    echo "   Vertrouw je lokale CA eenmalig met:"
     echo "     sudo security add-trusted-cert -d -r trustRoot \\"
-    echo "       -k /Library/Keychains/System.keychain \"$(pwd)/certs/localCA.pem\""
+    echo "       -k /Library/Keychains/System.keychain \"$CA_PEM\""
   else
-    echo "   Dit cert komt niet van jouw CA (waarschijnlijk van een collega)."
-    echo "   Maak je eigen set met: ./scripts/generate-local-certs.sh"
+    echo "   Er is geen lokale CA. Maak je eigen set met:"
+    echo "     ./scripts/generate-local-certs.sh"
   fi
 fi
 

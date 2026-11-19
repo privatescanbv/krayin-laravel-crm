@@ -81,5 +81,11 @@ docs/html
 # gedeeld cert is voor iedere andere ontwikkelaar "niet vertrouwd" (en de
 # private key hoort al helemaal niet in de repo). Aanmaken met:
 #   ./scripts/generate-local-certs.sh
-/certs/*.pem
-/certs/*.srl
+# De map zelf blijft bestaan: docker/php/Dockerfile doet `mv /build/certs /certs`
+# en faalt als certs/ ontbreekt.
+/certs/*
+!/certs/.gitkeep
+
+# Vim swapfiles
+*.swp
+*.swo

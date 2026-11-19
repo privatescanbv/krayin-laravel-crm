@@ -57,11 +57,13 @@ Alles draait in Docker. Je hebt op de host **geen** PHP en **geen** Composer nod
    ./scripts/generate-local-certs.sh
    ```
 
-   Vertrouw daarna je eigen CA eenmalig (het script print het commando):
+   De CA komt in `~/.local-dev-ca` en wordt **gedeeld met de andere
+   PrivateScan-projecten** (o.a. clinic-portal). Je vertrouwt hem dus één keer,
+   en daarna werken alle `*.local.privatescan.nl`-projecten:
 
    ```bash
    sudo security add-trusted-cert -d -r trustRoot \
-     -k /Library/Keychains/System.keychain "$PWD/certs/localCA.pem"
+     -k /Library/Keychains/System.keychain "$HOME/.local-dev-ca/rootCA.pem"
    ```
 
    Firefox heeft zijn eigen trust store: zet `security.enterprise_roots.enabled`

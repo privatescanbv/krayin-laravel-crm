@@ -15,6 +15,7 @@ use App\Repositories\OrderRepository;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Webkul\Contact\Models\Person;
 
 uses(RefreshDatabase::class);
@@ -51,7 +52,7 @@ test('patient appointments endpoint returns planned/approved orders as appointme
         'from'         => now()->addHours(2),
         'to'           => now()->addHours(3),
     ]);
-    ResourceOrderItem::factory()->create([
+    $futureBooking = ResourceOrderItem::factory()->create([
         'orderitem_id' => $futureOrderItem2->id,
         'resource_id'  => $resourceA->id,
         'from'         => now()->addHours(1), // earliest
@@ -69,7 +70,7 @@ test('patient appointments endpoint returns planned/approved orders as appointme
     ]);
 
     $pastOrderItem = OrderItem::factory()->create(['order_id' => $pastOrder->id]);
-    ResourceOrderItem::factory()->create([
+    $pastBooking = ResourceOrderItem::factory()->create([
         'orderitem_id' => $pastOrderItem->id,
         'resource_id'  => $resourceB->id,
         'from'         => now()->subHours(5),
@@ -88,7 +89,7 @@ test('patient appointments endpoint returns planned/approved orders as appointme
         'first_examination_at'  => null,
     ]);
     $slotOnlyItem = OrderItem::factory()->create(['order_id' => $slotOnlyOrder->id]);
-    ResourceOrderItem::factory()->create([
+    $slotOnlyBooking = ResourceOrderItem::factory()->create([
         'orderitem_id' => $slotOnlyItem->id,
         'resource_id'  => $resourceA->id,
         'from'         => now()->addDay()->setTime(15, 0),
@@ -123,14 +124,14 @@ test('patient appointments endpoint returns planned/approved orders as appointme
                 'clinic_id',
                 'clinic_ref',
                 'start_at',
-                'is_remote',
+                'end_at',
                 'created_at',
             ],
         ],
     ]);
 
     $response->assertJsonFragment([
-        'id'           => 'order-'.$futureOrder->id,
+        'id'           => (string) $futureBooking->id,
         'patient_id'   => (string) $person->id,
         'clinic_id'    => (string) $clinicA->id,
     ]);
@@ -144,13 +145,13 @@ test('patient appointments endpoint returns planned/approved orders as appointme
     ]);
 
     $response->assertJsonFragment([
-        'id'           => 'order-'.$slotOnlyOrder->id,
+        'id'           => (string) $slotOnlyBooking->id,
         'patient_id'   => (string) $person->id,
         'clinic_id'    => (string) $clinicA->id,
     ]);
 
     $response->assertJsonFragment([
-        'id'           => 'order-'.$pastOrder->id,
+        'id'           => (string) $pastBooking->id,
         'patient_id'   => (string) $person->id,
         'clinic_id'    => (string) $clinicB->id,
     ]);
@@ -194,7 +195,7 @@ test('clinic is derived from first booking for patient when order is not combine
         'from'         => now()->addHours(1), // earliest overall, but not patient's
         'to'           => now()->addHours(2),
     ]);
-    ResourceOrderItem::factory()->create([
+    $patientBooking = ResourceOrderItem::factory()->create([
         'orderitem_id' => $oiPatient->id,
         'resource_id'  => $resourcePatient->id,
         'from'         => now()->addHours(2),
@@ -209,7 +210,7 @@ test('clinic is derived from first booking for patient when order is not combine
 
     $response->assertOk();
     $response->assertJsonFragment([
-        'id'           => 'order-'.$order->id,
+        'id'           => (string) $patientBooking->id,
         'patient_id'   => (string) $patient->id,
         // Should pick patient's clinic, not the earliest overall clinic.
         'clinic_id'    => (string) $clinicPatient->id,
@@ -242,7 +243,7 @@ test('patient appointments endpoint supports future/past filter', function () {
     ]);
 
     $futureOrderItem = OrderItem::factory()->create(['order_id' => $futureOrder->id]);
-    ResourceOrderItem::factory()->create([
+    $futureBooking = ResourceOrderItem::factory()->create([
         'orderitem_id' => $futureOrderItem->id,
         'resource_id'  => $resourceFuture->id,
         'from'         => now()->addHours(6),
@@ -258,7 +259,7 @@ test('patient appointments endpoint supports future/past filter', function () {
     ]);
 
     $pastOrderItem = OrderItem::factory()->create(['order_id' => $pastOrder->id]);
-    ResourceOrderItem::factory()->create([
+    $pastBooking = ResourceOrderItem::factory()->create([
         'orderitem_id' => $pastOrderItem->id,
         'resource_id'  => $resourcePast->id,
         'from'         => now()->subHours(6),
@@ -276,7 +277,7 @@ test('patient appointments endpoint supports future/past filter', function () {
     $futureResponse->assertOk();
     $futureResponse->assertJsonCount(1, 'data');
     $futureResponse->assertJsonFragment([
-        'id'           => 'order-'.$futureOrder->id,
+        'id'           => (string) $futureBooking->id,
         'patient_id'   => (string) $person->id,
         'clinic_id'    => (string) $clinicFuture->id,
     ]);
@@ -295,7 +296,7 @@ test('patient appointments endpoint supports future/past filter', function () {
     $pastResponse->assertOk();
     $pastResponse->assertJsonCount(1, 'data');
     $pastResponse->assertJsonFragment([
-        'id'           => 'order-'.$pastOrder->id,
+        'id'           => (string) $pastBooking->id,
         'patient_id'   => (string) $person->id,
         'clinic_id'    => (string) $clinicPast->id,
     ]);
@@ -354,7 +355,7 @@ test('ingepland order is shown as patient appointment', function () {
     ]);
 
     $orderItem = OrderItem::factory()->create(['order_id' => $ingeplandOrder->id]);
-    ResourceOrderItem::factory()->create([
+    $booking = ResourceOrderItem::factory()->create([
         'orderitem_id' => $orderItem->id,
         'resource_id'  => $resource->id,
         'from'         => now()->addDay(),
@@ -369,7 +370,7 @@ test('ingepland order is shown as patient appointment', function () {
     $response->assertOk();
     $response->assertJsonCount(1, 'data');
     $response->assertJsonFragment([
-        'id'         => 'order-'.$ingeplandOrder->id,
+        'id'         => (string) $booking->id,
         'patient_id' => (string) $person->id,
         'clinic_id'  => (string) $clinic->id,
     ]);
@@ -444,4 +445,45 @@ test('registration note is null when the department has none', function () {
         ->getJson('/api/patient/kc-note-3/appointments')
         ->assertOk()
         ->assertJsonPath('data.0.registration_note', null);
+});
+
+test('clinic is resolved from the already-loaded booking, without a redundant extra lookup', function () {
+    // Each appointment's booking-resolution query (unchanged from before this ticket) already
+    // eager-loads its clinic; the Resource must use that instead of re-querying Clinic::find().
+    // So exactly one query should touch "clinics" per appointment, not two.
+    $keycloakId = 'kc-query-count';
+    $person = Person::factory()->create(['keycloak_user_id' => $keycloakId]);
+    $salesLead = SalesLead::factory()->create();
+    $salesLead->persons()->attach($person->id);
+
+    $makeAppointment = function () use ($salesLead) {
+        $clinic = Clinic::factory()->create();
+        $resource = Resource::factory()->create(['clinic_id' => $clinic->id]);
+        $order = Order::factory()->create([
+            'sales_lead_id'     => $salesLead->id,
+            'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id(),
+        ]);
+        $item = OrderItem::factory()->create(['order_id' => $order->id]);
+        ResourceOrderItem::factory()->create([
+            'orderitem_id' => $item->id,
+            'resource_id'  => $resource->id,
+            'from'         => now()->addDay(),
+            'to'           => now()->addDay()->addHour(),
+        ]);
+        $order->refresh()->update(['pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id()]);
+    };
+
+    $makeAppointment();
+    $makeAppointment();
+
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+    $this->withHeaders(['X-API-KEY' => 'valid-api-key-123'])
+        ->getJson("/api/patient/{$keycloakId}/appointments")
+        ->assertOk()
+        ->assertJsonCount(2, 'data');
+
+    $clinicQueries = collect(DB::getQueryLog())->filter(fn ($q) => str_contains($q['query'], '"clinics"'));
+
+    expect($clinicQueries)->toHaveCount(2);
 });

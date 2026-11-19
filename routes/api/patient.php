@@ -42,6 +42,8 @@ Route::prefix('patient/{id}')
 
         // Patient appointments (derived from Orders), by keycloak user id
         Route::get('appointments', [PatientAppointmentController::class, 'index']);
+        Route::get('appointments/{appointmentId}', [PatientAppointmentController::class, 'show'])
+            ->name('api.patient.appointments.show');
 
         // Patient documents (derived from Orders -> Activities type=file)
         Route::get('documents', [PatientDocumentController::class, 'index'])

@@ -5,10 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Enums\AppointmentTimeFilter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\PatientAppointmentsIndexRequest;
+use App\Http\Resources\AppointmentDetailResource;
 use App\Http\Resources\PatientPortalAppointmentResource;
+use App\Models\Order;
+use App\Models\ResourceOrderItem;
 use App\Repositories\OrderRepository;
+use App\Services\AppointmentDetailService;
 use App\Services\Keycloak\KeycloakService;
 use App\Services\OrderCheckService;
+use App\Support\AppointmentReference;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -20,10 +25,12 @@ class PatientAppointmentController extends Controller
     public function __construct(
         private readonly KeycloakService $keycloakService,
         private readonly OrderRepository $orderRepository,
+        private readonly OrderCheckService $orderCheckService,
+        private readonly AppointmentDetailService $appointmentDetailService,
     ) {}
 
     /**
-     * Get appointments for a patient (derived from Orders and published Activities).
+     * Get appointments for a patient (derived from Orders).
      *
      * @group Patient appointments
      *
@@ -33,7 +40,7 @@ class PatientAppointmentController extends Controller
      * @queryParam page integer Page number. Example: 1
      * @queryParam per_page integer Items per page (max 100). Example: 15
      *
-     * @response 200 scenario="Success" {"data":[{"id":"order-123","patient_id":"1","practitioner_id":null,"clinic_id":null,"clinic_ref":null,"start_at":"2026-01-27T10:00:00+01:00","end_at":null,"timezone":"Europe/Amsterdam","is_remote":false,"remote_url":null,"created_at":"2026-01-20T09:00:00+01:00","updated_at":"2026-01-20T09:00:00+01:00"}],"meta":{"current_page":1,"per_page":15,"total":42}}
+     * @response 200 scenario="Success" {"data":[{"id":"42","patient_id":"1","clinic_id":null,"clinic_ref":null,"start_at":"2026-01-27T10:00:00+01:00","end_at":"2026-01-27T10:30:00+01:00","timezone":"Europe/Amsterdam","created_at":"2026-01-20T09:00:00+01:00","updated_at":"2026-01-20T09:00:00+01:00"}],"meta":{"current_page":1,"per_page":15,"total":42}}
      * @response 200 scenario="Success (empty)" {"data":[],"meta":{"current_page":1,"per_page":15,"total":0}}
      * @response 404 scenario="Patient not found" {"message":"Not Found"}
      */
@@ -71,24 +78,64 @@ class PatientAppointmentController extends Controller
     }
 
     /**
+     * Detail of a single appointment (tickets/portaal/02-appointment-detail.md). The id is the
+     * booking (`ResourceOrderItem`) id; the legacy `order-{id}` form is still accepted.
+     *
+     * @group Patient appointments
+     *
+     * @urlParam id string required The Keycloak user ID of the patient.
+     * @urlParam appointmentId string required The appointment id, as returned by the list endpoint.
+     *
+     * @response 404 scenario="Unknown patient, or appointment of another patient"
+     */
+    public function show(string $keycloakUserId, string $appointmentId): AppointmentDetailResource
+    {
+        [$person] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
+
+        abort_if($person === null, 404);
+
+        ['bookingId' => $bookingId, 'orderId' => $orderId] = AppointmentReference::decode($appointmentId);
+
+        if ($bookingId !== null) {
+            $booking = ResourceOrderItem::query()
+                ->with(['resource.clinicDepartment', 'resource.clinic.visitAddress', 'orderItem.order'])
+                ->whereHas('orderItem.order', fn ($q) => $q->forPerson($person))
+                ->find($bookingId);
+
+            abort_if($booking === null, 404);
+
+            $order = $booking->orderItem->order;
+        } elseif ($orderId !== null) {
+            $order = Order::forPerson($person)->find($orderId);
+
+            abort_if($order === null, 404);
+
+            $booking = $this->orderCheckService->retrieveFirstBookingForOrder($order, $person);
+        } else {
+            abort(404);
+        }
+
+        return new AppointmentDetailResource($this->appointmentDetailService->build($order, $booking));
+    }
+
+    /**
      * Collect order-based appointment items for a person.
      */
     private function collectOrderItems(Person $person, ?AppointmentTimeFilter $filter, Carbon $now): Collection
     {
         return $this->orderRepository
             ->getPatientAppointmentOrdersForPerson($person, $filter, $now)
-            ->map(function ($order) use ($person) {
-                $department = app(OrderCheckService::class)->retrieveClinicDepartmentFromOrder($order, $person);
+            ->map(function (Order $order) use ($person) {
+                $booking = $this->orderCheckService->retrieveFirstBookingForOrder($order, $person);
+                $department = $booking?->resource?->clinicDepartment;
 
                 return [
-                    'source'  => 'order',
-                    'sort_at' => $order->firstExaminationCarbon(),
-                    'payload' => [
-                        'order'      => $order,
-                        'department' => $department,
-                        'clinic'     => $department?->clinic_id !== null ? (string) $department->clinic_id : null,
-                        'person'     => $person,
-                    ],
+                    'sort_at'    => $order->firstExaminationCarbon(),
+                    'order'      => $order,
+                    'booking'    => $booking,
+                    'clinic'     => $booking?->resource?->clinic,
+                    'department' => $department,
+                    'person'     => $person,
                 ];
             });
     }

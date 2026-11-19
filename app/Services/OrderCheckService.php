@@ -49,28 +49,38 @@ class OrderCheckService
     }
 
     /**
-     * Department of the first planned (not lost) booking on the appointment day.
-     * Falls back to the first not-lost booking overall when nothing is planned on that day.
+     * The first planned (not lost) booking on the appointment day, used as the order's primary
+     * appointment (stable id, clinic, registration note). Falls back to the first not-lost
+     * booking overall when nothing is planned on that day. When $patient is given and the order
+     * is explicitly not combined, only that patient's own bookings are considered.
      */
-    public function retrieveClinicDepartmentFromOrder(Order $order, Person $patient): ?ClinicDepartment
+    public function retrieveFirstBookingForOrder(Order $order, ?Person $patient): ?ResourceOrderItem
     {
         $query = fn () => ResourceOrderItem::query()
-            ->with(['resource:id,clinic_department_id', 'resource.clinicDepartment'])
+            ->with(['resource:id,clinic_department_id', 'resource.clinicDepartment', 'resource.clinic.visitAddress'])
             ->whereHas('orderItem', function ($q) use ($order, $patient) {
                 $q->where('order_id', $order->id)->notLost();
 
                 // Only restrict to the patient's order items when the order is explicitly NOT combined.
                 // (Treat null as "combined", since legacy rows may have null here.)
-                if ($order->combine_order === false) {
+                if ($patient !== null && $order->combine_order === false) {
                     $q->where('person_id', $patient->id);
                 }
             })
             ->orderBy('from', 'asc');
 
         $day = $order->firstExaminationCarbon();
-        $firstBooking = ($day ? $query()->onDate($day)->first() : null) ?? $query()->first();
 
-        return $firstBooking?->resource?->clinicDepartment;
+        return ($day ? $query()->onDate($day)->first() : null) ?? $query()->first();
+    }
+
+    /**
+     * Department of the first planned (not lost) booking on the appointment day.
+     * Falls back to the first not-lost booking overall when nothing is planned on that day.
+     */
+    public function retrieveClinicDepartmentFromOrder(Order $order, Person $patient): ?ClinicDepartment
+    {
+        return $this->retrieveFirstBookingForOrder($order, $patient)?->resource?->clinicDepartment;
     }
 
     /**

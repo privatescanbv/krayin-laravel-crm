@@ -5,6 +5,15 @@
 
 **Afhankelijk van:** [01](01-document-type.md) (voor `preparation[]`)  ·  **Grootte:** M  ·  **Prio:** hoog  ·  **Bron:** APPT-001, APPT-002, K15, V5, gap-analyse G-4
 
+**Status (2026-11-19):** gebouwd — V5 besluit (id = boeking), `AppointmentDetailResource` +
+`AppointmentDetailService`, beide detailroutes, lijst-id/dode velden/N+1. Twee bewuste afwijkingen:
+- De kliniekroute draait op `clinic/{keycloakUserId}/appointments/{id}` + `SalesLead::forPortalDoctor`
+  (bestaande auth, alleen Arts), niet op `portal/appointments/{id}` + `scopeVisibleInPortalFor`: die auth-laag
+  (G-1a, `keycloak.staff`-middleware, niet-Arts-rollen) bestaat nog niet. Resource/service zijn al gedeeld, dus
+  verhuizen naar `portal/*` is straks alleen een routewijziging.
+- `preparation[]` geeft altijd `[]`. Er bestaat nog geen koppeling document ↔ producttype (alleen document ↔
+  order/persoon); dat is zelf een nieuw datamodel, niet iets wat ticket 01 al levert. Volgt als los ticket.
+
 ## Aanname (voorlopig)
 
 Kliniek en patiënt mogen **dezelfde afspraakdetails** zien. Daarom één Resource voor beide portalen. Klopt dat

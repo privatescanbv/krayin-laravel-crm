@@ -11,6 +11,7 @@ use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use App\Models\ActivityAction;
 use App\Models\Department;
 use App\Models\DocumentType;
+use Illuminate\Validation\Rule;
 use App\Models\Order;
 use App\Models\SalesLead;
 use App\Services\ActivityStatusService;
@@ -162,7 +163,9 @@ class ActivityController extends Controller
             'comment'           => 'required_if:type,note',
             'schedule_to'       => 'required_unless:type,note,file|date',
             'file'              => 'required_if:type,file',
-            'document_type_id'  => 'required_if:type,file|nullable|integer|exists:document_types,id',
+            'document_type_id'  => ['required_if:type,file', 'nullable', 'integer', Rule::exists('document_types', 'id')->where(
+                fn ($q) => $q->whereNull('key')->orWhere('key', '!=', DocumentType::KEY_TO_MIGRATE)
+            )],
         ]);
 
         Event::dispatch('activity.create.before');
@@ -231,7 +234,7 @@ class ActivityController extends Controller
     {
         $activity = $this->activityRepository->with([
             'lead', 'salesLead', 'clinic', 'order', 'person',
-            'files', 'portalPersons', 'group', 'emails',
+            'files', 'portalPersons', 'documentType', 'group', 'emails',
         ])->findOrFail($id);
 
         $groups = app(GroupRepository::class)->all();
@@ -276,6 +279,8 @@ class ActivityController extends Controller
         if ($this->isLockedDocument($activity)) {
             return $this->lockedDocumentResponse();
         }
+
+        request()->validate(['document_type_id' => 'nullable|integer|exists:document_types,id']);
 
         if (request()->filled('document_type_id')) {
             $newType = DocumentType::find(request('document_type_id'));

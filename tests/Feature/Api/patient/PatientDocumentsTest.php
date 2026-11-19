@@ -3,6 +3,7 @@
 use App\Models\DocumentType;
 use App\Models\Order;
 use App\Models\SalesLead;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
@@ -456,3 +457,20 @@ it('lists only patient-visible document types', function () {
 
     $response->assertJsonFragment(['id' => $visible->id, 'label' => 'Rontgenfoto test']);
 });
+
+it('rejects a non-numeric type filter with 422', function () {
+    config(['api.keys' => ['test-api-key']]);
+
+    $keycloakUserId = (string) Str::uuid();
+    Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
+
+    $this->getJson("/api/patient/{$keycloakUserId}/documents?type=report", ['X-API-KEY' => 'test-api-key'])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('type');
+});
+
+it('fails hard when a system document type is missing', function () {
+    DocumentType::where('key', DocumentType::KEY_FINANCIAL)->delete();
+
+    DocumentType::idForKey(DocumentType::KEY_FINANCIAL);
+})->throws(ModelNotFoundException::class);

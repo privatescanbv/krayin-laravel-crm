@@ -54,6 +54,19 @@
                                 label="Titel (optioneel)"
                             />
 
+                            <!-- Document Type -->
+                            <x-adminc::components.field
+                                type="select"
+                                name="document_type_id"
+                                :label="trans('admin::app.settings.document_types.index.create.title')"
+                                rules="required"
+                            >
+                                <option value="">{{ trans('admin::app.components.activities.actions.file.select-document-type') }}</option>
+                                @foreach (\App\Models\DocumentType::assignable()->ordered()->get() as $documentType)
+                                    <option value="{{ $documentType->id }}">{{ $documentType->name }}</option>
+                                @endforeach
+                            </x-adminc::components.field>
+
                             <!-- Checks selector (multi-select) -->
                             <div class="mb-4">
                                 <label class="mb-1 block text-xs font-medium text-gray-800 dark:text-white">

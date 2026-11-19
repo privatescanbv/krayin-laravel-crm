@@ -98,7 +98,7 @@
                                 rules="required"
                             >
                                 <option value="">{{ trans('admin::app.components.activities.actions.file.select-document-type') }}</option>
-                                @foreach (\App\Models\DocumentType::ordered()->get() as $documentType)
+                                @foreach (\App\Models\DocumentType::assignable()->ordered()->get() as $documentType)
                                     <option value="{{ $documentType->id }}">{{ $documentType->name }}</option>
                                 @endforeach
                             </x-adminc::components.field>

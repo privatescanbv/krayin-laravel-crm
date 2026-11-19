@@ -537,7 +537,7 @@ class SalesLeadController extends Controller
         if (! is_null($isDoneFilter)) {
             $salesQuery->where('is_done', $isDoneFilter);
         }
-        $salesActivities = $salesQuery->get();
+        $salesActivities = $salesQuery->with('documentType')->get();
 
         // 2. Child order activities — label: 'Order: {title}'
         $orderActivities = collect();
@@ -549,7 +549,7 @@ class SalesLeadController extends Controller
                 if (! is_null($isDoneFilter)) {
                     $orderQuery->where('is_done', $isDoneFilter);
                 }
-                $orderActivities = $orderQuery->get();
+                $orderActivities = $orderQuery->with('documentType')->get();
                 $orderActivities->each(fn ($a) => $a->entity_source = [
                     'type'  => 'order',
                     'label' => 'Order: '.($orderTitles[$a->order_id] ?? $a->order_id),

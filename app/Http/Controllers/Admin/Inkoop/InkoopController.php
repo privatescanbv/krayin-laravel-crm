@@ -6,6 +6,7 @@ use App\Enums\ActivityType;
 use App\Enums\Inkoop\InkoopInvoiceParser;
 use App\Enums\Inkoop\InkoopInvoiceStatus;
 use App\Models\Clinic;
+use App\Models\DocumentType;
 use App\Models\Inkoop\InkoopInvoice;
 use App\Models\Inkoop\InkoopInvoiceItem;
 use App\Models\Inkoop\InkoopPerson;
@@ -72,11 +73,12 @@ class InkoopController extends Controller
 
         try {
             $activity = $this->activityRepository->create([
-                'type'      => ActivityType::FILE,
-                'title'     => 'Inkoop factuur: '.$originalFilename,
-                'clinic_id' => $clinic->id,
-                'user_id'   => auth()->guard('user')->id() ?: auth()->id(),
-                'file'      => $file,
+                'type'             => ActivityType::FILE,
+                'title'            => 'Inkoop factuur: '.$originalFilename,
+                'clinic_id'        => $clinic->id,
+                'user_id'          => auth()->guard('user')->id() ?: auth()->id(),
+                'file'             => $file,
+                'document_type_id' => DocumentType::idForKey(DocumentType::KEY_FINANCIAL),
             ]);
 
             $invoice->update(['activity_id' => $activity->id]);

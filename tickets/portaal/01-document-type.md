@@ -59,7 +59,7 @@ Tabel `document_types` (model `App\Models\DocumentType`):
 | Vragenlijsten | | aan | aan | |
 | Informatie | | aan | aan | bijv. voorbereiding, folders |
 | Financieel | `financial` | uit | aan | orderbevestigingen; de code die ze aanmaakt zoekt dit type op via de `key` |
-| Door mij aangeleverd | `own_upload` | aan | aan | type voor patiënt-uploads ([patient-portaal/09](../patient-portaal/09-patient-upload.md)) |
+| Extern aangeleverd | `own_upload` | aan | aan | type voor patiënt-uploads ([patient-portaal/09](../patient-portaal/09-patient-upload.md)) |
 
 De vier typen met een `key` zijn systeemtypen: niet te verwijderen, `key` niet te wijzigen. Beginwaarden van
 de schakelaars zijn akkoord; daarna is alles zelf te beheren.

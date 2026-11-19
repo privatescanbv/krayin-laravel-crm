@@ -6,13 +6,11 @@ use App\Helpers\DatabaseHelper;
 use App\Models\Clinic;
 use App\Models\Order;
 use Illuminate\Container\Container;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Throwable;
 use Webkul\Activity\Models\Activity;
-use Webkul\Activity\Models\File as ActivityFile;
 use Webkul\Activity\Services\ViewService;
 use Webkul\Contact\Models\Person;
 use Webkul\Core\Eloquent\Repository;
@@ -358,29 +356,5 @@ class ActivityRepository extends Repository
         }
 
         return $count;
-    }
-
-    /**
-     * Paginate "document" files for the given order ids.
-     *
-     * Documents are stored as activities (type=file) with records in activity_files.
-     *
-     * @param  array<int>  $orderIds
-     */
-    public function paginateDocumentFilesForOrders(array $orderIds, int $perPage, ?string $documentType = null): LengthAwarePaginator
-    {
-        return ActivityFile::query()
-            ->with(['activity'])
-            ->whereHas('activity', function ($q) use ($orderIds, $documentType) {
-                $q->where('type', ActivityType::FILE->value)
-                    ->whereHas('portalPersons')
-                    ->whereIn('order_id', $orderIds);
-
-                if (is_string($documentType) && $documentType !== '') {
-                    $q->where('additional->document_type', $documentType);
-                }
-            })
-            ->orderByDesc('created_at')
-            ->paginate($perPage);
     }
 }

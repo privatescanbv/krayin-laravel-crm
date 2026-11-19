@@ -73,3 +73,25 @@ test('file activity store persists order_id and sales_lead_id from multipart req
     expect($activity)->not->toBeNull()
         ->and($activity->sales_lead_id)->toBe($order->sales_lead_id);
 });
+
+test('file activity store rejects the to_migrate document type for new files', function () {
+    $user = User::find(DB::table('users')->insertGetId([
+        'first_name' => 'Test', 'last_name' => 'User', 'email' => 'to-migrate@example.com',
+        'password'   => bcrypt('secret'), 'status' => 1,
+        'role_id'    => DB::table('roles')->insertGetId([
+            'name'        => 'Tester', 'description' => 'Test role', 'permission_type' => 'all',
+            'permissions' => json_encode([]), 'created_at' => now(), 'updated_at' => now(),
+        ]),
+        'created_at' => now(), 'updated_at' => now(),
+    ]));
+    $this->actingAs($user, 'user');
+
+    $toMigrate = DocumentType::findByKey(DocumentType::KEY_TO_MIGRATE);
+
+    $this->postJson(route('admin.activities.store'), [
+        'type'             => 'file',
+        'order_id'         => (string) Order::factory()->create()->id,
+        'file'             => UploadedFile::fake()->create('scan.pdf', 12, 'application/pdf'),
+        'document_type_id' => (string) $toMigrate->id,
+    ])->assertStatus(422)->assertJsonValidationErrors('document_type_id');
+});

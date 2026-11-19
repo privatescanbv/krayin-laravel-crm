@@ -154,6 +154,10 @@
                     </span>
                 </template>
 
+                <span v-if="activity.type === 'file' && activity.document_type"
+                      class="inline-flex shrink-0 items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                      title="Type bestand">@{{ activity.document_type }}</span>
+
                 <span v-if="activity.type !== 'system' && activity.is_published_to_portal"
                       class="inline-flex shrink-0 items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400"
                       title="Gepubliceerd in patiëntportaal">Portaal<template v-if="activity.portal_persons && activity.portal_persons.length">: @{{ activity.portal_persons.map(p => p.name).join(', ') }}</template></span>

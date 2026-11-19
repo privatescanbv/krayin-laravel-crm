@@ -35,9 +35,9 @@ class PatientDocumentController extends Controller
      * @queryParam page integer Page number. Example: 1
      * @queryParam per_page integer Items per page (max 100). Example: 15
      * @queryParam order_id integer Optional: limit documents to a single Order id. Example: 987
-     * @queryParam type string Optional: document kind (stored in activity.additional.document_type). Example: report
+     * @queryParam type string Optional: one or more document_types ids, comma-separated. Example: 2,5
      *
-     * @response 200 scenario="Success" {"data":[{"id":456,"patient_id":123,"type":"report","group":"Order MRI knie","title":"MRI uitslag knie","file_name":"mri-knie-uitslag.pdf","mime_type":"application/pdf","size":245678,"download_url":"https://api.example.com/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/documents/456/download","created_at":"2025-01-20T10:15:30Z"}],"meta":{"current_page":1,"per_page":15,"total":42}}
+     * @response 200 scenario="Success" {"data":[{"id":456,"patient_id":123,"type":{"id":2,"label":"Verslagen"},"group":"Order MRI knie","title":"MRI uitslag knie","file_name":"mri-knie-uitslag.pdf","mime_type":"application/pdf","size":245678,"download_url":"https://api.example.com/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/documents/456/download","created_at":"2025-01-20T10:15:30Z"}],"meta":{"current_page":1,"per_page":15,"total":42}}
      * @response 200 scenario="Success (empty)" {"data":[],"meta":{"current_page":1,"per_page":15,"total":0}}
      * @response 404 scenario="Patient not found" {"message":"Not Found"}
      */

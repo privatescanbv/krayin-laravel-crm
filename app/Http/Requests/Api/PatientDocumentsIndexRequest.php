@@ -9,7 +9,7 @@ class PatientDocumentsIndexRequest extends PatientPaginatedIndexRequest
         return [
             // Optional filters
             'order_id' => ['sometimes', 'integer', 'min:1', 'exists:orders,id'],
-            'type'     => ['sometimes', 'string', 'max:255'],
+            'type'     => ['sometimes', 'string', 'regex:/^\d+(,\d+)*$/'],
         ];
     }
 

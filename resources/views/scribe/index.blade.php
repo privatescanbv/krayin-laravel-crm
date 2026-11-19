@@ -272,6 +272,9 @@ server-side. Changes nothing else and notifies nobody.</a>
                                                                                 <li class="tocify-item level-2" data-unique="patient-documents-GETapi-patient--id--documents--documentId--download">
                                 <a href="#patient-documents-GETapi-patient--id--documents--documentId--download">Download a patient document (activity file).</a>
                             </li>
+                                                                                <li class="tocify-item level-2" data-unique="patient-documents-GETapi-patient--id--document-types">
+                                <a href="#patient-documents-GETapi-patient--id--document-types">List document types a patient can filter their documents by.</a>
+                            </li>
                                                                         </ul>
                             </ul>
                     <ul id="tocify-header-patient-messages" class="tocify-header">
@@ -3863,7 +3866,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: ffee0a7e-e619-43e9-b6ff-afe257646f8d
+x-request-id: ffd1ae89-c3ef-44b5-b6e9-b1a53684b14b
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 59
  </code></pre></details>         <pre>
@@ -4890,7 +4893,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 97181f03-7044-48b5-8c97-a65133ff4557
+x-request-id: 227a31bd-b021-4d0a-aedb-9d1f957db31e
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 58
  </code></pre></details>         <pre>
@@ -5048,7 +5051,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: ce6e5bd1-0dc7-45cd-80e9-fb5c44a13e50
+x-request-id: 9be9d534-793c-4324-b416-5ba060eefac9
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 57
  </code></pre></details>         <pre>
@@ -5417,7 +5420,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: ab075f63-1a93-4627-86f1-a54f5e0d2d37
+x-request-id: a9e513f3-1057-4491-b4e3-e65ea6627d20
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 56
  </code></pre></details>         <pre>
@@ -5545,11 +5548,11 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"type\": \"file\",
+    \"type\": \"task\",
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_to\": \"2026-11-19 08:47:10\"
+    \"schedule_to\": \"2026-11-19 09:37:21\"
 }"
 </code></pre></div>
 
@@ -5566,11 +5569,11 @@ const headers = {
 };
 
 let body = {
-    "type": "file",
+    "type": "task",
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_to": "2026-11-19 08:47:10"
+    "schedule_to": "2026-11-19 09:37:21"
 };
 
 fetch(url, {
@@ -5687,10 +5690,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="type"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="file"
+               value="task"
                data-component="body">
     <br>
-<p>Example: <code>file</code></p>
+<p>Example: <code>task</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>task</code></li> <li><code>meeting</code></li> <li><code>call</code></li> <li><code>note</code></li> <li><code>file</code></li></ul>
         </div>
@@ -5749,10 +5752,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-11-19 08:47:10"
+               value="2026-11-19 09:37:21"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-11-19 08:47:10</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-11-19 09:37:21</code></p>
         </div>
         </form>
 
@@ -6448,7 +6451,7 @@ addresses or content.</p>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"level\": \"warning\",
+    \"level\": \"critical\",
     \"count\": 27,
     \"app\": \"n\"
 }"
@@ -6467,7 +6470,7 @@ const headers = {
 };
 
 let body = {
-    "level": "warning",
+    "level": "critical",
     "count": 27,
     "app": "n"
 };
@@ -6573,10 +6576,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="level"                data-endpoint="POSTapi-failed-jobs-alert"
-               value="warning"
+               value="critical"
                data-component="body">
     <br>
-<p>Example: <code>warning</code></p>
+<p>Example: <code>critical</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>warning</code></li> <li><code>critical</code></li></ul>
         </div>
@@ -8957,7 +8960,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "https://crm.local.privatescan.nl/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/documents?page=1&amp;per_page=15&amp;order_id=987&amp;type=report" \
+    --get "https://crm.local.privatescan.nl/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/documents?page=1&amp;per_page=15&amp;order_id=987&amp;type=2%2C5" \
     --header "X-API-KEY: {YOUR_AUTH_KEY}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
@@ -8972,7 +8975,7 @@ const params = {
     "page": "1",
     "per_page": "15",
     "order_id": "987",
-    "type": "report",
+    "type": "2,5",
 };
 Object.keys(params)
     .forEach(key =&gt; url.searchParams.append(key, params[key]));
@@ -9002,7 +9005,10 @@ fetch(url, {
         {
             &quot;id&quot;: 456,
             &quot;patient_id&quot;: 123,
-            &quot;type&quot;: &quot;report&quot;,
+            &quot;type&quot;: {
+                &quot;id&quot;: 2,
+                &quot;label&quot;: &quot;Verslagen&quot;
+            },
             &quot;group&quot;: &quot;Order MRI knie&quot;,
             &quot;title&quot;: &quot;MRI uitslag knie&quot;,
             &quot;file_name&quot;: &quot;mri-knie-uitslag.pdf&quot;,
@@ -9183,10 +9189,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="type"                data-endpoint="GETapi-patient--id--documents"
-               value="report"
+               value="2,5"
                data-component="query">
     <br>
-<p>Optional: document kind (stored in activity.additional.document_type). Example: <code>report</code></p>
+<p>Optional: one or more document_types ids, comma-separated. Example: <code>2,5</code></p>
             </div>
                 </form>
 
@@ -9210,7 +9216,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --form "name=Bloeduitslag"\
     --form "description=Resultaten van het bloedonderzoek."\
-    --form "file=@/tmp/phpe3cl4r00hgaf3H8FvuH" </code></pre></div>
+    --form "file=@/tmp/phppjuhrmptn2e9dSswK5b" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -9399,7 +9405,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The file to upload (max 20 MB). Example: <code>/tmp/phpe3cl4r00hgaf3H8FvuH</code></p>
+<p>The file to upload (max 20 MB). Example: <code>/tmp/phppjuhrmptn2e9dSswK5b</code></p>
         </div>
         </form>
 
@@ -9452,7 +9458,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: d293273c-f455-4ed1-952d-4eb734107da5
+x-request-id: 40a12197-2270-4b91-8389-b63cd5939e9c
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 55
  </code></pre></details>         <pre>
@@ -9579,6 +9585,163 @@ You can check the Dev Tools console for debugging information.</code></pre>
                data-component="url">
     <br>
 <p>The activity_files id. Example: <code>456</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="patient-documents-GETapi-patient--id--document-types">List document types a patient can filter their documents by.</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+
+
+<span id="example-requests-GETapi-patient--id--document-types">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "https://crm.local.privatescan.nl/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/document-types" \
+    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://crm.local.privatescan.nl/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/document-types"
+);
+
+const headers = {
+    "X-API-KEY": "{YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-patient--id--document-types">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;data&quot;: [
+        {
+            &quot;id&quot;: 2,
+            &quot;label&quot;: &quot;Verslagen&quot;
+        },
+        {
+            &quot;id&quot;: 4,
+            &quot;label&quot;: &quot;Beelden&quot;
+        }
+    ]
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-patient--id--document-types" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-patient--id--document-types"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-patient--id--document-types"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-patient--id--document-types" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-patient--id--document-types">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-patient--id--document-types" data-method="GET"
+      data-path="api/patient/{id}/document-types"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-patient--id--document-types', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-patient--id--document-types"
+                    onclick="tryItOut('GETapi-patient--id--document-types');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-patient--id--document-types"
+                    onclick="cancelTryOut('GETapi-patient--id--document-types');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-patient--id--document-types"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/patient/{id}/document-types</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-API-KEY" class="auth-value"               data-endpoint="GETapi-patient--id--document-types"
+               value="{YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-patient--id--document-types"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-patient--id--document-types"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>id</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="id"                data-endpoint="GETapi-patient--id--document-types"
+               value="3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d"
+               data-component="url">
+    <br>
+<p>The Keycloak user ID of the patient. Example: <code>3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d</code></p>
             </div>
                     </form>
 
@@ -10027,7 +10190,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: cee3408c-7287-43e8-990f-9b2f4b262462
+x-request-id: f4dca289-e01b-4a87-9103-7f14916d1e77
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 54
  </code></pre></details>         <pre>
@@ -10515,7 +10678,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 4cc4b0f1-4b12-4bcc-8f93-a51e3b517764
+x-request-id: 1500e069-974d-467d-868d-b730ab058fdf
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 53
  </code></pre></details>         <pre>
@@ -10696,7 +10859,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"preferences\": {
         \"email_notifications_enabled\": true,
         \"language\": \"architecto\",
-        \"onboarding_completed_at\": \"2026-11-19T08:47:10\"
+        \"onboarding_completed_at\": \"2026-11-19T09:37:22\"
     }
 }"
 </code></pre></div>
@@ -10717,7 +10880,7 @@ let body = {
     "preferences": {
         "email_notifications_enabled": true,
         "language": "architecto",
-        "onboarding_completed_at": "2026-11-19T08:47:10"
+        "onboarding_completed_at": "2026-11-19T09:37:22"
     }
 };
 
@@ -10889,10 +11052,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="preferences.onboarding_completed_at"                data-endpoint="PUTapi-patient--id--preferences"
-               value="2026-11-19T08:47:10"
+               value="2026-11-19T09:37:22"
                data-component="body">
     <br>
-<p>Het veld value is geen geldige datum. Example: <code>2026-11-19T08:47:10</code></p>
+<p>Het veld value is geen geldige datum. Example: <code>2026-11-19T09:37:22</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>email_notifications_enabled</code></b>&nbsp;&nbsp;

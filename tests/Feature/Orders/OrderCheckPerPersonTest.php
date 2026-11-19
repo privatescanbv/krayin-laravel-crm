@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ProductReports;
+use App\Models\DocumentType;
 use App\Models\Order;
 use App\Models\OrderCheck;
 use App\Models\OrderItem;
@@ -124,7 +125,7 @@ test('report upload succeeds without selecting checks', function () {
 
     $response = $this->post(
         route('admin.orders.report-upload.store', $order->id),
-        ['files'  => [$file]],
+        ['files'  => [$file], 'document_type_id' => DocumentType::factory()->create()->id],
         ['Accept' => 'application/json']
     );
 
@@ -132,6 +133,18 @@ test('report upload succeeds without selecting checks', function () {
         ->assertJsonPath('message', 'Rapportage succesvol geüpload.');
 
     expect(Activity::where('order_id', $order->id)->value('clinic_id'))->toBeNull();
+});
+
+test('report upload without document type is rejected', function () {
+    $this->actingAs(makeUser(), 'user');
+
+    $order = Order::factory()->create();
+
+    $this->post(
+        route('admin.orders.report-upload.store', $order->id),
+        ['files'  => [UploadedFile::fake()->create('rapport.pdf', 100, 'application/pdf')]],
+        ['Accept' => 'application/json']
+    )->assertUnprocessable()->assertJsonValidationErrors('document_type_id');
 });
 
 test('report upload with checks marks them done', function () {
@@ -152,8 +165,9 @@ test('report upload with checks marks them done', function () {
     $response = $this->post(
         route('admin.orders.report-upload.store', $order->id),
         [
-            'files'     => [$file],
-            'check_ids' => [$check->id],
+            'files'            => [$file],
+            'check_ids'        => [$check->id],
+            'document_type_id' => DocumentType::factory()->create()->id,
         ],
         ['Accept' => 'application/json']
     );

@@ -51,6 +51,9 @@ class ActivityResource extends JsonResource
             'portal_persons'     => $this->resource instanceof \Webkul\Activity\Models\Activity
                 ? $this->resource->portalPersons->map(fn ($p) => ['id' => $p->id, 'name' => $p->name])->values()
                 : [],
+            'document_type'      => $this->resource instanceof \Webkul\Activity\Models\Activity
+                ? $this->resource->documentType?->name
+                : null,
             'entity_source'      => data_get($this->resource, 'entity_source', null),
             'completed_at'       => data_get($this->resource, 'completed_at', null),
             'created_at'         => $this->created_at,

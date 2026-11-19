@@ -453,7 +453,7 @@ class OrderController extends SimpleEntityController
             $query->where('is_done', $isDoneFilter);
         }
 
-        $activities = $query->with('portalPersons')->get();
+        $activities = $query->with(['portalPersons', 'documentType'])->get();
 
         return ActivityResource::collection(
             $this->concatEmailActivitiesFor('order', $id, $activities, $this->attachmentRepository, $isDoneFilter)
@@ -795,6 +795,7 @@ class OrderController extends SimpleEntityController
             'files.*'           => 'file|max:20480',
             'check_ids'         => 'nullable|array',
             'check_ids.*'       => 'integer|exists:order_checks,id',
+            'document_type_id'  => 'required|integer|exists:document_types,id',
             'title'             => 'nullable|string|max:255',
             'comment'           => 'nullable|string',
             'publish_to_portal' => 'nullable|boolean',
@@ -819,13 +820,14 @@ class OrderController extends SimpleEntityController
                 : ($baseTitle ?: $file->getClientOriginalName());
 
             $activity = $activityRepository->create([
-                'type'     => ActivityType::FILE,
-                'title'    => $title,
-                'comment'  => $request->input('comment'),
-                'is_done'  => true,
-                'user_id'  => auth()->id(),
-                'order_id' => $order->id,
-                'file'     => $file,
+                'type'             => ActivityType::FILE,
+                'title'            => $title,
+                'comment'          => $request->input('comment'),
+                'is_done'          => true,
+                'user_id'          => auth()->id(),
+                'order_id'         => $order->id,
+                'file'             => $file,
+                'document_type_id' => $request->integer('document_type_id'),
             ]);
 
             if ($publishToPortal) {

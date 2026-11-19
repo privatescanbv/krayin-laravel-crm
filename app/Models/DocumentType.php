@@ -53,9 +53,12 @@ class DocumentType extends Model
         return static::where('key', $key)->first();
     }
 
-    public static function idForKey(string $key): ?int
+    /**
+     * Fails hard when the system type is missing, so documents never end up typeless.
+     */
+    public static function idForKey(string $key): int
     {
-        return static::where('key', $key)->value('id');
+        return static::where('key', $key)->firstOrFail()->id;
     }
 
     public function activities(): HasMany
@@ -74,6 +77,14 @@ class DocumentType extends Model
     public function isInUse(): bool
     {
         return $this->activities()->exists();
+    }
+
+    /**
+     * Types a user may pick for new files; "to migrate" is only for existing (migrated) data.
+     */
+    public function scopeAssignable(Builder $query): Builder
+    {
+        return $query->where(fn (Builder $q) => $q->whereNull('key')->orWhere('key', '!=', self::KEY_TO_MIGRATE));
     }
 
     public function scopeOrdered(Builder $query): Builder

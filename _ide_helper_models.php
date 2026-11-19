@@ -662,6 +662,29 @@ namespace App\Models{
 
 namespace App\Models{
 /**
+ * Document type for file activities, shared by the clinic and patient portal.
+ *
+ * `key` is only set for the system types recognized in code (see KEY_* constants below);
+ * it is immutable and the admin screen never exposes it as an editable field.
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Webkul\Activity\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Webkul\User\Models\User|null $creator
+ * @property-read \Webkul\User\Models\User|null $updater
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType assignable()
+ * @method static \Database\Factories\DocumentTypeFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType ordered()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType query()
+ * @mixin \Eloquent
+ */
+	#[\AllowDynamicProperties]
+	class IdeHelperDocumentType {}
+}
+
+namespace App\Models{
+/**
  * @property int $id
  * @property \App\Enums\DuplicateEntityType $entity_type
  * @property int $entity_id_1

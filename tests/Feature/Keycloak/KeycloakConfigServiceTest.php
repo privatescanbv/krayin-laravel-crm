@@ -56,7 +56,7 @@ function fakeImpersonationRealm(bool $serviceAccountsEnabled, array $assignedRol
         '*/clients?clientId=clinic-app'                         => Http::response([['id' => 'uuid-c', 'serviceAccountsEnabled' => $serviceAccountsEnabled]]),
         '*/clients?clientId=realm-management'                   => Http::response([['id' => 'uuid-rm']]),
         '*/clients/uuid-c/service-account-user'                 => Http::response(['id' => 'sa-1']),
-        '*/clients/uuid-rm/roles/impersonation'                 => Http::response(['id' => 'role-1', 'name' => 'impersonation']),
+        '*/clients/uuid-rm/roles/impersonation'                 => Http::response('{"id":"role-1","name":"impersonation","composite":false,"clientRole":true,"attributes":{}}'),
         '*/users/sa-1/role-mappings/clients/uuid-rm'            => Http::response($assignedRoles),
         '*/clients/uuid-c'                                      => Http::response(null, 204),
     ]);

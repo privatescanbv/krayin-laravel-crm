@@ -321,7 +321,10 @@ class KeycloakConfigService
                 return null;
             }
 
-            if (! $http()->post($mappingsUrl, [$role->json()])->successful()) {
+            /** Only id + name: re-encoding the decoded role turns "attributes":{} into [], which Keycloak rejects. */
+            $roleReference = ['id' => $role->json('id'), 'name' => $role->json('name')];
+
+            if (! $http()->post($mappingsUrl, [$roleReference])->successful()) {
                 return "Kon de impersonation-role niet toekennen aan het service account van {$clientId}.";
             }
 

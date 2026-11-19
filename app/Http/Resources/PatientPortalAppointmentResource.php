@@ -6,27 +6,22 @@ use App\Enums\Departments;
 use App\Models\Clinic;
 use App\Models\ClinicDepartment;
 use App\Models\Order;
+use App\Models\ResourceOrderItem;
+use App\Support\AppointmentReference;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 
 /**
- * Unified resource for patient portal appointment items.
- *
- * Handles both order-based and activity-based appointments.
+ * Resource for patient portal appointment list items, derived from Orders.
  *
  * Expected resource payload shape:
  *   [
- *     'source'  => 'order' | 'activity',
- *     'sort_at' => Carbon,
- *     'payload' => [
- *       'clinic' => int|string|null,  // Clinic ID
- *       'department' => ClinicDepartment|null, // department of first planned booking (order only)
- *       'person' => Person,
- *       'order'  => Order,            // when source = 'order'
- *       'activity' => Activity,       // when source = 'activity'
- *     ],
+ *     'order'      => Order,
+ *     'booking'    => ResourceOrderItem|null, // the order's primary appointment slot
+ *     'clinic'     => Clinic|null,             // already eager-loaded via the booking; never queried here
+ *     'department' => ClinicDepartment|null,
+ *     'person'     => Person,
  *   ]
  */
 class PatientPortalAppointmentResource extends JsonResource
@@ -38,55 +33,29 @@ class PatientPortalAppointmentResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        /** @var Order $order */
+        $order = $this['order'];
         /** @var Person $person */
-        $person = $this['payload']['person'];
+        $person = $this['person'];
+        /** @var ResourceOrderItem|null $booking */
+        $booking = $this['booking'] ?? null;
+        /** @var Clinic|null $clinic */
+        $clinic = $this['clinic'] ?? null;
+        /** @var ClinicDepartment|null $department */
+        $department = $this['department'] ?? null;
 
-        $clinic = $this['payload']['clinic']
-            ? Clinic::with('address')->find($this['payload']['clinic'])
-            : null;
-
-        return match ($this['source']) {
-            'order'    => $this->fromOrder($this['payload']['order'], $clinic, $person, $this['payload']['department'] ?? null),
-            'activity' => $this->fromActivity($this['payload']['activity'], $clinic, $person),
-        };
-    }
-
-    private function fromOrder(Order $order, ?Clinic $clinic, Person $person, ?ClinicDepartment $department = null): array
-    {
         return [
-            'id'                => 'order-'.$order->id,
+            'id'                => AppointmentReference::encode($order, $booking),
             'patient_id'        => (string) $person->id,
-            'practitioner_id'   => null,
             'clinic_id'         => $clinic ? (string) $clinic->id : null,
-            'clinic_ref'        => ClinicResource::make($clinic),
+            'clinic_ref'        => $clinic ? ClinicResource::make($clinic) : null,
             'start_at'          => $order->firstExaminationCarbon()?->toIso8601String(),
-            'end_at'            => null,
+            'end_at'            => $booking?->to?->toIso8601String(),
             'timezone'          => config('app.timezone'),
-            'is_remote'         => false,
-            'remote_url'        => null,
             'created_at'        => $order->created_at->toIso8601String(),
             'updated_at'        => $order->updated_at?->toIso8601String(),
             'department'        => $order->isHerniapoli() ? Departments::HERNIA->value : Departments::PRIVATESCAN->value,
             'registration_note' => $department?->order_confirmation_note,
-        ];
-    }
-
-    private function fromActivity(Activity $activity, ?Clinic $clinic, Person $person): array
-    {
-        return [
-            'id'              => 'activity-'.$activity->id,
-            'patient_id'      => (string) $person->id,
-            'practitioner_id' => null,
-            'clinic_id'       => $clinic ? (string) $clinic->id : null,
-            'clinic_ref'      => ClinicResource::make($clinic),
-            'start_at'        => $activity->schedule_from?->toIso8601String(),
-            'end_at'          => $activity->schedule_to?->toIso8601String(),
-            'timezone'        => config('app.timezone'),
-            'is_remote'       => false,
-            'remote_url'      => null,
-            'created_at'      => $activity->created_at->toIso8601String(),
-            'updated_at'      => $activity->updated_at?->toIso8601String(),
-            'department'      => null,
         ];
     }
 }

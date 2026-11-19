@@ -6,6 +6,10 @@ use App\Enums\PipelineStage;
 use App\Enums\RoleCode;
 use App\Models\AssessmentOutcome;
 use App\Models\Department;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Resource;
+use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -598,4 +602,32 @@ it('refuses notes on sales outside the doctor\'s scope', function () {
     $this->withoutHeader('X-API-KEY')->postJson(route('api.clinic.sales-leads.notes.store', ['kc-doc-1', $foreign->id]), ['text' => 'x'])->assertUnauthorized();
 
     expect(Activity::where('type', 'note')->count())->toBe(0);
+});
+
+it('lists the appointments of the sale in the detail, with ids usable for the appointment detail', function () {
+    portalUser('kc-doc-1');
+    $sale = doctorSale(User::query()->where('keycloak_user_id', 'kc-doc-1')->first(), herniaStage());
+    $person = Person::factory()->create();
+    $sale->persons()->attach($person->id);
+
+    $order = Order::factory()->create(['sales_lead_id' => $sale->id]);
+    $item = OrderItem::factory()->create(['order_id' => $order->id, 'person_id' => $person->id]);
+    $booking = ResourceOrderItem::factory()->create([
+        'orderitem_id' => $item->id,
+        'resource_id'  => Resource::factory()->create()->id,
+        'from'         => now()->addDay(),
+        'to'           => now()->addDay()->addHour(),
+    ]);
+    Order::factory()->create(['sales_lead_id' => $sale->id, 'first_examination_at' => null]); // geen afspraak
+
+    $response = $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads.show', ['kc-doc-1', $sale->id]))
+        ->assertOk()
+        ->assertJsonCount(1, 'data.appointments')
+        ->assertJsonPath('data.appointments.0.id', (string) $booking->id)
+        ->assertJsonPath('data.appointments.0.start_at', $booking->from->toIso8601String())
+        ->assertJsonPath('data.appointments.0.end_at', $booking->to->toIso8601String());
+
+    expect(array_keys($response->json('data.appointments.0')))->toBe(['id', 'type', 'start_at', 'end_at']);
+
+    $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.appointments.show', ['kc-doc-1', $booking->id]))->assertOk();
 });

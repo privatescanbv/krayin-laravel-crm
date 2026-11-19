@@ -2,8 +2,11 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Order;
 use App\Models\SalesLead;
+use App\Services\OrderCheckService;
 use App\Services\PlainText;
+use App\Support\AppointmentReference;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Carbon;
@@ -12,6 +15,7 @@ use Illuminate\Support\Carbon;
  * Patiëntkaart van één sale voor het kliniekportaal: de kaartvelden plus gewhitelist detail.
  * Alleen CRM-bronnen die bestaan; geen diagnose, regio, behandeladvies, adressen of financiële gegevens.
  * Verwacht persons, stage, doctor en assessmentOutcome eager-loaded en `withStageEnteredAt()`.
+ * `appointments`: één afspraak per order (eerste boeking), met dezelfde id als de afspraak-detail-endpoint.
  *
  * @mixin SalesLead
  */
@@ -39,6 +43,38 @@ class ClinicSalesLeadDetailResource extends JsonResource
                 ? ['code' => $this->assessment_outcome, 'label' => $this->assessmentOutcome?->label]
                 : null,
             'additional_research_required' => (bool) $this->additional_research_required,
+            'appointments'                 => $this->appointments(),
         ];
+    }
+
+    /**
+     * @return list<array{id: string, type: array{id: int, label: string}|null, start_at: string|null, end_at: string|null}>
+     */
+    private function appointments(): array
+    {
+        $orderCheckService = app(OrderCheckService::class);
+
+        return $this->orders()->get()
+            ->map(function (Order $order) use ($orderCheckService) {
+                $booking = $orderCheckService->retrieveFirstBookingForOrder($order, null);
+                $start = $booking?->from ?? $order->firstExaminationCarbon();
+
+                if ($start === null) {
+                    return null;
+                }
+
+                $type = $booking?->orderItem?->resolvedProductType();
+
+                return [
+                    'id'       => AppointmentReference::encode($order, $booking),
+                    'type'     => $type ? ['id' => $type->id, 'label' => $type->name] : null,
+                    'start_at' => $start->toIso8601String(),
+                    'end_at'   => $booking?->to?->toIso8601String(),
+                ];
+            })
+            ->filter()
+            ->sortBy('start_at')
+            ->values()
+            ->all();
     }
 }

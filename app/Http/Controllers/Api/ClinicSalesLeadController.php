@@ -87,7 +87,8 @@ class ClinicSalesLeadController extends Controller
 
     /**
      * Patient card of one sale assigned to the doctor: card fields plus all linked persons (with date of birth),
-     * stage, doctor, description (plain text), assessment outcome and additional-research flag.
+     * stage, doctor, description (plain text), assessment outcome, additional-research flag and `appointments`
+     * (one per order: id usable with `GET clinic/{keycloakUserId}/appointments/{appointmentId}`, type, start/end).
      * Closed sales that are visible to the doctor stay readable. No diagnosis, region, advice, contact or financial data.
      *
      * @group Clinic sales
@@ -95,7 +96,7 @@ class ClinicSalesLeadController extends Controller
      * @urlParam keycloakUserId string required The Keycloak user ID of the doctor.
      * @urlParam saleId integer required The sale id (must be assigned to this doctor and visible to the role).
      *
-     * @response 200 scenario="Success" {"data":{"id":12,"name":"Rugklachten","pipeline_stage_id":41,"created_at":"2026-11-05T09:00:00+00:00","updated_at":"2026-11-05T09:00:00+00:00","closed_at":null,"stage_entered_at":null,"persons":[{"id":7,"name":"Jan Jansen","first_name":"Jan","last_name":"Jansen","date_of_birth":"1980-02-03"}],"stage":{"id":41,"code":"sales-intake-hernia","name":"Casus bij arts ter beoordeling","sort_order":2,"is_won":false,"is_lost":false},"doctor":{"id":3,"name":"Dr. Voorbeeld"},"description":"Omschrijving van het traject.","assessment_outcome":{"code":"example-code","label":"Voorbeeldlabel"},"additional_research_required":false}}
+     * @response 200 scenario="Success" {"data":{"id":12,"name":"Rugklachten","pipeline_stage_id":41,"created_at":"2026-11-05T09:00:00+00:00","updated_at":"2026-11-05T09:00:00+00:00","closed_at":null,"stage_entered_at":null,"persons":[{"id":7,"name":"Jan Jansen","first_name":"Jan","last_name":"Jansen","date_of_birth":"1980-02-03"}],"stage":{"id":41,"code":"sales-intake-hernia","name":"Casus bij arts ter beoordeling","sort_order":2,"is_won":false,"is_lost":false},"doctor":{"id":3,"name":"Dr. Voorbeeld"},"description":"Omschrijving van het traject.","assessment_outcome":{"code":"example-code","label":"Voorbeeldlabel"},"additional_research_required":false,"appointments":[{"id":"881","type":{"id":4,"label":"MRI"},"start_at":"2026-12-01T09:30:00+01:00","end_at":"2026-12-01T10:15:00+01:00"}]}}
      * @response 403 scenario="User is not a doctor, or Bearer token belongs to another user"
      * @response 404 scenario="Unknown user, or sale not assigned to / not visible for this doctor"
      */

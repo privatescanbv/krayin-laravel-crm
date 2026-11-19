@@ -10,6 +10,7 @@ use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Stage;
 use Webkul\User\Models\Role;
 use Webkul\User\Models\User;
@@ -62,7 +63,8 @@ function apptForDoctor(User $doctor, Stage $stage): array
     $resource = Resource::factory()->create(['clinic_department_id' => $department->id]);
 
     $order = Order::factory()->create(['sales_lead_id' => $sale->id]);
-    $item = OrderItem::factory()->create(['order_id' => $order->id]);
+    $person = Person::factory()->create();
+    $item = OrderItem::factory()->create(['order_id' => $order->id, 'person_id' => $person->id]);
     $booking = ResourceOrderItem::factory()->create([
         'orderitem_id' => $item->id,
         'resource_id'  => $resource->id,
@@ -123,4 +125,16 @@ it('returns 404 for a hidden-stage sale and forbids non-doctor roles', function 
     $this->withHeaders(apptApiKeyHeader())
         ->getJson(route('api.clinic.appointments.show', ['kc-appt-clinic-1', $hiddenBooking->id]))
         ->assertForbidden();
+});
+
+it('only lists the order items of the booking\'s own person', function () {
+    $doctor = apptDoctor('kc-appt-doc-items');
+    [$order, $booking] = apptForDoctor($doctor, apptHerniaStage());
+
+    OrderItem::factory()->create(['order_id' => $order->id, 'person_id' => Person::factory()->create()->id]);
+
+    $this->withHeaders(apptApiKeyHeader())
+        ->getJson(route('api.clinic.appointments.show', ['kc-appt-doc-items', $booking->id]))
+        ->assertOk()
+        ->assertJsonCount(1, 'data.items');
 });

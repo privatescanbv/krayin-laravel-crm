@@ -2,16 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Actions\Clinic\SendClinicForgotPasswordMailAction;
-use App\Enums\RoleCode;
+use App\Http\Controllers\Api\Concerns\ResolvesClinicDoctor;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AppointmentDetailResource;
-use App\Models\Order;
-use App\Models\ResourceOrderItem;
 use App\Services\AppointmentDetailService;
-use App\Services\OrderCheckService;
-use App\Support\AppointmentReference;
-use Webkul\User\Models\User;
 
 /**
  * Afspraak-detail in the clinic portal (tickets/portaal/02-appointment-detail.md), Herniapoli
@@ -23,10 +17,9 @@ use Webkul\User\Models\User;
  */
 class ClinicAppointmentController extends Controller
 {
-    public function __construct(
-        private readonly OrderCheckService $orderCheckService,
-        private readonly AppointmentDetailService $appointmentDetailService,
-    ) {}
+    use ResolvesClinicDoctor;
+
+    public function __construct(private readonly AppointmentDetailService $appointmentDetailService) {}
 
     /**
      * @group Clinic appointments
@@ -41,41 +34,11 @@ class ClinicAppointmentController extends Controller
     {
         $doctor = $this->doctor($keycloakUserId);
 
-        ['bookingId' => $bookingId, 'orderId' => $orderId] = AppointmentReference::decode($appointmentId);
-
-        if ($bookingId !== null) {
-            $booking = ResourceOrderItem::query()
-                ->with(['resource.clinicDepartment', 'resource.clinic.visitAddress', 'orderItem.order'])
-                ->whereHas('orderItem.order.salesLead', fn ($q) => $q->forPortalDoctor($doctor))
-                ->find($bookingId);
-
-            abort_if($booking === null, 404);
-
-            $order = $booking->orderItem->order;
-        } elseif ($orderId !== null) {
-            $order = Order::query()
-                ->whereHas('salesLead', fn ($q) => $q->forPortalDoctor($doctor))
-                ->find($orderId);
-
-            abort_if($order === null, 404);
-
-            $booking = $this->orderCheckService->retrieveFirstBookingForOrder($order, null);
-        } else {
-            abort(404);
-        }
+        [$order, $booking] = $this->appointmentDetailService->resolve(
+            $appointmentId,
+            fn ($q) => $q->whereHas('salesLead', fn ($q) => $q->forPortalDoctor($doctor)),
+        );
 
         return new AppointmentDetailResource($this->appointmentDetailService->build($order, $booking));
-    }
-
-    private function doctor(string $keycloakUserId): User
-    {
-        $user = SendClinicForgotPasswordMailAction::clinicUsers()
-            ->where('keycloak_user_id', $keycloakUserId)
-            ->with('role')
-            ->firstOrFail();
-
-        abort_unless($user->role?->code === RoleCode::ARTS, 403);
-
-        return $user;
     }
 }

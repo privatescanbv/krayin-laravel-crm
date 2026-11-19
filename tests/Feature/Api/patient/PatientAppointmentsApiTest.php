@@ -44,8 +44,8 @@ test('patient appointments endpoint returns planned/approved orders as appointme
     ]);
 
     // Create two bookings; the earliest ResourceOrderItem.from determines clinic_id/clinic_label.
-    $futureOrderItem1 = OrderItem::factory()->create(['order_id' => $futureOrder->id]);
-    $futureOrderItem2 = OrderItem::factory()->create(['order_id' => $futureOrder->id]);
+    $futureOrderItem1 = OrderItem::factory()->create(['order_id' => $futureOrder->id, 'person_id' => $person->id]);
+    $futureOrderItem2 = OrderItem::factory()->create(['order_id' => $futureOrder->id, 'person_id' => $person->id]);
     ResourceOrderItem::factory()->create([
         'orderitem_id' => $futureOrderItem1->id,
         'resource_id'  => $resourceB->id,
@@ -69,7 +69,7 @@ test('patient appointments endpoint returns planned/approved orders as appointme
         'first_examination_at'  => now()->subDay(),
     ]);
 
-    $pastOrderItem = OrderItem::factory()->create(['order_id' => $pastOrder->id]);
+    $pastOrderItem = OrderItem::factory()->create(['order_id' => $pastOrder->id, 'person_id' => $person->id]);
     $pastBooking = ResourceOrderItem::factory()->create([
         'orderitem_id' => $pastOrderItem->id,
         'resource_id'  => $resourceB->id,
@@ -88,7 +88,7 @@ test('patient appointments endpoint returns planned/approved orders as appointme
         'pipeline_stage_id'     => PipelineStage::ORDER_WACHTEN_UITVOERING->id(),
         'first_examination_at'  => null,
     ]);
-    $slotOnlyItem = OrderItem::factory()->create(['order_id' => $slotOnlyOrder->id]);
+    $slotOnlyItem = OrderItem::factory()->create(['order_id' => $slotOnlyOrder->id, 'person_id' => $person->id]);
     $slotOnlyBooking = ResourceOrderItem::factory()->create([
         'orderitem_id' => $slotOnlyItem->id,
         'resource_id'  => $resourceA->id,
@@ -242,7 +242,7 @@ test('patient appointments endpoint supports future/past filter', function () {
         'first_examination_at' => now()->addHours(6),
     ]);
 
-    $futureOrderItem = OrderItem::factory()->create(['order_id' => $futureOrder->id]);
+    $futureOrderItem = OrderItem::factory()->create(['order_id' => $futureOrder->id, 'person_id' => $person->id]);
     $futureBooking = ResourceOrderItem::factory()->create([
         'orderitem_id' => $futureOrderItem->id,
         'resource_id'  => $resourceFuture->id,
@@ -258,7 +258,7 @@ test('patient appointments endpoint supports future/past filter', function () {
         'first_examination_at' => now()->subHours(6),
     ]);
 
-    $pastOrderItem = OrderItem::factory()->create(['order_id' => $pastOrder->id]);
+    $pastOrderItem = OrderItem::factory()->create(['order_id' => $pastOrder->id, 'person_id' => $person->id]);
     $pastBooking = ResourceOrderItem::factory()->create([
         'orderitem_id' => $pastOrderItem->id,
         'resource_id'  => $resourcePast->id,
@@ -354,7 +354,7 @@ test('ingepland order is shown as patient appointment', function () {
         'first_examination_at' => now()->addDay(),
     ]);
 
-    $orderItem = OrderItem::factory()->create(['order_id' => $ingeplandOrder->id]);
+    $orderItem = OrderItem::factory()->create(['order_id' => $ingeplandOrder->id, 'person_id' => $person->id]);
     $booking = ResourceOrderItem::factory()->create([
         'orderitem_id' => $orderItem->id,
         'resource_id'  => $resource->id,
@@ -390,7 +390,7 @@ function plannedOrderWithBookings(string $keycloakId, array $bookings): array
     foreach ($bookings as $booking) {
         $department = ClinicDepartment::factory()->create(['order_confirmation_note' => $booking['note']]);
         $resource = Resource::factory()->create(['clinic_department_id' => $department->id]);
-        $item = OrderItem::factory()->create(['order_id' => $order->id]);
+        $item = OrderItem::factory()->create(['order_id' => $order->id, 'person_id' => $person->id]);
         ResourceOrderItem::factory()->create([
             'orderitem_id' => $item->id,
             'resource_id'  => $resource->id,
@@ -456,14 +456,14 @@ test('clinic is resolved from the already-loaded booking, without a redundant ex
     $salesLead = SalesLead::factory()->create();
     $salesLead->persons()->attach($person->id);
 
-    $makeAppointment = function () use ($salesLead) {
+    $makeAppointment = function () use ($salesLead, $person) {
         $clinic = Clinic::factory()->create();
         $resource = Resource::factory()->create(['clinic_id' => $clinic->id]);
         $order = Order::factory()->create([
             'sales_lead_id'     => $salesLead->id,
             'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id(),
         ]);
-        $item = OrderItem::factory()->create(['order_id' => $order->id]);
+        $item = OrderItem::factory()->create(['order_id' => $order->id, 'person_id' => $person->id]);
         ResourceOrderItem::factory()->create([
             'orderitem_id' => $item->id,
             'resource_id'  => $resource->id,

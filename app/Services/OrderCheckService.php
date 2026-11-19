@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\ProductReports;
-use App\Models\ClinicDepartment;
 use App\Models\Order;
 use App\Models\OrderCheck;
 use App\Models\OrderItem;
@@ -14,6 +13,8 @@ use Webkul\Contact\Models\Person;
 
 class OrderCheckService
 {
+    public const BOOKING_RELATIONS = ['resource.clinicDepartment', 'resource.clinic.visitAddress', 'orderItem.order'];
+
     /**
      * Surface a non-removable order check so the user notices the purchase price could not be
      * resolved automatically (e.g. a non-plannable product with zero or multiple matching
@@ -51,19 +52,17 @@ class OrderCheckService
     /**
      * The first planned (not lost) booking on the appointment day, used as the order's primary
      * appointment (stable id, clinic, registration note). Falls back to the first not-lost
-     * booking overall when nothing is planned on that day. When $patient is given and the order
-     * is explicitly not combined, only that patient's own bookings are considered.
+     * booking overall when nothing is planned on that day. When $patient is given, only the
+     * bookings of that patient's own order items are considered (regardless of `combine_order`).
      */
     public function retrieveFirstBookingForOrder(Order $order, ?Person $patient): ?ResourceOrderItem
     {
         $query = fn () => ResourceOrderItem::query()
-            ->with(['resource:id,clinic_department_id', 'resource.clinicDepartment', 'resource.clinic.visitAddress'])
+            ->with(self::BOOKING_RELATIONS)
             ->whereHas('orderItem', function ($q) use ($order, $patient) {
                 $q->where('order_id', $order->id)->notLost();
 
-                // Only restrict to the patient's order items when the order is explicitly NOT combined.
-                // (Treat null as "combined", since legacy rows may have null here.)
-                if ($patient !== null && $order->combine_order === false) {
+                if ($patient !== null) {
                     $q->where('person_id', $patient->id);
                 }
             })
@@ -72,15 +71,6 @@ class OrderCheckService
         $day = $order->firstExaminationCarbon();
 
         return ($day ? $query()->onDate($day)->first() : null) ?? $query()->first();
-    }
-
-    /**
-     * Department of the first planned (not lost) booking on the appointment day.
-     * Falls back to the first not-lost booking overall when nothing is planned on that day.
-     */
-    public function retrieveClinicDepartmentFromOrder(Order $order, Person $patient): ?ClinicDepartment
-    {
-        return $this->retrieveFirstBookingForOrder($order, $patient)?->resource?->clinicDepartment;
     }
 
     /**

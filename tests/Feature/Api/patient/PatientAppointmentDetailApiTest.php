@@ -36,7 +36,7 @@ function makeAppointmentForPerson(Person $person, array $attributes = []): array
         'pipeline_stage_id' => PipelineStage::ORDER_INGEPLAND->id(),
         ...$attributes,
     ]);
-    $item = OrderItem::factory()->create(['order_id' => $order->id]);
+    $item = OrderItem::factory()->create(['order_id' => $order->id, 'person_id' => $person->id]);
     $booking = ResourceOrderItem::factory()->create([
         'orderitem_id' => $item->id,
         'resource_id'  => $resource->id,

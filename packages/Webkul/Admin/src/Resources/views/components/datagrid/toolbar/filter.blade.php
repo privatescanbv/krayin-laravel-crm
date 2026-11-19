@@ -216,6 +216,66 @@
                                                 <template v-else></template>
                                             </div>
 
+                                            <!-- Number range (van / tot) -->
+                                            <div v-else-if="column.filterable_type === 'number_range'">
+                                                <div class="flex items-center justify-between">
+                                                    <p
+                                                        class="text-xs font-medium text-gray-800 dark:text-white"
+                                                        v-text="column.label"
+                                                    >
+                                                    </p>
+
+                                                    <div
+                                                        class="flex items-center gap-x-1.5"
+                                                        @click="removeAppliedColumnAllValues(column.index)"
+                                                    >
+                                                        <p
+                                                            class="cursor-pointer text-xs font-medium leading-6 text-brandColor"
+                                                            v-if="hasAnyAppliedColumnValues(column.index)"
+                                                        >
+                                                            @lang('admin::app.components.datagrid.filters.custom-filters.clear-all')
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div class="mt-1.5 grid grid-cols-2 gap-1.5">
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        :name="`${column.index}[from]`"
+                                                        class="flex min-h-[39px] w-full rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
+                                                        placeholder="Van"
+                                                        @change="addFilter($event, column, { range: { name: 'from' } })"
+                                                    />
+
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        :name="`${column.index}[to]`"
+                                                        class="flex min-h-[39px] w-full rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
+                                                        placeholder="Tot"
+                                                        @change="addFilter($event, column, { range: { name: 'to' } })"
+                                                    />
+                                                </div>
+
+                                                <div class="mb-4 mt-1.5 flex flex-wrap gap-2">
+                                                    <p
+                                                        class="flex items-center rounded bg-gray-600 px-2 py-1 font-semibold text-white"
+                                                        v-if="findAppliedColumn(column.index)"
+                                                    >
+                                                        <span>
+                                                            @{{ getFormattedDates(findAppliedColumn(column.index)) }}
+                                                        </span>
+
+                                                        <span
+                                                            class="icon-cross-large cursor-pointer text-lg text-white ltr:ml-1.5 rtl:mr-1.5"
+                                                            @click="removeAppliedColumnValue(column.index)"
+                                                        >
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                            </div>
+
                                             <!-- Date -->
                                             <div v-else-if="column.type === 'date'">
                                                 <!-- Range -->
@@ -821,7 +881,7 @@
 
                                                             <div class="mb-4 flex flex-wrap gap-2">
                                                                 <!-- Date & Date Time Case -->
-                                                                <template v-if="column.type === 'date' || column.type === 'datetime'">
+                                                                <template v-if="column.type === 'date' || column.type === 'datetime' || available.columns.find(available => available.index === column.index)?.filterable_type === 'number_range'">
                                                                     <p class="flex items-center rounded bg-gray-600 px-2 py-1 font-semibold text-white">
                                                                         <span>
                                                                             @{{ getFormattedDates(column) }}
@@ -1232,7 +1292,8 @@
                         this.applyColumnValues(column, $event.target.value, additional);
 
                         const isDateRangeInput = ['date', 'datetime'].includes(column?.type)
-                            && ['date_range', 'datetime_range'].includes(column?.filterable_type);
+                            && ['date_range', 'datetime_range'].includes(column?.filterable_type)
+                            || column?.filterable_type === 'number_range';
 
                         if (column && ! isDateRangeInput) {
                             $event.target.value = '';
@@ -1286,7 +1347,8 @@
                         return;
                     }
 
-                    switch (column.type) {
+                    // A number range behaves like a date range: a single [from, to] tuple.
+                    switch (column.filterable_type === 'number_range' ? 'date' : column.type) {
                         case 'date':
                         case 'datetime':
                             let { range } = additional;
@@ -1372,6 +1434,14 @@
                         return '';
                     }
 
+                    const isNumberRange = this.available.columns.find(column => column.index === appliedColumn.index)?.filterable_type === 'number_range';
+
+                    if (isNumberRange) {
+                        const [from, to] = this.normalizeDateRangeValue(appliedColumn.value);
+
+                        return [from !== '' ? `van ${from}` : '', to !== '' ? `tot ${to}` : ''].filter(Boolean).join(' ');
+                    }
+
                     if (typeof appliedColumn.value === 'string') {
                         const availableColumn = this.available.columns.find(column => column.index === appliedColumn.index);
 
@@ -1408,7 +1478,7 @@
                  * @returns {boolean}
                  */
                 hasAnyValue(column) {
-                    if (column.type === 'date' || column.type === 'datetime') {
+                    if (column.type === 'date' || column.type === 'datetime' || this.available.columns.find(available => available.index === column.index)?.filterable_type === 'number_range') {
                         if (typeof column.value === 'string') {
                             return column.value !== '';
                         }
@@ -1582,7 +1652,8 @@
                     }
 
                     const availableColumn = this.available.columns.find(column => column.index === columnIndex);
-                    const isDateColumn = appliedColumn.type === 'date'
+                    const isDateColumn = availableColumn?.filterable_type === 'number_range'
+                        || appliedColumn.type === 'date'
                         || appliedColumn.type === 'datetime'
                         || availableColumn?.type === 'date'
                         || availableColumn?.type === 'datetime';

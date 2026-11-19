@@ -88,6 +88,8 @@ services:
     volumes:
       - '.:/usr/share/nginx/html'
       - './certs:/certs:ro'
+      # Lokale CA, zodat server-side calls naar https://sso.local.privatescan.nl slagen.
+      - '${LOCAL_DEV_CA_DIR:-${HOME}/.local-dev-ca}/rootCA.pem:/usr/local/share/ca-certificates/local-dev-ca.crt:ro'
       - './crm_storage:/usr/share/nginx/html/storage/app'
     extra_hosts:
       - "clinicdev.local.privatescan.nl:host-gateway"

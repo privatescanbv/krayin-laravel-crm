@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Actions\Activities\CreateActivityForSalesLeadAction;
-use App\Actions\Clinic\SendClinicForgotPasswordMailAction;
 use App\Enums\ActivityType;
 use App\Enums\PipelineDefaultKeys;
-use App\Enums\RoleCode;
+use App\Http\Controllers\Api\Concerns\ResolvesClinicDoctor;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\ClinicSalesLeadIndexRequest;
 use App\Http\Requests\Api\ClinicSalesLeadStageRequest;
@@ -32,6 +31,8 @@ use Webkul\User\Models\User;
  */
 class ClinicSalesLeadController extends Controller
 {
+    use ResolvesClinicDoctor;
+
     /**
      * Stages (kanban columns) of the Herniapoli sales pipeline that the user's role may see.
      * A stage without role restrictions is visible to every role.
@@ -221,17 +222,5 @@ class ClinicSalesLeadController extends Controller
         }
 
         return new ClinicSalesLeadResource(SalesLead::query()->withStageEnteredAt()->with('persons')->findOrFail($sale->id));
-    }
-
-    private function doctor(string $keycloakUserId): User
-    {
-        $user = SendClinicForgotPasswordMailAction::clinicUsers()
-            ->where('keycloak_user_id', $keycloakUserId)
-            ->with('role')
-            ->firstOrFail();
-
-        abort_unless($user->role?->code === RoleCode::ARTS, 403);
-
-        return $user;
     }
 }

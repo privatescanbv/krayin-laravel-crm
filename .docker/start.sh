@@ -26,6 +26,11 @@ mkdir -p \
     storage/framework/testing \
     storage/logs \
     bootstrap/cache
+# Lokale dev-CA (docker-compose.yml) in de trust store, voor calls naar *.local.privatescan.nl.
+if [ -f /usr/local/share/ca-certificates/local-dev-ca.crt ]; then
+    update-ca-certificates >/dev/null 2>&1 || true
+fi
+
 php artisan config:clear
 php artisan optimize:clear
 php artisan config:cache

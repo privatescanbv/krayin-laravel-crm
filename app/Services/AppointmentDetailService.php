@@ -9,8 +9,11 @@ use App\Models\ProductType;
 use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
 use App\Support\AppointmentReference;
+use Closure;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Webkul\Contact\Models\Person;
 
 /**
  * Builds the afspraak-detail payload shared by the patient and clinic portal
@@ -18,6 +21,43 @@ use Illuminate\Support\Collection;
  */
 class AppointmentDetailService
 {
+    public function __construct(private readonly OrderCheckService $orderCheckService) {}
+
+    /**
+     * Resolves an appointment id (booking id or legacy `order-{id}`) to its order and booking,
+     * aborting with 404 when unknown or outside the caller's scope.
+     *
+     * @param  Closure(Builder): mixed  $orderScope  restricts the orders the caller may see
+     * @param  Person|null  $patient  when given, only that person's own order items/bookings are visible
+     * @return array{0: Order, 1: ResourceOrderItem|null}
+     */
+    public function resolve(string $appointmentId, Closure $orderScope, ?Person $patient = null): array
+    {
+        ['bookingId' => $bookingId, 'orderId' => $orderId] = AppointmentReference::decode($appointmentId);
+
+        if ($bookingId !== null) {
+            $booking = ResourceOrderItem::query()
+                ->with(OrderCheckService::BOOKING_RELATIONS)
+                ->whereHas('orderItem', function ($q) use ($orderScope, $patient) {
+                    $q->whereHas('order', $orderScope)
+                        ->when($patient, fn ($q) => $q->where('person_id', $patient->id));
+                })
+                ->find($bookingId);
+
+            abort_if($booking === null, 404);
+
+            return [$booking->orderItem->order, $booking];
+        }
+
+        abort_if($orderId === null, 404);
+
+        $order = Order::query()->where($orderScope)->find($orderId);
+
+        abort_if($order === null, 404);
+
+        return [$order, $this->orderCheckService->retrieveFirstBookingForOrder($order, $patient)];
+    }
+
     /**
      * @return array{
      *     id: string,
@@ -30,7 +70,7 @@ class AppointmentDetailService
      *     items: Collection<int, OrderItem>,
      * }
      */
-    public function build(Order $order, ?ResourceOrderItem $booking): array
+    public function build(Order $order, ?ResourceOrderItem $booking, ?Person $patient = null): array
     {
         $order->loadMissing([
             'salesLead',
@@ -40,7 +80,9 @@ class AppointmentDetailService
             'orderItems.person',
         ]);
 
-        $items = $this->itemsForBooking($order, $booking);
+        // An appointment belongs to one person: the patient themself, or the booking's owner for the clinic.
+        $personId = $patient?->id ?? $booking?->orderItem?->person_id;
+        $items = $this->itemsForBooking($order, $booking, $personId);
         $department = $booking?->resource?->clinicDepartment;
 
         return [
@@ -57,14 +99,16 @@ class AppointmentDetailService
 
     /**
      * Order items booked into the same slot as $booking (same `from`): a visit can bundle
-     * several products at once. Falls back to every active item when there is no booking yet,
-     * or none shares its slot.
+     * several products at once. Only items of $personId (when known). Falls back to every
+     * (person-scoped) active item when there is no booking yet, or none shares its slot.
      *
      * @return Collection<int, OrderItem>
      */
-    private function itemsForBooking(Order $order, ?ResourceOrderItem $booking): Collection
+    private function itemsForBooking(Order $order, ?ResourceOrderItem $booking, ?int $personId): Collection
     {
-        $activeItems = $order->orderItems;
+        $activeItems = $personId === null
+            ? $order->orderItems
+            : $order->orderItems->where('person_id', $personId);
 
         if ($booking === null) {
             return $activeItems->values();

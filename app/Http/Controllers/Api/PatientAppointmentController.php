@@ -2,22 +2,17 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\AppointmentTimeFilter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\PatientAppointmentsIndexRequest;
 use App\Http\Resources\AppointmentDetailResource;
 use App\Http\Resources\PatientPortalAppointmentResource;
 use App\Models\Order;
-use App\Models\ResourceOrderItem;
 use App\Repositories\OrderRepository;
 use App\Services\AppointmentDetailService;
 use App\Services\Keycloak\KeycloakService;
 use App\Services\OrderCheckService;
-use App\Support\AppointmentReference;
-use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
 use Webkul\Contact\Models\Person;
 
 class PatientAppointmentController extends Controller
@@ -62,13 +57,15 @@ class PatientAppointmentController extends Controller
         $page = (int) ($request->query('page', 1));
         $now = now();
 
-        $items = $this->collectOrderItems($person, $filter, $now)
-            ->sortBy('sort_at')
+        $orders = $this->orderRepository
+            ->getPatientAppointmentOrdersForPerson($person, $filter, $now)
+            ->sortBy(fn (Order $order) => $order->firstExaminationCarbon())
             ->values();
 
+        // Resolve booking/clinic only for the requested page (1-2 queries per order).
         $paginator = new LengthAwarePaginator(
-            $items->forPage($page, $perPage),
-            $items->count(),
+            $orders->forPage($page, $perPage)->map(fn (Order $order) => $this->appointmentPayload($order, $person))->values(),
+            $orders->count(),
             $perPage,
             $page,
             ['path' => $request->url(), 'query' => $request->query()],
@@ -94,49 +91,31 @@ class PatientAppointmentController extends Controller
 
         abort_if($person === null, 404);
 
-        ['bookingId' => $bookingId, 'orderId' => $orderId] = AppointmentReference::decode($appointmentId);
+        [$order, $booking] = $this->appointmentDetailService->resolve(
+            $appointmentId,
+            fn ($q) => $q->forPerson($person),
+            $person,
+        );
 
-        if ($bookingId !== null) {
-            $booking = ResourceOrderItem::query()
-                ->with(['resource.clinicDepartment', 'resource.clinic.visitAddress', 'orderItem.order'])
-                ->whereHas('orderItem.order', fn ($q) => $q->forPerson($person))
-                ->find($bookingId);
-
-            abort_if($booking === null, 404);
-
-            $order = $booking->orderItem->order;
-        } elseif ($orderId !== null) {
-            $order = Order::forPerson($person)->find($orderId);
-
-            abort_if($order === null, 404);
-
-            $booking = $this->orderCheckService->retrieveFirstBookingForOrder($order, $person);
-        } else {
-            abort(404);
-        }
-
-        return new AppointmentDetailResource($this->appointmentDetailService->build($order, $booking));
+        return new AppointmentDetailResource($this->appointmentDetailService->build($order, $booking, $person));
     }
 
     /**
-     * Collect order-based appointment items for a person.
+     * Payload for {@see PatientPortalAppointmentResource}.
+     *
+     * @return array<string, mixed>
      */
-    private function collectOrderItems(Person $person, ?AppointmentTimeFilter $filter, Carbon $now): Collection
+    private function appointmentPayload(Order $order, Person $person): array
     {
-        return $this->orderRepository
-            ->getPatientAppointmentOrdersForPerson($person, $filter, $now)
-            ->map(function (Order $order) use ($person) {
-                $booking = $this->orderCheckService->retrieveFirstBookingForOrder($order, $person);
-                $department = $booking?->resource?->clinicDepartment;
+        $booking = $this->orderCheckService->retrieveFirstBookingForOrder($order, $person);
+        $department = $booking?->resource?->clinicDepartment;
 
-                return [
-                    'sort_at'    => $order->firstExaminationCarbon(),
-                    'order'      => $order,
-                    'booking'    => $booking,
-                    'clinic'     => $booking?->resource?->clinic,
-                    'department' => $department,
-                    'person'     => $person,
-                ];
-            });
+        return [
+            'order'      => $order,
+            'booking'    => $booking,
+            'clinic'     => $booking?->resource?->clinic,
+            'department' => $department,
+            'person'     => $person,
+        ];
     }
 }

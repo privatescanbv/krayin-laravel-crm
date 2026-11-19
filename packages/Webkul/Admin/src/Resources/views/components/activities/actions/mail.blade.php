@@ -530,8 +530,9 @@
                     if (window.tinymce) {
                         try {
                             const editor = window.tinymce.get('reply');
-                            if (editor && !editor.removed) {
-                                // Editor exists and is not removed, set content
+                            // Wacht tot de editor volledig geïnitialiseerd is: content die eerder gezet
+                            // wordt, overschrijft TinyMCE bij het afronden van de init (bv. trage Edge/Windows).
+                            if (editor && !editor.removed && editor.initialized) {
                                 editor.setContent(html);
                                 return;
                             }

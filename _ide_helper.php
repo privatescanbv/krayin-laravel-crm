@@ -5,7 +5,7 @@
 
 /**
  * A helper file for Laravel, to provide autocomplete information to your IDE
- * Generated for Laravel 13.42.0.
+ * Generated for Laravel 13.40.0.
  *
  * This file should not be included in your code, only analyzed by your IDE!
  *
@@ -3730,7 +3730,7 @@ namespace Illuminate\Support\Facades {
          * Get an Ably instance for the given configuration.
          *
          * @param array $config
-         * @return \Ably\PubSub\PubSubHttpClient|\Ably\AblyRest
+         * @return \Ably\AblyRest
          * @static
          */
         public static function ably($config)
@@ -16646,34 +16646,6 @@ namespace Illuminate\Support\Facades {
         }
 
         /**
-         * Retrieve data from the instance as a UUID instance.
-         *
-         * @param string $key
-         * @return \Ramsey\Uuid\UuidInterface|null
-         * @throws \Ramsey\Uuid\Exception\InvalidUuidStringException
-         * @static
-         */
-        public static function uuid($key)
-        {
-            /** @var \Illuminate\Http\Request $instance */
-            return $instance->uuid($key);
-        }
-
-        /**
-         * Retrieve data from the instance as a ULID instance.
-         *
-         * @param string $key
-         * @return \Symfony\Component\Uid\Ulid|null
-         * @throws \InvalidArgumentException
-         * @static
-         */
-        public static function ulid($key)
-        {
-            /** @var \Illuminate\Http\Request $instance */
-            return $instance->ulid($key);
-        }
-
-        /**
          * Retrieve data from the instance as an enum.
          *
          * @template TEnum of \BackedEnum
@@ -27847,6 +27819,16 @@ namespace Illuminate\Database\Query {
             return \Illuminate\Database\Query\Builder::getFillable();
         }
 
+            }
+    }
+
+namespace Illuminate\Database\Eloquent {
+    /**
+     * @template TKey of array-key
+     * @template TModel of \Illuminate\Database\Eloquent\Model
+     * @extends \Illuminate\Support\Collection<TKey, TModel>
+     */
+    class Collection extends \Illuminate\Support\Collection {
             }
     }
 

@@ -667,6 +667,17 @@ namespace App\Models{
  * `key` is only set for the system types recognized in code (see KEY_* constants below);
  * it is immutable and the admin screen never exposes it as an editable field.
  *
+ * @property int $id
+ * @property string|null $key Immutable; only set for system types recognized in code
+ * @property string $name
+ * @property string|null $description
+ * @property bool $show_in_clinic_portal
+ * @property bool $show_in_patient_portal
+ * @property int $sort_order
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property int|null $created_by
+ * @property int|null $updated_by
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Webkul\Activity\Models\Activity> $activities
  * @property-read int|null $activities_count
  * @property-read \Webkul\User\Models\User|null $creator
@@ -677,6 +688,17 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType ordered()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType whereKey($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType whereShowInClinicPortal($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType whereShowInPatientPortal($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType whereSortOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DocumentType whereUpdatedBy($value)
  * @mixin \Eloquent
  */
 	#[\AllowDynamicProperties]

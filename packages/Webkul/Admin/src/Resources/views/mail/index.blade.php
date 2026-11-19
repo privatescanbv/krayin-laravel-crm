@@ -449,6 +449,7 @@
                         ref="toggleComposeModal"
                         position="center"
                         size="large"
+                        :draggable="true"
                         @toggle="removeTinyMCE"
                     >
                         <x-slot:header>

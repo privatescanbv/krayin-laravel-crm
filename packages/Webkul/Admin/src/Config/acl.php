@@ -398,6 +398,26 @@ return [
         'route' => ['admin.settings.product_types.delete'],
         'sort'  => 3,
     ], [
+        'key'   => 'settings.document_types',
+        'name'  => 'admin::app.layouts.document_types',
+        'route' => 'admin.settings.document_types.index',
+        'sort'  => 2,
+    ], [
+        'key'   => 'settings.document_types.create',
+        'name'  => 'admin::app.acl.create',
+        'route' => ['admin.settings.document_types.create', 'admin.settings.document_types.store'],
+        'sort'  => 1,
+    ], [
+        'key'   => 'settings.document_types.edit',
+        'name'  => 'admin::app.acl.edit',
+        'route' => ['admin.settings.document_types.edit', 'admin.settings.document_types.update'],
+        'sort'  => 2,
+    ], [
+        'key'   => 'settings.document_types.delete',
+        'name'  => 'admin::app.acl.delete',
+        'route' => ['admin.settings.document_types.delete'],
+        'sort'  => 3,
+    ], [
         'key'   => 'settings.lead',
         'name'  => 'admin::app.acl.lead',
         'route' => ['admin.settings.pipelines.index', 'admin.settings.sources.index', 'admin.settings.types.index', 'admin.settings.assessment_outcomes.index'],

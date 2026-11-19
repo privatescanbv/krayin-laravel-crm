@@ -67,16 +67,14 @@ class PatientDocumentResource extends JsonResource
             }
         }
 
-        $documentType = data_get($activity?->additional, 'document_type')
-            ?? data_get($activity?->additional, 'type')
-            ?? 'file';
+        $documentType = $activity?->documentType;
 
         $title = (string) ($activity?->title ?: $file->name);
 
         return [
             'id'           => (int) $file->id,
             'patient_id'   => $patientId,
-            'type'         => (string) $documentType,
+            'type'         => $documentType ? ['id' => $documentType->id, 'label' => $documentType->name] : null,
             'group'        => $group,
             'title'        => $title,
             'description'  => $description,

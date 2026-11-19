@@ -36,7 +36,7 @@ it('stores confirmation PDF as activity and creates patient notification', funct
 
     $response->assertOk();
     $response->assertJsonPath('meta.total', 1);
-    $response->assertJsonPath('data.0.type', 'order_confirmation');
+    $response->assertJsonPath('data.0.type.label', 'Financieel');
 
     // Verify patient notification was created
     $notification = PatientNotification::where('patient_id', $person->id)->first();

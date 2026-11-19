@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ActivityType;
+use App\Models\DocumentType;
 use App\Models\Order;
 use Illuminate\Support\Facades\Storage;
 use Webkul\Activity\Models\Activity;
@@ -54,14 +55,12 @@ function createMissingConfirmationPdfFile(array $orderAttributes = []): array
     ], $orderAttributes));
 
     $activity = Activity::query()->create([
-        'title'      => 'Orderbevestiging PDF',
-        'type'       => ActivityType::FILE,
-        'comment'    => 'Automatisch gegenereerde orderbevestiging',
-        'is_done'    => true,
-        'order_id'   => $order->id,
-        'additional' => [
-            'document_type' => 'order_confirmation',
-        ],
+        'title'            => 'Orderbevestiging PDF',
+        'type'             => ActivityType::FILE,
+        'comment'          => 'Automatisch gegenereerde orderbevestiging',
+        'is_done'          => true,
+        'order_id'         => $order->id,
+        'document_type_id' => DocumentType::idForKey(DocumentType::KEY_FINANCIAL),
     ]);
 
     $fileName = 'order-bevestiging-'.$order->id.'-'.now()->format('Y-m-d').'.pdf';

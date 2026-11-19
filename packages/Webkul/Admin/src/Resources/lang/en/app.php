@@ -122,13 +122,14 @@ return [
                 ],
 
                 'file' => [
-                    'btn'           => 'File',
-                    'title'         => 'Add File',
-                    'title-control' => 'Title',
-                    'name'          => 'Name',
-                    'description'   => 'Description',
-                    'file'          => 'File',
-                    'save-btn'      => 'Save File',
+                    'btn'                  => 'File',
+                    'title'                => 'Add File',
+                    'title-control'        => 'Title',
+                    'name'                 => 'Name',
+                    'description'          => 'Description',
+                    'file'                 => 'File',
+                    'select-document-type' => 'Select a document type',
+                    'save-btn'             => 'Save File',
                 ],
 
                 'note' => [
@@ -874,6 +875,50 @@ return [
                     'name'        => 'Name',
                     'description' => 'Description',
                     'save-btn'    => 'Save',
+                ],
+            ],
+        ],
+
+        'document_types' => [
+            'index' => [
+                'title'           => 'Document Types',
+                'create-btn'      => 'Add Document Type',
+                'create-success'  => 'Document type created successfully.',
+                'update-success'  => 'Document type updated successfully.',
+                'destroy-success' => 'Document type deleted successfully.',
+                'delete-failed'   => 'Failed to delete document type.',
+                'in-use'          => 'This document type is a system type or still has documents and cannot be deleted.',
+
+                'datagrid' => [
+                    'id'                      => 'ID',
+                    'name'                    => 'Name',
+                    'show_in_clinic_portal'   => 'Clinic portal',
+                    'show_in_patient_portal'  => 'Patient portal',
+                    'sort_order'              => 'Order',
+                    'documents_count'         => 'Documents',
+                    'edit'                    => 'Edit',
+                    'delete'                  => 'Delete',
+                ],
+
+                'edit' => [
+                    'title'                   => 'Edit Document Type',
+                    'name'                    => 'Name',
+                    'description'             => 'Description',
+                    'show_in_clinic_portal'   => 'Show in clinic portal',
+                    'show_in_patient_portal'  => 'Show in patient portal',
+                    'sort_order'              => 'Order',
+                    'key'                     => 'System key',
+                    'save-btn'                => 'Save',
+                ],
+
+                'create' => [
+                    'title'                   => 'Create Document Type',
+                    'name'                    => 'Name',
+                    'description'             => 'Description',
+                    'show_in_clinic_portal'   => 'Show in clinic portal',
+                    'show_in_patient_portal'  => 'Show in patient portal',
+                    'sort_order'              => 'Order',
+                    'save-btn'                => 'Save',
                 ],
             ],
         ],
@@ -2642,6 +2687,8 @@ return [
         'partner_products-info'=> 'Manage partner products',
         'assessment_outcomes'      => 'Assessment outcomes',
         'assessment_outcomes-info' => 'Manage Herniapoli assessment outcomes',
+        'document_types'           => 'Document Types',
+        'document_types-info'      => 'Manage document types for the clinic and patient portal',
         'resource_types'       => 'Resource Types',
         'resource_types-info'  => 'Manage resource types',
         'product_types'        => 'Product Types',

@@ -120,13 +120,14 @@ return [
                     'message'      => 'Bericht',
                 ],
                 'file' => [
-                    'btn'           => 'Bestand',
-                    'title'         => 'Bestand toevoegen',
-                    'title-control' => 'Titel',
-                    'name'          => 'Naam',
-                    'description'   => 'Beschrijving',
-                    'file'          => 'Bestand',
-                    'save-btn'      => 'Bestand opslaan',
+                    'btn'                  => 'Bestand',
+                    'title'                => 'Bestand toevoegen',
+                    'title-control'        => 'Titel',
+                    'name'                 => 'Naam',
+                    'description'          => 'Beschrijving',
+                    'file'                 => 'Bestand',
+                    'select-document-type' => 'Selecteer een documenttype',
+                    'save-btn'             => 'Bestand opslaan',
                 ],
                 'note' => [
                     'btn'         => 'Notitie',
@@ -1770,6 +1771,50 @@ return [
                 'save-btn'   => 'Opslaan',
             ],
         ],
+        'document_types' => [
+            'index' => [
+                'title'           => 'Documenttypen',
+                'create-btn'      => 'Documenttype toevoegen',
+                'create-success'  => 'Documenttype succesvol aangemaakt.',
+                'update-success'  => 'Documenttype succesvol bijgewerkt.',
+                'destroy-success' => 'Documenttype succesvol verwijderd.',
+                'delete-failed'   => 'Verwijderen van documenttype mislukt.',
+                'in-use'          => 'Dit documenttype is een systeemtype of heeft nog documenten en kan niet verwijderd worden.',
+
+                'datagrid' => [
+                    'id'                      => 'ID',
+                    'name'                    => 'Naam',
+                    'show_in_clinic_portal'   => 'Kliniekportaal',
+                    'show_in_patient_portal'  => 'Patiëntportaal',
+                    'sort_order'              => 'Volgorde',
+                    'documents_count'         => 'Aantal documenten',
+                    'edit'                    => 'Bewerken',
+                    'delete'                  => 'Verwijderen',
+                ],
+
+                'edit' => [
+                    'title'                   => 'Documenttype bewerken',
+                    'name'                    => 'Naam',
+                    'description'             => 'Omschrijving',
+                    'show_in_clinic_portal'   => 'Tonen in kliniekportaal',
+                    'show_in_patient_portal'  => 'Tonen in patiëntportaal',
+                    'sort_order'              => 'Volgorde',
+                    'key'                     => 'Systeemsleutel',
+                    'save-btn'                => 'Opslaan',
+                ],
+
+                'create' => [
+                    'title'                   => 'Documenttype aanmaken',
+                    'name'                    => 'Naam',
+                    'description'             => 'Omschrijving',
+                    'show_in_clinic_portal'   => 'Tonen in kliniekportaal',
+                    'show_in_patient_portal'  => 'Tonen in patiëntportaal',
+                    'sort_order'              => 'Volgorde',
+                    'save-btn'                => 'Opslaan',
+                ],
+            ],
+        ],
+
         'assessment_outcomes' => [
             'index' => [
                 'title'           => 'Uitkomsten beoordeling',
@@ -2642,6 +2687,8 @@ return [
         'partner_products'      => 'Partnerproducten',
         'partner_products-info' => 'Beheer partnerproducten',
         'assessment_outcomes'      => 'Uitkomst beoordeling',
+        'document_types'           => 'Documenttypen',
+        'document_types-info'      => 'Beheer documenttypen voor het kliniek- en patiëntportaal',
         'assessment_outcomes-info' => 'Beheer de uitkomsten van de Herniapoli-beoordeling',
         'resource_types'        => 'Resource types',
         'resource_types-info'   => 'Beheer resource types',

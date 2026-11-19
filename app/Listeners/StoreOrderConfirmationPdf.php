@@ -6,6 +6,7 @@ use App\Enums\ActivityType;
 use App\Enums\NotificationReferenceType;
 use App\Events\OrderMarkedAsSent;
 use App\Events\PatientNotifyEvent;
+use App\Models\DocumentType;
 use App\Models\Order;
 use App\Services\Storage\DocumentStorage;
 use Illuminate\Support\Facades\Log;
@@ -62,9 +63,7 @@ class StoreOrderConfirmationPdf
             'is_done'           => true,
             'user_id'           => $userId,
             'order_id'          => $order->id,
-            'additional'        => [
-                'document_type' => 'order_confirmation',
-            ],
+            'document_type_id'  => DocumentType::idForKey(DocumentType::KEY_FINANCIAL),
         ]);
 
         $fileName = 'order-bevestiging-'.$order->id.'-'.date('Y-m-d').'.pdf';

@@ -6,6 +6,7 @@ use App\Enums\ActivityType;
 use App\Enums\NotificationReferenceType;
 use App\Events\OrderMarkedAsSent;
 use App\Events\PatientNotifyEvent;
+use App\Models\DocumentType;
 use App\Models\Order;
 use App\Models\OrderPersonConfirmation;
 use App\Repositories\OrderRepository;
@@ -449,7 +450,7 @@ class OrderConfirmationController extends Controller
             'user_id'           => $userId,
             'order_id'          => $order->id,
             'person_id'         => $person->id,
-            'additional'        => ['document_type' => 'order_confirmation'],
+            'document_type_id'  => DocumentType::idForKey(DocumentType::KEY_FINANCIAL),
         ]);
 
         $fileName = 'order-bevestiging-'.$order->id.'-'.$person->id.'-'.date('Y-m-d').'.pdf';

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\ActivityType;
 use App\Http\Controllers\Controller;
+use App\Models\DocumentType;
 use App\Services\Keycloak\KeycloakService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -66,6 +67,7 @@ class PatientFileUploadController extends Controller
             'type'               => ActivityType::FILE->value,
             'is_done'            => false,
             'file'               => $request->file('file'),
+            'document_type_id'   => DocumentType::idForKey(DocumentType::KEY_OWN_UPLOAD),
         ]);
 
         $activity->update(['person_id' => $person->id]);

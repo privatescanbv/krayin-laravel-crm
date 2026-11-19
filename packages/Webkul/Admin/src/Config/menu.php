@@ -342,6 +342,14 @@ return [
         'route'      => 'admin.settings.tags.index',
         'sort'       => 1,
         'icon-class' => 'icon-settings-tag',
+    ], [
+        'key'        => 'settings.other_settings.document_types',
+        'acl'        => 'settings.document_types',
+        'name'       => 'admin::app.layouts.document_types',
+        'info'       => 'admin::app.layouts.document_types-info',
+        'route'      => 'admin.settings.document_types.index',
+        'sort'       => 2,
+        'icon-class' => 'icon-setting',
     ],
 
     /**

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\DocumentType;
 use App\Models\Order;
 use App\Models\SalesLead;
 use Illuminate\Support\Facades\Storage;
@@ -32,29 +33,31 @@ it('returns paginated documents for a patient', function () {
         'sales_lead_id' => $salesLead->id,
     ]);
 
+    $documentType = DocumentType::factory()->create(['name' => 'MRI uitslagen test', 'show_in_patient_portal' => true]);
+
     // should not be visible: no portal persons
     /** @var Activity $activity */
     $activity1 = Activity::query()->create([
-        'title'         => 'MRI uitslag knie',
-        'type'          => 'file',
-        'comment'       => null,
-        'schedule_from' => now(),
-        'schedule_to'   => now(),
-        'is_done'       => 1,
-        'order_id'      => $order->id,
-        'additional'    => ['document_type' => 'report'],
+        'title'            => 'MRI uitslag knie',
+        'type'             => 'file',
+        'comment'          => null,
+        'schedule_from'    => now(),
+        'schedule_to'      => now(),
+        'is_done'          => 1,
+        'order_id'         => $order->id,
+        'document_type_id' => $documentType->id,
     ]);
 
     /** @var Activity $activity */
     $activity = Activity::query()->create([
-        'title'         => 'MRI uitslag knie',
-        'type'          => 'file',
-        'comment'       => null,
-        'schedule_from' => now(),
-        'schedule_to'   => now(),
-        'is_done'       => 1,
-        'order_id'      => $order->id,
-        'additional'    => ['document_type' => 'report'],
+        'title'            => 'MRI uitslag knie',
+        'type'             => 'file',
+        'comment'          => null,
+        'schedule_from'    => now(),
+        'schedule_to'      => now(),
+        'is_done'          => 1,
+        'order_id'         => $order->id,
+        'document_type_id' => $documentType->id,
     ]);
     $activity->portalPersons()->attach($person->id);
 
@@ -97,7 +100,8 @@ it('returns paginated documents for a patient', function () {
     $response->assertJsonPath('meta.total', 1);
     $response->assertJsonPath('data.0.id', $file->id);
     $response->assertJsonPath('data.0.patient_id', $person->id);
-    $response->assertJsonPath('data.0.type', 'report');
+    $response->assertJsonPath('data.0.type.id', $documentType->id);
+    $response->assertJsonPath('data.0.type.label', 'MRI uitslagen test');
     $response->assertJsonPath('data.0.title', 'MRI uitslag knie');
     $response->assertJsonPath('data.0.file_name', 'mri-knie-uitslag.pdf');
 
@@ -138,13 +142,17 @@ it('forbids accessing another patient documents with a keycloak token', function
 
 function makeFileActivity(array $attrs = [], array $portalPersonIds = []): Activity
 {
+    if (! isset($attrs['document_type_id'])) {
+        $attrs['document_type_id'] = DocumentType::query()->where('show_in_patient_portal', true)->value('id')
+            ?? DocumentType::factory()->create(['show_in_patient_portal' => true])->id;
+    }
+
     $activity = Activity::query()->create(array_merge([
         'title'         => 'Test Document',
         'type'          => 'file',
         'schedule_from' => now(),
         'schedule_to'   => now(),
         'is_done'       => 1,
-        'additional'    => ['document_type' => 'report'],
     ], $attrs));
 
     if (! empty($portalPersonIds)) {
@@ -374,4 +382,77 @@ it('per-person portal visibility: person B cannot see person A documents on same
     );
     $responseB->assertOk();
     $responseB->assertJsonPath('meta.total', 0);
+});
+
+it('hides a document whose type is not visible in the patient portal, even when published', function () {
+    config(['api.keys' => ['test-api-key']]);
+
+    $keycloakUserId = (string) Str::uuid();
+    $person = Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
+
+    $hiddenType = DocumentType::factory()->create(['show_in_patient_portal' => false]);
+
+    $activity = makeFileActivity(['person_id' => $person->id, 'document_type_id' => $hiddenType->id], [$person->id]);
+    $file = makeFileRecord($activity);
+
+    $indexResponse = $this->getJson(
+        "/api/patient/{$keycloakUserId}/documents",
+        ['X-API-KEY' => 'test-api-key']
+    );
+    $indexResponse->assertOk();
+    $indexResponse->assertJsonPath('meta.total', 0);
+
+    $downloadResponse = $this->getJson(
+        "/api/patient/{$keycloakUserId}/documents/{$file->id}/download",
+        ['X-API-KEY' => 'test-api-key']
+    );
+    $downloadResponse->assertNotFound();
+});
+
+it('type filter scopes documents to one or more document types and ignores non-patient-visible ids', function () {
+    config(['api.keys' => ['test-api-key']]);
+
+    $keycloakUserId = (string) Str::uuid();
+    $person = Person::factory()->create(['keycloak_user_id' => $keycloakUserId]);
+
+    $typeA = DocumentType::factory()->create(['show_in_patient_portal' => true]);
+    $typeB = DocumentType::factory()->create(['show_in_patient_portal' => true]);
+    $hiddenType = DocumentType::factory()->create(['show_in_patient_portal' => false]);
+
+    $activityA = makeFileActivity(['person_id' => $person->id, 'document_type_id' => $typeA->id], [$person->id]);
+    $fileA = makeFileRecord($activityA, 'a.pdf');
+
+    makeFileActivity(['person_id' => $person->id, 'document_type_id' => $typeB->id], [$person->id]);
+
+    // A file of the hidden type must never leak in, even if its id is requested explicitly.
+    $response = $this->getJson(
+        "/api/patient/{$keycloakUserId}/documents?type={$typeA->id},{$hiddenType->id}",
+        ['X-API-KEY' => 'test-api-key']
+    );
+
+    $response->assertOk();
+    $response->assertJsonPath('meta.total', 1);
+    $response->assertJsonPath('data.0.id', $fileA->id);
+});
+
+it('lists only patient-visible document types', function () {
+    config(['api.keys' => ['test-api-key']]);
+
+    $keycloakUserId = (string) Str::uuid();
+    Person::factory()->create(['keycloak_user_id' => $keycloakUserId, 'is_active' => true]);
+
+    $visible = DocumentType::factory()->create(['name' => 'Rontgenfoto test', 'show_in_patient_portal' => true, 'sort_order' => 1]);
+    DocumentType::factory()->create(['name' => 'Financieel intern', 'show_in_patient_portal' => false]);
+
+    $response = $this->getJson(
+        "/api/patient/{$keycloakUserId}/document-types",
+        ['X-API-KEY' => 'test-api-key']
+    );
+
+    $response->assertOk();
+    $ids = collect($response->json('data'))->pluck('id');
+
+    expect($ids)->toContain($visible->id);
+
+    $response->assertJsonFragment(['id' => $visible->id, 'label' => 'Rontgenfoto test']);
 });

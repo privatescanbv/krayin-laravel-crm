@@ -10,6 +10,7 @@ use App\Enums\WebhookType;
 use App\Http\Controllers\Concerns\HandlesReturnUrl;
 use App\Models\ActivityAction;
 use App\Models\Department;
+use App\Models\DocumentType;
 use App\Models\Order;
 use App\Models\SalesLead;
 use App\Services\ActivityStatusService;
@@ -155,12 +156,13 @@ class ActivityController extends Controller
     public function store(): RedirectResponse|JsonResponse
     {
         $this->validate(request(), [
-            'type'          => 'required',
-            'title'         => 'required_if:type,note|nullable|string|max:255',
-            'group_id'      => 'nullable|exists:groups,id',
-            'comment'       => 'required_if:type,note',
-            'schedule_to'   => 'required_unless:type,note,file|date',
-            'file'          => 'required_if:type,file',
+            'type'              => 'required',
+            'title'             => 'required_if:type,note|nullable|string|max:255',
+            'group_id'          => 'nullable|exists:groups,id',
+            'comment'           => 'required_if:type,note',
+            'schedule_to'       => 'required_unless:type,note,file|date',
+            'file'              => 'required_if:type,file',
+            'document_type_id'  => 'required_if:type,file|nullable|integer|exists:document_types,id',
         ]);
 
         Event::dispatch('activity.create.before');
@@ -270,6 +272,18 @@ class ActivityController extends Controller
     {
         // Get the current activity to check permissions
         $activity = $this->activityRepository->findOrFail($id);
+
+        if ($this->isLockedDocument($activity)) {
+            return $this->lockedDocumentResponse();
+        }
+
+        if (request()->filled('document_type_id')) {
+            $newType = DocumentType::find(request('document_type_id'));
+
+            if ($newType?->key === DocumentType::KEY_PRESCRIPTION) {
+                return $this->lockedDocumentResponse();
+            }
+        }
 
         if ($activity->is_done) {
             return $this->completedActivityResponse();
@@ -651,6 +665,11 @@ class ActivityController extends Controller
     public function destroy(int $id): RedirectResponse|JsonResponse
     {
         $activity = $this->activityRepository->findOrFail($id);
+
+        if ($this->isLockedDocument($activity)) {
+            return $this->lockedDocumentResponse();
+        }
+
         $leadId = $activity->lead_id;
         $orderId = $activity->order_id;
         $salesLeadId = $activity->sales_lead_id;
@@ -843,6 +862,29 @@ class ActivityController extends Controller
             'data'    => new ActivityResource($activity->refresh()),
             'message' => 'Koppeling bijgewerkt.',
         ]);
+    }
+
+    /**
+     * A Recept (prescription) document is locked after creation: it cannot be edited or
+     * deleted, and its type cannot be swapped to/from "Recept" to bypass the rule (G-6a).
+     */
+    private function isLockedDocument(Activity $activity): bool
+    {
+        return $activity->type === ActivityType::FILE
+            && $activity->documentType?->key === DocumentType::KEY_PRESCRIPTION;
+    }
+
+    private function lockedDocumentResponse(): RedirectResponse|JsonResponse
+    {
+        $message = 'Dit document is een recept en kan niet gewijzigd of verwijderd worden.';
+
+        if (request()->expectsJson() || request()->ajax()) {
+            return response()->json(['message' => $message], 422);
+        }
+
+        session()->flash('error', $message);
+
+        return redirect()->back();
     }
 
     private function completedActivityResponse(): RedirectResponse|JsonResponse

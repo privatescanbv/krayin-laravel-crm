@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\DocumentType;
 use App\Models\Order;
 use App\Services\Storage\DocumentStorage;
 use Illuminate\Console\Command;
@@ -24,10 +25,12 @@ class RepairMissingConfirmationPdfs extends Command
         $limit = max(1, (int) $this->option('limit'));
         $rows = [];
 
+        $financialId = DocumentType::idForKey(DocumentType::KEY_FINANCIAL);
+
         $files = ActivityFile::query()
             ->with('activity')
-            ->whereHas('activity', function (Builder $query) {
-                $query->where('additional->document_type', 'order_confirmation');
+            ->whereHas('activity', function (Builder $query) use ($financialId) {
+                $query->where('document_type_id', $financialId);
             })
             ->limit($limit)
             ->get();

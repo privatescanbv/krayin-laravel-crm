@@ -90,6 +90,19 @@
                                 :label="trans('admin::app.components.activities.actions.file.description')"
                             />
 
+                            <!-- Document Type -->
+                            <x-adminc::components.field
+                                type="select"
+                                name="document_type_id"
+                                :label="trans('admin::app.settings.document_types.index.create.title')"
+                                rules="required"
+                            >
+                                <option value="">{{ trans('admin::app.components.activities.actions.file.select-document-type') }}</option>
+                                @foreach (\App\Models\DocumentType::ordered()->get() as $documentType)
+                                    <option value="{{ $documentType->id }}">{{ $documentType->name }}</option>
+                                @endforeach
+                            </x-adminc::components.field>
+
                             <!-- File -->
                             <x-adminc::components.field
                                 type="file"

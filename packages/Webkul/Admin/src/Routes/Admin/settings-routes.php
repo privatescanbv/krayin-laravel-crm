@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\Settings\Clinic\PartnerProductController;
 use App\Http\Controllers\Admin\Settings\ClinicController;
 use App\Http\Controllers\Admin\Settings\ClinicDepartmentController;
 use App\Http\Controllers\Admin\Settings\DepartmentController;
+use App\Http\Controllers\Admin\Settings\DocumentTypeController;
 use App\Http\Controllers\Admin\Settings\ImportLogController;
 use App\Http\Controllers\Admin\Settings\ImportRunController;
 use App\Http\Controllers\Admin\Settings\MarketingCampaignController;
@@ -124,6 +125,20 @@ Route::prefix('settings')->group(function () {
         Route::get('search', 'search')->name('admin.settings.product_types.search');
         Route::delete('', 'destroy')->name('admin.settings.product_types.bulk_delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.product_types.delete');
+    });
+
+    /**
+     * Document Type routes.
+     */
+    Route::controller(DocumentTypeController::class)->prefix('document-types')->group(function () {
+        Route::get('', 'index')->name('admin.settings.document_types.index');
+        Route::get('create', 'create')->name('admin.settings.document_types.create');
+        Route::post('create', 'store')->name('admin.settings.document_types.store');
+        Route::get('edit/{id}', 'edit')->name('admin.settings.document_types.edit');
+        Route::put('edit/{id}', 'update')->name('admin.settings.document_types.update');
+        Route::get('search', 'search')->name('admin.settings.document_types.search');
+        Route::delete('', 'destroy')->name('admin.settings.document_types.bulk_delete');
+        Route::delete('{id}', 'destroy')->name('admin.settings.document_types.delete');
     });
 
     /**

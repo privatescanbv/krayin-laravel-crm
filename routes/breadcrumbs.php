@@ -570,6 +570,21 @@ Breadcrumbs::for('settings.product_types.edit', function (BreadcrumbTrail $trail
     $trail->push('', route('admin.settings.product_types.create'));
 });
 
+// Settings > Document Types
+Breadcrumbs::for('settings.document_types', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings');
+    $trail->push(trans('admin::app.layouts.document_types'), route('admin.settings.document_types.index'));
+});
+
+Breadcrumbs::for('settings.document_types.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings.document_types');
+    $trail->push('', route('admin.settings.document_types.create'));
+});
+Breadcrumbs::for('settings.document_types.edit', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings.document_types');
+    $trail->push('', route('admin.settings.document_types.create'));
+});
+
 // Settings > Resource Types > Create
 Breadcrumbs::for('settings.resource_types.create', function (BreadcrumbTrail $trail) {
     $trail->parent('settings.resource_types');

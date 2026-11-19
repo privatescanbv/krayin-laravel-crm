@@ -50,6 +50,8 @@ Route::prefix('patient/{id}')
             ->name('api.patient.documents.store');
         Route::get('documents/{documentId}/download', [PatientDocumentController::class, 'download'])
             ->name('api.patient.documents.download');
+        Route::get('document-types', [PatientDocumentController::class, 'types'])
+            ->name('api.patient.document-types.index');
 
         // Patient notifications
         Route::get('notifications', [PatientNotificationController::class, 'index'])

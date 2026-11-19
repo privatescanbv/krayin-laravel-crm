@@ -19,21 +19,27 @@ class ActivityRepository extends Repository
 
     /**
      * Paginate document files (FILE activities) published to a person's portal.
+     *
+     * Visibility always goes through the central `visibleInPatientPortal` scope, so a document
+     * type with show_in_patient_portal = false can never leak through, even via $documentTypeIds.
+     *
+     * @param  array<int>|null  $documentTypeIds
      */
     public function paginateDocumentFilesForPerson(
         Person $person,
         int $perPage,
-        ?string $documentType = null,
+        ?array $documentTypeIds = null,
         ?int $orderIdFilter = null,
     ): LengthAwarePaginator {
         return ActivityFile::query()
-            ->with(['activity'])
-            ->whereHas('activity', function (Builder $q) use ($person, $documentType, $orderIdFilter) {
+            ->with(['activity.documentType'])
+            ->whereHas('activity', function (Builder $q) use ($person, $documentTypeIds, $orderIdFilter) {
                 $q->ofType(ActivityType::FILE)
-                    ->publishedToPortalForPerson($person);
+                    ->publishedToPortalForPerson($person)
+                    ->visibleInPatientPortal();
 
-                if ($documentType !== null && $documentType !== '') {
-                    $q->where('additional->document_type', $documentType);
+                if (! empty($documentTypeIds)) {
+                    $q->whereIn('document_type_id', $documentTypeIds);
                 }
 
                 if ($orderIdFilter !== null) {

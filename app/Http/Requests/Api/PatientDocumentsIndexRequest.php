@@ -21,8 +21,8 @@ class PatientDocumentsIndexRequest extends PatientPaginatedIndexRequest
                 'example'     => 987,
             ],
             'type' => [
-                'description' => 'Optional: document kind (stored in activity.additional.document_type).',
-                'example'     => 'report',
+                'description' => 'Optional: one or more document_types ids, comma-separated.',
+                'example'     => '2,5',
             ],
         ];
     }

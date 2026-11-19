@@ -6,9 +6,11 @@ use App\Enums\ActivityType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\PatientDocumentsIndexRequest;
 use App\Http\Resources\PatientDocumentResource;
+use App\Models\DocumentType;
 use App\Models\Order;
 use App\Repositories\ActivityRepository;
 use App\Services\Keycloak\KeycloakService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Storage;
@@ -54,10 +56,16 @@ class PatientDocumentController extends Controller
         $validated = $request->validated();
         $perPage = (int) ($validated['per_page'] ?? 15);
         $orderIdFilter = isset($validated['order_id']) ? (int) $validated['order_id'] : null;
-        $documentTypeFilter = isset($validated['type']) ? (string) $validated['type'] : null;
+
+        $documentTypeIds = null;
+        if (isset($validated['type']) && $validated['type'] !== '') {
+            $documentTypeIds = array_values(array_filter(
+                array_map('intval', explode(',', (string) $validated['type']))
+            ));
+        }
 
         $paginator = $this->activityRepository
-            ->paginateDocumentFilesForPerson($person, $perPage, $documentTypeFilter, $orderIdFilter)
+            ->paginateDocumentFilesForPerson($person, $perPage, $documentTypeIds, $orderIdFilter)
             ->appends($request->query());
 
         // Build order title map lazily from the current page results.
@@ -95,6 +103,33 @@ class PatientDocumentController extends Controller
         );
 
         return PatientDocumentResource::collection($mappedPaginator);
+    }
+
+    /**
+     * List document types a patient can filter their documents by.
+     *
+     * @group Patient documents
+     *
+     * @urlParam id string required The Keycloak user ID of the patient. Example: 3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d
+     *
+     * @response 200 scenario="Success" {"data":[{"id":2,"label":"Verslagen"},{"id":4,"label":"Beelden"}]}
+     */
+    public function types(string $keycloakUserId): JsonResponse
+    {
+        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
+
+        if (is_null($person) && is_null($user)) {
+            abort(404);
+        }
+
+        $types = DocumentType::query()
+            ->where('show_in_patient_portal', true)
+            ->ordered()
+            ->get()
+            ->map(fn (DocumentType $type) => ['id' => $type->id, 'label' => $type->name])
+            ->values();
+
+        return response()->json(['data' => $types]);
     }
 
     /**

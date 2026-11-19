@@ -2,6 +2,7 @@
 
 use App\Enums\ActivityType;
 use App\Events\OrderMarkedAsSent;
+use App\Models\DocumentType;
 use App\Models\Order;
 use App\Models\OrderPersonConfirmation;
 use App\Models\SalesLead;
@@ -309,12 +310,12 @@ it('per-person documents are only visible to assigned person via API', function 
     ]);
 
     $activity = Activity::create([
-        'type'       => ActivityType::FILE,
-        'title'      => 'Orderbevestiging PDF – person 1',
-        'is_done'    => true,
-        'order_id'   => $order->id,
-        'person_id'  => $person1->id,
-        'additional' => ['document_type' => 'order_confirmation'],
+        'type'             => ActivityType::FILE,
+        'title'            => 'Orderbevestiging PDF – person 1',
+        'is_done'          => true,
+        'order_id'         => $order->id,
+        'person_id'        => $person1->id,
+        'document_type_id' => DocumentType::idForKey(DocumentType::KEY_FINANCIAL),
     ]);
     $activity->portalPersons()->attach($person1->id);
 

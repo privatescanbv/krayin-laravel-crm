@@ -9,6 +9,7 @@ use App\Enums\EntityType;
 use App\Enums\PatientMessageSenderType;
 use App\Models\ActivityAction;
 use App\Models\Clinic;
+use App\Models\DocumentType;
 use App\Models\Order;
 use App\Models\PatientMessage;
 use App\Models\SalesLead;
@@ -55,7 +56,8 @@ class Activity extends Model implements ActivityContract
         'schedule_to'   => 'datetime',
         'completed_at'  => 'datetime',
         'assigned_at'   => 'datetime',
-        'additional'    => 'array',
+        'additional'       => 'array',
+        'document_type_id' => 'integer',
         'is_done'              => 'boolean',
         'type'         => ActivityType::class,
         'status'       => ActivityStatus::class,
@@ -72,6 +74,7 @@ class Activity extends Model implements ActivityContract
         'location',
         'comment',
         'additional',
+        'document_type_id',
         'schedule_from',
         'schedule_to',
         'completed_at',
@@ -197,6 +200,14 @@ class Activity extends Model implements ActivityContract
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    /**
+     * Get the document type of this (file) activity.
+     */
+    public function documentType(): BelongsTo
+    {
+        return $this->belongsTo(DocumentType::class, 'document_type_id');
     }
 
     /**
@@ -351,6 +362,23 @@ class Activity extends Model implements ActivityContract
     public function scopeOfType(Builder $query, ActivityType $type): Builder
     {
         return $query->where('type', $type->value);
+    }
+
+    /**
+     * Central visibility rule: a document is only visible in the patient portal when its
+     * document type has show_in_patient_portal = true, on top of existing publication/scope.
+     */
+    public function scopeVisibleInPatientPortal(Builder $query): Builder
+    {
+        return $query->whereHas('documentType', fn (Builder $q) => $q->where('show_in_patient_portal', true));
+    }
+
+    /**
+     * Same rule as {@see scopeVisibleInPatientPortal()} for the clinic portal.
+     */
+    public function scopeVisibleInClinicPortal(Builder $query): Builder
+    {
+        return $query->whereHas('documentType', fn (Builder $q) => $q->where('show_in_clinic_portal', true));
     }
 
     /**

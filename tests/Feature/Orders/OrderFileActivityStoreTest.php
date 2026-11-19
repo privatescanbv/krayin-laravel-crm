@@ -3,6 +3,7 @@
 use App\Enums\ActivityType;
 use App\Enums\Departments;
 use App\Models\Department;
+use App\Models\DocumentType;
 use App\Models\Order;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -45,6 +46,7 @@ test('file activity store persists order_id and sales_lead_id from multipart req
     ]);
 
     $file = UploadedFile::fake()->create('scan.pdf', 12, 'application/pdf');
+    $documentType = DocumentType::factory()->create();
 
     $response = $this->post(route('admin.activities.store'), [
         'type'                => 'file',
@@ -54,6 +56,7 @@ test('file activity store persists order_id and sales_lead_id from multipart req
         'title'               => 'Testbestand',
         'comment'             => 'Omschrijving',
         'file'                => $file,
+        'document_type_id'    => (string) $documentType->id,
         'publish_to_portal'   => '0',
     ], [
         'Accept'           => 'application/json',

@@ -9,7 +9,6 @@ use App\Models\PersonPreference;
 use App\Services\Keycloak\KeycloakService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class PatientPreferenceController extends Controller
@@ -28,15 +27,13 @@ class PatientPreferenceController extends Controller
      * @responseField preferences.email_notifications_enabled.value boolean Whether email notifications are enabled.
      * @responseField preferences.email_notifications_enabled.is_system_managed boolean Whether this preference is managed by the system.
      * @responseField preferences.language ['nl', 'en', 'de'] Preferred language of the patient
+     *
+     * @response 403 scenario="Caller is not a patient (e.g. a clinic-portal account)" {"message":"Forbidden"}
+     * @response 404 scenario="Patient not found" {"message":"Not Found"}
      */
     public function index(string $keycloakUserId): JsonResponse
     {
-        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
-
-        if (is_null($person)) {
-            Log::warning("Patient with Keycloak ID {$keycloakUserId} not found when fetching preferences.");
-            abort(404);
-        }
+        $person = $this->keycloakService->resolvePatientOrFail($keycloakUserId);
 
         return response()->json([
             'preferences' => array_merge(
@@ -61,16 +58,13 @@ class PatientPreferenceController extends Controller
      * @bodyParam preferences.language ['nl', 'en', 'de'] Preferred language of the patient
      *
      * @response 200 scenario="Success" {"preferences": {"email_notifications_enabled": {"value": true, "is_system_managed": false}}}
+     * @response 403 scenario="Caller is not a patient (e.g. a clinic-portal account)" {"message":"Forbidden"}
      * @response 404 scenario="Patient not found" {"message":"Not Found"}
      * @response 422 scenario="Validation error" {"message":"The given data was invalid."}
      */
     public function update(Request $request, string $keycloakUserId): JsonResponse
     {
-        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
-
-        if (is_null($person)) {
-            abort(404);
-        }
+        $person = $this->keycloakService->resolvePatientOrFail($keycloakUserId);
 
         $validated = $request->validate([
             'preferences'                                                          => 'required|array',

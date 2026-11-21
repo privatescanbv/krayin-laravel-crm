@@ -39,19 +39,12 @@ class PatientDocumentController extends Controller
      *
      * @response 200 scenario="Success" {"data":[{"id":456,"patient_id":123,"type":{"id":2,"label":"Verslagen"},"group":"Order MRI knie","title":"MRI uitslag knie","file_name":"mri-knie-uitslag.pdf","mime_type":"application/pdf","size":245678,"download_url":"https://api.example.com/api/patient/3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d/documents/456/download","created_at":"2025-01-20T10:15:30Z"}],"meta":{"current_page":1,"per_page":15,"total":42}}
      * @response 200 scenario="Success (empty)" {"data":[],"meta":{"current_page":1,"per_page":15,"total":0}}
+     * @response 403 scenario="Caller is not a patient (e.g. a clinic-portal account)" {"message":"Forbidden"}
      * @response 404 scenario="Patient not found" {"message":"Not Found"}
      */
     public function index(PatientDocumentsIndexRequest $request, string $keycloakUserId): AnonymousResourceCollection
     {
-        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
-
-        if (is_null($person)) {
-            if (! is_null($user)) {
-                return PatientDocumentResource::collection(collect());
-            }
-
-            abort(404);
-        }
+        $person = $this->keycloakService->resolvePatientOrFail($keycloakUserId);
 
         $validated = $request->validated();
         $perPage = (int) ($validated['per_page'] ?? 15);
@@ -113,14 +106,12 @@ class PatientDocumentController extends Controller
      * @urlParam id string required The Keycloak user ID of the patient. Example: 3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d
      *
      * @response 200 scenario="Success" {"data":[{"id":2,"label":"Verslagen"},{"id":4,"label":"Beelden"}]}
+     * @response 403 scenario="Caller is not a patient (e.g. a clinic-portal account)" {"message":"Forbidden"}
+     * @response 404 scenario="Patient not found" {"message":"Not Found"}
      */
     public function types(string $keycloakUserId): JsonResponse
     {
-        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
-
-        if (is_null($person) && is_null($user)) {
-            abort(404);
-        }
+        $this->keycloakService->resolvePatientOrFail($keycloakUserId);
 
         $types = DocumentType::query()
             ->where('show_in_patient_portal', true)
@@ -140,15 +131,12 @@ class PatientDocumentController extends Controller
      * @urlParam id string required The Keycloak user ID of the patient. Example: 3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d
      * @urlParam documentId integer required The activity_files id. Example: 456
      *
+     * @response 403 scenario="Caller is not a patient (e.g. a clinic-portal account)" {"message":"Forbidden"}
      * @response 404 scenario="Not found" {"message":"Not Found"}
      */
     public function download(string $keycloakUserId, int $documentId): StreamedResponse
     {
-        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
-
-        if (is_null($person)) {
-            abort(404);
-        }
+        $person = $this->keycloakService->resolvePatientOrFail($keycloakUserId);
 
         $file = ActivityFile::query()
             ->with(['activity'])

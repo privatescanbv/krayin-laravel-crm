@@ -29,6 +29,7 @@ class PatientFileUploadController extends Controller
      * @bodyParam file file required The file to upload (max 20 MB).
      *
      * @response 201 scenario="Created" {"message":"File uploaded successfully","id":42}
+     * @response 403 scenario="Caller is not a patient (e.g. a clinic-portal account)" {"message":"Forbidden"}
      * @response 404 scenario="Patient not found" {"message":"Not Found"}
      * @response 422 scenario="Validation error" {"message":"The name field is required.","errors":{}}
      */
@@ -53,12 +54,7 @@ class PatientFileUploadController extends Controller
             ],
         ]);
 
-        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
-
-        if (is_null($person)) {
-            abort(404);
-        }
-        logger()->info('file upload, user found for keycloak id', ['person_id' => $person->id, 'user_id' => $user?->id]);
+        $person = $this->keycloakService->resolvePatientOrFail($keycloakUserId);
 
         $activity = $this->activityRepository->create([
             'title'              => $request->input('name'),

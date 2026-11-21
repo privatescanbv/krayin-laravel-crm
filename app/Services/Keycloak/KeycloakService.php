@@ -766,6 +766,24 @@ class KeycloakService
     }
 
     /**
+     * Resolve the patient (Person) for a patient-portal API call, or abort.
+     *
+     * The clinic-portal roles (arts, kliniek medewerker) are CRM `User` accounts, not patients,
+     * and must not get any access to patient API calls: abort with 403 when the Keycloak id
+     * resolves to a `User` instead of a `Person`, and 404 when it resolves to neither.
+     */
+    public function resolvePatientOrFail(string $keycloakUserId): Person
+    {
+        [$person, $user] = $this->resolvePersonOrUser($keycloakUserId);
+
+        if ($person !== null) {
+            return $person;
+        }
+
+        abort($user !== null ? 403 : 404);
+    }
+
+    /**
      * @return array{0: Person|null, 1: modelUser|null}
      */
     public function resolvePersonOrUser(string $keycloakUserId): array

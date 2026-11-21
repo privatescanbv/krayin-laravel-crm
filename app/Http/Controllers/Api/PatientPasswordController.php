@@ -30,16 +30,13 @@ class PatientPasswordController extends Controller
      * @bodyParam password_confirmation string required Confirmation of the new password. Example: NieuwWachtwoord1!
      *
      * @response 204 scenario="Success"
+     * @response 403 scenario="Caller is not a patient (e.g. a clinic-portal account)" {"message":"Forbidden"}
      * @response 404 scenario="Patient not found" {"message":"Not Found"}
      * @response 422 scenario="Validation error" {"message":"The given data was invalid.","errors":{"current_password":["Het huidige wachtwoord is onjuist."]}}
      */
     public function update(Request $request, string $keycloakUserId): Response
     {
-        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
-
-        if (is_null($person)) {
-            abort(404);
-        }
+        $person = $this->keycloakService->resolvePatientOrFail($keycloakUserId);
 
         $authHeader = (string) $request->header('Authorization', '');
         $usingBearerToken = $authHeader !== '' && str_starts_with($authHeader, 'Bearer ');

@@ -36,20 +36,12 @@ class PersonActivityController extends Controller
      *
      * @response 200 scenario="Success" {"data":[{"id":1,"person_id":123,"sender_type":"patient","sender_id":null,"body":"Hallo","is_read":false,"created_at":"2026-02-01T10:00:00+01:00","updated_at":"2026-02-01T10:00:00+01:00","sender":null,"sender_name":"Patient"}],"meta":{"current_page":1,"per_page":15,"total":42}}
      * @response 200 scenario="Success (empty)" {"data":[],"meta":{"current_page":1,"per_page":15,"total":0}}
+     * @response 403 scenario="Caller is not a patient (e.g. a clinic-portal account)" {"message":"Forbidden"}
      * @response 404 scenario="Patient not found" {"message":"Not Found"}
      */
     public function index(PatientMessagesIndexRequest $request, string $keycloakUserId): JsonResponse
     {
-        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
-        if (is_null($person)) {
-            if (! is_null($user)) {
-                $perPage = (int) $request->validated('per_page', 15);
-
-                // handle as no messages for users
-                return PatientMessagesCollection::empty($perPage)->response();
-            }
-            abort(404);
-        }
+        $person = $this->keycloakService->resolvePatientOrFail($keycloakUserId);
         $personId = $person->id;
         logger()->info("Fetching patient messages for person ID: {$personId}");
         // Get all patient messages linked to this person
@@ -68,20 +60,13 @@ class PersonActivityController extends Controller
 
     /**
      * Store a new patient message or reply.
+     *
+     * @response 403 scenario="Caller is not a patient (e.g. a clinic-portal account)" {"message":"Forbidden"}
+     * @response 404 scenario="Patient not found" {"message":"Not Found"}
      */
     public function store(Request $request, string $keycloakUserId): JsonResponse
     {
-        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
-        if (is_null($person)) {
-            if (! is_null($user)) {
-                logger()->error('No support for creating messages for users without person association.');
-
-                return response()->json([
-                    'data' => [],
-                ]);
-            }
-            abort(404);
-        }
+        $person = $this->keycloakService->resolvePatientOrFail($keycloakUserId);
         logger()->info('request add post = '.print_r($request->all(), true));
         $validated = $request->validate([
             'body'   => 'required|string',
@@ -114,15 +99,12 @@ class PersonActivityController extends Controller
      * @urlParam id string required The Keycloak user ID of the patient. Example: 3f0b2d3e-5e1d-4c0f-9c0c-1b2f3a4b5c6d
      *
      * @response 200 scenario="Success" {"message":"Messages marked as read.","data":{"marked_count":3}}
+     * @response 403 scenario="Caller is not a patient (e.g. a clinic-portal account)" {"message":"Forbidden"}
      * @response 404 scenario="Patient not found" {"message":"Not Found"}
      */
     public function markAsRead(string $keycloakUserId): JsonResponse
     {
-        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
-        if (is_null($person)) {
-            logger()->error('No support for mark messages as read for users without person association.');
-            abort(404);
-        }
+        $person = $this->keycloakService->resolvePatientOrFail($keycloakUserId);
 
         $markedCount = $this->patientMessageService->markAllMessagesReadForPatient($person);
 

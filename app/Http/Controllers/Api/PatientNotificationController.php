@@ -39,18 +39,13 @@ class PatientNotificationController extends Controller
      * @responseField meta.current_page integer Current page number.
      * @responseField meta.per_page integer Items per page.
      * @responseField meta.total integer Total number of notifications.
+     *
+     * @response 403 scenario="Caller is not a patient (e.g. a clinic-portal account)" {"message":"Forbidden"}
+     * @response 404 scenario="Patient not found" {"message":"Not Found"}
      */
     public function index(PatientNotificationsIndexRequest $request, string $keycloakUserId): AnonymousResourceCollection
     {
-        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
-
-        if (is_null($person)) {
-            if (! is_null($user)) {
-                return PatientNotificationResource::collection(collect());
-            }
-
-            abort(404);
-        }
+        $person = $this->keycloakService->resolvePatientOrFail($keycloakUserId);
 
         $locale = $person->preferred_language?->value ?? 'nl';
         app('request')->attributes->set('patient_locale', $locale);
@@ -102,20 +97,13 @@ class PatientNotificationController extends Controller
      * @urlParam notificationId integer required The notification id. Example: 123
      *
      * @response 204 scenario="Success" {}
+     * @response 403 scenario="Caller is not a patient (e.g. a clinic-portal account)" {"message":"Forbidden"}
      * @response 404 scenario="Patient not found" {"message":"Not Found"}
      * @response 422 scenario="Not dismissable" {"message":"Only dismissable notifications can be marked as read."}
      */
     public function markAsRead(string $keycloakUserId, int $notificationId): JsonResponse
     {
-        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
-
-        if (is_null($person) && is_null($user)) {
-            abort(404);
-        }
-
-        if (is_null($person)) {
-            abort(404);
-        }
+        $person = $this->keycloakService->resolvePatientOrFail($keycloakUserId);
 
         /** @var PatientNotification $notification */
         $notification = PatientNotification::query()

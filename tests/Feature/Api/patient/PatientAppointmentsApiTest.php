@@ -14,6 +14,7 @@ use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Webkul\Contact\Models\Person;
@@ -25,7 +26,15 @@ beforeEach(function () {
     Config::set('api.keys', ['valid-api-key-123']);
 });
 
+afterEach(function () {
+    Carbon::setTestNow();
+});
+
 test('patient appointments endpoint returns planned/approved orders as appointments', function () {
+    // Frozen well away from midnight so the relative now()->addHours()/addDay() fixtures below
+    // don't flip to a different calendar day depending on wall-clock time (see MBS-561).
+    Carbon::setTestNow(Carbon::parse('2026-06-15 10:00:00', 'Europe/Amsterdam'));
+
     $keycloakId = 'kc-user-appointments-1';
     $person = Person::factory()->create(['keycloak_user_id' => $keycloakId]);
 

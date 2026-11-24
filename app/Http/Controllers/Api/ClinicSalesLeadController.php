@@ -9,10 +9,13 @@ use App\Http\Controllers\Api\Concerns\ResolvesClinicDoctor;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\ClinicSalesLeadIndexRequest;
 use App\Http\Requests\Api\ClinicSalesLeadStageRequest;
+use App\Http\Requests\Api\ClinicSalesMessageIndexRequest;
+use App\Http\Requests\Api\ClinicSalesMessageStoreRequest;
 use App\Http\Requests\Api\ClinicSalesNoteIndexRequest;
 use App\Http\Requests\Api\ClinicSalesNoteStoreRequest;
 use App\Http\Resources\ClinicSalesLeadDetailResource;
 use App\Http\Resources\ClinicSalesLeadResource;
+use App\Http\Resources\ClinicSalesMessageResource;
 use App\Http\Resources\ClinicSalesNoteResource;
 use App\Http\Resources\ClinicSalesStageResource;
 use App\Models\SalesLead;
@@ -78,6 +81,7 @@ class ClinicSalesLeadController extends Controller
             $search()
                 ->closedStage($request->boolean('closed'))
                 ->withStageEnteredAt()
+                ->withCount('teamChatMessages')
                 ->when($request->integer('stage_id'), fn ($query, $stageId) => $query->where('pipeline_stage_id', $stageId))
                 ->with('persons')
                 ->orderByDesc('created_at')
@@ -112,6 +116,7 @@ class ClinicSalesLeadController extends Controller
             SalesLead::query()
                 ->forPortalDoctor($doctor)
                 ->withStageEnteredAt()
+                ->withCount('teamChatMessages')
                 ->with(['persons', 'stage', 'doctor', 'assessmentOutcome'])
                 ->findOrFail($saleId)
         );
@@ -180,6 +185,65 @@ class ClinicSalesLeadController extends Controller
     }
 
     /**
+     * Team chat of this sale between the doctor and CRM staff, newest first. Never visible to the patient and
+     * separate from the internal notes. Text is plain text; `author` is the user who wrote the message, or null when unknown.
+     *
+     * @group Clinic sales
+     *
+     * @urlParam keycloakUserId string required The Keycloak user ID of the doctor.
+     * @urlParam saleId integer required The sale id.
+     *
+     * @response 200 scenario="Success" {"data":[{"id":8,"text":"Kunt u de MRI-uitslag inzien?","created_at":"2026-11-10T09:00:00+00:00","author":{"id":9,"name":"Zorgadviseur"}}],"links":{},"meta":{}}
+     * @response 403 scenario="User is not a doctor, or Bearer token belongs to another user"
+     * @response 404 scenario="Unknown user, or sale not visible for this doctor"
+     */
+    public function messages(ClinicSalesMessageIndexRequest $request, string $keycloakUserId, int $saleId): AnonymousResourceCollection
+    {
+        $sale = SalesLead::query()->forPortalDoctor($this->doctor($keycloakUserId))->findOrFail($saleId);
+
+        $page = $sale->teamChatMessages()
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate($request->integer('per_page', 25));
+
+        $authors = User::query()->whereIn('id', $page->getCollection()->pluck('created_by')->filter()->unique())->get()->keyBy('id');
+        $page->getCollection()->each(fn (Activity $message) => $message->setAttribute('author_user', $authors->get($message->created_by)));
+
+        return ClinicSalesMessageResource::collection($page);
+    }
+
+    /**
+     * Post a plain-text team chat message on this sale as the doctor from the URL. CRM staff sees it on the sale.
+     * Does not touch the patient chat or the notes.
+     *
+     * @group Clinic sales
+     *
+     * @urlParam keycloakUserId string required The Keycloak user ID of the doctor.
+     * @urlParam saleId integer required The sale id.
+     *
+     * @response 201 scenario="Created" {"data":{"id":8,"text":"Kunt u de MRI-uitslag inzien?","created_at":"2026-11-10T09:00:00+00:00","author":{"id":3,"name":"Dr. Voorbeeld"}}}
+     * @response 403 scenario="User is not a doctor, or Bearer token belongs to another user"
+     * @response 404 scenario="Unknown user, or sale not visible for this doctor"
+     * @response 422 scenario="Empty or too long text" {"message":"The text field is required.","errors":{"text":["The text field is required."]}}
+     */
+    public function storeMessage(ClinicSalesMessageStoreRequest $request, CreateActivityForSalesLeadAction $create, string $keycloakUserId, int $saleId): JsonResponse
+    {
+        $doctor = $this->doctor($keycloakUserId);
+        $sale = SalesLead::query()->forPortalDoctor($doctor)->findOrFail($saleId);
+
+        $message = $create->execute($sale, true, [
+            'type'       => ActivityType::TEAM_CHAT->value,
+            'comment'    => PlainText::toHtml($request->validated('text')),
+            'user_id'    => $doctor->id,
+            'created_by' => $doctor->id,
+            'updated_by' => $doctor->id,
+        ]);
+        $message->setAttribute('author_user', $doctor);
+
+        return (new ClinicSalesMessageResource($message))->response()->setStatusCode(201);
+    }
+
+    /**
      * Move the doctor's own sale to another ordinary stage of the Herniapoli sales pipeline (kanban drag).
      * Only `pipeline_stage_id` is accepted. Won/lost targets and already closed sales are refused; the assessment
      * outcome rules of the admin stage change apply. Moving to the current stage is a no-op (200, nothing written).
@@ -226,6 +290,6 @@ class ClinicSalesLeadController extends Controller
             ]);
         }
 
-        return new ClinicSalesLeadResource(SalesLead::query()->withStageEnteredAt()->with('persons')->findOrFail($sale->id));
+        return new ClinicSalesLeadResource(SalesLead::query()->withStageEnteredAt()->withCount('teamChatMessages')->with('persons')->findOrFail($sale->id));
     }
 }

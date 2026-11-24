@@ -133,7 +133,7 @@
                 </div>
             </div>
 
-            <x-adminc::components.entity-navigation-menu :activitiesCount="$activitiesCount" show-orders="true"/>
+            <x-adminc::components.entity-navigation-menu :activitiesCount="$activitiesCount" show-orders="true" show-team-chat="true" :teamChatCount="$salesLead->teamChatMessages()->count()"/>
 
             <!-- Footer with creation and modification dates -->
             <div
@@ -171,6 +171,10 @@
 
             <div v-else-if="leadDetailSection === 'activiteiten'" class="flex w-full flex-col gap-4 rounded-lg">
                 @include('admin::activities.partials.tab-activities', ['entityId' => $salesLead->id, 'entityType' => 'sales-leads'])
+            </div>
+
+            <div v-else-if="leadDetailSection === 'teamchat'" class="flex w-full flex-col gap-4 rounded-lg">
+                @include('adminc.sales_leads.view.teamchat', ['salesLead' => $salesLead])
             </div>
 
             <div v-else-if="leadDetailSection === 'anamnese'" class="flex w-full flex-col gap-4 rounded-lg">
@@ -330,7 +334,7 @@
                                 let hash = window.location.hash.substring(1); // Remove '#'
 
                                 // Valid sections
-                                const validSections = ['algemeen', 'activiteiten', 'anamnese', 'marketing', 'orders'];
+                                const validSections = ['algemeen', 'activiteiten', 'teamchat', 'anamnese', 'marketing', 'orders'];
 
                                 if (validSections.includes(hash)) {
                                     this.leadDetailSection = hash;

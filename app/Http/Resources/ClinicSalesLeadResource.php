@@ -34,6 +34,7 @@ class ClinicSalesLeadResource extends JsonResource
                 // Raw column: Person's custom-attribute getAttribute() runs one extra query per person for a NULL column.
                 'date_of_birth' => ($dob = $person->getRawOriginal('date_of_birth')) ? Carbon::parse($dob)->toDateString() : null,
             ])->values(),
+            'counts' => ['chat' => (int) $this->team_chat_messages_count],
         ];
     }
 }

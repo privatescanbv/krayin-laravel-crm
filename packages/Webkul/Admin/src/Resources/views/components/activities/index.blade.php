@@ -287,7 +287,7 @@
                     type: Array,
                     default: [
                             @foreach (App\Enums\ActivityType::cases() as $type)
-                            @if ($type !== App\Enums\ActivityType::SYSTEM)
+                            @if (! in_array($type, [App\Enums\ActivityType::SYSTEM, App\Enums\ActivityType::TEAM_CHAT], true))
                         {
                             name: '{{ $type->value }}',
                             label: '{{ $type->label() }}',

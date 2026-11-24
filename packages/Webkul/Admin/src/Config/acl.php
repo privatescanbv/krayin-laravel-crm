@@ -788,7 +788,8 @@ return [
     ], [
         'key'   => 'sales-leads.view',
         'name'  => 'admin::app.acl.view',
-        'route' => ['admin.sales-leads.view', 'admin.sales-leads.debug'],
+        // Teamchat: wie de sale mag zien, mag in de chat van de tab reageren.
+        'route' => ['admin.sales-leads.view', 'admin.sales-leads.debug', 'admin.sales-leads.team-chat.store'],
         'sort'  => 1,
     ], [
         'key'   => 'sales-leads.create',

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\SalesLeadController;
 use App\Http\Controllers\Admin\SalesLeadEmailController;
+use App\Http\Controllers\Admin\SalesLeadTeamChatController;
 use Illuminate\Support\Facades\File;
 
 /**
@@ -23,6 +24,7 @@ Route::group(['middleware' => ['user']], function () {
 
     // Activity routes
     Route::get('sales-leads/{id}/activities', [SalesLeadController::class, 'activities'])->name('admin.sales-leads.activities.index');
+    Route::post('sales-leads/{id}/team-chat', [SalesLeadTeamChatController::class, 'store'])->name('admin.sales-leads.team-chat.store');
     Route::post('sales-leads/{id}/activities', [SalesLeadController::class, 'storeActivity'])->name('admin.sales-leads.activities.store');
 
     // Email routes

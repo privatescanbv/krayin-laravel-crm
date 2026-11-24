@@ -143,8 +143,8 @@ class ApiKeyAuth
         $path = $request->path();
 
         return match ($request->method()) {
-            'GET'   => (bool) preg_match('#^api/clinic/[^/]+/(sales-leads/\d+(/notes|/appointments/\d+|/documents|/documents/\d+/download)?|appointments/[^/]+)$#', $path),
-            'POST'  => (bool) preg_match('#^api/clinic/[^/]+/sales-leads/\d+/notes$#', $path),
+            'GET'   => (bool) preg_match('#^api/clinic/[^/]+/(sales-leads/\d+(/notes|/messages|/appointments/\d+|/documents|/documents/\d+/download)?|appointments/[^/]+)$#', $path),
+            'POST'  => (bool) preg_match('#^api/clinic/[^/]+/sales-leads/\d+/(notes|messages)$#', $path),
             'PUT'   => (bool) preg_match('#^api/clinic/[^/]+/sales-leads/\d+/stage$#', $path),
             default => false,
         };

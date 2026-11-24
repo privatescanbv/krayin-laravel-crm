@@ -46,6 +46,7 @@ class ClinicSalesLeadDetailResource extends JsonResource
             'additional_research_required' => (bool) $this->additional_research_required,
             'counts'                       => [
                 'files'        => $this->clinicPortalFiles()->count(),
+                'chat'         => (int) $this->team_chat_messages_count,
             ],
         ];
     }

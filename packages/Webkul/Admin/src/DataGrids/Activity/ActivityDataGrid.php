@@ -88,7 +88,7 @@ class ActivityDataGrid extends DataGrid
                 });
             })->groupBy('activities.id', 'leads.id', 'users.id', 'groups.id', 'persons.id');
 
-        $queryBuilder->where('activities.type', '!=', 'patient_message');
+        $queryBuilder->whereNotIn('activities.type', ['patient_message', 'team_chat']);
 
         $queueKey = request()->get('queue');
 

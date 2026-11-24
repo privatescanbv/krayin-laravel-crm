@@ -114,7 +114,7 @@ it('returns the card shape with person id, name and date of birth, without medic
         ->getJson(route('api.clinic.sales-leads', 'kc-doc-1'))
         ->assertOk();
 
-    expect(array_keys($response->json('data.0')))->toBe(['id', 'name', 'pipeline_stage_id', 'created_at', 'updated_at', 'closed_at', 'stage_entered_at', 'persons'])
+    expect(array_keys($response->json('data.0')))->toBe(['id', 'name', 'pipeline_stage_id', 'created_at', 'updated_at', 'closed_at', 'stage_entered_at', 'persons', 'counts'])
         ->and($response->json('data.0.persons'))->toBe([['id' => $person->id, 'name' => $person->name, 'date_of_birth' => '1980-04-02']]);
 });
 
@@ -824,7 +824,7 @@ it('reports per person how many appointments are planned and not yet planned in 
     expect($counts[$anna->id])->toBe(['scheduled' => 2, 'unscheduled' => 1])
         ->and($counts[$bert->id])->toBe(['scheduled' => 0, 'unscheduled' => 1])
         ->and(array_keys($response->json('data')))->not->toContain('appointments')
-        ->and($response->json('data.counts'))->toBe(['files' => 0]);
+        ->and($response->json('data.counts'))->toBe(['files' => 0, 'chat' => 0]);
 });
 
 function saleFile(SalesLead|Order $owner, ?DocumentType $type, string $name = 'verslag.pdf', string $content = 'pdf-bytes'): ActivityFile
@@ -925,4 +925,96 @@ it('forbids the appointment and document tabs to the bearer token of another sub
     foreach ($urls as $url) {
         $this->get($url, ['Authorization' => 'Bearer t', 'Accept' => 'application/json'])->assertForbidden();
     }
+});
+
+it('lists the team chat of this sale newest first with author, separate from notes', function () {
+    $doctor = portalUser('kc-doc-1');
+    $sale = saleWithDepartment($doctor, herniaStage());
+    $staff = User::factory()->create();
+    $groupId = Group::query()->value('id');
+    $mk = fn (string $type, string $comment, array $extra = []) => Activity::withoutEvents(fn () => Activity::create([
+        'type' => $type, 'comment' => $comment, 'is_done' => 1, 'sales_lead_id' => $sale->id, 'group_id' => $groupId, ...$extra,
+    ]));
+    $old = $mk('team_chat', 'Vraag', ['created_by' => $doctor->id, 'created_at' => now()->subDay()]);
+    $new = $mk('team_chat', 'Antwoord', ['created_by' => $staff->id, 'created_at' => now()]);
+    $note = $mk('note', 'Notitie', ['created_by' => $staff->id]);
+
+    $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads.messages', ['kc-doc-1', $sale->id]))
+        ->assertOk()->assertJsonCount(2, 'data')
+        ->assertJsonPath('data.0.id', $new->id)
+        ->assertJsonPath('data.0.author', ['id' => $staff->id, 'name' => $staff->name])
+        ->assertJsonPath('data.1.id', $old->id);
+
+    $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads.notes', ['kc-doc-1', $sale->id]))
+        ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $note->id);
+});
+
+it('posts a team chat message as the doctor under a bearer token without touching patient chat or notes', function () {
+    $doctor = portalUser('kc-doc-1');
+    $sale = saleWithDepartment($doctor, herniaStage());
+    fakeKeycloakToken('kc-doc-1');
+
+    $this->postJson("/api/clinic/kc-doc-1/sales-leads/{$sale->id}/messages", ['text' => '  Hallo <b>team</b>  ', 'type' => 'note'], ['Authorization' => 'Bearer t'])
+        ->assertCreated()
+        ->assertJsonPath('data.text', 'Hallo <b>team</b>')
+        ->assertJsonPath('data.author', ['id' => $doctor->id, 'name' => $doctor->name]);
+
+    $message = Activity::where('type', 'team_chat')->sole();
+    expect($message)->sales_lead_id->toBe($sale->id)->created_by->toBe($doctor->id)->person_id->toBeNull()
+        ->and(Activity::where('type', 'note')->count())->toBe(0)
+        ->and(DB::table('patient_messages')->count())->toBe(0);
+});
+
+it('validates team chat text', function (mixed $text) {
+    $sale = saleWithDepartment(portalUser('kc-doc-1'), herniaStage());
+
+    $this->withHeaders(apiKeyHeader())->postJson(route('api.clinic.sales-leads.messages.store', ['kc-doc-1', $sale->id]), ['text' => $text])
+        ->assertUnprocessable()->assertJsonValidationErrors('text');
+    expect(Activity::where('type', 'team_chat')->count())->toBe(0);
+})->with([null, '', '   ', str_repeat('a', 2001)]);
+
+it('refuses the team chat on sales outside the doctor\'s scope', function () {
+    $doctor = portalUser('kc-doc-1');
+    $foreign = saleWithDepartment(portalUser('kc-doc-2'), herniaStage(1));
+
+    $this->withHeaders(apiKeyHeader())->postJson(route('api.clinic.sales-leads.messages.store', ['kc-doc-1', $foreign->id]), ['text' => 'x'])->assertNotFound();
+    $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads.messages', ['kc-doc-1', $foreign->id]))->assertNotFound();
+    $this->withoutHeader('X-API-KEY')->getJson(route('api.clinic.sales-leads.messages', ['kc-doc-1', $foreign->id]))->assertUnauthorized();
+    expect(Activity::where('type', 'team_chat')->count())->toBe(0);
+});
+
+it('shows counts.chat on card and detail with a constant number of queries', function () {
+    $doctor = portalUser('kc-doc-1');
+    $groupId = Group::query()->value('id');
+    $sale = saleWithDepartment($doctor, herniaStage());
+    $mk = fn (SalesLead $s) => Activity::withoutEvents(fn () => Activity::create(['type' => 'team_chat', 'comment' => 'x', 'is_done' => 1, 'sales_lead_id' => $s->id, 'group_id' => $groupId]));
+    $mk($sale);
+    $mk($sale);
+
+    $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads', 'kc-doc-1'))->assertOk()->assertJsonPath('data.0.counts.chat', 2);
+    $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads.show', ['kc-doc-1', $sale->id]))->assertOk()->assertJsonPath('data.counts.chat', 2);
+
+    $queries = function () {
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads', 'kc-doc-1'))->assertOk();
+
+        return count(DB::getQueryLog());
+    };
+    $before = $queries();
+    foreach (range(1, 3) as $i) {
+        $s = saleWithDepartment($doctor, herniaStage());
+        $mk($s);
+    }
+    expect($queries())->toBe($before);
+});
+
+it('keeps team chat out of the admin and service activity lists', function () {
+    $doctor = portalUser('kc-doc-1');
+    $sale = saleWithDepartment($doctor, herniaStage());
+    $groupId = Group::query()->value('id');
+    Activity::withoutEvents(fn () => Activity::create(['type' => 'team_chat', 'comment' => 'geheim', 'is_done' => 1, 'sales_lead_id' => $sale->id, 'group_id' => $groupId]));
+
+    $this->withHeaders(apiKeyHeader())->getJson("/api/sales-leads/{$sale->id}/activities")->assertOk()->assertJsonCount(0, 'data');
+    expect(Activity::withoutTeamChat()->where('sales_lead_id', $sale->id)->count())->toBe(0);
 });

@@ -43,6 +43,8 @@ Route::prefix('clinic/{keycloakUserId}')
         Route::get('sales-leads/{saleId}', [ClinicSalesLeadController::class, 'show'])->whereNumber('saleId')->name('api.clinic.sales-leads.show');
         Route::get('sales-leads/{saleId}/notes', [ClinicSalesLeadController::class, 'notes'])->whereNumber('saleId')->name('api.clinic.sales-leads.notes');
         Route::post('sales-leads/{saleId}/notes', [ClinicSalesLeadController::class, 'storeNote'])->whereNumber('saleId')->name('api.clinic.sales-leads.notes.store');
+        Route::get('sales-leads/{saleId}/messages', [ClinicSalesLeadController::class, 'messages'])->whereNumber('saleId')->name('api.clinic.sales-leads.messages');
+        Route::post('sales-leads/{saleId}/messages', [ClinicSalesLeadController::class, 'storeMessage'])->whereNumber('saleId')->name('api.clinic.sales-leads.messages.store');
         Route::get('sales-leads/{saleId}/appointments/{personId}', [ClinicSalesLeadAppointmentController::class, 'index'])->whereNumber(['saleId', 'personId'])->name('api.clinic.sales-leads.appointments');
         Route::get('sales-leads/{saleId}/documents', [ClinicSalesLeadDocumentController::class, 'index'])->whereNumber('saleId')->name('api.clinic.sales-leads.documents');
         Route::get('sales-leads/{saleId}/documents/{documentId}/download', [ClinicSalesLeadDocumentController::class, 'download'])->whereNumber(['saleId', 'documentId'])->name('api.clinic.sales-leads.documents.download');

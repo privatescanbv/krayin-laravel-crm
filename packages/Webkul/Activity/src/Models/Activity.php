@@ -357,6 +357,14 @@ class Activity extends Model implements ActivityContract
     }
 
     /**
+     * Team chat (doctor <-> CRM staff) is never part of timelines, grids or patient-facing data.
+     */
+    public function scopeWithoutTeamChat(Builder $query): Builder
+    {
+        return $query->where('activities.type', '!=', ActivityType::TEAM_CHAT->value);
+    }
+
+    /**
      * Scope activities by type.
      */
     public function scopeOfType(Builder $query, ActivityType $type): Builder

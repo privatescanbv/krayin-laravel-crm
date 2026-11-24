@@ -45,12 +45,12 @@
     </span>
 </a>
 <div class="tocify-wrapper">
-    
+
             <div class="lang-selector">
                                             <button type="button" class="lang-button" data-language-name="bash">bash</button>
                                             <button type="button" class="lang-button" data-language-name="javascript">javascript</button>
                     </div>
-    
+
     <div class="search">
         <input type="text" class="search" id="input-search" placeholder="Search">
     </div>
@@ -373,7 +373,7 @@ You can switch the language used with the tabs at the top right (or from the nav
 
         <h1 id="application-webhooks">Application webhooks</h1>
 
-    
+
 
                                 <h2 id="application-webhooks-PUTapi-webhooks-event">Handle an application webhook event.</h2>
 
@@ -627,7 +627,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="clinic-appointments">Clinic appointments</h1>
 
-    
+
 
                                 <h2 id="clinic-appointments-GETapi-clinic--keycloakUserId--appointments--appointmentId-">GET api/clinic/{keycloakUserId}/appointments/{appointmentId}</h2>
 
@@ -815,7 +815,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="clinic-profile">Clinic profile</h1>
 
-    
+
 
                                 <h2 id="clinic-profile-GETapi-clinic--keycloakUserId--naw">Get the profile of a clinic user.</h2>
 
@@ -1389,7 +1389,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="clinic-sales">Clinic sales</h1>
 
-    
+
 
                                 <h2 id="clinic-sales-GETapi-clinic--keycloakUserId--sales-stages">Stages (kanban columns) of the Herniapoli sales pipeline that the user&#039;s role may see.</h2>
 
@@ -3356,7 +3356,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="endpoints">Endpoints</h1>
 
-    
+
 
                                 <h2 id="endpoints-POSTapi-leads-hernia">Create a Hernia lead from the inbound (Gravity Forms) payload schema.</h2>
 
@@ -7828,7 +7828,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="keycloak">Keycloak</h1>
 
-    
+
 
                                 <h2 id="keycloak-GETapi-keycloak-persons--keycloakUserId-">Haal person id op op basis van Keycloak user id.</h2>
 
@@ -8224,7 +8224,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-naw">Patient NAW</h1>
 
-    
+
 
                                 <h2 id="patient-naw-GETapi-patient--id--naw">Get NAW data for a patient.</h2>
 
@@ -8990,7 +8990,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-password">Patient Password</h1>
 
-    
+
 
                                 <h2 id="patient-password-PUTapi-patient--id--password">Update the password for a patient.</h2>
 
@@ -9438,7 +9438,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-appointments">Patient appointments</h1>
 
-    
+
 
                                 <h2 id="patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders).</h2>
 
@@ -9853,7 +9853,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-counters">Patient counters</h1>
 
-    
+
 
                                 <h2 id="patient-counters-GETapi-patient--id--counters">Get notification counters for the patient portal menu badges.</h2>
 
@@ -10027,7 +10027,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-documents">Patient documents</h1>
 
-    
+
 
                                 <h2 id="patient-documents-GETapi-patient--id--documents">Get all documents for a patient (FILE activities published to their portal via pivot).</h2>
 
@@ -10830,7 +10830,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-messages">Patient messages</h1>
 
-    
+
 
                                 <h2 id="patient-messages-GETapi-patient--id--messages">Get all patient messages for a person, grouped by thread.</h2>
 
@@ -11215,7 +11215,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-notifications">Patient notifications</h1>
 
-    
+
 
                                 <h2 id="patient-notifications-GETapi-patient--id--notifications">Get notifications for a patient.</h2>
 
@@ -11710,7 +11710,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-preferences">Patient preferences</h1>
 
-    
+
 
                                 <h2 id="patient-preferences-GETapi-patient--id--preferences">Get preferences for a patient.</h2>
 
@@ -12166,9 +12166,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </div>
         </form>
 
-            
 
-        
+
+
     </div>
     <div class="dark-box">
                     <div class="lang-selector">

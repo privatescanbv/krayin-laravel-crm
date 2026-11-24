@@ -168,6 +168,14 @@ class SalesLead extends Model
     }
 
     /**
+     * Team chat messages (doctor <-> CRM staff); separate from patient messages and notes.
+     */
+    public function teamChatMessages(): HasMany
+    {
+        return $this->hasMany(Activity::class, 'sales_lead_id')->where('type', ActivityType::TEAM_CHAT->value);
+    }
+
+    /**
      * Get the emails associated with the sales lead.
      */
     public function emails(): HasMany

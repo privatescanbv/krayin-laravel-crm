@@ -62,7 +62,7 @@ class SalesLeadController extends Controller
     {
         $salesLead = SalesLead::findOrFail($id);
 
-        $query = Activity::where('sales_lead_id', $salesLead->id);
+        $query = Activity::withoutTeamChat()->where('sales_lead_id', $salesLead->id);
 
         if (request()->has('is_done')) {
             $isDone = (int) request('is_done') === 1 ? 1 : 0;

@@ -533,7 +533,7 @@ class SalesLeadController extends Controller
         $withHierarchy = request()->has('hierarchy') ? filter_var(request('hierarchy'), FILTER_VALIDATE_BOOLEAN) : true;
 
         // 1. Own sales activities — label: 'Sales'
-        $salesQuery = Activity::where('sales_lead_id', $id);
+        $salesQuery = Activity::withoutTeamChat()->where('sales_lead_id', $id);
         if (! is_null($isDoneFilter)) {
             $salesQuery->where('is_done', $isDoneFilter);
         }

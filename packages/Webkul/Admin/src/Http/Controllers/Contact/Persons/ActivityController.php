@@ -50,7 +50,7 @@ class ActivityController extends Controller
             $salesNames  = $salesLeadIds->isNotEmpty() ? SalesLead::whereIn('id', $salesLeadIds)->pluck('name', 'id') : collect();
             $orderTitles = $orderIds->isNotEmpty()     ? Order::whereIn('id', $orderIds)->pluck('title', 'id') : collect();
 
-            $query = Activity::where(function ($q) use ($id, $leadIds, $salesLeadIds, $orderIds) {
+            $query = Activity::withoutTeamChat()->where(function ($q) use ($id, $leadIds, $salesLeadIds, $orderIds) {
                 $q->where('person_id', $id);
                 if ($leadIds->isNotEmpty())      $q->orWhereIn('lead_id', $leadIds);
                 if ($salesLeadIds->isNotEmpty()) $q->orWhereIn('sales_lead_id', $salesLeadIds);
@@ -101,7 +101,7 @@ class ActivityController extends Controller
         $salesActivities = collect();
         if ($salesLeadIds->isNotEmpty()) {
             $salesNames = SalesLead::whereIn('id', $salesLeadIds)->pluck('name', 'id');
-            $salesQuery = Activity::whereIn('sales_lead_id', $salesLeadIds);
+            $salesQuery = Activity::withoutTeamChat()->whereIn('sales_lead_id', $salesLeadIds);
             if (! is_null($isDoneFilter)) {
                 $salesQuery->where('is_done', $isDoneFilter);
             }

@@ -21,6 +21,12 @@ use Webkul\Contact\Models\Person;
  */
 class AppointmentDetailService
 {
+    public const SCHEDULED = 'scheduled';
+
+    public const UNSCHEDULED = 'unscheduled';
+
+    public const NOT_APPLICABLE = 'not_applicable';
+
     public function __construct(private readonly OrderCheckService $orderCheckService) {}
 
     /**
@@ -56,6 +62,34 @@ class AppointmentDetailService
         abort_if($order === null, 404);
 
         return [$order, $this->orderCheckService->retrieveFirstBookingForOrder($order, $patient)];
+    }
+
+    /**
+     * Every active order item of one person in all orders of the sale, one line per booking. An item without a
+     * booking is `unscheduled` (plannable) or `not_applicable` (no appointment needed). Order: upcoming first,
+     * then the past (most recent first), then unscheduled, then not applicable.
+     *
+     * @return Collection<int, array{item: OrderItem, booking: ResourceOrderItem|null, status: string}>
+     */
+    public function forPerson(SalesLead $sale, Person $person): Collection
+    {
+        return $this->sortLines($this->lines($sale, $person->id));
+    }
+
+    /**
+     * Scheduled/unscheduled line counts per person id, in a fixed number of queries (items without a person count nowhere).
+     *
+     * @return array<int, array{scheduled: int, unscheduled: int}>
+     */
+    public function countsPerPerson(SalesLead $sale): array
+    {
+        return $this->lines($sale, null)
+            ->groupBy(fn (array $line) => $line['item']->person_id)
+            ->map(fn (Collection $lines) => [
+                'scheduled'   => $lines->where('status', self::SCHEDULED)->count(),
+                'unscheduled' => $lines->where('status', self::UNSCHEDULED)->count(),
+            ])
+            ->all();
     }
 
     /**
@@ -95,6 +129,48 @@ class AppointmentDetailService
             'registration_note' => $department?->order_confirmation_note,
             'items'             => $items,
         ];
+    }
+
+    /**
+     * @return Collection<int, array{item: OrderItem, booking: ResourceOrderItem|null, status: string}>
+     */
+    private function lines(SalesLead $sale, ?int $personId): Collection
+    {
+        return OrderItem::query()
+            ->whereIn('order_id', $sale->orders()->select('id'))
+            ->when($personId, fn ($q) => $q->where('person_id', $personId), fn ($q) => $q->whereNotNull('person_id'))
+            ->notLost()
+            ->with([
+                'order', 'product.productType', 'product.resourceType', 'product.partnerProducts.resourceType', 'resourceType',
+                'resourceOrderItems' => fn ($q) => $q->with(['resource.clinicDepartment', 'resource.clinic.visitAddress'])->orderBy('from'),
+            ])
+            ->orderBy('id')
+            ->get()
+            ->flatMap(function (OrderItem $item) {
+                if ($item->resourceOrderItems->isNotEmpty()) {
+                    return $item->resourceOrderItems->map(fn (ResourceOrderItem $booking) => ['item' => $item, 'booking' => $booking, 'status' => self::SCHEDULED]);
+                }
+
+                return [['item' => $item, 'booking' => null, 'status' => $item->isPlannable() ? self::UNSCHEDULED : self::NOT_APPLICABLE]];
+            })
+            ->values();
+    }
+
+    /**
+     * @param  Collection<int, array{item: OrderItem, booking: ResourceOrderItem|null, status: string}>  $lines
+     * @return Collection<int, array{item: OrderItem, booking: ResourceOrderItem|null, status: string}>
+     */
+    private function sortLines(Collection $lines): Collection
+    {
+        $now = now();
+        $scheduled = $lines->where('status', self::SCHEDULED);
+        $upcoming = $scheduled->filter(fn (array $line) => $line['booking']->from->greaterThanOrEqualTo($now))->sortBy(fn (array $line) => $line['booking']->from);
+        $past = $scheduled->reject(fn (array $line) => $line['booking']->from->greaterThanOrEqualTo($now))->sortByDesc(fn (array $line) => $line['booking']->from);
+
+        return $upcoming->concat($past)
+            ->concat($lines->where('status', self::UNSCHEDULED))
+            ->concat($lines->where('status', self::NOT_APPLICABLE))
+            ->values();
     }
 
     /**

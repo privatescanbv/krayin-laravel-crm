@@ -8,6 +8,7 @@ use App\Models\ResourceOrderItem;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Webkul\Contact\Models\Person;
 use Webkul\Product\Models\Product;
 
 uses(RefreshDatabase::class);
@@ -154,6 +155,7 @@ test('clinicGuideDays excludes LOST order items from multi-day calculation', fun
     $lostItemId = DB::table('order_items')->insertGetId([
         'order_id'    => $order->id,
         'product_id'  => Product::factory()->create()->id,
+        'person_id'   => Person::factory()->create()->id,
         'quantity'    => 1,
         'total_price' => 0,
         'status'      => OrderItemStatus::LOST->value,

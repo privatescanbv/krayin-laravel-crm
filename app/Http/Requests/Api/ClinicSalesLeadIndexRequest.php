@@ -15,6 +15,8 @@ class ClinicSalesLeadIndexRequest extends FormRequest
     {
         return [
             'stage_id' => ['sometimes', 'integer'],
+            'q'        => ['sometimes', 'nullable', 'string', 'max:100'],
+            'closed'   => ['sometimes', 'boolean'],
             'page'     => ['sometimes', 'integer', 'min:1'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ];
@@ -24,6 +26,8 @@ class ClinicSalesLeadIndexRequest extends FormRequest
     {
         return [
             'stage_id' => ['description' => 'Only sales in this stage (a stage the user may not see gives an empty page).', 'example' => 41],
+            'q'        => ['description' => 'Search on first and/or last name of the linked persons (case-insensitive, partial words; every word must match).', 'example' => 'jan jans'],
+            'closed'   => ['description' => 'true/1: only closed (won or lost) sales; default only open sales.', 'example' => false],
             'page'     => ['description' => 'Page number.', 'example' => 1],
             'per_page' => ['description' => 'Items per page (1-100, default 25).', 'example' => 25],
         ];

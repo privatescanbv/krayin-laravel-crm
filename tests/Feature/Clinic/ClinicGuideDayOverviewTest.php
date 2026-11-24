@@ -44,7 +44,7 @@ function createClinicLinkedOrderItem(int $orderId, ?int $personId = null): Order
     return OrderItem::factory()->create([
         'order_id'   => $orderId,
         'product_id' => $product->id,
-        'person_id'  => $personId,
+        ...($personId === null ? [] : ['person_id' => $personId]),
     ]);
 }
 

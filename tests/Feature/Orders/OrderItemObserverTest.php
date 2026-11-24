@@ -181,7 +181,7 @@ test('updating order item status logs status labels', function () {
 test('updating order item person_id logs person name as label', function () {
     $person = Person::factory()->create(['first_name' => 'Jan', 'last_name' => 'Jansen']);
     $order = Order::factory()->create();
-    $orderItem = OrderItem::factory()->create(['order_id' => $order->id, 'person_id' => null]);
+    $orderItem = OrderItem::factory()->create(['order_id' => $order->id]);
 
     $orderItem->update(['person_id' => $person->id]);
 

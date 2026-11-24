@@ -366,7 +366,7 @@ class OrderController extends SimpleEntityController
                 $order->orderItems()->create([
                     'sort_order'  => isset($item['sort_order']) ? (int) $item['sort_order'] : null,
                     'product_id'  => $productId,
-                    'person_id'   => ! empty($item['person_id']) ? (int) $item['person_id'] : null,
+                    'person_id'   => (int) $item['person_id'],
                     'quantity'    => $quantity,
                     'total_price' => $totalPrice,
                     'status'      => OrderItemStatus::NEW,
@@ -532,7 +532,7 @@ class OrderController extends SimpleEntityController
 
                     $attributes = [
                         'product_id'  => $productId,
-                        'person_id'   => ! empty($item['person_id']) ? (int) $item['person_id'] : null,
+                        'person_id'   => (int) $item['person_id'],
                         'quantity'    => $quantity,
                         'total_price' => $totalPrice,
                     ];

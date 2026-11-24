@@ -1,5 +1,11 @@
 # 04 — Zoeken op naam en filter "Abgeschlossen"
 
+- **Status:** gebouwd, nog niet gecommit en niet handmatig getest (2026-11-24)
+  - Repo/branch: krayin-laravel-crm, `development`, ongecommit in de werkmap.
+  - Gedaan: `q` (elk woord in voor- of achternaam van één gekoppelde persoon, deelwoorden, hoofdletterongevoelig) en `closed` op `GET clinic/{id}/sales-leads` via `SalesLead::scopeWherePersonNameMatches` / `scopeClosedStage`; `meta.counts.open|closed` (2 count-queries, respecteren `q`, niet `closed`/`stage_id`); Form Request + Scribe bijgewerkt; tests in `ClinicSalesLeadsTest`.
+  - Afwijking: **standaard toont de lijst nu alleen open sales** (zoals het ticket vraagt); afgeronde sales verschijnen niet meer zonder `closed=1`. Het portaal moet dat weten.
+  - Nog: het portaal gebruiken (`clinic-portal`), "Wartet" blijft buiten scope.
+
 **Afhankelijk van:** 01  ·  **Grootte:** S  ·  **Bron:** [gap-analyse](00-gap-analyse.md) §3.1
 
 Het filter "Wartet" is niet in dit ticket: de betekenis is nog open.

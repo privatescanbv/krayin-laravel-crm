@@ -10,6 +10,7 @@ use App\Traits\HasAuditTrail;
 use App\Traits\SelectsBestContactPerson;
 use BackedEnum;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Webkul\Activity\Models\Activity;
+use Webkul\Activity\Models\File as ActivityFile;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\Email;
@@ -376,6 +378,22 @@ class SalesLead extends Model
     }
 
     /**
+     * Files of this sale that the clinic portal may show: file activities on the sale itself or on one of its
+     * orders, whose document type has show_in_clinic_portal = true.
+     *
+     * @return Builder<ActivityFile>
+     */
+    public function clinicPortalFiles(): Builder
+    {
+        return ActivityFile::query()->whereHas('activity', fn (Builder $activity) => $activity
+            ->ofType(ActivityType::FILE)
+            ->visibleInClinicPortal()
+            ->where(fn (Builder $scope) => $scope
+                ->where('sales_lead_id', $this->id)
+                ->orWhereIn('order_id', $this->orders()->select('id'))));
+    }
+
+    /**
      * Get the orders associated with this sales lead.
      */
     public function orders(): HasMany
@@ -529,6 +547,38 @@ class SalesLead extends Model
             ->select('id');
 
         return $query->where('doctor_user_id', $doctor->id)->whereIn('pipeline_stage_id', $visibleStages);
+    }
+
+    /**
+     * Alleen afgeronde (fase is_won of is_lost) of juist alleen open sales.
+     */
+    public function scopeClosedStage($query, bool $closed = true)
+    {
+        $closedStages = Stage::query()->where(fn ($q) => $q->where('is_won', true)->orWhere('is_lost', true))->select('id');
+
+        return $closed
+            ? $query->whereIn('pipeline_stage_id', $closedStages)
+            : $query->whereNotIn('pipeline_stage_id', $closedStages);
+    }
+
+    /**
+     * Zoekt op voor- en/of achternaam van één gekoppelde persoon: elk woord moet in de voor- of achternaam
+     * voorkomen (deelwoorden, hoofdletterongevoelig). Leeg zoekwoord filtert niet.
+     */
+    public function scopeWherePersonNameMatches($query, ?string $term)
+    {
+        $words = preg_split('/\s+/', trim((string) $term), -1, PREG_SPLIT_NO_EMPTY);
+
+        if (! $words) {
+            return $query;
+        }
+
+        return $query->whereHas('persons', function ($persons) use ($words) {
+            foreach ($words as $word) {
+                $like = '%'.addcslashes($word, '%_\\').'%';
+                $persons->where(fn ($q) => $q->where('first_name', 'like', $like)->orWhere('last_name', 'like', $like));
+            }
+        });
     }
 
     /**

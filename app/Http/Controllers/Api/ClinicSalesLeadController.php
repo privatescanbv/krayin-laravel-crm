@@ -59,36 +59,40 @@ class ClinicSalesLeadController extends Controller
     }
 
     /**
-     * Herniapoli sales assigned to the doctor, newest first. Card data: persons carry id, name and date_of_birth (nullable); `stage_entered_at` is null when the move into the current stage is not in the audit trail.
+     * Herniapoli sales assigned to the doctor, newest first. Only open sales by default; `closed=1` gives the closed (won/lost) ones, `q` searches on person name. `meta.counts` has the open/closed totals for the current `q`. Card data: persons carry id, name and date_of_birth (nullable); `stage_entered_at` is null when the move into the current stage is not in the audit trail.
      *
      * @group Clinic sales
      *
      * @urlParam keycloakUserId string required The Keycloak user ID of the doctor.
      *
-     * @response 200 scenario="Success" {"data":[{"id":12,"name":"Rugklachten","pipeline_stage_id":41,"created_at":"2026-11-05T09:00:00+00:00","updated_at":"2026-11-05T09:00:00+00:00","closed_at":null,"stage_entered_at":"2026-11-06T10:30:00+00:00","persons":[{"id":7,"name":"Jan Jansen","date_of_birth":"1980-04-02"}]}],"links":{},"meta":{}}
+     * @response 200 scenario="Success" {"data":[{"id":12,"name":"Rugklachten","pipeline_stage_id":41,"created_at":"2026-11-05T09:00:00+00:00","updated_at":"2026-11-05T09:00:00+00:00","closed_at":null,"stage_entered_at":"2026-11-06T10:30:00+00:00","persons":[{"id":7,"name":"Jan Jansen","date_of_birth":"1980-04-02"}]}],"links":{},"meta":{"counts":{"open":1,"closed":0}}}
      * @response 403 scenario="User is not a doctor"
      * @response 404 scenario="No clinic user for this Keycloak user id"
      */
     public function index(ClinicSalesLeadIndexRequest $request, string $keycloakUserId): AnonymousResourceCollection
     {
         $doctor = $this->doctor($keycloakUserId);
+        $search = fn () => SalesLead::query()->forPortalDoctor($doctor)->wherePersonNameMatches($request->input('q'));
 
         return ClinicSalesLeadResource::collection(
-            SalesLead::query()
-                ->forPortalDoctor($doctor)
+            $search()
+                ->closedStage($request->boolean('closed'))
                 ->withStageEnteredAt()
                 ->when($request->integer('stage_id'), fn ($query, $stageId) => $query->where('pipeline_stage_id', $stageId))
                 ->with('persons')
                 ->orderByDesc('created_at')
                 ->orderByDesc('id')
                 ->paginate($request->integer('per_page', 25))
-        );
+        )->additional(['meta' => ['counts' => [
+            'open'   => $search()->closedStage(false)->count(),
+            'closed' => $search()->closedStage(true)->count(),
+        ]]]);
     }
 
     /**
      * Patient card of one sale assigned to the doctor: card fields plus all linked persons (with date of birth),
-     * stage, doctor, description (plain text), assessment outcome, additional-research flag and `appointments`
-     * (one per order: id usable with `GET clinic/{keycloakUserId}/appointments/{appointmentId}`, type, start/end).
+     * stage, doctor, description (plain text), assessment outcome, additional-research flag, per person
+     * `counts` (scheduled/unscheduled appointments; lines via `GET …/sales-leads/{saleId}/appointments/{personId}`) and `counts.files`.
      * Closed sales that are visible to the doctor stay readable. No diagnosis, region, advice, contact or financial data.
      *
      * @group Clinic sales
@@ -96,7 +100,7 @@ class ClinicSalesLeadController extends Controller
      * @urlParam keycloakUserId string required The Keycloak user ID of the doctor.
      * @urlParam saleId integer required The sale id (must be assigned to this doctor and visible to the role).
      *
-     * @response 200 scenario="Success" {"data":{"id":12,"name":"Rugklachten","pipeline_stage_id":41,"created_at":"2026-11-05T09:00:00+00:00","updated_at":"2026-11-05T09:00:00+00:00","closed_at":null,"stage_entered_at":null,"persons":[{"id":7,"name":"Jan Jansen","first_name":"Jan","last_name":"Jansen","date_of_birth":"1980-02-03"}],"stage":{"id":41,"code":"sales-intake-hernia","name":"Casus bij arts ter beoordeling","sort_order":2,"is_won":false,"is_lost":false},"doctor":{"id":3,"name":"Dr. Voorbeeld"},"description":"Omschrijving van het traject.","assessment_outcome":{"code":"example-code","label":"Voorbeeldlabel"},"additional_research_required":false,"appointments":[{"id":"881","type":{"id":4,"label":"MRI"},"start_at":"2026-12-01T09:30:00+01:00","end_at":"2026-12-01T10:15:00+01:00"}]}}
+     * @response 200 scenario="Success" {"data":{"id":12,"name":"Rugklachten","pipeline_stage_id":41,"created_at":"2026-11-05T09:00:00+00:00","updated_at":"2026-11-05T09:00:00+00:00","closed_at":null,"stage_entered_at":null,"persons":[{"id":7,"name":"Jan Jansen","first_name":"Jan","last_name":"Jansen","date_of_birth":"1980-02-03","counts":{"scheduled":1,"unscheduled":0}}],"stage":{"id":41,"code":"sales-intake-hernia","name":"Casus bij arts ter beoordeling","sort_order":2,"is_won":false,"is_lost":false},"doctor":{"id":3,"name":"Dr. Voorbeeld"},"description":"Omschrijving van het traject.","assessment_outcome":{"code":"example-code","label":"Voorbeeldlabel"},"additional_research_required":false,"counts":{"files":0}}}
      * @response 403 scenario="User is not a doctor, or Bearer token belongs to another user"
      * @response 404 scenario="Unknown user, or sale not assigned to / not visible for this doctor"
      */

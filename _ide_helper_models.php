@@ -1191,7 +1191,7 @@ namespace App\Models{
  * @property string|null $name
  * @property string|null $description
  * @property string|null $afb_description
- * @property int|null $person_id
+ * @property int $person_id
  * @property int $quantity
  * @property numeric $total_price
  * @property string|null $currency
@@ -1747,6 +1747,7 @@ namespace App\Models{
  * @property-read \Webkul\Lead\Models\Stage|null $stage
  * @property-read \Webkul\User\Models\User|null $updater
  * @property-read \App\Models\User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead closedStage(bool $closed = true)
  * @method static \Database\Factories\SalesLeadFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead forPortalDoctor(\Webkul\User\Models\User $doctor)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead newModelQuery()
@@ -1766,6 +1767,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereLeadId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereLostReason($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead wherePersonNameMatches(?string $term)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead wherePipelineStageId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereQuoteId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead whereUpdatedAt($value)

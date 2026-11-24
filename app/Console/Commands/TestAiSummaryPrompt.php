@@ -491,6 +491,7 @@ class TestAiSummaryPrompt extends Command
     private function seedOrderItems(Order $order): void
     {
         $product = Product::query()->first();
+        $personId = $order->salesLead?->persons()->value('persons.id');
 
         foreach ([
             ['name' => 'MRI knie rechts (vervolgonderzoek)', 'total_price' => 545.00],
@@ -499,6 +500,7 @@ class TestAiSummaryPrompt extends Command
             OrderItem::create([
                 'order_id'    => $order->id,
                 'product_id'  => $product?->id,
+                'person_id'   => $personId,
                 'name'        => $line['name'],
                 'quantity'    => 1,
                 'total_price' => $line['total_price'],

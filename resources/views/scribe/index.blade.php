@@ -45,12 +45,12 @@
     </span>
 </a>
 <div class="tocify-wrapper">
-
+    
             <div class="lang-selector">
                                             <button type="button" class="lang-button" data-language-name="bash">bash</button>
                                             <button type="button" class="lang-button" data-language-name="javascript">javascript</button>
                     </div>
-
+    
     <div class="search">
         <input type="text" class="search" id="input-search" placeholder="Search">
     </div>
@@ -73,6 +73,16 @@
                                     <ul id="tocify-subheader-application-webhooks" class="tocify-subheader">
                                                     <li class="tocify-item level-2" data-unique="application-webhooks-PUTapi-webhooks-event">
                                 <a href="#application-webhooks-PUTapi-webhooks-event">Handle an application webhook event.</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
+                    <ul id="tocify-header-clinic-appointments" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="clinic-appointments">
+                    <a href="#clinic-appointments">Clinic appointments</a>
+                </li>
+                                    <ul id="tocify-subheader-clinic-appointments" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="clinic-appointments-GETapi-clinic--keycloakUserId--appointments--appointmentId-">
+                                <a href="#clinic-appointments-GETapi-clinic--keycloakUserId--appointments--appointmentId-">GET api/clinic/{keycloakUserId}/appointments/{appointmentId}</a>
                             </li>
                                                                         </ul>
                             </ul>
@@ -101,14 +111,15 @@
                                 <a href="#clinic-sales-GETapi-clinic--keycloakUserId--sales-stages">Stages (kanban columns) of the Herniapoli sales pipeline that the user's role may see.</a>
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="clinic-sales-GETapi-clinic--keycloakUserId--sales-leads">
-                                <a href="#clinic-sales-GETapi-clinic--keycloakUserId--sales-leads">Herniapoli sales assigned to the doctor, newest first. Card data: persons carry id, name and date_of_birth (nullable); `stage_entered_at` is null when the move into the current stage is not in the audit trail.</a>
+                                <a href="#clinic-sales-GETapi-clinic--keycloakUserId--sales-leads">Herniapoli sales assigned to the doctor, newest first. Only open sales by default; `closed=1` gives the closed (won/lost) ones, `q` searches on person name. `meta.counts` has the open/closed totals for the current `q`. Card data: persons carry id, name and date_of_birth (nullable); `stage_entered_at` is null when the move into the current stage is not in the audit trail.</a>
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="clinic-sales-PUTapi-clinic--keycloakUserId--sales-leads--saleId--stage">
                                 <a href="#clinic-sales-PUTapi-clinic--keycloakUserId--sales-leads--saleId--stage">Move the doctor's own sale to another ordinary stage of the Herniapoli sales pipeline (kanban drag).</a>
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="clinic-sales-GETapi-clinic--keycloakUserId--sales-leads--saleId-">
                                 <a href="#clinic-sales-GETapi-clinic--keycloakUserId--sales-leads--saleId-">Patient card of one sale assigned to the doctor: card fields plus all linked persons (with date of birth),
-stage, doctor, description (plain text), assessment outcome and additional-research flag.</a>
+stage, doctor, description (plain text), assessment outcome, additional-research flag, per person
+`counts` (scheduled/unscheduled appointments; lines via `GET …/sales-leads/{saleId}/appointments/{personId}`) and `counts.files`.</a>
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="clinic-sales-GETapi-clinic--keycloakUserId--sales-leads--saleId--notes">
                                 <a href="#clinic-sales-GETapi-clinic--keycloakUserId--sales-leads--saleId--notes">Internal notes directly linked to this sale (type note only), newest first. Text is plain text.</a>
@@ -116,6 +127,16 @@ stage, doctor, description (plain text), assessment outcome and additional-resea
                                                                                 <li class="tocify-item level-2" data-unique="clinic-sales-POSTapi-clinic--keycloakUserId--sales-leads--saleId--notes">
                                 <a href="#clinic-sales-POSTapi-clinic--keycloakUserId--sales-leads--saleId--notes">Add a plain-text internal note to this sale. The doctor from the URL is the author; type and sale are fixed
 server-side. Changes nothing else and notifies nobody.</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="clinic-sales-GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-">
+                                <a href="#clinic-sales-GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-">All active order items of one patient of the sale, over all orders of the sale, one line per booking.</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="clinic-sales-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents">
+                                <a href="#clinic-sales-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents">Documents of one sale assigned to the doctor: files of the sale and of its orders, only of document types
+shown in the clinic portal. Newest first.</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="clinic-sales-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download">
+                                <a href="#clinic-sales-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download">Download one document of the sale (same scope and document-type check as the list).</a>
                             </li>
                                                                         </ul>
                             </ul>
@@ -244,7 +265,11 @@ server-side. Changes nothing else and notifies nobody.</a>
                 </li>
                                     <ul id="tocify-subheader-patient-appointments" class="tocify-subheader">
                                                     <li class="tocify-item level-2" data-unique="patient-appointments-GETapi-patient--id--appointments">
-                                <a href="#patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders and published Activities).</a>
+                                <a href="#patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders).</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="patient-appointments-GETapi-patient--id--appointments--appointmentId-">
+                                <a href="#patient-appointments-GETapi-patient--id--appointments--appointmentId-">Detail of a single appointment (tickets/portaal/02-appointment-detail.md). The id is the
+booking (`ResourceOrderItem`) id; the legacy `order-{id}` form is still accepted.</a>
                             </li>
                                                                         </ul>
                             </ul>
@@ -325,7 +350,7 @@ server-side. Changes nothing else and notifies nobody.</a>
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: November 19, 2026</li>
+        <li>Last updated: November 24, 2026</li>
     </ul>
 </div>
 
@@ -348,7 +373,7 @@ You can switch the language used with the tabs at the top right (or from the nav
 
         <h1 id="application-webhooks">Application webhooks</h1>
 
-
+    
 
                                 <h2 id="application-webhooks-PUTapi-webhooks-event">Handle an application webhook event.</h2>
 
@@ -600,9 +625,197 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </div>
         </form>
 
+                <h1 id="clinic-appointments">Clinic appointments</h1>
+
+    
+
+                                <h2 id="clinic-appointments-GETapi-clinic--keycloakUserId--appointments--appointmentId-">GET api/clinic/{keycloakUserId}/appointments/{appointmentId}</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+
+
+<span id="example-requests-GETapi-clinic--keycloakUserId--appointments--appointmentId-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "https://crm.local.privatescan.nl/api/clinic/architecto/appointments/architecto" \
+    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://crm.local.privatescan.nl/api/clinic/architecto/appointments/architecto"
+);
+
+const headers = {
+    "X-API-KEY": "{YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-clinic--keycloakUserId--appointments--appointmentId-">
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <details class="annotation">
+            <summary style="cursor: pointer;">
+                <small onclick="textContent = parentElement.parentElement.open ? 'Show headers' : 'Hide headers'">Show headers</small>
+            </summary>
+            <pre><code class="language-http">cache-control: no-cache, private
+content-type: application/json
+x-request-id: 81ccdf28-73da-407f-a317-89c410831076
+x-ratelimit-limit: 60
+x-ratelimit-remaining: 54
+ </code></pre></details>         <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: &quot;Invalid API key&quot;,
+    &quot;message&quot;: &quot;The provided API key is not valid&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, User is not a doctor):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;"></code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Unknown user, or appointment not visible for this doctor):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;"></code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-clinic--keycloakUserId--appointments--appointmentId-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-clinic--keycloakUserId--appointments--appointmentId-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-clinic--keycloakUserId--appointments--appointmentId-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-clinic--keycloakUserId--appointments--appointmentId-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-clinic--keycloakUserId--appointments--appointmentId-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-clinic--keycloakUserId--appointments--appointmentId-" data-method="GET"
+      data-path="api/clinic/{keycloakUserId}/appointments/{appointmentId}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-clinic--keycloakUserId--appointments--appointmentId-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-clinic--keycloakUserId--appointments--appointmentId-"
+                    onclick="tryItOut('GETapi-clinic--keycloakUserId--appointments--appointmentId-');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-clinic--keycloakUserId--appointments--appointmentId-"
+                    onclick="cancelTryOut('GETapi-clinic--keycloakUserId--appointments--appointmentId-');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-clinic--keycloakUserId--appointments--appointmentId-"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/clinic/{keycloakUserId}/appointments/{appointmentId}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-API-KEY" class="auth-value"               data-endpoint="GETapi-clinic--keycloakUserId--appointments--appointmentId-"
+               value="{YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-clinic--keycloakUserId--appointments--appointmentId-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-clinic--keycloakUserId--appointments--appointmentId-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>keycloakUserId</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="keycloakUserId"                data-endpoint="GETapi-clinic--keycloakUserId--appointments--appointmentId-"
+               value="architecto"
+               data-component="url">
+    <br>
+<p>The Keycloak user ID of the doctor. Example: <code>architecto</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>appointmentId</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="appointmentId"                data-endpoint="GETapi-clinic--keycloakUserId--appointments--appointmentId-"
+               value="architecto"
+               data-component="url">
+    <br>
+<p>The appointment id, as returned by the patient appointments list. Example: <code>architecto</code></p>
+            </div>
+                    </form>
+
                 <h1 id="clinic-profile">Clinic profile</h1>
 
-
+    
 
                                 <h2 id="clinic-profile-GETapi-clinic--keycloakUserId--naw">Get the profile of a clinic user.</h2>
 
@@ -1176,7 +1389,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="clinic-sales">Clinic sales</h1>
 
-
+    
 
                                 <h2 id="clinic-sales-GETapi-clinic--keycloakUserId--sales-stages">Stages (kanban columns) of the Herniapoli sales pipeline that the user&#039;s role may see.</h2>
 
@@ -1349,7 +1562,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                     </form>
 
-                    <h2 id="clinic-sales-GETapi-clinic--keycloakUserId--sales-leads">Herniapoli sales assigned to the doctor, newest first. Card data: persons carry id, name and date_of_birth (nullable); `stage_entered_at` is null when the move into the current stage is not in the audit trail.</h2>
+                    <h2 id="clinic-sales-GETapi-clinic--keycloakUserId--sales-leads">Herniapoli sales assigned to the doctor, newest first. Only open sales by default; `closed=1` gives the closed (won/lost) ones, `q` searches on person name. `meta.counts` has the open/closed totals for the current `q`. Card data: persons carry id, name and date_of_birth (nullable); `stage_entered_at` is null when the move into the current stage is not in the audit trail.</h2>
 
 <p>
 <small class="badge badge-darkred">requires authentication</small>
@@ -1363,7 +1576,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "https://crm.local.privatescan.nl/api/clinic/architecto/sales-leads?stage_id=41&amp;page=1&amp;per_page=25" \
+    --get "https://crm.local.privatescan.nl/api/clinic/architecto/sales-leads?stage_id=41&amp;q=jan+jans&amp;closed=&amp;page=1&amp;per_page=25" \
     --header "X-API-KEY: {YOUR_AUTH_KEY}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
@@ -1376,6 +1589,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 const params = {
     "stage_id": "41",
+    "q": "jan jans",
+    "closed": "0",
     "page": "1",
     "per_page": "25",
 };
@@ -1422,7 +1637,12 @@ fetch(url, {
         }
     ],
     &quot;links&quot;: {},
-    &quot;meta&quot;: {}
+    &quot;meta&quot;: {
+        &quot;counts&quot;: {
+            &quot;open&quot;: 1,
+            &quot;closed&quot;: 0
+        }
+    }
 }</code>
  </pre>
             <blockquote>
@@ -1548,6 +1768,40 @@ You can check the Dev Tools console for debugging information.</code></pre>
                data-component="query">
     <br>
 <p>Only sales in this stage (a stage the user may not see gives an empty page). Example: <code>41</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>q</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="q"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads"
+               value="jan jans"
+               data-component="query">
+    <br>
+<p>Search on first and/or last name of the linked persons (case-insensitive, partial words; every word must match). Het veld value mag niet meer dan 100 tekens bevatten. Example: <code>jan jans</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>closed</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <label data-endpoint="GETapi-clinic--keycloakUserId--sales-leads" style="display: none">
+            <input type="radio" name="closed"
+                   value="1"
+                   data-endpoint="GETapi-clinic--keycloakUserId--sales-leads"
+                   data-component="query"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="GETapi-clinic--keycloakUserId--sales-leads" style="display: none">
+            <input type="radio" name="closed"
+                   value="0"
+                   data-endpoint="GETapi-clinic--keycloakUserId--sales-leads"
+                   data-component="query"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>true/1: only closed (won or lost) sales; default only open sales. Example: <code>false</code></p>
             </div>
                                     <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>page</code></b>&nbsp;&nbsp;
@@ -1801,7 +2055,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </form>
 
                     <h2 id="clinic-sales-GETapi-clinic--keycloakUserId--sales-leads--saleId-">Patient card of one sale assigned to the doctor: card fields plus all linked persons (with date of birth),
-stage, doctor, description (plain text), assessment outcome and additional-research flag.</h2>
+stage, doctor, description (plain text), assessment outcome, additional-research flag, per person
+`counts` (scheduled/unscheduled appointments; lines via `GET …/sales-leads/{saleId}/appointments/{personId}`) and `counts.files`.</h2>
 
 <p>
 <small class="badge badge-darkred">requires authentication</small>
@@ -1861,7 +2116,11 @@ fetch(url, {
                 &quot;name&quot;: &quot;Jan Jansen&quot;,
                 &quot;first_name&quot;: &quot;Jan&quot;,
                 &quot;last_name&quot;: &quot;Jansen&quot;,
-                &quot;date_of_birth&quot;: &quot;1980-02-03&quot;
+                &quot;date_of_birth&quot;: &quot;1980-02-03&quot;,
+                &quot;counts&quot;: {
+                    &quot;scheduled&quot;: 1,
+                    &quot;unscheduled&quot;: 0
+                }
             }
         ],
         &quot;stage&quot;: {
@@ -1881,7 +2140,10 @@ fetch(url, {
             &quot;code&quot;: &quot;example-code&quot;,
             &quot;label&quot;: &quot;Voorbeeldlabel&quot;
         },
-        &quot;additional_research_required&quot;: false
+        &quot;additional_research_required&quot;: false,
+        &quot;counts&quot;: {
+            &quot;files&quot;: 0
+        }
     }
 }</code>
  </pre>
@@ -2446,9 +2708,655 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </div>
         </form>
 
+                    <h2 id="clinic-sales-GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-">All active order items of one patient of the sale, over all orders of the sale, one line per booking.</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p><code>status</code>: <code>scheduled</code> (booking with a time; <code>id</code> works with <code>GET clinic/{keycloakUserId}/appointments/{appointmentId}</code>),
+<code>unscheduled</code> (needs planning, no booking yet; <code>expected_date</code> is the order's first-examination date when known) or
+<code>not_applicable</code> (no appointment needed). Upcoming first, then the past, then unscheduled, then not applicable.
+Lost/incorrect items and items without a person are never shown. No prices or internal fields.</p>
+
+<span id="example-requests-GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "https://crm.local.privatescan.nl/api/clinic/architecto/sales-leads/16/appointments/16" \
+    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://crm.local.privatescan.nl/api/clinic/architecto/sales-leads/16/appointments/16"
+);
+
+const headers = {
+    "X-API-KEY": "{YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;data&quot;: [
+        {
+            &quot;id&quot;: &quot;881&quot;,
+            &quot;order_item_id&quot;: 55,
+            &quot;order_id&quot;: 12,
+            &quot;label&quot;: &quot;MRI lumbale wervelkolom&quot;,
+            &quot;type&quot;: {
+                &quot;id&quot;: 4,
+                &quot;label&quot;: &quot;MRI&quot;
+            },
+            &quot;status&quot;: &quot;scheduled&quot;,
+            &quot;start_at&quot;: &quot;2026-12-01T09:30:00+01:00&quot;,
+            &quot;end_at&quot;: &quot;2026-12-01T10:15:00+01:00&quot;,
+            &quot;expected_date&quot;: null,
+            &quot;clinic&quot;: {
+                &quot;id&quot;: 2,
+                &quot;label&quot;: &quot;Kliniek Voorbeeld&quot;,
+                &quot;address&quot;: &quot;Straat 1\n1234 AB Plaats&quot;
+            }
+        },
+        {
+            &quot;id&quot;: null,
+            &quot;order_item_id&quot;: 56,
+            &quot;order_id&quot;: 12,
+            &quot;label&quot;: &quot;Consult&quot;,
+            &quot;type&quot;: null,
+            &quot;status&quot;: &quot;unscheduled&quot;,
+            &quot;start_at&quot;: null,
+            &quot;end_at&quot;: null,
+            &quot;expected_date&quot;: &quot;2026-12-20&quot;,
+            &quot;clinic&quot;: null
+        }
+    ],
+    &quot;meta&quot;: {
+        &quot;counts&quot;: {
+            &quot;scheduled&quot;: 1,
+            &quot;unscheduled&quot;: 1,
+            &quot;not_applicable&quot;: 0
+        }
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, User is not a doctor, or Bearer token belongs to another user):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;"></code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Unknown user, sale not assigned to / not visible for this doctor, or person not on this sale):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;"></code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-" data-method="GET"
+      data-path="api/clinic/{keycloakUserId}/sales-leads/{saleId}/appointments/{personId}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-"
+                    onclick="tryItOut('GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-"
+                    onclick="cancelTryOut('GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/clinic/{keycloakUserId}/sales-leads/{saleId}/appointments/{personId}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-API-KEY" class="auth-value"               data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-"
+               value="{YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>keycloakUserId</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="keycloakUserId"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-"
+               value="architecto"
+               data-component="url">
+    <br>
+<p>The Keycloak user ID of the doctor. Example: <code>architecto</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>saleId</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="saleId"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-"
+               value="16"
+               data-component="url">
+    <br>
+<p>The sale id (must be assigned to this doctor and visible to the role). Example: <code>16</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>personId</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="personId"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--appointments--personId-"
+               value="16"
+               data-component="url">
+    <br>
+<p>The id of a person of the sale (<code>persons[].id</code> of the sale). Example: <code>16</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="clinic-sales-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents">Documents of one sale assigned to the doctor: files of the sale and of its orders, only of document types
+shown in the clinic portal. Newest first.</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+
+
+<span id="example-requests-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "https://crm.local.privatescan.nl/api/clinic/architecto/sales-leads/16/documents?page=1&amp;per_page=25" \
+    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://crm.local.privatescan.nl/api/clinic/architecto/sales-leads/16/documents"
+);
+
+const params = {
+    "page": "1",
+    "per_page": "25",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "X-API-KEY": "{YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;data&quot;: [
+        {
+            &quot;id&quot;: 456,
+            &quot;title&quot;: &quot;MRI uitslag knie&quot;,
+            &quot;file_name&quot;: &quot;mri-knie-uitslag.pdf&quot;,
+            &quot;type&quot;: {
+                &quot;id&quot;: 2,
+                &quot;label&quot;: &quot;Verslagen&quot;
+            },
+            &quot;size&quot;: 245678,
+            &quot;created_at&quot;: &quot;2026-11-10T09:00:00+00:00&quot;,
+            &quot;download_url&quot;: &quot;https://api.example.com/api/clinic/3f0b2d3e/sales-leads/12/documents/456/download&quot;
+        }
+    ],
+    &quot;links&quot;: {},
+    &quot;meta&quot;: {}
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, User is not a doctor, or Bearer token belongs to another user):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;"></code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Unknown user, or sale not assigned to / not visible for this doctor):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;"></code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents" data-method="GET"
+      data-path="api/clinic/{keycloakUserId}/sales-leads/{saleId}/documents"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-clinic--keycloakUserId--sales-leads--saleId--documents', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents"
+                    onclick="tryItOut('GETapi-clinic--keycloakUserId--sales-leads--saleId--documents');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents"
+                    onclick="cancelTryOut('GETapi-clinic--keycloakUserId--sales-leads--saleId--documents');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/clinic/{keycloakUserId}/sales-leads/{saleId}/documents</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-API-KEY" class="auth-value"               data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--documents"
+               value="{YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--documents"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--documents"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>keycloakUserId</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="keycloakUserId"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--documents"
+               value="architecto"
+               data-component="url">
+    <br>
+<p>The Keycloak user ID of the doctor. Example: <code>architecto</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>saleId</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="saleId"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--documents"
+               value="16"
+               data-component="url">
+    <br>
+<p>The sale id (must be assigned to this doctor and visible to the role). Example: <code>16</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>page</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="page"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--documents"
+               value="1"
+               data-component="query">
+    <br>
+<p>Page number. Het veld value moet minimaal 1 zijn. Example: <code>1</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>per_page</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="per_page"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--documents"
+               value="25"
+               data-component="query">
+    <br>
+<p>Items per page (1-100, default 25). Het veld value moet minimaal 1 zijn. Het veld value mag niet groter zijn dan 100. Example: <code>25</code></p>
+            </div>
+                </form>
+
+                    <h2 id="clinic-sales-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download">Download one document of the sale (same scope and document-type check as the list).</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+
+
+<span id="example-requests-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "https://crm.local.privatescan.nl/api/clinic/architecto/sales-leads/16/documents/16/download" \
+    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://crm.local.privatescan.nl/api/clinic/architecto/sales-leads/16/documents/16/download"
+);
+
+const headers = {
+    "X-API-KEY": "{YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download">
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <details class="annotation">
+            <summary style="cursor: pointer;">
+                <small onclick="textContent = parentElement.parentElement.open ? 'Show headers' : 'Hide headers'">Show headers</small>
+            </summary>
+            <pre><code class="language-http">cache-control: no-cache, private
+content-type: application/json
+x-request-id: 0dff6598-8fd6-4cfa-8c59-d4d49f64c418
+x-ratelimit-limit: 60
+x-ratelimit-remaining: 55
+ </code></pre></details>         <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: &quot;Invalid API key&quot;,
+    &quot;message&quot;: &quot;The provided API key is not valid&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, User is not a doctor, or Bearer token belongs to another user):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;"></code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Unknown user, sale or document, document not of this sale, or document type not shown in the clinic portal):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;"></code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download" data-method="GET"
+      data-path="api/clinic/{keycloakUserId}/sales-leads/{saleId}/documents/{documentId}/download"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download"
+                    onclick="tryItOut('GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download"
+                    onclick="cancelTryOut('GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/clinic/{keycloakUserId}/sales-leads/{saleId}/documents/{documentId}/download</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-API-KEY" class="auth-value"               data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download"
+               value="{YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>keycloakUserId</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="keycloakUserId"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download"
+               value="architecto"
+               data-component="url">
+    <br>
+<p>The Keycloak user ID of the doctor. Example: <code>architecto</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>saleId</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="saleId"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download"
+               value="16"
+               data-component="url">
+    <br>
+<p>The sale id. Example: <code>16</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>documentId</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="documentId"                data-endpoint="GETapi-clinic--keycloakUserId--sales-leads--saleId--documents--documentId--download"
+               value="16"
+               data-component="url">
+    <br>
+<p>The document id from the list. Example: <code>16</code></p>
+            </div>
+                    </form>
+
                 <h1 id="endpoints">Endpoints</h1>
 
-
+    
 
                                 <h2 id="endpoints-POSTapi-leads-hernia">Create a Hernia lead from the inbound (Gravity Forms) payload schema.</h2>
 
@@ -2476,7 +3384,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"salutation\": \"Dhr.\",
     \"first_name\": \"architecto\",
     \"last_name\": \"architecto\",
-    \"birthdate\": \"2026-11-19\",
+    \"birthdate\": \"2026-11-24\",
     \"email1\": \"zbailey@example.net\",
     \"phone_mobile\": \"0612345678\",
     \"primary_huisnr_c\": \"12\",
@@ -2525,7 +3433,7 @@ let body = {
     "salutation": "Dhr.",
     "first_name": "architecto",
     "last_name": "architecto",
-    "birthdate": "2026-11-19",
+    "birthdate": "2026-11-24",
     "email1": "zbailey@example.net",
     "phone_mobile": "0612345678",
     "primary_huisnr_c": "12",
@@ -2751,10 +3659,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="birthdate"                data-endpoint="POSTapi-leads-hernia"
-               value="2026-11-19"
+               value="2026-11-24"
                data-component="body">
     <br>
-<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-11-19</code></p>
+<p>Must be a valid date in the format <code>Y-m-d</code>. Example: <code>2026-11-24</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>email1</code></b>&nbsp;&nbsp;
@@ -3866,7 +4774,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 41c4d278-c788-46bc-b192-ae88b7aefdf1
+x-request-id: c0420121-2a14-4efe-a8a0-64d207afea97
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 59
  </code></pre></details>         <pre>
@@ -4893,7 +5801,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: d0212087-7943-4dda-b1ee-e35bf6350825
+x-request-id: 906f3970-e5b5-4fb5-8e29-2455f9ac95f3
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 58
  </code></pre></details>         <pre>
@@ -5051,7 +5959,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 8258a74c-ce1d-4ed1-bd71-d0cd16c91700
+x-request-id: a2171681-0ad6-4d94-94ba-327518da90f3
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 57
  </code></pre></details>         <pre>
@@ -5420,7 +6328,7 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 210daf24-8cd5-4529-9712-cfb1db4ea647
+x-request-id: 95202456-7ae9-4dc5-a03a-dbc6ddd916c0
 x-ratelimit-limit: 60
 x-ratelimit-remaining: 56
  </code></pre></details>         <pre>
@@ -5548,11 +6456,11 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"type\": \"call\",
+    \"type\": \"task\",
     \"title\": \"architecto\",
     \"description\": \"Eius et animi quos velit et.\",
     \"comment\": \"architecto\",
-    \"schedule_to\": \"2026-11-19 11:16:35\"
+    \"schedule_to\": \"2026-11-24 17:41:01\"
 }"
 </code></pre></div>
 
@@ -5569,11 +6477,11 @@ const headers = {
 };
 
 let body = {
-    "type": "call",
+    "type": "task",
     "title": "architecto",
     "description": "Eius et animi quos velit et.",
     "comment": "architecto",
-    "schedule_to": "2026-11-19 11:16:35"
+    "schedule_to": "2026-11-24 17:41:01"
 };
 
 fetch(url, {
@@ -5690,10 +6598,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="type"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="call"
+               value="task"
                data-component="body">
     <br>
-<p>Example: <code>call</code></p>
+<p>Example: <code>task</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>task</code></li> <li><code>meeting</code></li> <li><code>call</code></li> <li><code>note</code></li> <li><code>file</code></li></ul>
         </div>
@@ -5752,10 +6660,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="schedule_to"                data-endpoint="POSTapi-sales-leads--id--activities"
-               value="2026-11-19 11:16:35"
+               value="2026-11-24 17:41:01"
                data-component="body">
     <br>
-<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-11-19 11:16:35</code></p>
+<p>This field is required unless <code>type</code> is in <code>note</code> or <code>file</code>. Must be a valid date in the format <code>Y-m-d H:i:s</code>. Example: <code>2026-11-24 17:41:01</code></p>
         </div>
         </form>
 
@@ -6451,7 +7359,7 @@ addresses or content.</p>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"level\": \"critical\",
+    \"level\": \"warning\",
     \"count\": 27,
     \"app\": \"n\"
 }"
@@ -6470,7 +7378,7 @@ const headers = {
 };
 
 let body = {
-    "level": "critical",
+    "level": "warning",
     "count": 27,
     "app": "n"
 };
@@ -6576,10 +7484,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="level"                data-endpoint="POSTapi-failed-jobs-alert"
-               value="critical"
+               value="warning"
                data-component="body">
     <br>
-<p>Example: <code>critical</code></p>
+<p>Example: <code>warning</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>warning</code></li> <li><code>critical</code></li></ul>
         </div>
@@ -6920,7 +7828,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="keycloak">Keycloak</h1>
 
-
+    
 
                                 <h2 id="keycloak-GETapi-keycloak-persons--keycloakUserId-">Haal person id op op basis van Keycloak user id.</h2>
 
@@ -7316,7 +8224,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-naw">Patient NAW</h1>
 
-
+    
 
                                 <h2 id="patient-naw-GETapi-patient--id--naw">Get NAW data for a patient.</h2>
 
@@ -8082,7 +8990,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-password">Patient Password</h1>
 
-
+    
 
                                 <h2 id="patient-password-PUTapi-patient--id--password">Update the password for a patient.</h2>
 
@@ -8530,9 +9438,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-appointments">Patient appointments</h1>
 
+    
 
-
-                                <h2 id="patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders and published Activities).</h2>
+                                <h2 id="patient-appointments-GETapi-patient--id--appointments">Get appointments for a patient (derived from Orders).</h2>
 
 <p>
 <small class="badge badge-darkred">requires authentication</small>
@@ -8588,16 +9496,13 @@ fetch(url, {
 <code class="language-json" style="max-height: 300px;">{
     &quot;data&quot;: [
         {
-            &quot;id&quot;: &quot;order-123&quot;,
+            &quot;id&quot;: &quot;42&quot;,
             &quot;patient_id&quot;: &quot;1&quot;,
-            &quot;practitioner_id&quot;: null,
             &quot;clinic_id&quot;: null,
             &quot;clinic_ref&quot;: null,
             &quot;start_at&quot;: &quot;2026-01-27T10:00:00+01:00&quot;,
-            &quot;end_at&quot;: null,
+            &quot;end_at&quot;: &quot;2026-01-27T10:30:00+01:00&quot;,
             &quot;timezone&quot;: &quot;Europe/Amsterdam&quot;,
-            &quot;is_remote&quot;: false,
-            &quot;remote_url&quot;: null,
             &quot;created_at&quot;: &quot;2026-01-20T09:00:00+01:00&quot;,
             &quot;updated_at&quot;: &quot;2026-01-20T09:00:00+01:00&quot;
         }
@@ -8768,9 +9673,187 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                 </form>
 
+                    <h2 id="patient-appointments-GETapi-patient--id--appointments--appointmentId-">Detail of a single appointment (tickets/portaal/02-appointment-detail.md). The id is the
+booking (`ResourceOrderItem`) id; the legacy `order-{id}` form is still accepted.</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+
+
+<span id="example-requests-GETapi-patient--id--appointments--appointmentId-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "https://crm.local.privatescan.nl/api/patient/architecto/appointments/architecto" \
+    --header "X-API-KEY: {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://crm.local.privatescan.nl/api/patient/architecto/appointments/architecto"
+);
+
+const headers = {
+    "X-API-KEY": "{YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-patient--id--appointments--appointmentId-">
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <details class="annotation">
+            <summary style="cursor: pointer;">
+                <small onclick="textContent = parentElement.parentElement.open ? 'Show headers' : 'Hide headers'">Show headers</small>
+            </summary>
+            <pre><code class="language-http">cache-control: no-cache, private
+content-type: application/json
+x-request-id: 6b4ac953-a1f3-4271-99ec-dd849c4ef238
+x-ratelimit-limit: 60
+x-ratelimit-remaining: 53
+ </code></pre></details>         <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: &quot;Invalid API key&quot;,
+    &quot;message&quot;: &quot;The provided API key is not valid&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Unknown patient, or appointment of another patient):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;"></code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-patient--id--appointments--appointmentId-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-patient--id--appointments--appointmentId-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-patient--id--appointments--appointmentId-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-patient--id--appointments--appointmentId-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-patient--id--appointments--appointmentId-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-patient--id--appointments--appointmentId-" data-method="GET"
+      data-path="api/patient/{id}/appointments/{appointmentId}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-patient--id--appointments--appointmentId-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-patient--id--appointments--appointmentId-"
+                    onclick="tryItOut('GETapi-patient--id--appointments--appointmentId-');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-patient--id--appointments--appointmentId-"
+                    onclick="cancelTryOut('GETapi-patient--id--appointments--appointmentId-');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-patient--id--appointments--appointmentId-"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/patient/{id}/appointments/{appointmentId}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-API-KEY</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-API-KEY" class="auth-value"               data-endpoint="GETapi-patient--id--appointments--appointmentId-"
+               value="{YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>{YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-patient--id--appointments--appointmentId-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-patient--id--appointments--appointmentId-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>id</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="id"                data-endpoint="GETapi-patient--id--appointments--appointmentId-"
+               value="architecto"
+               data-component="url">
+    <br>
+<p>The Keycloak user ID of the patient. Example: <code>architecto</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>appointmentId</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="appointmentId"                data-endpoint="GETapi-patient--id--appointments--appointmentId-"
+               value="architecto"
+               data-component="url">
+    <br>
+<p>The appointment id, as returned by the list endpoint. Example: <code>architecto</code></p>
+            </div>
+                    </form>
+
                 <h1 id="patient-counters">Patient counters</h1>
 
-
+    
 
                                 <h2 id="patient-counters-GETapi-patient--id--counters">Get notification counters for the patient portal menu badges.</h2>
 
@@ -8944,7 +10027,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-documents">Patient documents</h1>
 
-
+    
 
                                 <h2 id="patient-documents-GETapi-patient--id--documents">Get all documents for a patient (FILE activities published to their portal via pivot).</h2>
 
@@ -9216,7 +10299,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --form "name=Bloeduitslag"\
     --form "description=Resultaten van het bloedonderzoek."\
-    --form "file=@/tmp/phppfn81mui05o76CqSZ5Z" </code></pre></div>
+    --form "file=@/tmp/php3i1ikff6o83idrk7qwG" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -9405,7 +10488,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The file to upload (max 20 MB). Example: <code>/tmp/phppfn81mui05o76CqSZ5Z</code></p>
+<p>The file to upload (max 20 MB). Example: <code>/tmp/php3i1ikff6o83idrk7qwG</code></p>
         </div>
         </form>
 
@@ -9458,9 +10541,9 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: b4c70b47-6be0-4321-a109-4588dcbb2f4c
+x-request-id: cfd00084-8613-43f6-96a6-8259ab1e6358
 x-ratelimit-limit: 60
-x-ratelimit-remaining: 55
+x-ratelimit-remaining: 52
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -9747,7 +10830,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-messages">Patient messages</h1>
 
-
+    
 
                                 <h2 id="patient-messages-GETapi-patient--id--messages">Get all patient messages for a person, grouped by thread.</h2>
 
@@ -10132,7 +11215,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-notifications">Patient notifications</h1>
 
-
+    
 
                                 <h2 id="patient-notifications-GETapi-patient--id--notifications">Get notifications for a patient.</h2>
 
@@ -10190,9 +11273,9 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 7ebfc079-1079-45dc-a12c-3022d6c077fb
+x-request-id: 979f2f2b-23b2-4fa2-8b40-8788944809ad
 x-ratelimit-limit: 60
-x-ratelimit-remaining: 54
+x-ratelimit-remaining: 51
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -10627,7 +11710,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
                 <h1 id="patient-preferences">Patient preferences</h1>
 
-
+    
 
                                 <h2 id="patient-preferences-GETapi-patient--id--preferences">Get preferences for a patient.</h2>
 
@@ -10678,9 +11761,9 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-x-request-id: 7895b785-a1a2-4a4d-a8cb-0c70db9ce16d
+x-request-id: 50c8ee78-19d3-4c35-9e24-b3c68deb6cb3
 x-ratelimit-limit: 60
-x-ratelimit-remaining: 53
+x-ratelimit-remaining: 50
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -10859,7 +11942,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"preferences\": {
         \"email_notifications_enabled\": true,
         \"language\": \"architecto\",
-        \"onboarding_completed_at\": \"2026-11-19T11:16:36\"
+        \"onboarding_completed_at\": \"2026-11-24T17:41:02\"
     }
 }"
 </code></pre></div>
@@ -10880,7 +11963,7 @@ let body = {
     "preferences": {
         "email_notifications_enabled": true,
         "language": "architecto",
-        "onboarding_completed_at": "2026-11-19T11:16:36"
+        "onboarding_completed_at": "2026-11-24T17:41:02"
     }
 };
 
@@ -11052,10 +12135,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="preferences.onboarding_completed_at"                data-endpoint="PUTapi-patient--id--preferences"
-               value="2026-11-19T11:16:36"
+               value="2026-11-24T17:41:02"
                data-component="body">
     <br>
-<p>Het veld value is geen geldige datum. Example: <code>2026-11-19T11:16:36</code></p>
+<p>Het veld value is geen geldige datum. Example: <code>2026-11-24T17:41:02</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>email_notifications_enabled</code></b>&nbsp;&nbsp;
@@ -11083,9 +12166,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </div>
         </form>
 
+            
 
-
-
+        
     </div>
     <div class="dark-box">
                     <div class="lang-selector">

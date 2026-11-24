@@ -6,10 +6,12 @@ use App\Enums\PipelineStage;
 use App\Enums\RoleCode;
 use App\Models\AssessmentOutcome;
 use App\Models\Department;
+use App\Models\DocumentType;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
+use App\Models\ResourceType;
 use App\Models\SalesLead;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -17,9 +19,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Webkul\Activity\Models\Activity;
+use Webkul\Activity\Models\File as ActivityFile;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Stage;
 use Webkul\User\Models\Group;
@@ -448,7 +452,7 @@ it('shows the detail of the doctor\'s own sale with the whitelisted fields only'
 
     expect($response->json('data.description'))->toBe("Eerste & tweede\n\nAlinea 2 alert(1)")
         ->and(collect($response->json('data.persons'))->pluck('date_of_birth')->filter()->all())->toBe(['1980-02-03'])
-        ->and(array_keys($response->json('data.persons.0')))->toBe(['id', 'name', 'first_name', 'last_name', 'date_of_birth'])
+        ->and(array_keys($response->json('data.persons.0')))->toBe(['id', 'name', 'first_name', 'last_name', 'date_of_birth', 'counts'])
         ->and(array_keys($response->json('data.doctor')))->toBe(['id', 'name'])
         ->and(array_keys($response->json('data')))->not->toContain('email', 'phone', 'expected_close_date', 'lead_value', 'diagnosis', 'user_id');
 });
@@ -604,30 +608,321 @@ it('refuses notes on sales outside the doctor\'s scope', function () {
     expect(Activity::where('type', 'note')->count())->toBe(0);
 });
 
-it('lists the appointments of the sale in the detail, with ids usable for the appointment detail', function () {
-    portalUser('kc-doc-1');
-    $sale = doctorSale(User::query()->where('keycloak_user_id', 'kc-doc-1')->first(), herniaStage());
-    $person = Person::factory()->create();
+function closedHerniaStage(bool $won = true): Stage
+{
+    $stage = $won ? Stage::factory()->won() : Stage::factory()->lost();
+
+    return grantPortalRoles($stage->create(['lead_pipeline_id' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value]));
+}
+
+function salePerson(SalesLead $sale, string $first, string $last): Person
+{
+    $person = Person::factory()->create(['first_name' => $first, 'last_name' => $last]);
     $sale->persons()->attach($person->id);
 
-    $order = Order::factory()->create(['sales_lead_id' => $sale->id]);
-    $item = OrderItem::factory()->create(['order_id' => $order->id, 'person_id' => $person->id]);
-    $booking = ResourceOrderItem::factory()->create([
-        'orderitem_id' => $item->id,
-        'resource_id'  => Resource::factory()->create()->id,
-        'from'         => now()->addDay(),
-        'to'           => now()->addDay()->addHour(),
+    return $person;
+}
+
+it('lists only open sales by default and only closed sales with closed=1', function () {
+    $doctor = portalUser('kc-doc-1');
+    $open = doctorSale($doctor, herniaStage());
+    $won = doctorSale($doctor, closedHerniaStage(true));
+    $lost = doctorSale($doctor, closedHerniaStage(false));
+
+    $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads', 'kc-doc-1'))
+        ->assertOk()->assertJsonPath('data.*.id', [$open->id]);
+
+    $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads', ['keycloakUserId' => 'kc-doc-1', 'closed' => 1]))
+        ->assertOk()->assertJsonCount(2, 'data')->assertJsonMissing(['id' => $open->id]);
+
+    $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads', ['keycloakUserId' => 'kc-doc-1', 'closed' => 'x']))
+        ->assertUnprocessable();
+});
+
+it('does not count or list closed sales of a stage the role may not see', function () {
+    $doctor = portalUser('kc-doc-1');
+    doctorSale($doctor, grantPortalRoles(Stage::factory()->won()->create(['lead_pipeline_id' => PipelineDefaultKeys::PIPELINE_HERNIA_SALES_ID->value]), false));
+
+    $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads', ['keycloakUserId' => 'kc-doc-1', 'closed' => 1]))
+        ->assertOk()->assertJsonCount(0, 'data')->assertJsonPath('meta.counts', ['open' => 0, 'closed' => 0]);
+});
+
+it('searches on first and last name, partial and case-insensitive, within the own sales only', function () {
+    $doctor = portalUser('kc-doc-1');
+    $other = portalUser('kc-doc-2');
+    $stage = herniaStage();
+    $jan = doctorSale($doctor, $stage);
+    salePerson($jan, 'Jan', 'Jansen');
+    $piet = doctorSale($doctor, $stage);
+    salePerson($piet, 'Piet', 'Pietersen');
+    salePerson(doctorSale($other, $stage), 'Jan', 'Jansen');
+
+    $search = fn (string $q) => $this->withHeaders(apiKeyHeader())
+        ->getJson(route('api.clinic.sales-leads', ['keycloakUserId' => 'kc-doc-1', 'q' => $q]))
+        ->assertOk()->json('data.*.id');
+
+    expect($search('JANS'))->toBe([$jan->id])
+        ->and($search('jan jans'))->toBe([$jan->id])
+        ->and($search('jansen jan'))->toBe([$jan->id])
+        ->and($search('pietersen'))->toBe([$piet->id])
+        ->and($search('jansen pietersen'))->toBe([])
+        ->and($search('nobody'))->toBe([])
+        ->and($search('%'))->toBe([])
+        ->and($search('  '))->toHaveCount(2);
+});
+
+it('reports open and closed counts that respect the search term but not the closed filter', function () {
+    $doctor = portalUser('kc-doc-1');
+    salePerson(doctorSale($doctor, herniaStage()), 'Jan', 'Jansen');
+    salePerson(doctorSale($doctor, herniaStage(2)), 'Piet', 'Pietersen');
+    salePerson(doctorSale($doctor, closedHerniaStage()), 'Jan', 'Bakker');
+    salePerson(doctorSale($doctor, closedHerniaStage(false)), 'Klaas', 'Bakker');
+
+    $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads', 'kc-doc-1'))
+        ->assertOk()->assertJsonPath('meta.counts', ['open' => 2, 'closed' => 2])->assertJsonPath('meta.total', 2);
+
+    $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads', ['keycloakUserId' => 'kc-doc-1', 'q' => 'jan', 'closed' => 1]))
+        ->assertOk()->assertJsonPath('meta.counts', ['open' => 1, 'closed' => 1])->assertJsonPath('meta.total', 1);
+});
+
+function plannableType(bool $plannable = true): ResourceType
+{
+    return ResourceType::query()->firstOrCreate(['name' => $plannable ? 'MRI scanner' : 'Other']);
+}
+
+function personItem(SalesLead $sale, Person $person, array $attributes = [], ?Order $order = null, ?Carbon $from = null, bool $plannable = true): OrderItem
+{
+    $order ??= Order::factory()->create(['sales_lead_id' => $sale->id, 'first_examination_at' => null]);
+    $item = OrderItem::factory()->create([
+        'order_id'         => $order->id,
+        'person_id'        => $person->id,
+        'resource_type_id' => plannableType($plannable)->id,
+        ...$attributes,
     ]);
-    Order::factory()->create(['sales_lead_id' => $sale->id, 'first_examination_at' => null]); // geen afspraak
 
-    $response = $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads.show', ['kc-doc-1', $sale->id]))
-        ->assertOk()
-        ->assertJsonCount(1, 'data.appointments')
-        ->assertJsonPath('data.appointments.0.id', (string) $booking->id)
-        ->assertJsonPath('data.appointments.0.start_at', $booking->from->toIso8601String())
-        ->assertJsonPath('data.appointments.0.end_at', $booking->to->toIso8601String());
+    if ($from) {
+        ResourceOrderItem::factory()->create([
+            'orderitem_id' => $item->id,
+            'resource_id'  => Resource::factory()->create()->id,
+            'from'         => $from,
+            'to'           => $from->copy()->addHour(),
+        ]);
+    }
 
-    expect(array_keys($response->json('data.appointments.0')))->toBe(['id', 'type', 'start_at', 'end_at']);
+    return $item;
+}
+
+function personAppointments(string $keycloakId, SalesLead $sale, Person $person)
+{
+    return test()->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads.appointments', [$keycloakId, $sale->id, $person->id]));
+}
+
+it('lists all items of one person across all orders of the sale and never those of the other person', function () {
+    $doctor = portalUser('kc-doc-1');
+    $sale = doctorSale($doctor, herniaStage());
+    $anna = salePerson($sale, 'Anna', 'A');
+    $bert = salePerson($sale, 'Bert', 'B');
+    $shared = Order::factory()->create(['sales_lead_id' => $sale->id, 'first_examination_at' => null]);
+
+    $annaOne = personItem($sale, $anna, from: now()->addDays(2), order: $shared);
+    $bertOne = personItem($sale, $bert, from: now()->addDays(3), order: $shared);
+    $annaTwo = personItem($sale, $anna, from: now()->addDays(9));
+    $bertTwo = personItem($sale, $bert, from: now()->addDays(4));
+    personItem(doctorSale($doctor, herniaStage(2)), $anna, from: now()->addDay()); // andere sale
+
+    $response = personAppointments('kc-doc-1', $sale, $anna)->assertOk();
+    expect(collect($response->json('data'))->pluck('order_item_id')->all())->toBe([$annaOne->id, $annaTwo->id]);
+
+    expect(collect(personAppointments('kc-doc-1', $sale, $bert)->assertOk()->json('data'))->pluck('order_item_id')->all())
+        ->toBe([$bertOne->id, $bertTwo->id]);
+});
+
+it('shows planned, not yet planned and not-applicable items with status, ordering and counts, without prices', function () {
+    $doctor = portalUser('kc-doc-1');
+    $sale = doctorSale($doctor, herniaStage());
+    $person = salePerson($sale, 'Anna', 'A');
+    $past = personItem($sale, $person, from: now()->subDays(3));
+    $older = personItem($sale, $person, from: now()->subDays(10));
+    $later = personItem($sale, $person, from: now()->addDays(5));
+    $soon = personItem($sale, $person, from: now()->addDay());
+    $dated = Order::factory()->create(['sales_lead_id' => $sale->id, 'first_examination_at' => now()->addDays(20)->toDateString()]);
+    $unplanned = personItem($sale, $person, order: $dated);
+    $nothingToPlan = personItem($sale, $person, plannable: false);
+
+    $response = personAppointments('kc-doc-1', $sale, $person)->assertOk()
+        ->assertJsonPath('data.*.order_item_id', [$soon->id, $later->id, $past->id, $older->id, $unplanned->id, $nothingToPlan->id])
+        ->assertJsonPath('data.*.status', ['scheduled', 'scheduled', 'scheduled', 'scheduled', 'unscheduled', 'not_applicable'])
+        ->assertJsonPath('meta.counts', ['scheduled' => 4, 'unscheduled' => 1, 'not_applicable' => 1]);
+
+    $booking = $soon->resourceOrderItems()->first();
+    expect($response->json('data.0'))->toMatchArray(['id' => (string) $booking->id, 'start_at' => $booking->from->toIso8601String(), 'end_at' => $booking->to->toIso8601String(), 'expected_date' => null])
+        ->and($response->json('data.4'))->toMatchArray(['id' => null, 'start_at' => null, 'end_at' => null, 'clinic' => null, 'expected_date' => now()->addDays(20)->toDateString()])
+        ->and($response->json('data.5'))->toMatchArray(['id' => null, 'status' => 'not_applicable', 'expected_date' => null])
+        ->and(array_keys($response->json('data.0')))->toBe(['id', 'order_item_id', 'order_id', 'label', 'type', 'status', 'start_at', 'end_at', 'expected_date', 'clinic'])
+        ->and(json_encode($response->json()))->not->toMatch('/price|prijs|cost|inkoop/i');
 
     $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.appointments.show', ['kc-doc-1', $booking->id]))->assertOk();
+});
+
+it('gives every booking of an item its own line', function () {
+    $doctor = portalUser('kc-doc-1');
+    $sale = doctorSale($doctor, herniaStage());
+    $person = salePerson($sale, 'Anna', 'A');
+    $item = personItem($sale, $person, from: now()->addDays(2));
+    ResourceOrderItem::factory()->create(['orderitem_id' => $item->id, 'resource_id' => Resource::factory()->create()->id, 'from' => now()->addDays(1), 'to' => now()->addDays(1)->addHour()]);
+
+    personAppointments('kc-doc-1', $sale, $person)->assertOk()
+        ->assertJsonCount(2, 'data')
+        ->assertJsonPath('data.*.order_item_id', [$item->id, $item->id])
+        ->assertJsonPath('meta.counts.scheduled', 2);
+});
+
+it('hides lost and incorrect items', function () {
+    $doctor = portalUser('kc-doc-1');
+    $sale = doctorSale($doctor, herniaStage());
+    $person = salePerson($sale, 'Anna', 'A');
+    $visible = personItem($sale, $person, from: now()->addDay());
+    // Status na het inplannen zetten: een boeking maakt van de regel zelf weer "ingepland".
+    personItem($sale, $person, from: now()->addDay())->update(['status' => 'lost']);
+    personItem($sale, $person, from: now()->addDay())->update(['status' => 'incorrect']);
+
+    personAppointments('kc-doc-1', $sale, $person)->assertOk()->assertJsonPath('data.*.order_item_id', [$visible->id]);
+});
+
+it('refuses persons that are not on the sale, other doctors\' sales and non-doctors', function () {
+    $doctor = portalUser('kc-doc-1');
+    $other = portalUser('kc-doc-2');
+    portalUser('kc-clinic-1', RoleCode::KLINIEK_MEDEWERKER);
+    $sale = doctorSale($doctor, herniaStage());
+    $person = salePerson($sale, 'Anna', 'A');
+    $stranger = Person::factory()->create();
+    personItem($sale, $stranger, from: now()->addDay());
+    $foreign = doctorSale($other, herniaStage(2));
+    $foreignPerson = salePerson($foreign, 'Piet', 'P');
+
+    personAppointments('kc-doc-1', $sale, $stranger)->assertNotFound();
+    personAppointments('kc-doc-1', $sale, $foreignPerson)->assertNotFound();
+    personAppointments('kc-doc-1', $foreign, $foreignPerson)->assertNotFound();
+    personAppointments('kc-doc-2', $sale, $person)->assertNotFound();
+    personAppointments('kc-clinic-1', $sale, $person)->assertForbidden();
+    $this->withoutHeader('X-API-KEY')->getJson(route('api.clinic.sales-leads.appointments', ['kc-doc-1', $sale->id, $person->id]))->assertUnauthorized();
+});
+
+it('reports per person how many appointments are planned and not yet planned in the sale detail', function () {
+    $doctor = portalUser('kc-doc-1');
+    $sale = doctorSale($doctor, herniaStage());
+    $anna = salePerson($sale, 'Anna', 'A');
+    $bert = salePerson($sale, 'Bert', 'B');
+    personItem($sale, $anna, from: now()->addDay());
+    personItem($sale, $anna, from: now()->addDays(2));
+    personItem($sale, $anna);
+    personItem($sale, $bert);
+
+    $response = $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads.show', ['kc-doc-1', $sale->id]))->assertOk();
+    $counts = collect($response->json('data.persons'))->mapWithKeys(fn ($p) => [$p['id'] => $p['counts']]);
+
+    expect($counts[$anna->id])->toBe(['scheduled' => 2, 'unscheduled' => 1])
+        ->and($counts[$bert->id])->toBe(['scheduled' => 0, 'unscheduled' => 1])
+        ->and(array_keys($response->json('data')))->not->toContain('appointments')
+        ->and($response->json('data.counts'))->toBe(['files' => 0]);
+});
+
+function saleFile(SalesLead|Order $owner, ?DocumentType $type, string $name = 'verslag.pdf', string $content = 'pdf-bytes'): ActivityFile
+{
+    $activity = Activity::query()->create([
+        'title'            => 'Titel '.$name,
+        'type'             => 'file',
+        'schedule_from'    => now(),
+        'schedule_to'      => now(),
+        'is_done'          => 1,
+        ...($owner instanceof Order ? ['order_id' => $owner->id] : ['sales_lead_id' => $owner->id]),
+        'document_type_id' => $type?->id,
+    ]);
+    $path = 'activities/'.$activity->id.'/'.$name;
+    Storage::disk(config('filesystems.default'))->put($path, $content);
+
+    return ActivityFile::query()->create(['name' => $name, 'path' => $path, 'activity_id' => $activity->id]);
+}
+
+it('lists the documents of the sale and its orders, only of types shown in the clinic portal', function () {
+    Storage::fake(config('filesystems.default'));
+    $doctor = portalUser('kc-doc-1');
+    $sale = doctorSale($doctor, herniaStage());
+    $order = Order::factory()->create(['sales_lead_id' => $sale->id]);
+    $visible = DocumentType::factory()->create(['name' => 'Testverslagen', 'show_in_clinic_portal' => true]);
+    $hidden = DocumentType::factory()->create(['show_in_clinic_portal' => false]);
+
+    $onSale = saleFile($sale, $visible, 'a.pdf', '12345');
+    $onOrder = saleFile($order, $visible, 'b.pdf');
+    saleFile($sale, $hidden, 'hidden.pdf');
+    saleFile(Order::factory()->create(['sales_lead_id' => doctorSale($doctor, herniaStage(2))->id]), $visible, 'other-sale.pdf');
+
+    $response = $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads.documents', ['kc-doc-1', $sale->id]))
+        ->assertOk()
+        ->assertJsonCount(2, 'data');
+
+    expect(collect($response->json('data'))->pluck('id')->sort()->values()->all())->toBe([$onSale->id, $onOrder->id])
+        ->and(collect($response->json('data'))->firstWhere('id', $onSale->id))->toMatchArray([
+            'file_name' => 'a.pdf', 'type' => ['id' => $visible->id, 'label' => 'Testverslagen'], 'size' => 5,
+        ]);
+
+    $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads.show', ['kc-doc-1', $sale->id]))
+        ->assertOk()->assertJsonPath('data.counts.files', 2);
+});
+
+it('downloads a document of the own sale and refuses hidden types, other sales and other doctors', function () {
+    Storage::fake(config('filesystems.default'));
+    $doctor = portalUser('kc-doc-1');
+    portalUser('kc-doc-2');
+    $sale = doctorSale($doctor, herniaStage());
+    $visible = DocumentType::factory()->create(['show_in_clinic_portal' => true]);
+    $hidden = DocumentType::factory()->create(['show_in_clinic_portal' => false]);
+    $file = saleFile($sale, $visible, 'ok.pdf', 'inhoud');
+    $hiddenFile = saleFile($sale, $hidden, 'hidden.pdf');
+    $otherSale = doctorSale($doctor, herniaStage(2));
+    $otherFile = saleFile($otherSale, $visible, 'other.pdf');
+
+    $download = fn (string $kc, SalesLead $s, ActivityFile $f) => $this->withHeaders(apiKeyHeader())
+        ->get(route('api.clinic.sales-leads.documents.download', [$kc, $s->id, $f->id]));
+
+    expect($download('kc-doc-1', $sale, $file)->assertOk()->streamedContent())->toBe('inhoud');
+    $download('kc-doc-1', $sale, $hiddenFile)->assertNotFound();
+    $download('kc-doc-1', $sale, $otherFile)->assertNotFound();
+    $download('kc-doc-2', $sale, $file)->assertNotFound();
+    $this->withHeaders(apiKeyHeader())->getJson(route('api.clinic.sales-leads.documents', ['kc-doc-2', $sale->id]))->assertNotFound();
+});
+
+function tabUrls(): array
+{
+    $sale = doctorSale(User::query()->where('keycloak_user_id', 'kc-doc-1')->first(), herniaStage());
+    $file = saleFile($sale, DocumentType::factory()->create(['show_in_clinic_portal' => true]));
+    $person = salePerson($sale, 'Anna', 'A');
+
+    return [
+        route('api.clinic.sales-leads.appointments', ['kc-doc-1', $sale->id, $person->id]),
+        route('api.clinic.sales-leads.documents', ['kc-doc-1', $sale->id]),
+        route('api.clinic.sales-leads.documents.download', ['kc-doc-1', $sale->id, $file->id]),
+    ];
+}
+
+it('serves the appointment and document tabs to the bearer token of the doctor itself', function () {
+    Storage::fake(config('filesystems.default'));
+    portalUser('kc-doc-1');
+    $urls = tabUrls();
+    fakeKeycloakToken('kc-doc-1');
+
+    foreach ($urls as $url) {
+        $this->get($url, ['Authorization' => 'Bearer t', 'Accept' => 'application/json'])->assertOk();
+    }
+});
+
+it('forbids the appointment and document tabs to the bearer token of another subject', function () {
+    Storage::fake(config('filesystems.default'));
+    portalUser('kc-doc-1');
+    $urls = tabUrls();
+    fakeKeycloakToken('kc-doc-2');
+
+    foreach ($urls as $url) {
+        $this->get($url, ['Authorization' => 'Bearer t', 'Accept' => 'application/json'])->assertForbidden();
+    }
 });

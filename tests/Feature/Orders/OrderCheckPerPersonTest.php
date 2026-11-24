@@ -56,9 +56,10 @@ test('creates separate checks per person when both have products with same repor
         ->and($checks->count())->toBe(2);
 });
 
-test('creates single check when order item has no person', function () {
+test('creates a single check named after the person of the order item', function () {
     $order = Order::factory()->create();
     $product = Product::factory()->create();
+    $person = Person::factory()->create(['first_name' => 'Els', 'last_name' => 'Bakker', 'is_active' => true]);
 
     PartnerProduct::factory()->create([
         'product_id' => $product->id,
@@ -69,7 +70,7 @@ test('creates single check when order item has no person', function () {
     OrderItem::factory()->create([
         'order_id'   => $order->id,
         'product_id' => $product->id,
-        'person_id'  => null,
+        'person_id'  => $person->id,
     ]);
 
     $this->service->updatePartnerProductChecks($order->fresh());
@@ -78,11 +79,11 @@ test('creates single check when order item has no person', function () {
         ->where('removable', false)
         ->pluck('name');
 
-    expect($checks)->toContain('Partner product rapportage: Radiologie MRI')
+    expect($checks)->toContain('Partner product rapportage: Radiologie MRI — '.$person->name)
         ->and($checks->count())->toBe(1);
 });
 
-test('removes obsolete checks when person is removed from order item', function () {
+test('replaces the check when the order item moves to another person', function () {
     $order = Order::factory()->create();
     $product = Product::factory()->create();
 
@@ -104,14 +105,16 @@ test('removes obsolete checks when person is removed from order item', function 
 
     expect(OrderCheck::where('order_id', $order->id)->count())->toBe(1);
 
-    // Remove person from order item
-    $item->person_id = null;
+    // Move the order item to another person
+    $other = Person::factory()->create(['first_name' => 'Piet', 'last_name' => 'Smit', 'is_active' => true]);
+    $item->person_id = $other->id;
     $item->saveQuietly();
 
     $this->service->updatePartnerProductChecks($order->fresh());
 
     $checks = OrderCheck::where('order_id', $order->id)->where('removable', false)->pluck('name');
-    expect($checks)->toContain('Partner product rapportage: Cardiologie')
+    expect($checks)->toContain('Partner product rapportage: Cardiologie — '.$other->name)
+        ->not->toContain('Partner product rapportage: Cardiologie — '.$person->name)
         ->and($checks->count())->toBe(1);
 });
 

@@ -3,7 +3,9 @@
 use App\Http\Controllers\Api\ClinicAppointmentController;
 use App\Http\Controllers\Api\ClinicPasswordResetController;
 use App\Http\Controllers\Api\ClinicProfileController;
+use App\Http\Controllers\Api\ClinicSalesLeadAppointmentController;
 use App\Http\Controllers\Api\ClinicSalesLeadController;
+use App\Http\Controllers\Api\ClinicSalesLeadDocumentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -41,6 +43,9 @@ Route::prefix('clinic/{keycloakUserId}')
         Route::get('sales-leads/{saleId}', [ClinicSalesLeadController::class, 'show'])->whereNumber('saleId')->name('api.clinic.sales-leads.show');
         Route::get('sales-leads/{saleId}/notes', [ClinicSalesLeadController::class, 'notes'])->whereNumber('saleId')->name('api.clinic.sales-leads.notes');
         Route::post('sales-leads/{saleId}/notes', [ClinicSalesLeadController::class, 'storeNote'])->whereNumber('saleId')->name('api.clinic.sales-leads.notes.store');
+        Route::get('sales-leads/{saleId}/appointments/{personId}', [ClinicSalesLeadAppointmentController::class, 'index'])->whereNumber(['saleId', 'personId'])->name('api.clinic.sales-leads.appointments');
+        Route::get('sales-leads/{saleId}/documents', [ClinicSalesLeadDocumentController::class, 'index'])->whereNumber('saleId')->name('api.clinic.sales-leads.documents');
+        Route::get('sales-leads/{saleId}/documents/{documentId}/download', [ClinicSalesLeadDocumentController::class, 'download'])->whereNumber(['saleId', 'documentId'])->name('api.clinic.sales-leads.documents.download');
 
         // Afspraak-detail (tickets/portaal/02-appointment-detail.md), Herniapoli doctors only
         Route::get('appointments/{appointmentId}', [ClinicAppointmentController::class, 'show'])->name('api.clinic.appointments.show');

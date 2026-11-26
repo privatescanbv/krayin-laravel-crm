@@ -57,6 +57,10 @@ class OrderAfbController extends Controller
     {
         $order = Order::findOrFail($id);
 
+        if (! config('services.afb.dispatch_enabled')) {
+            return $this->dispatchDisabledResponse();
+        }
+
         if ($order->isHerniapoli()) {
             return response()->json(['message' => 'AFB verzending is niet van toepassing voor Herniapoli orders.'], 422);
         }
@@ -188,6 +192,10 @@ class OrderAfbController extends Controller
             'reply_to'  => 'required|email',
             'person_id' => 'nullable|integer',
         ]);
+
+        if (! config('services.afb.dispatch_enabled')) {
+            return $this->dispatchDisabledResponse();
+        }
 
         $order = Order::with([
             'salesLead.persons',
@@ -347,5 +355,10 @@ class OrderAfbController extends Controller
         }
 
         abort(404);
+    }
+
+    private function dispatchDisabledResponse(): JsonResponse
+    {
+        return response()->json(['message' => 'AFB verzending staat uit op deze omgeving (AFB_DISPATCH_ENABLED).'], 422);
     }
 }

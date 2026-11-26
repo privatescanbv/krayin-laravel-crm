@@ -1232,3 +1232,11 @@ test('gvl pdf attachment filename includes slugified person name', function () {
     expect($gvlAttachment)->not->toBeNull()
         ->and($gvlAttachment->name)->toContain(Str::slug($person->name));
 });
+
+test('dispatch job sends nothing when AFB dispatch is disabled', function () {
+    config(['services.afb.dispatch_enabled' => false]);
+
+    $this->mock(AfbDispatchService::class)->shouldNotReceive('sendDispatch');
+
+    app()->call([new SendAfbDispatchJob(1, [1], AfbDispatchType::BATCH->value), 'handle']);
+});

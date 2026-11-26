@@ -152,6 +152,9 @@ return [
         // AI summary settings live in config/ai_summaries.php (per subject).
         'response_format_json' => filter_var(env('LLM_RESPONSE_FORMAT_JSON', true), FILTER_VALIDATE_BOOLEAN),
     ],
+    'afb' => [
+        'dispatch_enabled' => filter_var(env('AFB_DISPATCH_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+    ],
     'feedback_widget' => [
         'key' => env('FEEDBACK_WIDGET_KEY'),
     ],

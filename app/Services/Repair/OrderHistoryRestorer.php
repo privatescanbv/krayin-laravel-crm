@@ -36,14 +36,14 @@ class OrderHistoryRestorer
     /**
      * @return array{activities: int, emails: int, linked_emails: int, closed_tasks: int}|null null when there is nothing to repair
      */
-    public function restore(): ?array
+    public function restore(string $dataFile = self::DATA_FILE, string $manifestFile = self::MANIFEST_FILE): ?array
     {
         // Fresh and test databases migrate too: leave the files on disk untouched there.
         if (! DB::table('orders')->whereNotNull('external_id')->exists()) {
             return null;
         }
 
-        $path = storage_path(self::DATA_FILE);
+        $path = storage_path($dataFile);
 
         if (! File::exists($path)) {
             if ($this->hasOrdersWithoutHistory()) {
@@ -58,7 +58,7 @@ class OrderHistoryRestorer
 
         $manifest = $this->withoutQueryEvents(fn () => DB::transaction(fn () => $this->insertRecords($path)));
 
-        $this->rememberInserted($manifest);
+        $this->rememberInserted($manifest, $manifestFile);
 
         $counts = [
             'activities'    => count($manifest['activity_ids']),
@@ -72,9 +72,9 @@ class OrderHistoryRestorer
         return $counts;
     }
 
-    public function revert(): void
+    public function revert(string $manifestFile = self::MANIFEST_FILE): void
     {
-        $path = storage_path(self::MANIFEST_FILE);
+        $path = storage_path($manifestFile);
 
         if (! File::exists($path)) {
             return;
@@ -110,13 +110,13 @@ class OrderHistoryRestorer
      *
      * @param  array{activity_ids: list<int>, email_ids: list<int>, linked_email_ids: list<int>, closed_tasks: int}  $inserted
      */
-    private function rememberInserted(array $inserted): void
+    private function rememberInserted(array $inserted, string $manifestFile): void
     {
         if (! $inserted['activity_ids'] && ! $inserted['email_ids'] && ! $inserted['linked_email_ids']) {
             return;
         }
 
-        $path = storage_path(self::MANIFEST_FILE);
+        $path = storage_path($manifestFile);
 
         if (File::exists($path)) {
             $inserted = array_merge_recursive(json_decode(File::get($path), true, flags: JSON_THROW_ON_ERROR), $inserted);

@@ -1745,6 +1745,8 @@ namespace App\Models{
  * @property-read \Illuminate\Database\Eloquent\Collection<int, SalesLead> $referredHerniaSales
  * @property-read int|null $referred_hernia_sales_count
  * @property-read \Webkul\Lead\Models\Stage|null $stage
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Webkul\Activity\Models\Activity> $teamChatMessages
+ * @property-read int|null $team_chat_messages_count
  * @property-read \Webkul\User\Models\User|null $updater
  * @property-read \App\Models\User|null $user
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SalesLead closedStage(bool $closed = true)

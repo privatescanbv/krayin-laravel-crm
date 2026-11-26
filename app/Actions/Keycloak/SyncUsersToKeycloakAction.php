@@ -56,8 +56,8 @@ class SyncUsersToKeycloakAction
             $keycloakUser = $this->keycloakService->getUserByEmail($user->email, $accessToken);
 
             if ($keycloakUser) {
-                // User exists, update keycloak_user_id if needed
-                if (empty($user->keycloak_user_id)) {
+                // User exists: fill or repair keycloak_user_id (stale after a realm rebuild or DB import)
+                if ($user->keycloak_user_id !== $keycloakUser['id']) {
                     if (! $dryRun) {
                         $this->userRepository->update(['keycloak_user_id' => $keycloakUser['id']], $user->id);
                         Log::info('Updated keycloak_user_id for existing Keycloak user', [

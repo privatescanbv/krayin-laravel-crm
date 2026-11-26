@@ -363,7 +363,7 @@ class KeycloakService
      */
     public function getUserByEmail(string $email, ?string $accessToken = null): ?array
     {
-        $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/users?email='.urlencode($email));
+        $url = $this->resolveKeycloakUrl('/admin/realms/'.$this->getRealm().'/users?exact=true&email='.urlencode($email));
         $response = $this->makeRequest('GET', $url, $accessToken);
 
         if ($response?->successful()) {

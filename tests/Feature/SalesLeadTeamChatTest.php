@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Enums\Departments;
+use App\Models\Department;
 use App\Models\SalesLead;
 use Database\Seeders\TestSeeder;
+use Illuminate\Support\Facades\DB;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -28,12 +31,29 @@ test('crm user posts a team chat message on a sale without creating patient mess
     $message = Activity::where('type', 'team_chat')->sole();
     expect($message)->sales_lead_id->toBe($sale->id)->created_by->toBe($user->id)->person_id->toBeNull()
         ->and($message->comment)->toContain('Hoi dokter')
-        ->and(\DB::table('patient_messages')->count())->toBe(0);
-
-    $this->get(route('admin.sales-leads.view', $sale->id))->assertOk()->assertSee('Teamchat');
+        ->and(DB::table('patient_messages')->count())->toBe(0);
 
     $this->getJson(route('admin.sales-leads.activities.index', $sale->id))->assertOk()->assertJsonCount(0, 'data');
 });
+
+test('the sale view offers the team chat below orders, but not for Privatescan', function (Departments $department, bool $visible) {
+    $this->seed(TestSeeder::class);
+    $user = User::factory()->create();
+    $this->actingAs($user, 'user');
+    $sale = teamChatSale($user);
+    $sale->lead->update(['department_id' => Department::firstOrCreate(['name' => $department->value])->id]);
+
+    $response = $this->get(route('admin.sales-leads.view', $sale->id))->assertOk();
+
+    $visible
+        ? $response->assertSeeInOrder(["setSection('orders')", "setSection('teamchat')"], false)
+            ->assertSee(route('admin.sales-leads.team-chat.store', $sale->id), false)
+        : $response->assertDontSee("setSection('teamchat')", false)
+            ->assertDontSee(route('admin.sales-leads.team-chat.store', $sale->id), false);
+})->with([
+    'Herniapoli'  => [Departments::HERNIA, true],
+    'Privatescan' => [Departments::PRIVATESCAN, false],
+]);
 
 function teamChatSale(User $user): SalesLead
 {

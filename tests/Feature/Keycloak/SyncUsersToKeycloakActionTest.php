@@ -131,6 +131,30 @@ it('skips users that already exist in Keycloak', function () {
     expect($user->keycloak_user_id)->toBe('existing-keycloak-id');
 });
 
+it('repairs a stale keycloak_user_id', function () {
+    User::query()->where('id', '!=', 0)->update(['status' => 0]);
+    KeycloakHttpHelpers::isolateTest();
+
+    $user = User::factory()->create([
+        'email'            => 'stale@example.com',
+        'status'           => 1,
+        'role_id'          => $this->role->id,
+        'keycloak_user_id' => 'stale-keycloak-id',
+    ]);
+
+    KeycloakHttpHelpers::enableKeycloak();
+    KeycloakHttpHelpers::fakeAdminToken();
+    KeycloakHttpHelpers::fakeUserOperations([
+        'email_checks' => [
+            'stale@example.com' => ['id' => 'current-keycloak-id', 'email' => 'stale@example.com'],
+        ],
+    ]);
+
+    app(SyncUsersToKeycloakAction::class)->execute(false);
+
+    expect($user->refresh()->keycloak_user_id)->toBe('current-keycloak-id');
+});
+
 it('skips users without email', function () {
     User::query()->where('id', '!=', 0)->update(['status' => 0]);
     KeycloakHttpHelpers::isolateTest();

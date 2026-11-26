@@ -2,6 +2,7 @@
     use App\Enums\LostReason;use App\Services\Ai\AiSubjectRegistry;
 
     $aiSummaryEnabled = app(AiSubjectRegistry::class)->isEnabled('sales_leads');
+    $showTeamChat = ! $salesLead->getDepartment()?->isPrivatescan();
 @endphp
 <x-admin::layouts>
     <x-slot:title>
@@ -133,7 +134,7 @@
                 </div>
             </div>
 
-            <x-adminc::components.entity-navigation-menu :activitiesCount="$activitiesCount" show-orders="true" show-team-chat="true" :teamChatCount="$salesLead->teamChatMessages()->count()"/>
+            <x-adminc::components.entity-navigation-menu :activitiesCount="$activitiesCount" show-orders="true" :show-team-chat="$showTeamChat" :teamChatCount="$showTeamChat ? $salesLead->teamChatMessages()->count() : 0"/>
 
             <!-- Footer with creation and modification dates -->
             <div
@@ -173,9 +174,11 @@
                 @include('admin::activities.partials.tab-activities', ['entityId' => $salesLead->id, 'entityType' => 'sales-leads'])
             </div>
 
-            <div v-else-if="leadDetailSection === 'teamchat'" class="flex w-full flex-col gap-4 rounded-lg">
-                @include('adminc.sales_leads.view.teamchat', ['salesLead' => $salesLead])
-            </div>
+            @if ($showTeamChat)
+                <div v-else-if="leadDetailSection === 'teamchat'" class="flex w-full flex-col gap-4 rounded-lg">
+                    @include('adminc.sales_leads.view.teamchat', ['salesLead' => $salesLead])
+                </div>
+            @endif
 
             <div v-else-if="leadDetailSection === 'anamnese'" class="flex w-full flex-col gap-4 rounded-lg">
                 @include('admin::leads.view.anamnese-with-override', [
@@ -334,7 +337,7 @@
                                 let hash = window.location.hash.substring(1); // Remove '#'
 
                                 // Valid sections
-                                const validSections = ['algemeen', 'activiteiten', 'teamchat', 'anamnese', 'marketing', 'orders'];
+                                const validSections = ['algemeen', 'activiteiten', 'anamnese', 'marketing', 'orders'{!! $showTeamChat ? ", 'teamchat'" : '' !!}];
 
                                 if (validSections.includes(hash)) {
                                     this.leadDetailSection = hash;

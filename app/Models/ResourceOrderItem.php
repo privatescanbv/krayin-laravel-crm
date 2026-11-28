@@ -47,9 +47,17 @@ class ResourceOrderItem extends Model
         return $this->belongsTo(OrderItem::class, 'orderitem_id');
     }
 
+    /**
+     * Match bookings that overlap the given calendar day, not just ones whose `from` falls on
+     * it. Without the `to` check, a booking starting right before midnight and ending shortly
+     * after would be excluded from "today" even though it is still the earliest booking that day.
+     */
     public function scopeOnDate(Builder $query, Carbon $date): Builder
     {
-        return $query->whereDate('from', $date->toDateString());
+        return $query->where(function (Builder $query) use ($date) {
+            $query->whereDate('from', $date->toDateString())
+                ->orWhereDate('to', $date->toDateString());
+        });
     }
 
     public function scopeOnOrderItemId(Builder $query, string $orderItemId): Builder

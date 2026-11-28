@@ -37,19 +37,12 @@ class PatientAppointmentController extends Controller
      *
      * @response 200 scenario="Success" {"data":[{"id":"42","patient_id":"1","clinic_id":null,"clinic_ref":null,"start_at":"2026-01-27T10:00:00+01:00","end_at":"2026-01-27T10:30:00+01:00","timezone":"Europe/Amsterdam","created_at":"2026-01-20T09:00:00+01:00","updated_at":"2026-01-20T09:00:00+01:00"}],"meta":{"current_page":1,"per_page":15,"total":42}}
      * @response 200 scenario="Success (empty)" {"data":[],"meta":{"current_page":1,"per_page":15,"total":0}}
+     * @response 403 scenario="Caller is not a patient (e.g. a clinic-portal account)" {"message":"Forbidden"}
      * @response 404 scenario="Patient not found" {"message":"Not Found"}
      */
     public function index(PatientAppointmentsIndexRequest $request, string $keycloakUserId): AnonymousResourceCollection
     {
-        [$person, $user] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
-
-        if (is_null($person)) {
-            if (! is_null($user)) {
-                return PatientPortalAppointmentResource::collection(collect());
-            }
-
-            abort(404);
-        }
+        $person = $this->keycloakService->resolvePatientOrFail($keycloakUserId);
 
         $validated = $request->validated();
         $perPage = (int) ($validated['per_page'] ?? 15);
@@ -83,13 +76,12 @@ class PatientAppointmentController extends Controller
      * @urlParam id string required The Keycloak user ID of the patient.
      * @urlParam appointmentId string required The appointment id, as returned by the list endpoint.
      *
+     * @response 403 scenario="Caller is not a patient (e.g. a clinic-portal account)" {"message":"Forbidden"}
      * @response 404 scenario="Unknown patient, or appointment of another patient"
      */
     public function show(string $keycloakUserId, string $appointmentId): AppointmentDetailResource
     {
-        [$person] = $this->keycloakService->resolvePersonOrUser($keycloakUserId);
-
-        abort_if($person === null, 404);
+        $person = $this->keycloakService->resolvePatientOrFail($keycloakUserId);
 
         [$order, $booking] = $this->appointmentDetailService->resolve(
             $appointmentId,
